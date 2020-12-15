@@ -34,7 +34,7 @@
 #include <QTransform>
 
 #include "pospoint.h"
-#include "carstate.h"
+#include "vehiclestate.h"
 #include "osmclient.h"
 
 class MapModule
@@ -67,15 +67,13 @@ public:
     } RoutePointType;
 
     explicit MapWidget(QWidget *parent = 0);
-    QSharedPointer<CarState> getCarState(int carId);
-    void setFollowCar(int car);
-    void setTraceCar(int car);
-    void setSelectedCar(int car);
-    void addCar(QSharedPointer<CarState> CarState);
-    bool removeCar(int carId);
-    bool removeCopter(int copterId);
-    void clearCars();
-    void clearCopters();
+    QSharedPointer<VehicleState> getVehicleState(int vehicleID);
+    void setFollowVehicle(int vehicleID);
+    void setTraceVehicle(int vehicleID);
+    void setSelectedVehicle(int vehicleID);
+    void addVehicle(QSharedPointer<VehicleState> vehicleState);
+    bool removeVehicle(int vehicleID);
+    void clearVehicles();
     PosPoint* getAnchor(int anchorId);
     void addAnchor(const PosPoint &anchor);
     bool removeAnchor(int anchorId);
@@ -139,8 +137,8 @@ public:
     qint32 getRoutePointTime() const;
     void setRoutePointTime(const qint32 &routePointTime);
 
-    double getTraceMinSpaceCar() const;
-    void setTraceMinSpaceCar(double traceMinSpaceCar);
+    double getTraceMinSpaceVehicle() const;
+    void setTraceMinSpaceVehicle(double traceMinSpaceVehicle);
 
     double getTraceMinSpaceGps() const;
     void setTraceMinSpaceGps(double traceMinSpaceGps);
@@ -175,7 +173,7 @@ public:
     quint32 getRoutePointAttributes() const;
     void setRoutePointAttributes(const quint32 &routePointAttributes);
 
-    QList<QSharedPointer<CarState> > getCarStateList() const;
+    QList<QSharedPointer<VehicleState> > getVehicleStateList() const;
 
     double drawGrid(QPainter &painter, QTransform drawTrans, QTransform txtTrans, double gridWidth, double gridHeight);
     QPair<int, int> drawInfoTraces(QPainter& painter, QTransform drawTrans, QTransform txtTrans, const QRectF &viewRect_mm);
@@ -200,7 +198,7 @@ private slots:
     void tileReady(OsmTile tile);
     void errorGetTile(QString reason);
     void timerSlot();
-    void carStateUpdated(const CarState& updatedCarState);
+    void vehiclePositionUpdated(const VehicleState& updatedVehicleState);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -211,10 +209,10 @@ protected:
     bool event(QEvent *event) override;
 
 private:
-    QList<QSharedPointer<CarState>> mCarStateList;
-    QVector<PosPoint> mCarTrace;
-    QVector<PosPoint> mCarTraceGNSS;
-    QVector<PosPoint> mCarTraceUwb;
+    QList<QSharedPointer<VehicleState>> mVehicleStateList;
+    QVector<PosPoint> mVehicleTrace;
+    QVector<PosPoint> mVehicleTraceGNSS;
+    QVector<PosPoint> mVehicleTraceUwb;
     QList<PosPoint> mAnchors;
     QList<QList<PosPoint> > mRoutes;
     QList<QList<PosPoint> > mInfoTraces;
@@ -230,9 +228,9 @@ private:
     double mYOffset;
     int mMouseLastX;
     int mMouseLastY;
-    int mFollowCarId;
-    int mTraceCar;
-    int mSelectedCar;
+    int mFollowVehicleId;
+    int mTraceVehicle;
+    int mSelectedVehicle;
     double xRealPos;
     double yRealPos;
     bool mAntialiasDrawings;
@@ -253,7 +251,7 @@ private:
     int mAnchorSelected;
     int mRouteNow;
     int mInfoTraceNow;
-    double mTraceMinSpaceCar;
+    double mTraceMinSpaceVehicle;
     double mTraceMinSpaceGps;
     QList<QPixmap> mPixmaps;
     bool mAnchorMode;

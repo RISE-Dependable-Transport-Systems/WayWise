@@ -19,7 +19,6 @@
 /*
  * TODO
  * - gnss, uwb, etc pos refactoring
- * - generalize car to vehicle with sub-classes
  * - gather map preferences in class/struct, same with status
  * - make utility functions public/move
  * - interface to register mouse, keyboard actions
@@ -263,9 +262,9 @@ MapWidget::MapWidget(QWidget *parent) : QWidget(parent)
     mYOffset = 0;
     mMouseLastX = 1000000;
     mMouseLastY = 1000000;
-    mFollowCarId = -1;
-    mTraceCar = -1;
-    mSelectedCar = -1;
+    mFollowVehicleId = -1;
+    mTraceVehicle = -1;
+    mSelectedVehicle = -1;
     xRealPos = 0;
     yRealPos = 0;
     mRoutePointSpeed = 1.0;
@@ -280,7 +279,7 @@ MapWidget::MapWidget(QWidget *parent) : QWidget(parent)
     mRoutePointSelected = -1;
     mAnchorSelected = -1;
     mRouteNow = 0;
-    mTraceMinSpaceCar = 0.05;
+    mTraceMinSpaceVehicle = 0.05;
     mTraceMinSpaceGps = 0.05;
     mInfoTraceNow = 0;
     mAnchorMode = false;
@@ -359,28 +358,28 @@ MapWidget::MapWidget(QWidget *parent) : QWidget(parent)
     grabGesture(Qt::PinchGesture);
 }
 
-QSharedPointer<CarState> MapWidget::getCarState(int carId)
+QSharedPointer<VehicleState> MapWidget::getVehicleState(int vehicleID)
 {
-    for (int i = 0;i < mCarStateList.size();i++) {
-        if (mCarStateList[i]->getId() == carId) {
-            return mCarStateList[i];
+    for (int i = 0;i < mVehicleStateList.size();i++) {
+        if (mVehicleStateList[i]->getId() == vehicleID) {
+            return mVehicleStateList[i];
         }
     }
 
     return 0;
 }
 
-void MapWidget::addCar(QSharedPointer<CarState> CarState)
+void MapWidget::addVehicle(QSharedPointer<VehicleState> vehicleState)
 {
-    mCarStateList.append(CarState);
-    connect(CarState.get(), &CarState::carPositionUpdated, this, &MapWidget::carStateUpdated);
+    mVehicleStateList.append(vehicleState);
+    connect(vehicleState.get(), &VehicleState::positionUpdated, this, &MapWidget::vehiclePositionUpdated);
 }
 
-bool MapWidget::removeCar(int carId)
+bool MapWidget::removeVehicle(int vehicleID)
 {
-    QMutableListIterator<QSharedPointer<CarState>> i(mCarStateList);
+    QMutableListIterator<QSharedPointer<VehicleState>> i(mVehicleStateList);
     while (i.hasNext()) {
-        if (i.next()->getId() == carId) {
+        if (i.next()->getId() == vehicleID) {
             i.remove();
             return true;
         }
@@ -389,9 +388,9 @@ bool MapWidget::removeCar(int carId)
     return false;
 }
 
-void MapWidget::clearCars()
+void MapWidget::clearVehicles()
 {
-    mCarStateList.clear();
+    mVehicleStateList.clear();
 }
 
 PosPoint *MapWidget::getAnchor(int anchorId)
@@ -480,9 +479,9 @@ void MapWidget::moveView(double px, double py)
 
 void MapWidget::clearTrace()
 {
-    mCarTrace.clear();
-    mCarTraceGNSS.clear();
-    mCarTraceUwb.clear();
+    mVehicleTrace.clear();
+    mVehicleTraceGNSS.clear();
+    mVehicleTraceUwb.clear();
     update();
 }
 
@@ -615,33 +614,33 @@ void MapWidget::timerSlot()
     updateTraces();
 }
 
-void MapWidget::carStateUpdated(const CarState &updatedCarState)
+void MapWidget::vehiclePositionUpdated(const VehicleState &updatedVehicleState)
 {
-    (void) updatedCarState;
+    (void) updatedVehicleState;
     update();
 }
 
-void MapWidget::setFollowCar(int car)
+void MapWidget::setFollowVehicle(int vehicleID)
 {
-    int oldCar = mFollowCarId;
-    mFollowCarId = car;
+    int oldVehicle = mFollowVehicleId;
+    mFollowVehicleId = vehicleID;
 
-    if (oldCar != mFollowCarId) {
+    if (oldVehicle != mFollowVehicleId) {
         update();
     }
 }
 
-void MapWidget::setTraceCar(int car)
+void MapWidget::setTraceVehicle(int vehicleID)
 {
-    mTraceCar = car;
+    mTraceVehicle = vehicleID;
 }
 
-void MapWidget::setSelectedCar(int car)
+void MapWidget::setSelectedVehicle(int vehicleID)
 {
-    int oldCar = mSelectedCar;
-    mSelectedCar = car;
+    int oldVehicle = mSelectedVehicle;
+    mSelectedVehicle = vehicleID;
 
-    if (oldCar != mSelectedCar) {
+    if (oldVehicle != mSelectedVehicle) {
         update();
     }
 }
@@ -778,15 +777,15 @@ void MapWidget::mousePressEvent(QMouseEvent *e)
 
     if (ctrl) {
         if (e->buttons() & Qt::LeftButton) {
-            if (mSelectedCar >= 0) {
-                for (int i = 0;i < mCarStateList.size();i++) {
-                    QSharedPointer<CarState> CarState = mCarStateList[i];
-                    if (CarState->getId() == mSelectedCar) {
-                        PosPoint pos = CarState->getPosition();
+            if (mSelectedVehicle >= 0) {
+                for (int i = 0;i < mVehicleStateList.size();i++) {
+                    QSharedPointer<VehicleState> VehicleState = mVehicleStateList[i];
+                    if (VehicleState->getId() == mSelectedVehicle) {
+                        PosPoint pos = VehicleState->getPosition();
                         QPoint p = getMousePosRelative();
                         pos.setXY(p.x() / 1000.0, p.y() / 1000.0);
-                        CarState->setPosition(pos);
-                        emit posSet(mSelectedCar, pos);
+                        VehicleState->setPosition(pos);
+                        emit posSet(mSelectedVehicle, pos);
                     }
                 }
             }
@@ -947,16 +946,16 @@ void MapWidget::wheelEvent(QWheelEvent *e)
         ctrl = true;
     }
 
-    if (ctrl && mSelectedCar >= 0) {
-        for (int i = 0;i < mCarStateList.size();i++) {
-            QSharedPointer<CarState> CarState = mCarStateList[i];
-            if (CarState->getId() == mSelectedCar) {
-                PosPoint pos = CarState->getPosition();
+    if (ctrl && mSelectedVehicle >= 0) {
+        for (int i = 0;i < mVehicleStateList.size();i++) {
+            QSharedPointer<VehicleState> VehicleState = mVehicleStateList[i];
+            if (VehicleState->getId() == mSelectedVehicle) {
+                PosPoint pos = VehicleState->getPosition();
                 double angle = pos.getYaw() + (double)e->angleDelta().y() * 0.0005;
                 normalizeAngleRad(angle);
                 pos.setYaw(angle);
-                CarState->setPosition(pos);
-                emit posSet(mSelectedCar, pos);
+                VehicleState->setPosition(pos);
+                emit posSet(mSelectedVehicle, pos);
                 update();
             }
         }
@@ -1028,9 +1027,9 @@ bool MapWidget::event(QEvent *event)
     return QWidget::event(event);
 }
 
-QList<QSharedPointer<CarState> > MapWidget::getCarStateList() const
+QList<QSharedPointer<VehicleState> > MapWidget::getVehicleStateList() const
 {
-    return mCarStateList;
+    return mVehicleStateList;
 }
 
 quint32 MapWidget::getRoutePointAttributes() const
@@ -1139,14 +1138,14 @@ void MapWidget::setTraceMinSpaceGps(double traceMinSpaceGps)
     mTraceMinSpaceGps = traceMinSpaceGps;
 }
 
-double MapWidget::getTraceMinSpaceCar() const
+double MapWidget::getTraceMinSpaceVehicle() const
 {
-    return mTraceMinSpaceCar;
+    return mTraceMinSpaceVehicle;
 }
 
-void MapWidget::setTraceMinSpaceCar(double traceMinSpaceCar)
+void MapWidget::setTraceMinSpaceVehicle(double traceMinSpaceVehicle)
 {
-    mTraceMinSpaceCar = traceMinSpaceCar;
+    mTraceMinSpaceVehicle = traceMinSpaceVehicle;
 }
 
 qint32 MapWidget::getRoutePointTime() const
@@ -2156,12 +2155,12 @@ void MapWidget::paint(QPainter &painter, int width, int height, bool highQuality
         mYOffset *= scaleDiff;
     }
 
-    // Optionally follow a car
-    if (mFollowCarId >= 0) {
-        for (int i = 0;i < mCarStateList.size();i++) {
-            QSharedPointer<CarState> CarState = mCarStateList[i];
-            if (CarState->getId() == mFollowCarId) {
-                PosPoint followLoc = CarState->getPosition();
+    // Optionally follow a vehicle
+    if (mFollowVehicleId >= 0) {
+        for (int i = 0;i < mVehicleStateList.size();i++) {
+            QSharedPointer<VehicleState> VehicleState = mVehicleStateList[i];
+            if (VehicleState->getId() == mFollowVehicleId) {
+                PosPoint followLoc = VehicleState->getPosition();
                 mXOffset = -followLoc.getX() * 1000.0 * mScaleFactor;
                 mYOffset = -followLoc.getY() * 1000.0 * mScaleFactor;
             }
@@ -2225,35 +2224,35 @@ void MapWidget::paint(QPainter &painter, int width, int height, bool highQuality
     // Draw info traces
     QPair<int, int> infoTraceStats = drawInfoTraces(painter, drawTrans, txtTrans, viewRect_mm);
 
-    // Draw trace for the selected car
+    // Draw trace for the selected vehicle
     pen.setWidthF(5.0 / mScaleFactor);
     pen.setColor(Qt::red);
     painter.setPen(pen);
     painter.setTransform(drawTrans);
-    for (int i = 1;i < mCarTrace.size();i++) {
-        painter.drawLine(mCarTrace[i - 1].getX() * 1000.0, mCarTrace[i - 1].getY() * 1000.0,
-                mCarTrace[i].getX() * 1000.0, mCarTrace[i].getY() * 1000.0);
+    for (int i = 1;i < mVehicleTrace.size();i++) {
+        painter.drawLine(mVehicleTrace[i - 1].getX() * 1000.0, mVehicleTrace[i - 1].getY() * 1000.0,
+                mVehicleTrace[i].getX() * 1000.0, mVehicleTrace[i].getY() * 1000.0);
     }
 
-    // Draw GNSS trace for the selected car
+    // Draw GNSS trace for the selected vehicle
     pen.setWidthF(2.5 / mScaleFactor);
     pen.setColor(Qt::magenta);
     painter.setPen(pen);
     painter.setTransform(drawTrans);
-    for (int i = 1;i < mCarTraceGNSS.size();i++) {
-        painter.drawLine(mCarTraceGNSS[i - 1].getX() * 1000.0, mCarTraceGNSS[i - 1].getY() * 1000.0,
-                mCarTraceGNSS[i].getX() * 1000.0, mCarTraceGNSS[i].getY() * 1000.0);
+    for (int i = 1;i < mVehicleTraceGNSS.size();i++) {
+        painter.drawLine(mVehicleTraceGNSS[i - 1].getX() * 1000.0, mVehicleTraceGNSS[i - 1].getY() * 1000.0,
+                mVehicleTraceGNSS[i].getX() * 1000.0, mVehicleTraceGNSS[i].getY() * 1000.0);
     }
 
-    // Draw UWB trace for the selected car
+    // Draw UWB trace for the selected vehicle
     if (mDrawUwbTrace) {
         pen.setWidthF(2.5 / mScaleFactor);
         pen.setColor(Qt::green);
         painter.setPen(pen);
         painter.setTransform(drawTrans);
-        for (int i = 1;i < mCarTraceUwb.size();i++) {
-            painter.drawLine(mCarTraceUwb[i - 1].getX() * 1000.0, mCarTraceUwb[i - 1].getY() * 1000.0,
-                    mCarTraceUwb[i].getX() * 1000.0, mCarTraceUwb[i].getY() * 1000.0);
+        for (int i = 1;i < mVehicleTraceUwb.size();i++) {
+            painter.drawLine(mVehicleTraceUwb[i - 1].getX() * 1000.0, mVehicleTraceUwb[i - 1].getY() * 1000.0,
+                    mVehicleTraceUwb[i].getX() * 1000.0, mVehicleTraceUwb[i].getY() * 1000.0);
         }
     }
 
@@ -2271,10 +2270,10 @@ void MapWidget::paint(QPainter &painter, int width, int height, bool highQuality
     }
     painter.restore();
 
-    // Draw cars
+    // Draw vehicles
     painter.setPen(QPen(QPalette::Foreground));
-    for(const auto& carState : mCarStateList)
-        carState->draw(painter, drawTrans, carState->getId() == mSelectedCar);
+    for(const auto& vehicleState : mVehicleStateList)
+        vehicleState->draw(painter, drawTrans, vehicleState->getId() == mSelectedVehicle);
 
     painter.setPen(QPen(QPalette::Foreground));
 
@@ -2290,45 +2289,45 @@ void MapWidget::paint(QPainter &painter, int width, int height, bool highQuality
 
 void MapWidget::updateTraces()
 {
-    // Store trace for the selected car or copter
-    if (mTraceCar >= 0) {
-        for (int i = 0;i < mCarStateList.size();i++) {
-            QSharedPointer<CarState> CarState = mCarStateList[i];
-            if (CarState->getId() == mTraceCar) {
-                if (mCarTrace.isEmpty()) {
-                    mCarTrace.append(CarState->getPosition());
+    // Store trace for the selected vehicle
+    if (mTraceVehicle >= 0) {
+        for (int i = 0;i < mVehicleStateList.size();i++) {
+            QSharedPointer<VehicleState> VehicleState = mVehicleStateList[i];
+            if (VehicleState->getId() == mTraceVehicle) {
+                if (mVehicleTrace.isEmpty()) {
+                    mVehicleTrace.append(VehicleState->getPosition());
                 }
-                if (mCarTrace.last().getDistanceTo(CarState->getPosition()) > mTraceMinSpaceCar) {
-                    mCarTrace.append(CarState->getPosition());
+                if (mVehicleTrace.last().getDistanceTo(VehicleState->getPosition()) > mTraceMinSpaceVehicle) {
+                    mVehicleTrace.append(VehicleState->getPosition());
                 }
 //                // GPS trace
-//                if (mCarTraceGps.isEmpty()) {
-//                    mCarTraceGps.append(CarState->getLocationGps());
+//                if (mVehicleTraceGps.isEmpty()) {
+//                    mVehicleTraceGps.append(VehicleState->getLocationGps());
 //                }
-//                if (mCarTraceGps.last().getDistanceTo(CarState->getLocationGps()) > mTraceMinSpaceGps) {
-//                    mCarTraceGps.append(CarState->getLocationGps());
+//                if (mVehicleTraceGps.last().getDistanceTo(VehicleState->getLocationGps()) > mTraceMinSpaceGps) {
+//                    mVehicleTraceGps.append(VehicleState->getLocationGps());
 //                }
 //                // UWB trace
-//                if (mCarTraceUwb.isEmpty()) {
-//                    mCarTraceUwb.append(CarState->getLocationUwb());
+//                if (mVehicleTraceUwb.isEmpty()) {
+//                    mVehicleTraceUwb.append(VehicleState->getLocationUwb());
 //                }
-//                if (mCarTraceUwb.last().getDistanceTo(CarState->getLocationUwb()) > mTraceMinSpaceCar) {
-//                    mCarTraceUwb.append(CarState->getLocationUwb());
+//                if (mVehicleTraceUwb.last().getDistanceTo(VehicleState->getLocationUwb()) > mTraceMinSpaceVehicle) {
+//                    mVehicleTraceUwb.append(VehicleState->getLocationUwb());
 //                }
             }
         }
     }
 
     // Truncate traces
-    while (mCarTrace.size() > 5000) {
-        mCarTrace.removeFirst();
+    while (mVehicleTrace.size() > 5000) {
+        mVehicleTrace.removeFirst();
     }
 
-    while (mCarTraceGNSS.size() > 1800) {
-        mCarTraceGNSS.removeFirst();
+    while (mVehicleTraceGNSS.size() > 1800) {
+        mVehicleTraceGNSS.removeFirst();
     }
 
-    while (mCarTraceUwb.size() > 5000) {
-        mCarTraceUwb.removeFirst();
+    while (mVehicleTraceUwb.size() > 5000) {
+        mVehicleTraceUwb.removeFirst();
     }
 }

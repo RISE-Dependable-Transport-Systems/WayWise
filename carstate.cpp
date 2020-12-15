@@ -1,43 +1,14 @@
-/*
-    Copyright 2012 Benjamin Vedder	benjamin@vedder.se
-              2020 Marvin Damschen  marvin.damschen@ri.se
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-    */
-
 #include "carstate.h"
-#include <QDebug>
 
-CarState::CarState(int id, Qt::GlobalColor color)
+CarState::CarState(int id, Qt::GlobalColor color) : VehicleState(id, color)
 {
-    mId = id;
-    mColor = color;
-    mName = "";
-    mName.sprintf("Car %d", mId);
-    mTime = 0;
-    mLength = 0.8;
-    mWidth = 0.335;
 
-    mPosition.setType(PosType::fused);
-    mPositionGNSS.setType(PosType::GNSS);
-    mPositionUWB.setType(PosType::UWB);
 }
 
 void CarState::draw(QPainter &painter, const QTransform &drawTrans, bool isSelected)
 {
     PosPoint pos = getPosition();
-//        LocPoint pos_gps = CarState->getLocationGps();
+//        LocPoint pos_gps = VehicleState->getLocationGps();
 
     const double car_len = getLength() * 1000.0;
     const double car_w = getWidth() * 1000.0;
@@ -101,7 +72,7 @@ void CarState::draw(QPainter &painter, const QTransform &drawTrans, bool isSelec
     //        painter.drawEllipse(QPointF(x_gps, y_gps), car_w / 15.0, car_w / 15.0);
 
     //        // Autopilot state
-    //        LocPoint ap_goal = CarState->getApGoal();
+    //        LocPoint ap_goal = VehicleState->getApGoal();
     //        if (ap_goal.getRadius() > 0.0) {
     //            pen.setColor(col_ap);
     //            painter.setPen(pen);
@@ -118,16 +89,16 @@ void CarState::draw(QPainter &painter, const QTransform &drawTrans, bool isSelec
     //        painter.setPen(QPen(textColor));
 
     //        // Print data
-    //        QTime t = QTime::fromMSecsSinceStartOfDay(CarState->getTime());
+    //        QTime t = QTime::fromMSecsSinceStartOfDay(VehicleState->getTime());
     //        QString solStr;
-    //        if (!CarState->getLocationGps().getInfo().isEmpty()) {
-    //            solStr = QString("Sol: %1\n").arg(CarState->getLocationGps().getInfo());
+    //        if (!VehicleState->getLocationGps().getInfo().isEmpty()) {
+    //            solStr = QString("Sol: %1\n").arg(VehicleState->getLocationGps().getInfo());
     //        }
     //        txt.sprintf("%s\n"
     //                    "%s"
     //                    "(%.3f, %.3f, %.0f)\n"
     //                    "%02d:%02d:%02d:%03d",
-    //                    CarState->getName().toLocal8Bit().data(),
+    //                    VehicleState->getName().toLocal8Bit().data(),
     //                    solStr.toLocal8Bit().data(),
     //                    pos.getX(), pos.getY(), angle,
     //                    t.hour(), t.minute(), t.second(), t.msec());
@@ -140,69 +111,14 @@ void CarState::draw(QPainter &painter, const QTransform &drawTrans, bool isSelec
     //        painter.drawText(rect_txt, txt);
 }
 
-int CarState::getId() const
+double CarState::getAxisDistance() const
 {
-    return mId;
+    return mAxisDistance;
 }
 
-void CarState::setId(int id, bool changeName)
+void CarState::setAxisDistance(double axisDistance)
 {
-    mId = id;
-
-    if (changeName) {
-        mName = "";
-        mName.sprintf("Car %d", mId);
-    }
-}
-
-QString CarState::getName() const
-{
-    return mName;
-}
-
-void CarState::setName(QString name)
-{
-    mName = name;
-}
-
-void CarState::setPosition(PosPoint &point)
-{
-    switch (point.getType()) {
-        case PosType::fused:    mPosition = point; break;
-        case PosType::GNSS:     mPositionGNSS = point; break;
-        case PosType::UWB:      mPositionUWB = point; break;
-    }
-    emit carPositionUpdated(*this);
-}
-
-Qt::GlobalColor CarState::getColor() const
-{
-    return mColor;
-}
-
-void CarState::setColor(Qt::GlobalColor color)
-{
-    mColor = color;
-}
-
-PosPoint &CarState::getApGoal()
-{
-    return mApGoal;
-}
-
-void CarState::setApGoal(const PosPoint &apGoal)
-{
-    mApGoal = apGoal;
-}
-
-qint32 CarState::getTime() const
-{
-    return mTime;
-}
-
-void CarState::setTime(const qint32 &time)
-{
-    mTime = time;
+    mAxisDistance = axisDistance;
 }
 
 double CarState::getSteering() const
@@ -217,16 +133,6 @@ void CarState::setSteering(double value)
     mSteering = value;
 }
 
-double CarState::getSpeed() const
-{
-    return mSpeed;
-}
-
-void CarState::setSpeed(double value)
-{
-    mSpeed = value;
-}
-
 const QPointF CarState::getStoppingPointForTurnRadiusAndBrakeDistance(const double turnRadius, const double brakeDistance) const
 {
     double x = fabs(turnRadius) * sin(brakeDistance/fabs(turnRadius));
@@ -238,65 +144,4 @@ const QPointF CarState::getStoppingPointForTurnRadiusAndBrakeDistance(const doub
 const QPointF CarState::getStoppingPointForTurnRadius(const double turnRadius) const
 {
     return getStoppingPointForTurnRadiusAndBrakeDistance(turnRadius, getBrakingDistance());
-}
-
-double CarState::getMinAcceleration() const
-{
-    return mMinAcceleration;
-}
-
-void CarState::setMinAcceleration(double minAcceleration)
-{
-    mMinAcceleration = minAcceleration;
-}
-
-double CarState::getMaxAcceleration() const
-{
-    return mMaxAcceleration;
-}
-
-void CarState::setMaxAcceleration(double maxAcceleration)
-{
-    mMaxAcceleration = maxAcceleration;
-}
-
-double CarState::getAxisDistance() const
-{
-    return mAxisDistance;
-}
-
-void CarState::setAxisDistance(double axisDistance)
-{
-    mAxisDistance = axisDistance;
-}
-
-double CarState::getLength() const
-{
-    return mLength;
-}
-
-void CarState::setLength(double length)
-{
-    mLength = length;
-}
-
-double CarState::getWidth() const
-{
-    return mWidth;
-}
-
-void CarState::setWidth(double width)
-{
-    mWidth = width;
-}
-
-PosPoint CarState::getPosition(PosType type) const
-{
-    switch (type) {
-        case PosType::fused:    return mPosition;
-        case PosType::GNSS:     return mPositionGNSS;
-        case PosType::UWB:      return mPositionUWB;
-    }
-
-    return mPosition;
 }
