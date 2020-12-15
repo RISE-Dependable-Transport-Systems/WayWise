@@ -66,7 +66,7 @@ void VehicleState::setPosition(PosPoint &point)
         case PosType::GNSS:     mPositionGNSS = point; break;
         case PosType::UWB:      mPositionUWB = point; break;
     }
-    emit positionUpdated(*this);
+    emit positionUpdated();
 }
 
 Qt::GlobalColor VehicleState::getColor() const

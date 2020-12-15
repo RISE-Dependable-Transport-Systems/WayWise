@@ -59,7 +59,7 @@ public:
     void setSpeed(double value);
 
 signals:
-    void positionUpdated(const VehicleState& updatedVehicleState);
+    void positionUpdated();
 
 private:
     // Static state
