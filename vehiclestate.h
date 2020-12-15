@@ -32,7 +32,7 @@ class VehicleState : public QObject
 public:
     VehicleState(int id = 0, Qt::GlobalColor color = Qt::red);
 
-    virtual void draw(QPainter &painter, const QTransform &drawTrans, bool isSelected = true) = 0;
+    virtual void draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected = true) = 0;
 
     // Static state
     int getId() const;

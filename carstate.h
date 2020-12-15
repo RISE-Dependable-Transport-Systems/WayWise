@@ -14,7 +14,7 @@ class CarState : public VehicleState
 public:
     CarState(int id = 0, Qt::GlobalColor color = Qt::red);
 
-    virtual void draw(QPainter &painter, const QTransform &drawTrans, bool isSelected = true);
+    virtual void draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected = true);
 
     // Static state
     double getAxisDistance() const;

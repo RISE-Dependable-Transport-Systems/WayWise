@@ -2273,7 +2273,7 @@ void MapWidget::paint(QPainter &painter, int width, int height, bool highQuality
     // Draw vehicles
     painter.setPen(QPen(QPalette::Foreground));
     for(const auto& vehicleState : mVehicleStateList)
-        vehicleState->draw(painter, drawTrans, vehicleState->getId() == mSelectedVehicle);
+        vehicleState->draw(painter, drawTrans, txtTrans, vehicleState->getId() == mSelectedVehicle);
 
     painter.setPen(QPen(QPalette::Foreground));
 

@@ -5,8 +5,10 @@ CarState::CarState(int id, Qt::GlobalColor color) : VehicleState(id, color)
 
 }
 
-void CarState::draw(QPainter &painter, const QTransform &drawTrans, bool isSelected)
+void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected)
 {
+    Q_UNUSED(txtTrans)
+
     PosPoint pos = getPosition();
 //        LocPoint pos_gps = VehicleState->getLocationGps();
 
