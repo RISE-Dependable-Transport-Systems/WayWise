@@ -2,17 +2,18 @@
 #include <QTime>
 #include <QPalette>
 
-CopterState::CopterState(int id, Qt::GlobalColor color)
+CopterState::CopterState(int id, Qt::GlobalColor color) : VehicleState(id, color)
 {
-
+    // Default values for Holybro S500/X500
+    mFrameType = CopterFrameType::X;
+    mPropellerSize = 260;
+    setWidth(520);
+    setLength(520);
+    setName("Copter");
 }
 
 void CopterState::draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected)
 {
-//    pen.setWidthF(2.0 / mScaleFactor);
-//    pen.setColor(textColor);
-//    painter.setPen(pen);
-
 //    LocPoint pos_gps = copterInfo.getLocationGps();
     PosPoint pos = getPosition();
     double x = pos.getX() * 1000.0;
@@ -26,10 +27,16 @@ void CopterState::draw(QPainter &painter, const QTransform &drawTrans, const QTr
     painter.translate(x, y);
     painter.rotate(-angle);
 
+    bool tooSmallForDetails = false;
+    QLineF testScaleLine(0,0,0,1);
+    double scale = drawTrans.map(testScaleLine).length();
+    if (scale < 0.05)
+        tooSmallForDetails = true;
+
     QColor col_frame = getColor();
     QColor col_prop_main;
     QColor col_prop_other;
-    QColor col_gps = Qt::magenta;
+//    QColor col_gps = Qt::magenta;
     QColor col_ap;
 
     if (isSelected) {
@@ -41,29 +48,49 @@ void CopterState::draw(QPainter &painter, const QTransform &drawTrans, const QTr
         col_prop_other = Qt::lightGray;
         col_ap = Qt::lightGray;
     }
+    col_prop_main.setAlphaF(0.3);
+    col_prop_other.setAlphaF(0.3);
 
-    // Draw the Quadcopter
-    painter.setBrush(col_frame);
-    painter.drawRoundedRect(-20, -300, 40, 600, 10, 10);
-    painter.drawRoundedRect(-300, -20, 600, 40, 10, 10);
+    double scaleIndependentSize = 30/scale;
+    if (tooSmallForDetails) {
+        QPen pen;
+        pen.setColor(QPalette::Foreground);
+        pen.setWidthF(2/scale);
+        painter.setPen(pen);
+        painter.setBrush(getColor());
 
-    // Draw propellers
-    QColor col = col_prop_main;
-    col.setAlphaF(0.3);
-    painter.setBrush(QBrush(col));
-    painter.drawEllipse(QPointF(275, 0), 130, 130);
-    col = col_prop_other;
-    col.setAlphaF(0.3);
-    painter.setBrush(QBrush(col));
-    painter.drawEllipse(QPointF(0, 275), 130, 130);
-    painter.drawEllipse(QPointF(0, -275), 130, 130);
-    painter.drawEllipse(QPointF(-275, 0), 130, 130);
+        QPainterPath arrow;
+        arrow.moveTo(0,-scaleIndependentSize/2);
+        arrow.lineTo(-scaleIndependentSize, -scaleIndependentSize);
+        arrow.lineTo(0, scaleIndependentSize);
+        arrow.lineTo(scaleIndependentSize, -scaleIndependentSize);
+        arrow.lineTo(0, -scaleIndependentSize/2);
+        painter.drawPath(arrow);
+    } else {
+        painter.rotate((mFrameType == CopterFrameType::X) ? 45 : 0);
 
-    // Draw the acceleration vector
-    if (fabs(pos.getRoll()) > 1e-5 || fabs(pos.getPitch()) > 1e-5) {
-        painter.setBrush(QBrush(Qt::green));
-        painter.setPen(QPen(Qt::green, 30));
-        painter.drawLine(QPointF(0.0, 0.0), QPointF(-pos.getPitch() * 800.0, -pos.getRoll() * 800.0));
+        // Draw the frame
+        painter.setBrush(col_frame);
+        painter.drawRect(-getWidth()/2, -20, getWidth(), 40);
+        painter.drawRect(-20, -getLength()/2, 40, getLength());
+
+        // Draw propellers
+        painter.setBrush(QBrush(col_prop_main));
+        painter.drawEllipse(QPointF(getWidth()/2, 0), mPropellerSize/2, mPropellerSize/2);
+        if (mFrameType == CopterFrameType::PLUS)
+            painter.setBrush(QBrush(col_prop_other));
+        painter.drawEllipse(QPointF(0, getLength()/2), mPropellerSize/2, mPropellerSize/2);
+
+        painter.setBrush(QBrush(col_prop_other));
+        painter.drawEllipse(QPointF(0, -getLength()/2), mPropellerSize/2, mPropellerSize/2);
+        painter.drawEllipse(QPointF(-getWidth()/2, 0), mPropellerSize/2, mPropellerSize/2);
+
+        // Draw the acceleration vector
+        if (fabs(pos.getRoll()) > 1e-5 || fabs(pos.getPitch()) > 1e-5) {
+            painter.setBrush(QBrush(Qt::green));
+            painter.setPen(QPen(Qt::green, 30));
+            painter.drawLine(QPointF(0.0, 0.0), QPointF(-pos.getPitch() * 800.0, -pos.getRoll() * 800.0));
+        }
     }
 
     // Print data
@@ -72,12 +99,12 @@ void CopterState::draw(QPainter &painter, const QTransform &drawTrans, const QTr
     QPointF pt_txt;
     QRectF rect_txt;
     txt.sprintf("%s\n"
-                "(%.3f, %.3f, %.0f)\n"
+                "(%.3f, %.3f, %.3f, %.0f)\n"
                 "%02d:%02d:%02d:%03d",
                 getName().toLocal8Bit().data(),
-                pos.getX(), pos.getY(), angle,
+                pos.getX(), pos.getY(), pos.getHeight(), angle,
                 t.hour(), t.minute(), t.second(), t.msec());
-    pt_txt.setX(x + 450);
+    pt_txt.setX(x + ((scale < 0.05) ? scaleIndependentSize : (getWidth() + getLength())/2));
     pt_txt.setY(y);
     painter.setTransform(txtTrans);
     pt_txt = drawTrans.map(pt_txt);
