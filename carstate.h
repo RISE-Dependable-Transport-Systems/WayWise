@@ -27,7 +27,7 @@ public:
     inline double getTurnRadiusRear() const { return mAxisDistance / -mSteering; } // steering in [-1.0:1.0] as a simple approximation of tan(steering angle)
     inline double getTurnRadiusFront() const { return sqrt(pow(mAxisDistance,2) + pow(getTurnRadiusRear(),2)); }
     inline double getTotalReactionTime() const { return 0.8; } // TODO: placeholder, needs to be calculated
-    inline double getBrakingDistance() const { return getSpeed() * getTotalReactionTime() - 0.5 * pow(getSpeed() + getMaxAcceleration() * getTotalReactionTime(), 2.0) / getMinAcceleration(); }
+    inline double getBrakingDistance() const;
     const QPointF getStoppingPointForTurnRadiusAndBrakeDistance(const double turnRadius, const double brakeDistance) const;
     const QPointF getStoppingPointForTurnRadius(const double turnRadius) const;
     inline double getMinTurnRadiusRear() const { return qMax(mAxisDistance / tanf(getMaxSteeringAngle()), pow(getSpeed(), 2)/(0.21*9.81)); }

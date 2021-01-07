@@ -135,6 +135,14 @@ void CarState::setSteering(double value)
     mSteering = value;
 }
 
+double CarState::getBrakingDistance() const {
+    double brakingDistance = 0.0;
+    if (getSpeed() != 0.0)
+        brakingDistance = getSpeed() * getTotalReactionTime() - 0.5 * pow(getSpeed() + getMaxAcceleration() * getTotalReactionTime(), 2.0) / getMinAcceleration();
+
+    return brakingDistance;
+}
+
 const QPointF CarState::getStoppingPointForTurnRadiusAndBrakeDistance(const double turnRadius, const double brakeDistance) const
 {
     double x = fabs(turnRadius) * sin(brakeDistance/fabs(turnRadius));
