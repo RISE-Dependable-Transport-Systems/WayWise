@@ -143,15 +143,20 @@ double CarState::getBrakingDistance() const {
     return brakingDistance;
 }
 
-const QPointF CarState::getStoppingPointForTurnRadiusAndBrakeDistance(const double turnRadius, const double brakeDistance) const
+double CarState::getThreeSecondsDistance() const
 {
-    double x = fabs(turnRadius) * sin(brakeDistance/fabs(turnRadius));
-    double y = turnRadius * (1 - cos(brakeDistance/fabs(turnRadius)));
+    return 3.0 * getSpeed();
+}
+
+const QPointF CarState::getStoppingPointForTurnRadiusAndBrakingDistance(const double turnRadius, const double brakingDistance) const
+{
+    double x = fabs(turnRadius) * sin(brakingDistance/fabs(turnRadius));
+    double y = turnRadius * (1 - cos(brakingDistance/fabs(turnRadius)));
 
     return QPointF(x, y);
 }
 
 const QPointF CarState::getStoppingPointForTurnRadius(const double turnRadius) const
 {
-    return getStoppingPointForTurnRadiusAndBrakeDistance(turnRadius, getBrakingDistance());
+    return getStoppingPointForTurnRadiusAndBrakingDistance(turnRadius, getBrakingDistance());
 }
