@@ -24,7 +24,7 @@ VehicleState::VehicleState(int id, Qt::GlobalColor color)
     mId = id;
     mColor = color;
     mName = "";
-    mName.sprintf("Car %d", mId);
+    mName.sprintf("Vehicle %d", mId);
     mTime = 0;
     mLength = 0.8;
     mWidth = 0.335;
@@ -45,7 +45,7 @@ void VehicleState::setId(int id, bool changeName)
 
     if (changeName) {
         mName = "";
-        mName.sprintf("Car %d", mId);
+        mName.sprintf("Vehicle %d", mId);
     }
 }
 
