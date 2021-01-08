@@ -58,6 +58,9 @@ public:
     double getSpeed() const;
     void setSpeed(double value);
 
+    void setDrawStatusText(bool drawStatusText);
+    bool getDrawStatusText() const;
+
 signals:
     void positionUpdated();
 
@@ -79,6 +82,8 @@ private:
     PosPoint mApGoal;
     qint32 mTime;
     double mSpeed = 0.0; // [m/s]
+
+    bool mDrawStatusText = true;
 };
 
 #endif // VEHICLESTATE_H

@@ -7,8 +7,6 @@ CarState::CarState(int id, Qt::GlobalColor color) : VehicleState(id, color)
 
 void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected)
 {
-    Q_UNUSED(txtTrans)
-
     PosPoint pos = getPosition();
 //        LocPoint pos_gps = VehicleState->getLocationGps();
 
@@ -104,13 +102,21 @@ void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTrans
     //                    solStr.toLocal8Bit().data(),
     //                    pos.getX(), pos.getY(), angle,
     //                    t.hour(), t.minute(), t.second(), t.msec());
-    //        pt_txt.setX(x + 120 + (car_len - 190) * ((cos(pos.getYaw()) + 1) / 2));
-    //        pt_txt.setY(y);
-    //        painter.setTransform(txtTrans);
-    //        pt_txt = drawTrans.map(pt_txt);
-    //        rect_txt.setCoords(pt_txt.x(), pt_txt.y() - 20,
-    //                           pt_txt.x() + 400, pt_txt.y() + 100);
-    //        painter.drawText(rect_txt, txt);
+
+    if (getDrawStatusText()) {
+        QPointF statusTextPoint;
+        QRectF statusTextRect;
+        QString statusText = QString::number(getId());
+
+        statusTextPoint.setX(x + car_w + car_len * ((cos(getPosition().getYaw()) + 1) / 3));
+        statusTextPoint.setY(y - car_w / 2);
+
+        painter.setTransform(txtTrans);
+        statusTextPoint = drawTrans.map(statusTextPoint);
+        statusTextRect.setCoords(statusTextPoint.x(), statusTextPoint.y(),
+                           statusTextPoint.x() + 400, statusTextPoint.y() + 100);
+        painter.drawText(statusTextRect, statusText);
+    }
 }
 
 double CarState::getAxisDistance() const
