@@ -85,11 +85,12 @@ void CopterState::draw(QPainter &painter, const QTransform &drawTrans, const QTr
         painter.drawEllipse(QPointF(0, -getLength()/2), mPropellerSize/2, mPropellerSize/2);
         painter.drawEllipse(QPointF(-getWidth()/2, 0), mPropellerSize/2, mPropellerSize/2);
 
-        // Draw the acceleration vector
-        if (fabs(pos.getRoll()) > 1e-5 || fabs(pos.getPitch()) > 1e-5) {
+        // Draw velocity
+        if (fabs(getVelocity().x) > 1e-5 || fabs(getVelocity().y) > 1e-5) {
+            painter.rotate((mFrameType == CopterFrameType::X) ? -45+angle : angle);
             painter.setBrush(QBrush(Qt::green));
             painter.setPen(QPen(Qt::green, 30));
-            painter.drawLine(QPointF(0.0, 0.0), QPointF(-pos.getPitch() * 800.0, -pos.getRoll() * 800.0));
+            painter.drawLine(QPointF(0.0, 0.0), QPointF(getVelocity().x*1000.0, getVelocity().y*1000.0));
         }
     }
 

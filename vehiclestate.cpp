@@ -109,6 +109,16 @@ bool VehicleState::getDrawStatusText() const
     return mDrawStatusText;
 }
 
+VehicleState::Velocity VehicleState::getVelocity() const
+{
+    return mVelocity;
+}
+
+void VehicleState::setVelocity(const VehicleState::Velocity &velocity)
+{
+    mVelocity = velocity;
+}
+
 double VehicleState::getMinAcceleration() const
 {
     return mMinAcceleration;

@@ -34,6 +34,10 @@ public:
 
     virtual void draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected = true) = 0;
 
+    struct Velocity {
+        double x, y, z;
+    };
+
     // Static state
     int getId() const;
     void setId(int id, bool changeName = false);
@@ -57,6 +61,8 @@ public:
     void setTime(const qint32 &time);
     double getSpeed() const;
     void setSpeed(double value);
+    Velocity getVelocity() const;
+    void setVelocity(const Velocity &velocity);
 
     void setDrawStatusText(bool drawStatusText);
     bool getDrawStatusText() const;
@@ -82,6 +88,7 @@ private:
     PosPoint mApGoal;
     qint32 mTime;
     double mSpeed = 0.0; // [m/s]
+    Velocity mVelocity = {0.0, 0.0, 0.0}; // [m/s]
 
     bool mDrawStatusText = true;
 };
