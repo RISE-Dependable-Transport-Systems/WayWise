@@ -9,7 +9,6 @@ CopterState::CopterState(int id, Qt::GlobalColor color) : VehicleState(id, color
     mPropellerSize = 260;
     setWidth(520);
     setLength(520);
-    setName("Copter");
 }
 
 void CopterState::draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected)
@@ -95,16 +94,25 @@ void CopterState::draw(QPainter &painter, const QTransform &drawTrans, const QTr
     }
 
     // Print data
-    QTime t = QTime::fromMSecsSinceStartOfDay(getTime());
     QString txt;
     QPointF pt_txt;
     QRectF rect_txt;
+
+    QString landedStateStr;
+    switch (mLandedState) {
+        case LandedState::Unknown: landedStateStr = "unknown"; break;
+        case LandedState::OnGround: landedStateStr = "on ground"; break;
+        case LandedState::InAir: landedStateStr = "in air"; break;
+        case LandedState::TakingOff: landedStateStr = "taking off"; break;
+        case LandedState::Landing: landedStateStr = "landing"; break;
+    }
+
     txt.sprintf("%s\n"
                 "(%.3f, %.3f, %.3f, %.0f)\n"
-                "%02d:%02d:%02d:%03d",
+                "State: %s\n",
                 getName().toLocal8Bit().data(),
                 pos.getX(), pos.getY(), pos.getHeight(), angle,
-                t.hour(), t.minute(), t.second(), t.msec());
+                landedStateStr.toLocal8Bit().data());
     pt_txt.setX(x + ((scale < 0.05) ? scaleIndependentSize : (getWidth() + getLength())/2));
     pt_txt.setY(y);
     painter.setTransform(txtTrans);
@@ -129,4 +137,14 @@ void CopterState::draw(QPainter &painter, const QTransform &drawTrans, const QTr
 //    // GPS Location
 //    painter.setBrush(col_gps);
 //    painter.drawEllipse(QPointF(x_gps, y_gps), 335.0 / 15.0, 335.0 / 15.0);
+}
+
+CopterState::LandedState CopterState::getLandedState() const
+{
+    return mLandedState;
+}
+
+void CopterState::setLandedState(const CopterState::LandedState &landedState)
+{
+    mLandedState = landedState;
 }
