@@ -44,8 +44,8 @@ public:
                               QTransform drawTrans, QTransform txtTrans, double scale) = 0;
     virtual bool processMouse(bool isPress, bool isRelease, bool isMove, bool isWheel,
                               QPoint widgetPos, PosPoint mapPos, double wheelAngleDelta,
-                              bool ctrl, bool shift, bool ctrlShift,
-                              bool leftButton, bool rightButton, double scale) = 0;
+                              Qt::KeyboardModifiers keyboardModifiers,
+                              Qt::MouseButtons mouseButtons, double scale) = 0;
 };
 
 class MapWidget : public QWidget
@@ -53,13 +53,6 @@ class MapWidget : public QWidget
     Q_OBJECT
 
 public:
-    typedef enum {
-        InteractionModeDefault,
-        InteractionModeCtrlDown,
-        InteractionModeShiftDown,
-        InteractionModeCtrlShiftDown
-    } InteractionMode;
-
     typedef enum {
         Default,
         Inactive,
@@ -162,9 +155,6 @@ public:
 
     double getCameraImageOpacity() const;
     void setCameraImageOpacity(double cameraImageOpacity);
-
-    MapWidget::InteractionMode getInteractionMode() const;
-    void setInteractionMode(const MapWidget::InteractionMode &controlMode);
 
     void addMapModule(QSharedPointer<MapModule> m);
     void removeMapModule(QSharedPointer<MapModule> m);
@@ -367,7 +357,6 @@ private:
     QImage mLastCameraImage;
     double mCameraImageWidth;
     double mCameraImageOpacity;
-    InteractionMode mInteractionMode;
     QTimer *mTimer;
     QVector<QSharedPointer<MapModule>> mMapModules;
 

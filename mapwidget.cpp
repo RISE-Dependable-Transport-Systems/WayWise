@@ -180,7 +180,6 @@ MapWidget::MapWidget(QWidget *parent) : QWidget(parent)
     mDrawUwbTrace = false;
     mCameraImageWidth = 0.46;
     mCameraImageOpacity = 0.8;
-    mInteractionMode = InteractionModeDefault;
 
     mOsm = new OsmClient(this);
     mDrawOpenStreetmap = true;
@@ -549,20 +548,6 @@ void MapWidget::mouseMoveEvent(QMouseEvent *e)
     bool shift = e->modifiers() == Qt::ShiftModifier;
     bool ctrl_shift = e->modifiers() == (Qt::ControlModifier | Qt::ShiftModifier);
 
-    if (mInteractionMode == InteractionModeCtrlDown) {
-        ctrl = true;
-        shift = false;
-        ctrl_shift = false;
-    } else if (mInteractionMode == InteractionModeShiftDown) {
-        ctrl = false;
-        shift = true;
-        ctrl_shift = false;
-    } else if (mInteractionMode == InteractionModeCtrlShiftDown) {
-        ctrl = false;
-        shift = false;
-        ctrl_shift = true;
-    }
-
     QPoint mousePosWidget = this->mapFromGlobal(QCursor::pos());
     PosPoint mousePosMap;
     QPoint p = getMousePosRelative();
@@ -571,9 +556,8 @@ void MapWidget::mouseMoveEvent(QMouseEvent *e)
     for (const auto& m: mMapModules) {
         if (m->processMouse(false, false, true, false,
                             mousePosWidget, mousePosMap, 0.0,
-                            ctrl, shift, ctrl_shift,
-                            e->buttons() & Qt::LeftButton,
-                            e->buttons() & Qt::RightButton,
+                            e->modifiers(),
+                            e->buttons(),
                             mScaleFactor)) {
             return;
         }
@@ -624,20 +608,6 @@ void MapWidget::mousePressEvent(QMouseEvent *e)
     bool shift = e->modifiers() == Qt::ShiftModifier;
     bool ctrl_shift = e->modifiers() == (Qt::ControlModifier | Qt::ShiftModifier);
 
-    if (mInteractionMode == InteractionModeCtrlDown) {
-        ctrl = true;
-        shift = false;
-        ctrl_shift = false;
-    } else if (mInteractionMode == InteractionModeShiftDown) {
-        ctrl = false;
-        shift = true;
-        ctrl_shift = false;
-    } else if (mInteractionMode == InteractionModeCtrlShiftDown) {
-        ctrl = false;
-        shift = false;
-        ctrl_shift = true;
-    }
-
     QPoint mousePosWidget = this->mapFromGlobal(QCursor::pos());
     PosPoint mousePosMap;
     QPoint p = getMousePosRelative();
@@ -646,9 +616,8 @@ void MapWidget::mousePressEvent(QMouseEvent *e)
     for (const auto& m: mMapModules) {
         if (m->processMouse(true, false, false, false,
                             mousePosWidget, mousePosMap, 0.0,
-                            ctrl, shift, ctrl_shift,
-                            e->buttons() & Qt::LeftButton,
-                            e->buttons() & Qt::RightButton,
+                            e->modifiers(),
+                            e->buttons(),
                             mScaleFactor)) {
             return;
         }
@@ -760,20 +729,6 @@ void MapWidget::mouseReleaseEvent(QMouseEvent *e)
     bool shift = e->modifiers() == Qt::ShiftModifier;
     bool ctrl_shift = e->modifiers() == (Qt::ControlModifier | Qt::ShiftModifier);
 
-    if (mInteractionMode == InteractionModeCtrlDown) {
-        ctrl = true;
-        shift = false;
-        ctrl_shift = false;
-    } else if (mInteractionMode == InteractionModeShiftDown) {
-        ctrl = false;
-        shift = true;
-        ctrl_shift = false;
-    } else if (mInteractionMode == InteractionModeCtrlShiftDown) {
-        ctrl = false;
-        shift = false;
-        ctrl_shift = true;
-    }
-
     QPoint mousePosWidget = this->mapFromGlobal(QCursor::pos());
     PosPoint mousePosMap;
     QPoint p = getMousePosRelative();
@@ -782,9 +737,8 @@ void MapWidget::mouseReleaseEvent(QMouseEvent *e)
     for (const auto& m: mMapModules) {
         if (m->processMouse(false, true, false, false,
                             mousePosWidget, mousePosMap, 0.0,
-                            ctrl, shift, ctrl_shift,
-                            e->buttons() & Qt::LeftButton,
-                            e->buttons() & Qt::RightButton,
+                            e->modifiers(),
+                            e->buttons(),
                             mScaleFactor)) {
             return;
         }
@@ -804,20 +758,6 @@ void MapWidget::wheelEvent(QWheelEvent *e)
     bool shift = e->modifiers() == Qt::ShiftModifier;
     bool ctrl_shift = e->modifiers() == (Qt::ControlModifier | Qt::ShiftModifier);
 
-    if (mInteractionMode == InteractionModeCtrlDown) {
-        ctrl = true;
-        shift = false;
-        ctrl_shift = false;
-    } else if (mInteractionMode == InteractionModeShiftDown) {
-        ctrl = false;
-        shift = true;
-        ctrl_shift = false;
-    } else if (mInteractionMode == InteractionModeCtrlShiftDown) {
-        ctrl = false;
-        shift = false;
-        ctrl_shift = true;
-    }
-
     QPoint mousePosWidget = this->mapFromGlobal(QCursor::pos());
     PosPoint mousePosMap;
     QPoint p = getMousePosRelative();
@@ -826,16 +766,11 @@ void MapWidget::wheelEvent(QWheelEvent *e)
     for (const auto& m: mMapModules) {
         if (m->processMouse(false, false, false, true,
                             mousePosWidget, mousePosMap, e->angleDelta().y(),
-                            ctrl, shift, ctrl_shift,
-                            e->buttons() & Qt::LeftButton,
-                            e->buttons() & Qt::RightButton,
+                            e->modifiers(),
+                            e->buttons(),
                             mScaleFactor)) {
             return;
         }
-    }
-
-    if (mInteractionMode == InteractionModeCtrlDown) {
-        ctrl = true;
     }
 
     if (ctrl && mSelectedVehicle >= 0) {
@@ -934,21 +869,11 @@ void MapWidget::setRoutePointAttributes(const quint32 &routePointAttributes)
     mRoutePointAttributes = routePointAttributes;
 }
 
-MapWidget::InteractionMode MapWidget::getInteractionMode() const
-{
-    return mInteractionMode;
-}
-
-void MapWidget::setInteractionMode(const MapWidget::InteractionMode &controlMode)
-{
-    mInteractionMode = controlMode;
-    update();
-}
-
 void MapWidget::addMapModule(QSharedPointer<MapModule> m)
 {
     mMapModules.append(m);
 }
+
 
 void MapWidget::removeMapModule(QSharedPointer<MapModule> m)
 {
@@ -1978,12 +1903,6 @@ void MapWidget::drawInfoOverlay(QPainter &painter, QTransform txtTrans, double w
             painter.drawText(width - txtOffset, start_txt, mapAnnotations);
             start_txt += txt_row_h;
         }
-    }
-
-    if (mInteractionMode != InteractionModeDefault) {
-        mapAnnotations.sprintf("IMode: %d", mInteractionMode);
-        painter.drawText(width - txtOffset, start_txt, mapAnnotations);
-        start_txt += txt_row_h;
     }
 
     int numInfoPointsInView = infoTraceStats.first;
