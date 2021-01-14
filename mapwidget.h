@@ -176,6 +176,8 @@ public:
 
     void drawInfoOverlay(QPainter &painter, QTransform txtTrans, double width, double gridResolution, QPair<int, int> infoTraceStats);
 
+
+// TODO: -> coordinate_transforms.h
 #define FE_WGS84        (1.0/298.257223563) // earth flattening (WGS84)
 #define RE_WGS84        6378137.0           // earth semimajor axis (WGS84) (m)
 
