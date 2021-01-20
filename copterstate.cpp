@@ -148,3 +148,13 @@ void CopterState::setLandedState(const CopterState::LandedState &landedState)
 {
     mLandedState = landedState;
 }
+
+PosPoint CopterState::getHomePosition() const
+{
+    return mHomePosition;
+}
+
+void CopterState::setHomePosition(const PosPoint &homePosition)
+{
+    mHomePosition = homePosition;
+}
