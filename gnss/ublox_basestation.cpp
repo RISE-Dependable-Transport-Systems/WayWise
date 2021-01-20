@@ -1,5 +1,5 @@
 #include "ublox_basestation.h"
-#include "coordinate_transforms.h"
+#include "../coordinatetransforms.h"
 #include <QDebug>
 
 const UbloxBasestation::BasestationConfig UbloxBasestation::defaultConfig;
@@ -213,7 +213,7 @@ bool UbloxBasestation::configureUblox(const BasestationConfig& basestationConfig
 void UbloxBasestation::rxNavPvt(ubx_nav_pvt pvt)
 {
     // TODO: use pvt information (GNSS signal type, etc.)
-    emit currentPosition(pvt.lat, pvt.lon, pvt.height);
+    emit currentPosition({pvt.lat, pvt.lon, pvt.height});
 }
 
 void UbloxBasestation::rxNavSat(ubx_nav_sat sat)
@@ -285,10 +285,7 @@ void UbloxBasestation::rxNavSat(ubx_nav_sat sat)
 
 void UbloxBasestation::rxSvin(ubx_nav_svin svin)
 {
-    double llh[3];
-    coordinateTransforms::xyzToLlh(svin.meanX, svin.meanY, svin.meanZ,
-                      &llh[0], &llh[1], &llh[2]);
-
+    llh_t llh = coordinateTransforms::xyzToLlh({svin.meanX, svin.meanY, svin.meanZ});
     QString txt = QString(
                 "Lat:          %1\n"
                 "Lon:          %2\n"
@@ -298,9 +295,9 @@ void UbloxBasestation::rxSvin(ubx_nav_svin svin)
                 "Duration:     %6 s\n"
                 "Valid:        %7\n"
                 "Active:       %8").
-            arg(llh[0], 0, 'f', 8).
-            arg(llh[1], 0, 'f', 8).
-            arg(llh[2]).
+            arg(llh.latitude, 0, 'f', 8).
+            arg(llh.longitude, 0, 'f', 8).
+            arg(llh.height).
             arg(svin.obs).
             arg(svin.meanAcc).
             arg(svin.dur).

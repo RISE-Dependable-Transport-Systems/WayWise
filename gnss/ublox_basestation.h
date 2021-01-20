@@ -6,6 +6,7 @@
 #include <QSerialPort>
 #include <QSerialPortInfo>
 #include "ublox.h"
+#include "../coordinatetransforms.h"
 
 // Sets up Ublox GNSS connected over serial as a basestation. Supports/tested with F9P only for now.
 // Does not use/provide any widget classes to enable use in cmd applications.
@@ -30,12 +31,13 @@ public:
     explicit UbloxBasestation(QObject *parent = nullptr);
     bool connectSerial(const QSerialPortInfo &serialPortInfo, const BasestationConfig config = defaultConfig);
     bool disconnectSerial();
+    bool isSerialConnected() {return mUblox.isSerialConnected();}
     BasestationConfig& getBasestationConfigCurrent();
     BasestationConfig& getBasestationConfigDefault();
 
 signals:
     void rtcmData(const QByteArray& data, const int& type);
-    void currentPosition(const double& refLat, const double& refLon, const double& refHeight);
+    void currentPosition(const llh_t &llh);
 
 private:
     Ublox mUblox;

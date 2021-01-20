@@ -33,7 +33,6 @@
 
 #include "mapwidget.h"
 
-
 // Some utility functions
 namespace
 {
@@ -199,9 +198,7 @@ MapWidget::MapWidget(QWidget *parent) : QWidget(parent)
     mTimer->start(20);
 
     // ASTA
-    mRefLat = 57.78100308;
-    mRefLon = 12.76925422;
-    mRefHeight = 253.76;
+    mRefLlh = {57.78100308, 12.76925422, 253.76};
 
     // RISE RTK base station
 //    mRefLat = 57.71495867;
@@ -706,17 +703,10 @@ void MapWidget::mousePressEvent(QMouseEvent *e)
     } else if (ctrl_shift) {
         if (e->buttons() & Qt::LeftButton) {
             QPoint p = getMousePosRelative();
-            double iLlh[3], llh[3], xyz[3];
-            iLlh[0] = mRefLat;
-            iLlh[1] = mRefLon;
-            iLlh[2] = mRefHeight;
-            xyz[0] = p.x() / 1000.0;
-            xyz[1] = p.y() / 1000.0;
-            xyz[2] = 0.0;
-            enuToLlh(iLlh, xyz, llh);
-            mRefLat = llh[0];
-            mRefLon = llh[1];
-            mRefHeight = 0.0;
+            llh_t iLlh = mRefLlh;
+            xyz_t xyz = {p.x() / 1000.0, p.y() / 1000.0, 0.0};
+            llh_t llh = coordinateTransforms::enuToLlh(iLlh, xyz);
+            mRefLlh = {llh.latitude, llh.longitude, 0.0};
         }
 
         update();
@@ -725,10 +715,6 @@ void MapWidget::mousePressEvent(QMouseEvent *e)
 
 void MapWidget::mouseReleaseEvent(QMouseEvent *e)
 {
-    bool ctrl = e->modifiers() == Qt::ControlModifier;
-    bool shift = e->modifiers() == Qt::ShiftModifier;
-    bool ctrl_shift = e->modifiers() == (Qt::ControlModifier | Qt::ShiftModifier);
-
     QPoint mousePosWidget = this->mapFromGlobal(QCursor::pos());
     PosPoint mousePosMap;
     QPoint p = getMousePosRelative();
@@ -755,8 +741,6 @@ void MapWidget::mouseReleaseEvent(QMouseEvent *e)
 void MapWidget::wheelEvent(QWheelEvent *e)
 {
     bool ctrl = e->modifiers() == Qt::ControlModifier;
-    bool shift = e->modifiers() == Qt::ShiftModifier;
-    bool ctrl_shift = e->modifiers() == (Qt::ControlModifier | Qt::ShiftModifier);
 
     QPoint mousePosWidget = this->mapFromGlobal(QCursor::pos());
     PosPoint mousePosMap;
@@ -1379,19 +1363,20 @@ void MapWidget::setDrawOpenStreetmap(bool drawOpenStreetmap)
     update();
 }
 
-void MapWidget::setEnuRef(double lat, double lon, double height)
+void MapWidget::setEnuRef(const llh_t &llh)
 {
-    mRefLat = lat;
-    mRefLon = lon;
-    mRefHeight = height;
+    mRefLlh = llh;
     update();
 }
 
-void MapWidget::getEnuRef(double *llh)
+llh_t MapWidget::getEnuRef()
 {
-    llh[0] = mRefLat;
-    llh[1] = mRefLon;
-    llh[2] = mRefHeight;
+    return mRefLlh;
+}
+
+llh_t const * MapWidget::getEnuRef_Ptr()
+{
+    return &mRefLlh;
 }
 
 double MapWidget::drawGrid(QPainter& painter, QTransform drawTrans, QTransform txtTrans, double gridWidth, double gridHeight)
@@ -1617,32 +1602,25 @@ void MapWidget::drawOSMTiles(QPainter& painter, QTransform drawTrans, double vie
 {
     painter.setTransform(drawTrans);
     if (mDrawOpenStreetmap) {
-        double i_llh[3];
-        i_llh[0] = mRefLat;
-        i_llh[1] = mRefLon;
-        i_llh[2] = mRefHeight;
+        const llh_t &iLlh = mRefLlh;
 
         mOsmZoomLevel = (int)round(log(mScaleFactor * mOsmRes * 100000000.0 *
-                                        cos(i_llh[0] * M_PI / 180.0)) / log(2.0));
+                                        cos(iLlh.latitude * M_PI / 180.0)) / log(2.0));
         if (mOsmZoomLevel > mOsmMaxZoomLevel) {
             mOsmZoomLevel = mOsmMaxZoomLevel;
         } else if (mOsmZoomLevel < 0) {
             mOsmZoomLevel = 0;
         }
 
-        int xt = OsmTile::long2tilex(i_llh[1], mOsmZoomLevel);
-        int yt = OsmTile::lat2tiley(i_llh[0], mOsmZoomLevel);
+        int xt = OsmTile::long2tilex(iLlh.longitude, mOsmZoomLevel);
+        int yt = OsmTile::lat2tiley(iLlh.latitude, mOsmZoomLevel);
 
-        double llh_t[3];
-        llh_t[0] = OsmTile::tiley2lat(yt, mOsmZoomLevel);
-        llh_t[1] = OsmTile::tilex2long(xt, mOsmZoomLevel);
-        llh_t[2] = 0.0;
+        llh_t llhTile = {OsmTile::tiley2lat(yt, mOsmZoomLevel), OsmTile::tilex2long(xt, mOsmZoomLevel), 0.0};
 
-        double xyz[3];
-        llhToEnu(i_llh, llh_t, xyz);
+        xyz_t xyz = coordinateTransforms::llhToEnu(iLlh, llhTile);
 
         // Calculate scale at ENU origin
-        double w = OsmTile::lat2width(i_llh[0], mOsmZoomLevel);
+        double w = OsmTile::lat2width(iLlh.latitude, mOsmZoomLevel);
 
         int t_ofs_x = (int)ceil(-(viewCenter.x() - viewWidth / 2.0) / w);
         int t_ofs_y = (int)ceil((viewCenter.y() + viewHeight / 2.0) / w);
@@ -1659,8 +1637,8 @@ void MapWidget::drawOSMTiles(QPainter& painter, QTransform drawTrans, double vie
             for (int i = 0;i < 40;i++) {
                 int xt_i = xt + i - t_ofs_x;
                 int yt_i = yt + j - t_ofs_y;
-                double ts_x = xyz[0] + w * i - (double)t_ofs_x * w;
-                double ts_y = -xyz[1] + w * j - (double)t_ofs_y * w;
+                double ts_x = xyz.x + w * i - (double)t_ofs_x * w;
+                double ts_y = -xyz.y + w * j - (double)t_ofs_y * w;
 
                 // We are outside the view
                 if (ts_x > (viewCenter.x() + viewWidth / 2.0)) {
