@@ -31,10 +31,15 @@ public:
     LandedState getLandedState() const;
     void setLandedState(const LandedState &landedState);
 
+    PosPoint getHomePosition() const;
+    void setHomePosition(const PosPoint &homePosition);
+
 private:
     CopterFrameType mFrameType;
     int mPropellerSize; // [mm]
     LandedState mLandedState = LandedState::Unknown;
+
+    PosPoint mHomePosition;
 };
 
 #endif // COPTERSTATE_H
