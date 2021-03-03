@@ -18,8 +18,10 @@ public:
 
     // Static state
     double getAxisDistance() const;
-    void setAxisDistance(double axisDistance);
-    inline double getMaxSteeringAngle() const { return M_PI/4.0; }; // = 45°, fixed for now
+	void setAxisDistance(double axisDistance);
+	inline double getMaxSteeringAngle() const { return mMaxSteeringAngle < M_PI/180.0 ? M_PI/4.0 : mMaxSteeringAngle; } // 45° assumed if unset
+	void setMaxSteeringAngle(double steeringAngle_rad);
+	void setMinTurnRadiusRear(double minTurnRadius_m);
 
     // Dynamic state
     double getSteering() const;
@@ -31,11 +33,13 @@ public:
     double getThreeSecondsDistance() const; // Distance the vehicle can move within 3 seconds at current speed, Swedish "Tresekundersregeln"
     const QPointF getStoppingPointForTurnRadiusAndBrakingDistance(const double turnRadius, const double brakeDistance) const;
     const QPointF getStoppingPointForTurnRadius(const double turnRadius) const;
-    inline double getMinTurnRadiusRear() const { return qMax(mAxisDistance / tanf(getMaxSteeringAngle()), pow(getSpeed(), 2)/(0.21*9.81)); }
+	inline double getMinTurnRadiusRear() const { return qMin(qMax(mAxisDistance / tanf(getMaxSteeringAngle()), pow(getSpeed(), 2)/(0.21*9.81)), mMinTurnRadiusRear); }
 
 private:
     double mAxisDistance; // [m]
     double mSteering = 0.0; // [-1.0:1.0]
+	double mMaxSteeringAngle = 0.0; // [rad]
+	double mMinTurnRadiusRear = std::numeric_limits<double>::infinity(); // [m]
 };
 
 #endif // CARSTATE_H
