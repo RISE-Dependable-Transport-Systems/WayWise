@@ -121,7 +121,7 @@ void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTrans
 
 double CarState::getAxisDistance() const
 {
-    return mAxisDistance;
+	return fabs(mAxisDistance) < 0.001 ? 0.8*getLength() : mAxisDistance;
 }
 
 void CarState::setAxisDistance(double axisDistance)
@@ -139,6 +139,14 @@ void CarState::setSteering(double value)
     value = (value > tanf(getMaxSteeringAngle())) ? tanf(getMaxSteeringAngle()) : value;
     value = (value < -tanf(getMaxSteeringAngle())) ? -tanf(getMaxSteeringAngle()) : value;
     mSteering = value;
+}
+
+void CarState::setMaxSteeringAngle(double steeringAngle_rad) {
+	mMaxSteeringAngle = fabs(steeringAngle_rad);
+}
+
+void CarState::setMinTurnRadiusRear(double minTurnRadius_m) {
+	mMinTurnRadiusRear = fabs(minTurnRadius_m);
 }
 
 double CarState::getBrakingDistance() const {
