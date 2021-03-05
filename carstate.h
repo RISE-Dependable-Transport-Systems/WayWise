@@ -33,7 +33,7 @@ public:
     double getThreeSecondsDistance() const; // Distance the vehicle can move within 3 seconds at current speed, Swedish "Tresekundersregeln"
     const QPointF getStoppingPointForTurnRadiusAndBrakingDistance(const double turnRadius, const double brakeDistance) const;
     const QPointF getStoppingPointForTurnRadius(const double turnRadius) const;
-	inline double getMinTurnRadiusRear() const { return qMin(qMax(mAxisDistance / tanf(getMaxSteeringAngle()), pow(getSpeed(), 2)/(0.21*9.81)), mMinTurnRadiusRear); }
+	inline double getMinTurnRadiusRear() const { return qMax(qMin(mAxisDistance / tanf(getMaxSteeringAngle()), mMinTurnRadiusRear), pow(getSpeed(), 2)/(0.21*9.81)); }
 
 private:
     double mAxisDistance; // [m]
