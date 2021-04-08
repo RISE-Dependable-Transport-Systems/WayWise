@@ -22,7 +22,10 @@
 #include <QObject>
 #include <QVector>
 #include <QString>
+#ifdef QT_GUI_LIB
 #include <QPainter>
+#endif
+
 #include "pospoint.h"
 #include <math.h>
 
@@ -31,9 +34,9 @@ class VehicleState : public QObject
     Q_OBJECT
 public:
     VehicleState(int id = 0, Qt::GlobalColor color = Qt::red);
-
+#ifdef QT_GUI_LIB
     virtual void draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected = true) = 0;
-
+#endif
     struct Velocity {
         double x, y, z;
     };
@@ -66,6 +69,8 @@ public:
 
     void setDrawStatusText(bool drawStatusText);
     bool getDrawStatusText() const;
+
+    virtual void simulationStep(double dt_ms) = 0; // Take current state and simulate step forward for dt_ms milliseconds, update state accordingly
 
 signals:
     void positionUpdated();

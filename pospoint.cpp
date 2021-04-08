@@ -20,9 +20,9 @@
 #include <cmath>
 
 PosPoint::PosPoint(double x, double y, double height, double roll, double pitch, double yaw, double speed,
-                   double radius, double sigma, QColor color, qint32 time, int id, bool drawLine, quint32 attributes, PosType type) :
+                   double radius, double sigma, qint32 time, int id, bool drawLine, quint32 attributes, PosType type) :
     mX(x), mY(y), mHeight(height), mRoll(roll), mPitch(pitch), mYaw(yaw), mSpeed(speed),
-    mRadius(radius), mSigma(sigma), mColor(color), mTime(time), mId(id), mDrawLine(drawLine),
+    mRadius(radius), mSigma(sigma), mTime(time), mId(id), mDrawLine(drawLine),
     mAttributes(attributes), mType(type)
 {
 }
@@ -123,11 +123,6 @@ QString PosPoint::getInfo() const
     return mInfo;
 }
 
-QColor PosPoint::getColor() const
-{
-    return mColor;
-}
-
 qint32 PosPoint::getTime() const
 {
     return mTime;
@@ -150,7 +145,6 @@ PosPoint &PosPoint::operator =(const PosPoint &point)
     mRadius = point.mRadius;
     mSigma = point.mSigma;
     mInfo = point.mInfo;
-    mColor = point.mColor;
     mTime = point.mTime;
     mId = point.mId;
     mDrawLine = point.mDrawLine;
@@ -194,7 +188,6 @@ bool PosPoint::operator ==(const PosPoint &point)
             mRadius == point.mRadius &&
             mSigma == point.mSigma &&
             mInfo == point.mInfo &&
-            mColor == point.mColor &&
             mTime == point.mTime &&
             mId == point.mId &&
             mDrawLine == point.mDrawLine &&
@@ -253,11 +246,6 @@ void PosPoint::setRadius(double radius)
 void PosPoint::setSigma(double sigma)
 {
     mSigma = sigma;
-}
-
-void PosPoint::setColor(const QColor &color)
-{
-    mColor = color;
 }
 
 void PosPoint::setDrawLine(bool drawLine)
