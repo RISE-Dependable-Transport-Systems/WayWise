@@ -67,3 +67,13 @@ bool PacketInterfaceTCPServer::listen(quint16 port)
 {
     return mTcpServer.startServer(port);
 }
+
+QSharedPointer<VehicleState> PacketInterfaceTCPServer::vehicleState() const
+{
+    return mVehicleState;
+}
+
+void PacketInterfaceTCPServer::setVehicleState(const QSharedPointer<VehicleState> &vehicleState)
+{
+    mVehicleState = vehicleState;
+}
