@@ -62,7 +62,7 @@ public:
     void setPosition(PosPoint &point);
     qint32 getTime() const;
     void setTime(const qint32 &time);
-    double getSpeed() const;
+    virtual double getSpeed() const;
     void setSpeed(double value);
     Velocity getVelocity() const;
     void setVelocity(const Velocity &velocity);
