@@ -25,6 +25,7 @@
 //#include <QImage>
 #include "datatypes.h"
 #include "locpoint.h"
+#include "vbytearray.h"
 
 class PacketInterface : public QObject
 {

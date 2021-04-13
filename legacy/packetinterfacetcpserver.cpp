@@ -8,7 +8,7 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
     QObject::connect(mTcpServer.packet(), &Packet::packetReceived, [this](QByteArray& data){mPacketInterface.sendPacket(data);}); // feed incoming tcp data into "PacketInterface"
 
     QObject::connect(&mPacketInterface, &PacketInterface::dataToSend, [this](QByteArray& data){  // data from controlstation (-> TCP -> PacketInterface) to rover
-        QByteArray packetData;
+        VByteArray packetData;
         // drop crc (3), metainfo (data.at(0) + id & cmd) and copy actual data
         packetData.resize(data.size()-3-data.at(0)-2);
         quint8 recipientID = data.at(data.at(0));
@@ -16,12 +16,12 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
         memcpy(packetData.data(), data.data()+data.at(0)+2, packetData.size());
         //qDebug() << data.size() << (quint8)data.at(0) << packetData.size();
 
-        qDebug() << "Got packet for id:" << recipientID << "cmd:" << commandID;
+        if (commandID != CMD_GET_STATE)
+            qDebug() << "Got packet for id:" << recipientID << "cmd:" << commandID << "length:" << packetData.size();
 
         switch(commandID) {
-        case CMD_PACKET::CMD_GET_STATE: {
+        case CMD_GET_STATE: {
             if (mVehicleState && mVehicleState->getId() == recipientID) {
-
                 VByteArray ret;
                 ret.vbAppendUint8(mVehicleState->getId());
                 ret.vbAppendUint8(commandID);
@@ -56,8 +56,22 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
                 ret.vbAppendDouble32(mVehicleState->getPosition(PosType::UWB).getY(), 1e4); // UWB PY
                 mTcpServer.packet()->sendPacket(ret);
             }
-            break;
-        }
+        } break;
+        case CMD_SET_POS:
+        case CMD_SET_POS_ACK: {
+            PosPoint tmpPos = mVehicleState->getPosition();
+            tmpPos.setX(packetData.vbPopFrontDouble32(1e4));
+            tmpPos.setY(packetData.vbPopFrontDouble32(1e4));
+            tmpPos.setYaw(packetData.vbPopFrontDouble32(1e6));
+            mVehicleState->setPosition(tmpPos);
+
+            if (commandID == CMD_SET_POS_ACK) {
+                VByteArray ack;
+                ack.vbAppendUint8(mVehicleState->getId());
+                ack.vbAppendUint8(commandID);
+                mTcpServer.packet()->sendPacket(ack);
+            }
+        } break;
         default:
             qDebug() << "WARNING: unhandled packet with command id" << commandID;
             break;
