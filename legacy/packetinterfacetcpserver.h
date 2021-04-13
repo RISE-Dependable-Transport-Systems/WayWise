@@ -21,6 +21,9 @@ public:
 signals:
 
 private:
+    const int firmware_version_major = 12;
+    const int firmware_version_minor = 3;
+
     TcpServerSimple mTcpServer;
     PacketInterface mPacketInterface;
     QSharedPointer<VehicleState> mVehicleState;

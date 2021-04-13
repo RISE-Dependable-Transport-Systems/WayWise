@@ -20,40 +20,42 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
 
         switch(commandID) {
         case CMD_PACKET::CMD_GET_STATE: {
-            // TODO testing reply, double check message format!
-            VByteArray ret;
-            ret.vbAppendUint8(recipientID);
-            ret.vbAppendUint8(commandID);
-            ret.vbAppendUint8(12);
-            ret.vbAppendUint8(3);
-            ret.vbAppendDouble32(0.0, 1e6);
-            ret.vbAppendDouble32(0.0, 1e6);
-            ret.vbAppendDouble32(0.0, 1e6);
-            ret.vbAppendDouble32(0.0, 1e6);
-            ret.vbAppendDouble32(0.0, 1e6);
-            ret.vbAppendDouble32(0.0, 1e6);
-            ret.vbAppendDouble32(0.0, 1e6);
-            ret.vbAppendDouble32(0.0, 1e6);
-            ret.vbAppendDouble32(0.0, 1e6);
-            ret.vbAppendDouble32(0.0, 1e6); // Mag x
-            ret.vbAppendDouble32(0.0, 1e6); // Mag y
-            ret.vbAppendDouble32(0.0, 1e6); // Mag z
-            ret.vbAppendDouble32(5.0, 1e4);
-            ret.vbAppendDouble32(8.0, 1e4);
-            ret.vbAppendDouble32(10.0, 1e6);
-            ret.vbAppendDouble32(12.1, 1e6); // v_in
-            ret.vbAppendDouble32(24.0, 1e6); // temp mos
-            ret.vbAppendUint8(0); // MC Fault code
-            ret.vbAppendDouble32(0.0, 1e4); // PX GPS
-            ret.vbAppendDouble32(0.0, 1e4); // PY GPS
-            ret.vbAppendDouble32(0.0, 1e4);
-            ret.vbAppendDouble32(0.0, 1e4);
-            ret.vbAppendDouble32(5, 1e6);
-            ret.vbAppendInt32(utility::getTimeUtcToday());
-            ret.vbAppendInt16(0);
-            ret.vbAppendDouble32(0.0, 1e4); // UWB px
-            ret.vbAppendDouble32(0.0, 1e4); // UWB PY
-            mTcpServer.packet()->sendPacket(ret);
+            if (mVehicleState && mVehicleState->getId() == recipientID) {
+
+                VByteArray ret;
+                ret.vbAppendUint8(mVehicleState->getId());
+                ret.vbAppendUint8(commandID);
+                ret.vbAppendUint8(firmware_version_major);
+                ret.vbAppendUint8(firmware_version_minor);
+                ret.vbAppendDouble32(mVehicleState->getPosition().getRoll(), 1e6);
+                ret.vbAppendDouble32(mVehicleState->getPosition().getPitch(), 1e6);
+                ret.vbAppendDouble32(mVehicleState->getPosition().getYaw(), 1e6);
+                ret.vbAppendDouble32(0.0, 1e6); // accel_x
+                ret.vbAppendDouble32(0.0, 1e6); // accel_y
+                ret.vbAppendDouble32(0.0, 1e6); // accel_z
+                ret.vbAppendDouble32(0.0, 1e6); // roll_rate
+                ret.vbAppendDouble32(0.0, 1e6); // pitch_rate
+                ret.vbAppendDouble32(0.0, 1e6); // yaw_rate
+                ret.vbAppendDouble32(0.0, 1e6); // magnet_x
+                ret.vbAppendDouble32(0.0, 1e6); // magnet_y
+                ret.vbAppendDouble32(0.0, 1e6); // magnet_z
+                ret.vbAppendDouble32(mVehicleState->getPosition(PosType::fused).getX(), 1e4);
+                ret.vbAppendDouble32(mVehicleState->getPosition(PosType::fused).getY(), 1e4);
+                ret.vbAppendDouble32(mVehicleState->getSpeed(), 1e6);
+                ret.vbAppendDouble32(-1.0, 1e6); // v_in
+                ret.vbAppendDouble32(-1.0, 1e6); // temp mos
+                ret.vbAppendUint8(0); // MC Fault code
+                ret.vbAppendDouble32(mVehicleState->getPosition(PosType::GNSS).getX(), 1e4);
+                ret.vbAppendDouble32(mVehicleState->getPosition(PosType::GNSS).getY(), 1e4);
+                ret.vbAppendDouble32(0.0, 1e4); // autopilot_goal_x
+                ret.vbAppendDouble32(0.0, 1e4); // autopilot_goal_y
+                ret.vbAppendDouble32(5, 1e6); // autopilot_pp_radius
+                ret.vbAppendInt32(utility::getTimeUtcToday());
+                ret.vbAppendInt16(0); // autopilot_route_left
+                ret.vbAppendDouble32(mVehicleState->getPosition(PosType::UWB).getX(), 1e4); // UWB px
+                ret.vbAppendDouble32(mVehicleState->getPosition(PosType::UWB).getY(), 1e4); // UWB PY
+                mTcpServer.packet()->sendPacket(ret);
+            }
             break;
         }
         default:
