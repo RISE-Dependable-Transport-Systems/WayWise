@@ -10,19 +10,19 @@ void DiffDriveVehicleState::simulationStep(double dt_ms)
 {
     PosPoint currentPosition = getPosition();
     double drivenDistance = getSpeed() * dt_ms / 1000;
-
-    // TODO left&right *distance* instead of speed (factor in dt_ms!)
+    double drivenDistLeft = getSpeedLeft() * dt_ms / 1000;
+    double drivenDistRight = getSpeedRight() * dt_ms / 1000;
 
     // Differential drive kinematic model, TODO: getWidth() should be center of left/right wheel
     if (fabs(getSpeedLeft() - getSpeedRight()) > 1e-6) { // Turning
-        double turnRadius = (getWidth() *  (getSpeedLeft() + getSpeedRight())) / (2 * (getSpeedLeft() - getSpeedRight()));
-        double yawChange = (getSpeedLeft() - getSpeedRight()) / getWidth();
+        double turnRadius = (getWidth() *  (drivenDistLeft + drivenDistRight)) / (2 * (drivenDistLeft - drivenDistRight));
+        double yawChange = (drivenDistLeft - drivenDistRight) / getWidth();
 
         // TODO the following part is generic -> move to parent class
-        currentPosition.setX(currentPosition.getX() + turnRadius * (sin(-currentPosition.getYaw() + yawChange) - sinf(-currentPosition.getYaw())));
-        currentPosition.setY(currentPosition.getY() + turnRadius * (cos(-currentPosition.getYaw() - yawChange) - cosf(-currentPosition.getYaw())));
+        currentPosition.setX(currentPosition.getX() - turnRadius * (sin(-currentPosition.getYaw() - yawChange) - sinf(-currentPosition.getYaw())));
+        currentPosition.setY(currentPosition.getY() - turnRadius * (cos(-currentPosition.getYaw() + yawChange) - cosf(-currentPosition.getYaw())));
 
-        double nextYaw = currentPosition.getYaw() - yawChange;
+        double nextYaw = currentPosition.getYaw() + yawChange;
         // normalize Yaw
         while (nextYaw > M_PI)
             nextYaw -= 2.0 * M_PI;
