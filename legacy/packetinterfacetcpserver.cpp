@@ -72,6 +72,44 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
                 mTcpServer.packet()->sendPacket(ack);
             }
         } break;
+        case CMD_RC_CONTROL: {
+            if (!mMovementController) // we have nowhere to send the control input to
+                break;
+
+            RC_MODE mode;
+            double throttle, steering;
+            mode = (RC_MODE)packetData.vbPopFrontUint8();
+            throttle = packetData.vbPopFrontDouble32(1e4);
+            steering = packetData.vbPopFrontDouble32(1e6);
+
+//            steering *= mAutoPilot->autopilot_get_steering_scale();
+//            mAutoPilot->autopilot_set_active(false);
+            mMovementController->setDesiredSteering(steering);
+            mMovementController->setDesiredSpeed(throttle); // TODO!
+
+            // TODO:
+//            switch (mode) {
+//            case RC_MODE_CURRENT:
+//                mMotor->setControl(MotorSim::MOTOR_CONTROL_CURRENT, throttle);
+//                break;
+
+//            case RC_MODE_DUTY:
+//                utility::truncateNumber(&throttle, -1.0, 1.0);
+//                mMotor->setControl(MotorSim::MOTOR_CONTROL_DUTY, throttle);
+//                break;
+
+//            case RC_MODE_PID: // In m/s
+//                setMotorSpeed(throttle);
+//                break;
+
+//            case RC_MODE_CURRENT_BRAKE:
+//                mMotor->setControl(MotorSim::MOTOR_CONTROL_CURRENT_BRAKE, throttle);
+//                break;
+
+//            default:
+//                break;
+//            }
+        } break;
         default:
             qDebug() << "WARNING: unhandled packet with command id" << commandID;
             break;
@@ -84,7 +122,7 @@ bool PacketInterfaceTCPServer::listen(quint16 port)
     return mTcpServer.startServer(port);
 }
 
-QSharedPointer<VehicleState> PacketInterfaceTCPServer::vehicleState() const
+QSharedPointer<VehicleState> PacketInterfaceTCPServer::getVehicleState() const
 {
     return mVehicleState;
 }
@@ -92,4 +130,14 @@ QSharedPointer<VehicleState> PacketInterfaceTCPServer::vehicleState() const
 void PacketInterfaceTCPServer::setVehicleState(const QSharedPointer<VehicleState> &vehicleState)
 {
     mVehicleState = vehicleState;
+}
+
+QSharedPointer<MovementController> PacketInterfaceTCPServer::getMovementController() const
+{
+    return mMovementController;
+}
+
+void PacketInterfaceTCPServer::setMovementController(const QSharedPointer<MovementController> &movementController)
+{
+    mMovementController = movementController;
 }
