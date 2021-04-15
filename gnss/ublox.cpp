@@ -1107,15 +1107,15 @@ void Ublox::ubx_decode_nav_pvt(uint8_t *msg, int len)
     pvt.nano = ubx_get_I4(msg, &ind); // 16
     pvt.fixType = ubx_get_U1(msg, &ind); // 20
     flags = ubx_get_X1(msg, &ind); // 21
-    pvt.gnssfixok = flags    & 0b00000001;
-    pvt.diffsoln = flags     & 0b00000010;
-    pvt.psmstate = flags     & 0b00011100;
-    pvt.headVehValid = flags & 0b00100000;
-    pvt.carrsoln = flags     & 0b11000000;
+    pvt.gnssfixok = (flags    & 0b00000001);
+    pvt.diffsoln = (flags     & 0b00000010);
+    pvt.psmstate = (flags     & 0b00011100) >> 2;
+    pvt.headVehValid = (flags & 0b00100000);
+    pvt.carrsoln = (flags     & 0b11000000) >> 6;
     flags = ubx_get_X1(msg, &ind); // 22
-    pvt.confirmed_avai = flags & 0b00100000;
-    pvt.confirmed_date = flags & 0b01000000;
-    pvt.confirmed_time = flags & 0b10000000;
+    pvt.confirmed_avai = (flags & 0b00100000);
+    pvt.confirmed_date = (flags & 0b01000000);
+    pvt.confirmed_time = (flags & 0b10000000);
     pvt.num_sv = ubx_get_U1(msg, &ind); // 23
     pvt.lon = ((double)ubx_get_I4(msg, &ind))*1.0e-7; // 24
     pvt.lat = ((double)ubx_get_I4(msg, &ind))*1.0e-7; // 28
@@ -1359,17 +1359,19 @@ void Ublox::ubx_decode_esf_meas(uint8_t *msg, int len)
 
     meas.time_tag = ubx_get_U4(msg, &ind);
     uint16_t flags = ubx_get_X2(msg, &ind);
-    meas.time_mark_sent =       flags & 0b0000000000000011;
-    meas.time_mark_edge =       flags & 0b0000000000000100;
-    meas.calib_t_tag_valid =    flags & 0b0000000000001000;
-    meas.num_meas =             flags & 0b1111100000000000;
+    meas.time_mark_sent =       (flags & 0b0000000000000011);
+    meas.time_mark_edge =       (flags & 0b0000000000000100);
+    meas.calib_t_tag_valid =    (flags & 0b0000000000001000);
+    meas.num_meas =             len - 8 - meas.calib_t_tag_valid * 4; //flags & 0b1111100000000000;
     meas.id = ubx_get_U2(msg, &ind);
 
-    for (int i = 0; i < meas.num_meas; i++) {
+    for (int i = 0; i < meas.num_meas && i < MAX_ESF_NUM_MEAS; i++) {
         uint32_t data = ubx_get_X4(msg, &ind);
-        meas.data_field[i] = data & 0b00000000111111111111111111111111;
-        meas.data_type[i] =  data & 0b00111111000000000000000000000000;
+        meas.data_field[i] = (data & 0b00000000111111111111111111111111);
+        meas.data_type[i] =  (ubx_esf_datatype_enum)((data & 0b00111111000000000000000000000000) >> 24);
     }
+    if (meas.num_meas > MAX_ESF_NUM_MEAS)
+        qDebug() << "Warning: dropped" << MAX_ESF_NUM_MEAS-meas.num_meas << "measurements while decoding UBX-EAF-MEAS.";
 
     if (meas.calib_t_tag_valid)
         meas.calib_t_tag = ubx_get_U4(msg, &ind);
