@@ -1008,6 +1008,14 @@ void Ublox::ubx_decode(uint8_t msg_class, uint8_t id, uint8_t *msg, int len)
         }
     } break;
 
+    case UBX_CLASS_ESF: {
+        switch (id) {
+        case UBX_ESF_MEAS:
+            ubx_decode_esf_meas(msg, len);
+            break;
+        }
+    } break;
+
     case UBX_CLASS_RXM: {
         switch (id) {
         case UBX_RXM_RAWX:
@@ -1340,4 +1348,31 @@ void Ublox::ubx_decode_mon_ver(uint8_t *msg, int len)
     }
 
     emit rxMonVer(sw, hw, extensions);
+}
+
+void Ublox::ubx_decode_esf_meas(uint8_t *msg, int len)
+{
+    (void)len;
+
+    ubx_esf_meas meas;
+    int ind = 0;
+
+    meas.time_tag = ubx_get_U4(msg, &ind);
+    uint16_t flags = ubx_get_X2(msg, &ind);
+    meas.time_mark_sent =       flags & 0b0000000000000011;
+    meas.time_mark_edge =       flags & 0b0000000000000100;
+    meas.calib_t_tag_valid =    flags & 0b0000000000001000;
+    meas.num_meas =             flags & 0b1111100000000000;
+    meas.id = ubx_get_U2(msg, &ind);
+
+    for (int i = 0; i < meas.num_meas; i++) {
+        uint32_t data = ubx_get_X4(msg, &ind);
+        meas.data_field[i] = data & 0b00000000111111111111111111111111;
+        meas.data_type[i] =  data & 0b00111111000000000000000000000000;
+    }
+
+    if (meas.calib_t_tag_valid)
+        meas.calib_t_tag = ubx_get_U4(msg, &ind);
+
+    emit rxEsfMeas(meas);
 }

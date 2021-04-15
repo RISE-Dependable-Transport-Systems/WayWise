@@ -184,6 +184,19 @@ typedef struct {
     ubx_rxm_rawx_obs obs[64];
 } ubx_rxm_rawx;
 
+#define MAX_ESF_NUM_MEAS 16
+typedef struct {
+    uint32_t time_tag;
+    uint8_t time_mark_sent;
+    bool time_mark_edge;
+    bool calib_t_tag_valid;
+    uint8_t num_meas;
+    uint16_t id;
+    uint32_t data_field[MAX_ESF_NUM_MEAS];
+    uint8_t data_type[MAX_ESF_NUM_MEAS];
+    uint32_t calib_t_tag;
+} ubx_esf_meas;
+
 typedef struct {
     uint32_t baudrate;
     bool in_rtcm3;
@@ -523,6 +536,7 @@ signals:
     void rxRawx(const ubx_rxm_rawx &rawx);
     void rxNavSat(const ubx_nav_sat &sat);
     void rxCfgGnss(const ubx_cfg_gnss &gnss);
+    void rxEsfMeas(const ubx_esf_meas &meas);
     void rxMonVer(const QString &sw, const QString &hw, const QStringList &extensions);
     void ubxRx(const QByteArray &data);
     void rtcmRx(const QByteArray &data, const int &type);
@@ -566,6 +580,7 @@ private:
     void ubx_decode_nav_sat(uint8_t *msg, int len);
     void ubx_decode_cfg_gnss(uint8_t *msg, int len);
     void ubx_decode_mon_ver(uint8_t *msg, int len);
+    void ubx_decode_esf_meas(uint8_t *msg, int len);
 };
 
 // Message classes
@@ -600,6 +615,9 @@ private:
 // Ack messages
 #define UBX_ACK_ACK						0x01
 #define UBX_ACK_NAK						0x00
+
+// External sensor fusion (ESF) messages
+#define UBX_ESF_MEAS                    0x02
 
 // Configuration messages
 #define UBX_CFG_PRT						0x00
