@@ -109,6 +109,26 @@ bool VehicleState::getDrawStatusText() const
     return mDrawStatusText;
 }
 
+std::array<float, 3> VehicleState::getGyroscopeXYZ() const
+{
+    return mGyroscopeXYZ;
+}
+
+void VehicleState::setGyroscopeXYZ(const std::array<float, 3> &gyroscopeXYZ)
+{
+    mGyroscopeXYZ = gyroscopeXYZ;
+}
+
+std::array<float, 3> VehicleState::getAccelerometerXYZ() const
+{
+    return mAccelerometerXYZ;
+}
+
+void VehicleState::setAccelerometerXYZ(const std::array<float, 3> &accelerometerXYZ)
+{
+    mAccelerometerXYZ = accelerometerXYZ;
+}
+
 VehicleState::Velocity VehicleState::getVelocity() const
 {
     return mVelocity;

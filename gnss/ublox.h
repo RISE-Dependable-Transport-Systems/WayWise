@@ -186,11 +186,11 @@ typedef struct {
 } ubx_rxm_rawx;
 
 #define MAX_ESF_NUM_MEAS 16
-enum ubx_esf_datatype_enum {GYRO_Z=5, GYRO_Y=13, GYRO_X=12, ACC_X=16, ACC_Y=17, ACC_Z=18};
+enum ubx_esf_datatype_enum {GYRO_Z=5, GYRO_Y=13, GYRO_X=14, ACC_X=16, ACC_Y=17, ACC_Z=18};
 
-inline double esfMeas2Dbl(unsigned meas, uint8_t exp) {
+inline float esfMeas2Float(unsigned meas, uint8_t exp) {
     return (((meas & 0b100000000000000000000000) ?
-                 (-1.0*(((~(unsigned)((meas-1U) & 0b011111111111111111111111)) & 0b11111111111111111111111)))
+                 (-1.0f*(((~(unsigned)((meas-1U) & 0b011111111111111111111111)) & 0b11111111111111111111111)))
                :
                  meas)
             * pow(2,-exp));

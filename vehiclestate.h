@@ -72,6 +72,12 @@ public:
 
     virtual void simulationStep(double dt_ms) = 0; // Take current state and simulate step forward for dt_ms milliseconds, update state accordingly
 
+    std::array<float, 3> getGyroscopeXYZ() const;
+    void setGyroscopeXYZ(const std::array<float, 3> &gyroscopeXYZ);
+
+    std::array<float, 3> getAccelerometerXYZ() const;
+    void setAccelerometerXYZ(const std::array<float, 3> &accelerometerXYZ);
+
 signals:
     void positionUpdated();
 
@@ -94,6 +100,10 @@ private:
     qint32 mTime;
     double mSpeed = 0.0; // [m/s]
     Velocity mVelocity = {0.0, 0.0, 0.0}; // [m/s]
+
+    // For debugging mostly
+    std::array<float,3> mGyroscopeXYZ = {0.0, 0.0, 0.0}; // [deg/s]
+    std::array<float,3> mAccelerometerXYZ = {0.0, 0.0, 0.0}; // [g]
 
     bool mDrawStatusText = true;
 };

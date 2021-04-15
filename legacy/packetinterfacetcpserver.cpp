@@ -27,15 +27,15 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
                 ret.vbAppendUint8(commandID);
                 ret.vbAppendUint8(firmware_version_major);
                 ret.vbAppendUint8(firmware_version_minor);
-                ret.vbAppendDouble32(mVehicleState->getPosition().getRoll(), 1e6);
-                ret.vbAppendDouble32(mVehicleState->getPosition().getPitch(), 1e6);
-                ret.vbAppendDouble32(mVehicleState->getPosition().getYaw() * 180/M_PI, 1e6); // yaw expected in degrees
-                ret.vbAppendDouble32(0.0, 1e6); // accel_x
-                ret.vbAppendDouble32(0.0, 1e6); // accel_y
-                ret.vbAppendDouble32(0.0, 1e6); // accel_z
-                ret.vbAppendDouble32(0.0, 1e6); // roll_rate
-                ret.vbAppendDouble32(0.0, 1e6); // pitch_rate
-                ret.vbAppendDouble32(0.0, 1e6); // yaw_rate
+                ret.vbAppendDouble32(mVehicleState->getPosition(PosType::GNSS).getRoll(), 1e6);
+                ret.vbAppendDouble32(mVehicleState->getPosition(PosType::GNSS).getPitch(), 1e6);
+                ret.vbAppendDouble32(mVehicleState->getPosition(PosType::GNSS).getYaw(), 1e6); // yaw in degrees
+                ret.vbAppendDouble32(mVehicleState->getAccelerometerXYZ()[0], 1e6); // accel_x in g
+                ret.vbAppendDouble32(mVehicleState->getAccelerometerXYZ()[1], 1e6); // accel_y in g
+                ret.vbAppendDouble32(mVehicleState->getAccelerometerXYZ()[2], 1e6); // accel_z in g
+                ret.vbAppendDouble32(mVehicleState->getGyroscopeXYZ()[0]*M_PI/180.0, 1e6); // roll_rate in radians per second
+                ret.vbAppendDouble32(mVehicleState->getGyroscopeXYZ()[1]*M_PI/180.0, 1e6); // pitch_rate in radians per second
+                ret.vbAppendDouble32(mVehicleState->getGyroscopeXYZ()[2]*M_PI/180.0, 1e6); // yaw_rate in radians per second
                 ret.vbAppendDouble32(0.0, 1e6); // magnet_x
                 ret.vbAppendDouble32(0.0, 1e6); // magnet_y
                 ret.vbAppendDouble32(0.0, 1e6); // magnet_z
