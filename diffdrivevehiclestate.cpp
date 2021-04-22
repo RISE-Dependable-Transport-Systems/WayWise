@@ -19,8 +19,8 @@ void DiffDriveVehicleState::simulationStep(double dt_ms)
         double yawChange = (drivenDistLeft - drivenDistRight) / getWidth();
 
         // TODO the following part is generic -> move to parent class
-        currentPosition.setX(currentPosition.getX() - turnRadius * (sin(-currentPosition.getYaw() - yawChange) - sinf(-currentPosition.getYaw())));
-        currentPosition.setY(currentPosition.getY() - turnRadius * (cos(-currentPosition.getYaw() + yawChange) - cosf(-currentPosition.getYaw())));
+        currentPosition.setX(currentPosition.getX() - turnRadius * (sin(-currentPosition.getYaw() - yawChange) - sin(-currentPosition.getYaw())));
+        currentPosition.setY(currentPosition.getY() - turnRadius * (cos(-currentPosition.getYaw() + yawChange) - cos(-currentPosition.getYaw())));
 
         double nextYaw = currentPosition.getYaw() + yawChange;
         // normalize Yaw

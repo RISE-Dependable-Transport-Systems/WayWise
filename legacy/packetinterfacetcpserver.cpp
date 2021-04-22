@@ -14,12 +14,12 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
         quint8 recipientID = data.at(data.at(0));
         CMD_PACKET commandID = (CMD_PACKET)(quint8)data.at(data.at(0)+1);
         memcpy(packetData.data(), data.data()+data.at(0)+2, packetData.size());
-        //qDebug() << data.size() << (quint8)data.at(0) << packetData.size();
 
-        if (commandID != CMD_GET_STATE)
-            qDebug() << "Got packet for id:" << recipientID << "cmd:" << commandID << "length:" << packetData.size();
+//        if (commandID != CMD_GET_STATE)
+//            qDebug() << "Got packet for id:" << recipientID << "cmd:" << commandID << "length:" << packetData.size();
 
         switch(commandID) {
+        // --- Get state from vehicle
         case CMD_GET_STATE: {
             if (mVehicleState && mVehicleState->getId() == recipientID) {
                 VByteArray ret;
@@ -27,9 +27,13 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
                 ret.vbAppendUint8(commandID);
                 ret.vbAppendUint8(firmware_version_major);
                 ret.vbAppendUint8(firmware_version_minor);
-                ret.vbAppendDouble32(mVehicleState->getPosition(PosType::GNSS).getRoll(), 1e6);
-                ret.vbAppendDouble32(mVehicleState->getPosition(PosType::GNSS).getPitch(), 1e6);
-                ret.vbAppendDouble32(mVehicleState->getPosition(PosType::GNSS).getYaw(), 1e6); // yaw in degrees
+                // TODO: conf GNSS/Odo orientation fuse from PacketInterface
+//                ret.vbAppendDouble32(mVehicleState->getPosition(PosType::GNSS).getRoll(), 1e6);
+//                ret.vbAppendDouble32(mVehicleState->getPosition(PosType::GNSS).getPitch(), 1e6);
+//                ret.vbAppendDouble32(mVehicleState->getPosition(PosType::GNSS).getYaw(), 1e6); // yaw in degrees
+                ret.vbAppendDouble32(mVehicleState->getPosition().getRoll(), 1e6);
+                ret.vbAppendDouble32(mVehicleState->getPosition().getPitch(), 1e6);
+                ret.vbAppendDouble32(mVehicleState->getPosition().getYaw()*180.0/M_PI, 1e6); // yaw in degrees
                 ret.vbAppendDouble32(mVehicleState->getAccelerometerXYZ()[0], 1e6); // accel_x in g
                 ret.vbAppendDouble32(mVehicleState->getAccelerometerXYZ()[1], 1e6); // accel_y in g
                 ret.vbAppendDouble32(mVehicleState->getAccelerometerXYZ()[2], 1e6); // accel_z in g
@@ -57,12 +61,13 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
                 mTcpServer.packet()->sendPacket(ret);
             }
         } break;
+        // --- Set state on vehicle
         case CMD_SET_POS:
         case CMD_SET_POS_ACK: {
             PosPoint tmpPos = mVehicleState->getPosition();
             tmpPos.setX(packetData.vbPopFrontDouble32(1e4));
             tmpPos.setY(packetData.vbPopFrontDouble32(1e4));
-            tmpPos.setYaw(packetData.vbPopFrontDouble32(1e6));
+            tmpPos.setYaw(packetData.vbPopFrontDouble32(1e6) * M_PI/180.0);
             mVehicleState->setPosition(tmpPos);
 
             if (commandID == CMD_SET_POS_ACK) {
@@ -72,6 +77,7 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
                 mTcpServer.packet()->sendPacket(ack);
             }
         } break;
+        // --- Remote control vehicle
         case CMD_RC_CONTROL: {
             if (!mMovementController) // we have nowhere to send the control input to
                 break;
@@ -85,7 +91,7 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
 //            steering *= mAutoPilot->autopilot_get_steering_scale();
 //            mAutoPilot->autopilot_set_active(false);
             mMovementController->setDesiredSteering(steering);
-            mMovementController->setDesiredSpeed(throttle); // TODO!
+            mMovementController->setDesiredSpeed(throttle*3.0); // TODO!
 
             // TODO:
 //            switch (mode) {
@@ -109,6 +115,62 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
 //            default:
 //                break;
 //            }
+        } break;
+        // --- Autopilot
+        case CMD_AP_CLEAR_POINTS: {
+            if (mWaypointFollower)  {
+                mWaypointFollower->clearRoute();
+
+                // Send ack
+                VByteArray ack;
+                ack.vbAppendUint8(mVehicleState->getId());
+                ack.vbAppendUint8(commandID);
+                mTcpServer.packet()->sendPacket(ack);
+            } else
+                qDebug() << "WARNING: unhandled CMD_AP_CLEAR_POINTS";
+        } break;
+        case CMD_AP_ADD_POINTS: {
+            if (mWaypointFollower)  {
+                mWaypointFollower->clearRoute();
+
+                PosPoint newPoint;
+                while (!packetData.isEmpty()) {
+                    newPoint.setX(packetData.vbPopFrontDouble32(1e4));
+                    newPoint.setY(packetData.vbPopFrontDouble32(1e4));
+                    newPoint.setHeight(packetData.vbPopFrontDouble32(1e4));
+                    newPoint.setSpeed(packetData.vbPopFrontDouble32(1e6));
+                    newPoint.setTime(packetData.vbPopFrontInt32());
+                    newPoint.setAttributes(packetData.vbPopFrontUint32());
+                    mWaypointFollower->addWaypoint(newPoint);
+                }
+
+                // Send ack
+                VByteArray ack;
+                ack.vbAppendUint8(mVehicleState->getId());
+                ack.vbAppendUint8(commandID);
+                mTcpServer.packet()->sendPacket(ack);
+            } else
+                qDebug() << "WARNING: unhandled CMD_AP_CLEAR_POINTS";
+        } break;
+        case CMD_AP_SET_ACTIVE: {
+            if (mWaypointFollower)  {
+                bool activateAutopilot = packetData.vbPopFrontInt8();
+                bool resetAutopilotState = packetData.vbPopFrontInt8();
+                if (activateAutopilot)
+                    mWaypointFollower->startFollowingRoute(resetAutopilotState);
+                else {
+                    mWaypointFollower->stopFollowingRoute();
+                    if (resetAutopilotState)
+                        mWaypointFollower->resetState();
+                }
+
+                // Send ack
+                VByteArray ack;
+                ack.vbAppendUint8(mVehicleState->getId());
+                ack.vbAppendUint8(commandID);
+                mTcpServer.packet()->sendPacket(ack);
+            } else
+                qDebug() << "WARNING: unhandled CMD_AP_SET_ACTIVE";
         } break;
         default:
             qDebug() << "WARNING: unhandled packet with command id" << commandID;
@@ -140,4 +202,14 @@ QSharedPointer<MovementController> PacketInterfaceTCPServer::getMovementControll
 void PacketInterfaceTCPServer::setMovementController(const QSharedPointer<MovementController> &movementController)
 {
     mMovementController = movementController;
+}
+
+QSharedPointer<WaypointFollower> PacketInterfaceTCPServer::getWaypointFollower() const
+{
+    return mWaypointFollower;
+}
+
+void PacketInterfaceTCPServer::setWaypointFollower(const QSharedPointer<WaypointFollower> &waypointFollower)
+{
+    mWaypointFollower = waypointFollower;
 }

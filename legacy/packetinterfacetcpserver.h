@@ -8,6 +8,7 @@
 #include <sdvp_qtcommon/legacy/vbytearray.h>
 #include <sdvp_qtcommon/vehiclestate.h>
 #include <sdvp_qtcommon/movementcontroller.h>
+#include <sdvp_qtcommon/waypointfollower.h>
 
 class PacketInterfaceTCPServer : public QObject
 {
@@ -22,6 +23,9 @@ public:
     QSharedPointer<MovementController> getMovementController() const;
     void setMovementController(const QSharedPointer<MovementController> &movementController);
 
+    QSharedPointer<WaypointFollower> getWaypointFollower() const;
+    void setWaypointFollower(const QSharedPointer<WaypointFollower> &waypointFollower);
+
 signals:
 
 private:
@@ -32,6 +36,7 @@ private:
     PacketInterface mPacketInterface;
     QSharedPointer<VehicleState> mVehicleState;
     QSharedPointer<MovementController> mMovementController;
+    QSharedPointer<WaypointFollower> mWaypointFollower;
 
 };
 

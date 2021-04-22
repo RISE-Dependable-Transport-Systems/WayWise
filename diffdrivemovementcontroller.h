@@ -13,7 +13,6 @@ public:
     DiffDriveMovementController(QSharedPointer<DiffDriveVehicleState> vehicleState);
 
 private:
-    QSharedPointer<DiffDriveVehicleState> mVehicleState;
 
     // MovementController interface
 public:
