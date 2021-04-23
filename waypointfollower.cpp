@@ -1,6 +1,7 @@
 #include "waypointfollower.h"
 #include <cmath>
 #include <QDebug>
+#include <QLineF>
 
 WaypointFollower::WaypointFollower(QSharedPointer<MovementController> movementController)
 {
@@ -106,15 +107,23 @@ void WaypointFollower::updateState()
     case WaypointFollower::FOLLOW_ROUTE_GOTO_BEGIN:
         mMovementController->setDesiredSteering(getCurvatureToPoint(mCurrentState.currentGoal.getPoint())); // TODO: steering should be proportional to curvature (but not necessarily equal)
         mMovementController->setDesiredSpeed(mCurrentState.currentGoal.getSpeed());
-        // TODO: -> FOLLOW_ROUTE_FOLLOWING when close to WP
+        // TODO
+        if (QLineF(mMovementController->getVehicleState()->getPosition().getPoint(), mCurrentState.currentGoal.getPoint()).length() < mLookahead) // TODO: initially bigger distance (might be coming from bad angle)?
+            mCurrentState.stmState = FOLLOW_ROUTE_FOLLOWING;
         break;
 
     case WaypointFollower::FOLLOW_ROUTE_FOLLOWING:
         // TODO
+        if (mCurrentState.currentWaypoint == mWaypointList.size()-1U)
+            mCurrentState.stmState = FOLLOW_ROUTE_END;
         break;
 
     case WaypointFollower::FOLLOW_ROUTE_END:
-        // TODO
+        mMovementController->setDesiredSteering(0.0);
+        mMovementController->setDesiredSpeed(0.0);
+        mUpdateStateTimer.stop();
+        mCurrentState.stmState = NONE;
+        mCurrentState.currentWaypoint = mWaypointList.size();
         break;
 
     }

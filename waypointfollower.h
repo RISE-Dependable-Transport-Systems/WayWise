@@ -39,7 +39,7 @@ private:
     void updateState();
 
     QSharedPointer<MovementController> mMovementController;
-    double mLookahead;
+    double mLookahead = 1.0;
     QList <PosPoint> mWaypointList;
     const unsigned mUpdateStatePeriod_ms = 100;
     QTimer mUpdateStateTimer;
