@@ -29,8 +29,8 @@ public:
 signals:
 
 private:
-    const int firmware_version_major = 12;
-    const int firmware_version_minor = 3;
+    const int firmware_version_major = 20;
+    const int firmware_version_minor = 1;
 
     TcpServerSimple mTcpServer;
     PacketInterface mPacketInterface;
