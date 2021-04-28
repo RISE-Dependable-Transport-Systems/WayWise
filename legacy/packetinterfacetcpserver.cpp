@@ -19,9 +19,16 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
 //            qDebug() << "Got packet for id:" << recipientID << "cmd:" << commandID << "length:" << packetData.size();
 
         switch(commandID) {
+        case CMD_HEARTBEAT: break;
+
         // --- Get state from vehicle
         case CMD_GET_STATE: {
             if (mVehicleState && mVehicleState->getId() == recipientID) {
+
+                WayPointFollowerState wpFollowerState;
+                if (mWaypointFollower)
+                    wpFollowerState = mWaypointFollower->getCurrentState();
+
                 VByteArray ret;
                 ret.vbAppendUint8(mVehicleState->getId());
                 ret.vbAppendUint8(commandID);
@@ -51,9 +58,9 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
                 ret.vbAppendUint8(0); // MC Fault code
                 ret.vbAppendDouble32(mVehicleState->getPosition(PosType::GNSS).getX(), 1e4);
                 ret.vbAppendDouble32(mVehicleState->getPosition(PosType::GNSS).getY(), 1e4);
-                ret.vbAppendDouble32(0.0, 1e4); // autopilot_goal_x
-                ret.vbAppendDouble32(0.0, 1e4); // autopilot_goal_y
-                ret.vbAppendDouble32(5, 1e6); // autopilot_pp_radius
+                ret.vbAppendDouble32(wpFollowerState.currentGoal.getX(), 1e4); // autopilot_goal_x
+                ret.vbAppendDouble32(wpFollowerState.currentGoal.getY(), 1e4); // autopilot_goal_y
+                ret.vbAppendDouble32(wpFollowerState.purePursuitRadius, 1e6); // autopilot_pp_radius
                 ret.vbAppendInt32(utility::getTimeUtcToday());
                 ret.vbAppendInt16(0); // autopilot_route_left
                 ret.vbAppendDouble32(mVehicleState->getPosition(PosType::UWB).getX(), 1e4); // UWB px
@@ -131,8 +138,6 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
         } break;
         case CMD_AP_ADD_POINTS: {
             if (mWaypointFollower)  {
-                mWaypointFollower->clearRoute();
-
                 PosPoint newPoint;
                 while (!packetData.isEmpty()) {
                     newPoint.setX(packetData.vbPopFrontDouble32(1e4));
