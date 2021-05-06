@@ -1,16 +1,16 @@
 #include "packetinterfacetcpserver.h"
 #include "datatypes.h"
+#include <QTime>
+#include <QDateTime>
 
 PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(parent)
 {
     mTcpServer.setUsePacket(true);
 
-    QObject::connect(mTcpServer.packet(), &Packet::packetReceived, [this](QByteArray& data){mPacketInterface.sendPacket(data);}); // feed incoming tcp data into "PacketInterface"
-
-    QObject::connect(&mPacketInterface, &PacketInterface::dataToSend, [this](QByteArray& data){  // data from controlstation (-> TCP -> PacketInterface) to rover
+    QObject::connect(mTcpServer.packet(), &Packet::packetReceived, [this](QByteArray& data){ // data from controlstation to rover
         VByteArray packetData;
-        // drop crc (3), metainfo (data.at(0) + id & cmd) and copy actual data
-        packetData.resize(data.size()-3-data.at(0)-2);
+        // drop id & cmd and copy actual data, TODO: unnecessary to copy
+        packetData.resize(data.size()-2);
         quint8 recipientID = data.at(data.at(0));
         CMD_PACKET commandID = (CMD_PACKET)(quint8)data.at(data.at(0)+1);
         memcpy(packetData.data(), data.data()+data.at(0)+2, packetData.size());
@@ -61,7 +61,7 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
                 ret.vbAppendDouble32(wpFollowerState.currentGoal.getX(), 1e4); // autopilot_goal_x
                 ret.vbAppendDouble32(wpFollowerState.currentGoal.getY(), 1e4); // autopilot_goal_y
                 ret.vbAppendDouble32(wpFollowerState.purePursuitRadius, 1e6); // autopilot_pp_radius
-                ret.vbAppendInt32(utility::getTimeUtcToday());
+                ret.vbAppendInt32(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()).msecsSinceStartOfDay());
                 ret.vbAppendInt16(0); // autopilot_route_left
                 ret.vbAppendDouble32(mVehicleState->getPosition(PosType::UWB).getX(), 1e4); // UWB px
                 ret.vbAppendDouble32(mVehicleState->getPosition(PosType::UWB).getY(), 1e4); // UWB PY

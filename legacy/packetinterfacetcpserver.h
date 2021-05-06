@@ -3,9 +3,8 @@
 
 #include <QObject>
 #include <sdvp_qtcommon/legacy/tcpserversimple.h>
-#include <sdvp_qtcommon/legacy/packetinterface.h>
-#include <sdvp_qtcommon/legacy/utility.h>
-#include <sdvp_qtcommon/legacy/vbytearray.h>
+//#include <sdvp_qtcommon/legacy/utility.h>
+#include <sdvp_qtcommon/vbytearray.h>
 #include <sdvp_qtcommon/vehiclestate.h>
 #include <sdvp_qtcommon/movementcontroller.h>
 #include <sdvp_qtcommon/waypointfollower.h>
@@ -33,7 +32,6 @@ private:
     const int firmware_version_minor = 1;
 
     TcpServerSimple mTcpServer;
-    PacketInterface mPacketInterface;
     QSharedPointer<VehicleState> mVehicleState;
     QSharedPointer<MovementController> mMovementController;
     QSharedPointer<WaypointFollower> mWaypointFollower;
