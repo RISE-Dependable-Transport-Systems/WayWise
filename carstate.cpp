@@ -119,6 +119,34 @@ void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTrans
     }
 }
 
+void CarState::simulationStep(double dt_ms)
+{
+    PosPoint currentPosition = getPosition();
+    double drivenDistance = getSpeed() * dt_ms / 1000;
+
+    // Bicycle kinematic model with rear axle as reference point
+    if (fabs(getSteering()) > 1e-6) { // Turning
+        double turnRadiusRear = getTurnRadiusRear();
+        double turnRadiusFront = getTurnRadiusFront();
+
+        if (turnRadiusRear < 0.0) {
+            turnRadiusFront = -turnRadiusFront;
+        }
+
+        double yawChange = drivenDistance / ((turnRadiusRear + turnRadiusFront) / 2.0);
+
+        currentPosition.setX(currentPosition.getX() + turnRadiusRear * (sin(-currentPosition.getYaw() + yawChange) - sinf(-currentPosition.getYaw())));
+        currentPosition.setY(currentPosition.getY() + turnRadiusRear * (cos(-currentPosition.getYaw() - yawChange) - cosf(-currentPosition.getYaw())));
+
+        currentPosition.setYaw(currentPosition.getYaw() - yawChange);
+    } else { // Driving forward
+        currentPosition.setX(currentPosition.getX() + cos(-currentPosition.getYaw()) * drivenDistance);
+        currentPosition.setY(currentPosition.getY() + sin(-currentPosition.getYaw()) * drivenDistance);
+    }
+
+    setPosition(currentPosition);
+}
+
 double CarState::getAxisDistance() const
 {
 	return fabs(mAxisDistance) < 0.001 ? 0.8*getLength() : mAxisDistance;

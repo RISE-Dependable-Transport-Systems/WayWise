@@ -15,6 +15,7 @@ public:
     CarState(int id = 0, Qt::GlobalColor color = Qt::red);
 
     virtual void draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected = true);
+    virtual void simulationStep(double dt_ms);
 
     // Static state
     double getAxisDistance() const;
@@ -40,6 +41,7 @@ private:
     double mSteering = 0.0; // [-1.0:1.0]
 	double mMaxSteeringAngle = 0.0; // [rad]
 	double mMinTurnRadiusRear = std::numeric_limits<double>::infinity(); // [m]
+
 };
 
 #endif // CARSTATE_H

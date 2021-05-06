@@ -1138,8 +1138,8 @@ int MapWidget::drawInfoPoints(QPainter &painter, const QList<PosPoint> &pts,
                 last_visible = i;
             }
 
-            painter.setBrush(ip.getColor());
-            painter.setPen(ip.getColor());
+//            painter.setBrush(ip.getColor());
+//            painter.setPen(ip.getColor());
             painter.drawEllipse(p2, ip.getRadius(), ip.getRadius());
 
             drawn++;
@@ -1550,25 +1550,25 @@ QPair<int, int> MapWidget::drawInfoTraces(QPainter& painter, QTransform drawTran
         for (int i = 0;i < itNow.size();i++) {
             PosPoint ip = itNow[i];
 
-            if (mInfoTraceNow != in) {
-                ip.setColor(Qt::gray);
-            }
+//            if (mInfoTraceNow != in) {
+//                ip.setColor(Qt::gray);
+//            }
 
-            if (ip.getColor() == Qt::darkGreen || ip.getColor() == Qt::green) {
-                pts_green.append(ip);
-            } else if (ip.getColor() == Qt::darkRed || ip.getColor() == Qt::red) {
-                pts_red.append(ip);
-            } else {
+//            if (ip.getColor() == Qt::darkGreen || ip.getColor() == Qt::green) {
+//                pts_green.append(ip);
+//            } else if (ip.getColor() == Qt::darkRed || ip.getColor() == Qt::red) {
+//                pts_red.append(ip);
+//            } else {
                 pts_other.append(ip);
-            }
+//            }
         }
 
-        info_points += drawInfoPoints(painter, pts_green, drawTrans, txtTrans,
-                                      viewRect_mm, info_min_dist);
+//        info_points += drawInfoPoints(painter, pts_green, drawTrans, txtTrans,
+//                                      viewRect_mm, info_min_dist);
         info_points += drawInfoPoints(painter, pts_other, drawTrans, txtTrans,
                                       viewRect_mm, info_min_dist);
-        info_points += drawInfoPoints(painter, pts_red, drawTrans, txtTrans,
-                                      viewRect_mm, info_min_dist);
+//        info_points += drawInfoPoints(painter, pts_red, drawTrans, txtTrans,
+//                                      viewRect_mm, info_min_dist);
     }
 
     // Draw point closest to mouse pointer
