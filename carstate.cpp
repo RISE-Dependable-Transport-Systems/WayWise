@@ -6,6 +6,7 @@ CarState::CarState(int id, Qt::GlobalColor color) : VehicleState(id, color)
 
 }
 
+#ifdef QT_GUI_LIB
 void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected)
 {
     PosPoint pos = getPosition();
@@ -119,6 +120,7 @@ void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTrans
         painter.drawText(statusTextRect, statusText);
     }
 }
+#endif
 
 void CarState::simulationStep(double dt_ms)
 {
