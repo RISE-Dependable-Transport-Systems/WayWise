@@ -17,8 +17,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
     */
 
-#ifndef DATATYPES_H
-#define DATATYPES_H
+#ifndef VESCDATATYPES_H
+#define VESCDATATYPES_H
 
 #include <QObject>
 #include <QString>
@@ -818,4 +818,4 @@ public:
 
 }
 
-#endif // DATATYPES_H
+#endif // VESCDATATYPES_H

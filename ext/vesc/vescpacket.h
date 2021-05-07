@@ -17,8 +17,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
     */
 
-#ifndef PACKET_H
-#define PACKET_H
+#ifndef VESCPACKET_H
+#define VESCPACKET_H
 
 #include <QObject>
 #include <QTimer>
@@ -63,4 +63,4 @@ private:
 
 }
 
-#endif // PACKET_H
+#endif // VESCPACKET_H

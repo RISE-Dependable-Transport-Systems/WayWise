@@ -17,7 +17,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
     */
 
-#include "packet.h"
+#include "vescpacket.h"
 #include <cstring>
 #include <QDebug>
 
