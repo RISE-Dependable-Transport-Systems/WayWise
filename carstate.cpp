@@ -1,4 +1,5 @@
 #include "carstate.h"
+#include <QDebug>
 
 CarState::CarState(int id, Qt::GlobalColor color) : VehicleState(id, color)
 {
@@ -180,7 +181,8 @@ void CarState::setMinTurnRadiusRear(double minTurnRadius_m) {
 double CarState::getBrakingDistance() const {
     double brakingDistance = 0.0;
     if (getSpeed() != 0.0)
-        brakingDistance = getSpeed() * getTotalReactionTime() - 0.5 * pow(getSpeed() + getMaxAcceleration() * getTotalReactionTime(), 2.0) / getMinAcceleration();
+        brakingDistance = getSpeed() * getTotalReactionTime() -
+                ((getSpeed() >= 0.0) ? 0.5 : -0.5) * pow(abs(getSpeed()) + getMaxAcceleration() * getTotalReactionTime(), 2.0) / getMinAcceleration();
 
     return brakingDistance;
 }

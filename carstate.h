@@ -29,7 +29,7 @@ public:
     void setSteering(double value);
     inline double getTurnRadiusRear() const { return mAxisDistance / -mSteering; } // steering in [-1.0:1.0] as a simple approximation of tan(steering angle)
     inline double getTurnRadiusFront() const { return sqrt(pow(mAxisDistance,2) + pow(getTurnRadiusRear(),2)); }
-    inline double getTotalReactionTime() const { return 0.8; } // TODO: placeholder, needs to be calculated
+    inline double getTotalReactionTime() const { return 0.3; } // TODO: needs to be calculated/estimated
     double getBrakingDistance() const;
     double getThreeSecondsDistance() const; // Distance the vehicle can move within 3 seconds at current speed, Swedish "Tresekundersregeln"
     const QPointF getStoppingPointForTurnRadiusAndBrakingDistance(const double turnRadius, const double brakeDistance) const;
