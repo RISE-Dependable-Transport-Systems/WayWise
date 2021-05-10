@@ -10,6 +10,43 @@ UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
     FusionBiasInitialise(&mFusionBias, 0.5f, mIMUSamplePeriod); // stationary threshold = 0.5 degrees per second, expected period 20 ms
     FusionAhrsInitialise(&mFusionAhrs, 0.5f); // gain = 0.5
     connect(&mUblox, &Ublox::rxEsfMeas, this, &UbloxRover::updateAHRS);
+
+    // Print nav-pvt message
+    // Search for nav-pvt in following document:
+    // https://cdn.sparkfun.com/assets/learn_tutorials/1/1/7/2/ZED-F9R_Interfacedescription__UBX-19056845_.pdf
+    connect(&mUblox, &Ublox::rxNavPvt, this, [](const ubx_nav_pvt &pvt){
+        qDebug() << "NAV-PVT data:\n"
+                 << "\nDate: " << pvt.year << pvt.month << pvt.day
+                 << "\nTime: " << pvt.hour << pvt.min << pvt.second
+                 << "\nFix Type: " << pvt.fix_type
+                 << "\nGNSS valid fix: " << pvt.gnss_fix_ok
+                 << "\nHeading valid: " << pvt.head_veh_valid
+                 << "\nNumber of satelites used: " << pvt.num_sv
+                 << "\nLongitude:" << pvt.lon << "Latitude:" << pvt.lat << "Height:" << pvt.height
+                 << "\nGround speed " << pvt.g_speed << "m/s"
+                 << "\nHeading of motion: " << pvt.head_mot
+                 << "\nHeading of vehicle: " << pvt.head_veh
+                 << "\n";});
+
+    // Print esf-status message
+    // Search for sensor data type in following document for explanation:
+    // https://www.u-blox.com/sites/default/files/ZED-F9R_Integrationmanual_UBX-20039643.pdf
+    connect(&mUblox, &Ublox::rxEsfStatus, this, [](const ubx_esf_status &status){
+        qDebug() << "ESF-STATUS data:\n"
+                 << "\nVersion: " << status.version
+                 << "\nFusion mode: " << status.fusion_mode
+                 << "\nNumber of sensors: " << status.num_sens
+                 << "\n";
+        for (int i = 0;i < status.num_sens;i++) {
+            qDebug() << "Sensor data type: " << status.sensors[i].type
+                     << "\nSensor data used: " << status.sensors[i].used
+                     << "\nSensor data ready: " << status.sensors[i].ready
+                     << "\nSensor calibration status: " << status.sensors[i].calib_status
+                     << "\nSensor time status: " << status.sensors[i].time_status
+                     << "\nSensor observation freq: " << status.sensors[i].freq
+                     << "\n";
+
+        }});
 }
 
 bool UbloxRover::connectSerial(const QSerialPortInfo &serialPortInfo)
@@ -28,6 +65,8 @@ bool UbloxRover::connectSerial(const QSerialPortInfo &serialPortInfo)
 bool UbloxRover::configureUblox()
 {
     mUblox.ubxCfgMsg(UBX_CLASS_ESF, UBX_ESF_MEAS, 1);
+    //mUblox.ubxCfgMsg(UBX_CLASS_NAV, UBX_NAV_PVT, 1); // Choose update rate
+    //mUblox.ubxCfgMsg(UBX_CLASS_ESF, UBX_ESF_STATUS, 1); // Choose update rate
     return true;
 }
 

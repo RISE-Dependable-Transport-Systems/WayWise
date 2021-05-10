@@ -998,11 +998,9 @@ void Ublox::ubx_decode(uint8_t msg_class, uint8_t id, uint8_t *msg, int len)
         case UBX_ACK_ACK:
             ubx_decode_ack(msg, len);
             break;
-
         case UBX_ACK_NAK:
             ubx_decode_nak(msg, len);
             break;
-
         default:
             break;
         }
@@ -1012,6 +1010,11 @@ void Ublox::ubx_decode(uint8_t msg_class, uint8_t id, uint8_t *msg, int len)
         switch (id) {
         case UBX_ESF_MEAS:
             ubx_decode_esf_meas(msg, len);
+            break;
+         case UBX_ESF_STATUS:
+            ubx_decode_esf_status(msg, len);
+            break;
+         default:
             break;
         }
     } break;
@@ -1091,36 +1094,60 @@ void Ublox::ubx_decode_nav_pvt(uint8_t *msg, int len)
     int ind = 0;
     uint8_t flags;
 
-    pvt.i_tow = ubx_get_U4(msg, &ind); // 0
-    pvt.year = ubx_get_U2(msg, &ind); // 4
-    pvt.month = ubx_get_U1(msg, &ind); // 6
-    pvt.day = ubx_get_U1(msg, &ind); // 7
-    pvt.hour = ubx_get_U1(msg, &ind); // 8
-    pvt.min = ubx_get_U1(msg, &ind); // 9
+    pvt.i_tow  = ubx_get_U4(msg, &ind); // 0
+    pvt.year   = ubx_get_U2(msg, &ind); // 4
+    pvt.month  = ubx_get_U1(msg, &ind); // 6
+    pvt.day    = ubx_get_U1(msg, &ind); // 7
+    pvt.hour   = ubx_get_U1(msg, &ind); // 8
+    pvt.min    = ubx_get_U1(msg, &ind); // 9
     pvt.second = ubx_get_U1(msg, &ind); // 10
-    flags = ubx_get_X1(msg, &ind); // 11
-    pvt.valid_date = flags & 0x01;
-    pvt.valid_time = flags & 0x02;
-    pvt.fully_resolved = flags & 0x04;
-    pvt.valid_mag = flags & 0x08;
-    pvt.tAcc = ubx_get_U4(msg, &ind); // 12
-    pvt.nano = ubx_get_I4(msg, &ind); // 16
-    pvt.fixType = ubx_get_U1(msg, &ind); // 20
-    flags = ubx_get_X1(msg, &ind); // 21
-    pvt.gnssfixok = (flags    & 0b00000001);
-    pvt.diffsoln = (flags     & 0b00000010);
-    pvt.psmstate = (flags     & 0b00011100) >> 2;
-    pvt.headVehValid = (flags & 0b00100000);
-    pvt.carrsoln = (flags     & 0b11000000) >> 6;
-    flags = ubx_get_X1(msg, &ind); // 22
-    pvt.confirmed_avai = (flags & 0b00100000);
-    pvt.confirmed_date = (flags & 0b01000000);
-    pvt.confirmed_time = (flags & 0b10000000);
-    pvt.num_sv = ubx_get_U1(msg, &ind); // 23
-    pvt.lon = ((double)ubx_get_I4(msg, &ind))*1.0e-7; // 24
-    pvt.lat = ((double)ubx_get_I4(msg, &ind))*1.0e-7; // 28
-    pvt.height = ((double)ubx_get_I4(msg, &ind))*1.0e-3; // 32
-    // TODO: ...
+
+    flags              = ubx_get_X1(msg, &ind); // 11
+    pvt.valid_date     = (flags >> 0) & 1;
+    pvt.valid_time     = (flags >> 1) & 1;
+    pvt.fully_resolved = (flags >> 2) & 1;
+    pvt.valid_mag      = (flags >> 3) & 1;
+
+    pvt.t_acc    = ubx_get_U4(msg, &ind); // 12
+    pvt.nano     = ubx_get_I4(msg, &ind); // 16
+    pvt.fix_type = ubx_get_U1(msg, &ind); // 20
+
+    flags              = ubx_get_X1(msg, &ind); // 21
+    pvt.gnss_fix_ok    = (flags >> 0) & 1;
+    pvt.diffsoln       = (flags >> 1) & 1;
+    pvt.psm_state      = (flags >> 2) & 6;
+    pvt.head_veh_valid = (flags >> 5) & 1;
+    pvt.carr_soln      = (flags >> 6) & 3;
+
+    flags              = ubx_get_X1(msg, &ind); // 22
+    pvt.confirmed_avai = (flags >> 5) & 1;
+    pvt.confirmed_date = (flags >> 6) & 1;
+    pvt.confirmed_time = (flags >> 7) & 1;
+
+    pvt.num_sv   = ubx_get_U1(msg, &ind);                  // 23
+    pvt.lon      = ((double)ubx_get_I4(msg, &ind))*1.0e-7; // 24
+    pvt.lat      = ((double)ubx_get_I4(msg, &ind))*1.0e-7; // 28
+    pvt.height   = ((double)ubx_get_I4(msg, &ind))*1.0e-3; // 32
+    pvt.hmsl     = ((double)ubx_get_I4(msg, &ind))*1.0e-3; // 36
+    pvt.h_acc    = ((double)ubx_get_U4(msg, &ind))*1.0e-3; // 40
+    pvt.v_acc    = ((double)ubx_get_U4(msg, &ind))*1.0e-3; // 44
+    pvt.vel_n    = ((double)ubx_get_I4(msg, &ind))*1.0e-3; // 48
+    pvt.vel_e    = ((double)ubx_get_I4(msg, &ind))*1.0e-3; // 52
+    pvt.vel_d    = ((double)ubx_get_I4(msg, &ind))*1.0e-3; // 56
+    pvt.g_speed  = ((double)ubx_get_I4(msg, &ind))*1.0e-3; // 60
+    pvt.head_mot = ((double)ubx_get_I4(msg, &ind))*1.0e-5; // 64
+    pvt.s_acc    = ((double)ubx_get_U4(msg, &ind))*1.0e-3; // 68
+    pvt.head_acc = ((double)ubx_get_U4(msg, &ind))*1.0e-5; // 72
+    pvt.p_dop    = ((double)ubx_get_U2(msg, &ind))*1.0e-2; // 76
+
+    flags           = ubx_get_X1(msg, &ind); // 78
+    pvt.invalid_llh = (flags >> 0) & 1;
+
+    ind += 5;  //  79-83 reserved
+
+    pvt.head_veh = ((double)ubx_get_I4(msg, &ind))*1.0e-5; // 84
+    pvt.mag_dec   = ((double)ubx_get_I2(msg, &ind))*1.0e-2; // 88
+    pvt.mag_acc   = ((double)ubx_get_U2(msg, &ind))*1.0e-2; // 92
 
     emit rxNavPvt(pvt);
 }
@@ -1154,7 +1181,6 @@ void Ublox::ubx_decode_relposned(uint8_t *msg, int len)
         pos.pos_length += (float)ubx_get_I1(msg, &ind) / 10000.0;
     else
         ind += 1;
-
     pos.acc_n = (float)ubx_get_U4(msg, &ind) / 10000.0;
     pos.acc_e = (float)ubx_get_U4(msg, &ind) / 10000.0;
     pos.acc_d = (float)ubx_get_U4(msg, &ind) / 10000.0;
@@ -1377,4 +1403,41 @@ void Ublox::ubx_decode_esf_meas(uint8_t *msg, int len)
         meas.calib_t_tag = ubx_get_U4(msg, &ind);
 
     emit rxEsfMeas(meas);
+}
+
+void Ublox::ubx_decode_esf_status(uint8_t *msg, int len)
+{
+    (void)len;
+
+    static ubx_esf_status status;
+    int ind = 0;
+    uint8_t flags;
+
+    status.i_tow       = ubx_get_U4(msg, &ind); // 0
+    status.version     = ubx_get_U1(msg, &ind); // 4
+    ind                += 7;                    // 5-11 reserved
+    status.fusion_mode = ubx_get_U1(msg, &ind); // 12
+    ind                += 2;                    // 13-14
+    status.num_sens    = ubx_get_U1(msg, &ind); // 15
+
+    for (int i = 0;i < status.num_sens;i++) {
+        flags                   = ubx_get_X1(msg, &ind); // 16 + (num_sens*4)
+        status.sensors[i].type  = (flags >> 0) & 63;
+        status.sensors[i].used  = (flags >> 6) & 1;
+        status.sensors[i].ready = (flags >> 7) & 1;
+
+        flags                          = ubx_get_X1(msg, &ind); // 17 + (num_sens*4)
+        status.sensors[i].calib_status = (flags >> 0) & 3;
+        status.sensors[i].time_status  = (flags >> 2) & 3;
+
+        status.sensors[i].freq = ubx_get_U1(msg, &ind); // 18
+
+        flags                          = ubx_get_X1(msg, &ind); // 19 + (num_sens*4)
+        status.sensors[i].bad_meas     = (flags >> 0) & 1;
+        status.sensors[i].bad_t_tag    = (flags >> 1) & 1;
+        status.sensors[i].missing_meas = (flags >> 2) & 1;
+        status.sensors[i].noisy_meas   = (flags >> 3) & 1;
+    }
+
+    emit rxEsfStatus(status);
 }

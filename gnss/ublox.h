@@ -117,15 +117,15 @@ typedef struct {
     bool fully_resolved;
     bool valid_mag;
 
-    uint32_t tAcc;
+    uint32_t t_acc;
     int32_t nano;
+    uint8_t fix_type;
 
-    uint8_t fixType;
-    bool gnssfixok;
+    bool gnss_fix_ok;
     bool diffsoln;
-    uint8_t psmstate;
-    bool headVehValid;
-    uint8_t carrsoln;
+    uint8_t psm_state;
+    bool head_veh_valid;
+    uint8_t carr_soln;
 
     bool confirmed_avai;
     bool confirmed_date;
@@ -135,7 +135,23 @@ typedef struct {
     double lon;
     double lat;
     double height;
-    // TODO: ...
+    double hmsl;
+    double h_acc;
+    double v_acc;
+    double vel_n;
+    double vel_e;
+    double vel_d;
+    double g_speed;
+    double head_mot;
+    double s_acc;
+    double head_acc;
+    double p_dop;
+
+    bool invalid_llh;
+
+    double head_veh;
+    double mag_dec;
+    double mag_acc;
 } ubx_nav_pvt;
 
 typedef struct {
@@ -207,6 +223,30 @@ typedef struct {
     ubx_esf_datatype_enum data_type[MAX_ESF_NUM_MEAS];
     uint32_t calib_t_tag;
 } ubx_esf_meas;
+
+typedef struct {
+    uint8_t type;
+    bool used;
+    bool ready;
+
+    uint8_t calib_status;
+    uint8_t time_status;
+
+    uint8_t freq;
+
+    bool bad_meas;
+    bool bad_t_tag;
+    bool missing_meas;
+    bool noisy_meas;
+} ubx_esf_status_sensors;
+
+typedef struct {
+    uint32_t i_tow;
+    uint8_t version;
+    uint8_t fusion_mode;
+    uint8_t num_sens;
+    ubx_esf_status_sensors sensors[255]; // ToDo: set correct nr of sensors
+} ubx_esf_status;
 
 typedef struct {
     uint32_t baudrate;
@@ -548,6 +588,7 @@ signals:
     void rxNavSat(const ubx_nav_sat &sat);
     void rxCfgGnss(const ubx_cfg_gnss &gnss);
     void rxEsfMeas(const ubx_esf_meas &meas);
+    void rxEsfStatus(const ubx_esf_status &status);
     void rxMonVer(const QString &sw, const QString &hw, const QStringList &extensions);
     void ubxRx(const QByteArray &data);
     void rtcmRx(const QByteArray &data, const int &type);
@@ -592,6 +633,7 @@ private:
     void ubx_decode_cfg_gnss(uint8_t *msg, int len);
     void ubx_decode_mon_ver(uint8_t *msg, int len);
     void ubx_decode_esf_meas(uint8_t *msg, int len);
+    void ubx_decode_esf_status(uint8_t *msg, int len);
 };
 
 // Message classes
@@ -629,6 +671,7 @@ private:
 
 // External sensor fusion (ESF) messages
 #define UBX_ESF_MEAS                    0x02
+#define UBX_ESF_STATUS                  0x10
 
 // Configuration messages
 #define UBX_CFG_PRT						0x00
