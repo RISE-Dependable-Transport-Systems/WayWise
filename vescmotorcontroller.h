@@ -2,32 +2,43 @@
 #define VESCMOTORCONTROLLER_H
 
 #include <QObject>
+#include <QSharedPointer>
+#include "motorcontroller.h"
+#include "servocontroller.h"
 #include <QSerialPort>
 #include <QSerialPortInfo>
 #include <QByteArray>
 #include "ext/vesc/vescpacket.h"
 #include "ext/vesc/datatypes.h"
 
-class VESCMotorController : public QObject
+class VESCMotorController : public MotorController
 {
     Q_OBJECT
 public:
-    explicit VESCMotorController(QObject *parent = nullptr);
+    VESCMotorController();
 
     bool connectSerial(const QSerialPortInfo &serialPortInfo);
-    void pollFirmwareVersion();
+    bool isSerialConnected();
 
-    void requestRPM(int32_t rpm);
-    void requestSteering(float steering);
+    virtual void pollFirmwareVersion();
+    virtual void requestRPM(int32_t rpm);
 
-signals:
-    void firmwareVersionReceived(QPair<int,int>); // Major and minor firmware version
-    void statusValuesReceived(double rpm, int tachometer, double voltageInput, double temperature, int errorID);
+    QSharedPointer<ServoController> getServoController();
 
 private:
+    // internal class to avoid mutli-inheritance from QObject
+    class VESCServoController : public ServoController {
+    public:
+        VESCServoController(VESC::Packet* packet) {mVESCPacket = packet;};
+        virtual void requestSteering(float steering);
+    private:
+        VESC::Packet* mVESCPacket;
+    };
+    QSharedPointer<VESCServoController> mVESCServoController;
+
     QSerialPort mSerialPort;
 
-    const int heartbeatPeriod_ms = 100;
+    const int heartbeatPeriod_ms = 300;
     QTimer mHeartbeatTimer;
 
     // Only request selected values

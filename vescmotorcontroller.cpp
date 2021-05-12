@@ -3,8 +3,10 @@
 #include "vbytearray.h"
 #include <QDebug>
 
-VESCMotorController::VESCMotorController(QObject *parent) : QObject(parent)
+VESCMotorController::VESCMotorController()
 {
+    mVESCServoController.reset(new VESCServoController(&mVESCPacket));
+
     // --- Serial communication & command parsing setup
     connect(&mSerialPort, &QSerialPort::readyRead, this, [this](){
         while (mSerialPort.bytesAvailable() > 0)
@@ -57,6 +59,11 @@ bool VESCMotorController::connectSerial(const QSerialPortInfo &serialPortInfo)
     return true;
 }
 
+bool VESCMotorController::isSerialConnected()
+{
+    return mSerialPort.isOpen() && mSerialPort.isWritable();
+}
+
 void VESCMotorController::pollFirmwareVersion()
 {
     VByteArray vb;
@@ -72,12 +79,17 @@ void VESCMotorController::requestRPM(int32_t rpm)
     mVESCPacket.sendPacket(vb);
 }
 
-void VESCMotorController::requestSteering(float steering)
+void VESCMotorController::VESCServoController::requestSteering(float steering) // TODO: smoothen servo input
 {
     VByteArray vb;
     vb.vbAppendInt8(VESC::COMM_SET_SERVO_POS);
     vb.vbAppendDouble16(steering, 1000.0);
-    mVESCPacket.sendPacket(vb);
+    mVESCPacket->sendPacket(vb);
+}
+
+QSharedPointer<ServoController> VESCMotorController::getServoController()
+{
+    return mVESCServoController;
 }
 
 void VESCMotorController::processVESCPacket(QByteArray &data)
@@ -213,7 +225,7 @@ void VESCMotorController::processVESCPacket(QByteArray &data)
                 values.vq = vb.vbPopFrontDouble32(1e3);
             }
         }
-        //qDebug() << values.temp_mos << values.rpm << values.v_in << values.tachometer << values.fault_str;
+//        qDebug() << "Temp.:" << values.temp_mos << "RPM:" << values.rpm << "VIN:" << values.v_in << "Tacho.:" << values.tachometer << "Error:" << values.fault_str;
         emit statusValuesReceived(values.rpm, values.tachometer, values.v_in, values.temp_mos, values.fault_code);
     } break;
     default:
