@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QSharedPointer>
 #include "ublox.h"
+#include "sdvp_qtcommon/coordinatetransforms.h"
 // TODO: move out?
 extern "C" {
 #include "../ext/Fusion/FusionBias.h"
@@ -17,12 +18,16 @@ class UbloxRover : public QObject
 public:
     UbloxRover(QSharedPointer<VehicleState> vehicleState);
     bool connectSerial(const QSerialPortInfo &serialPortInfo);
+    void setEnuRef(llh_t enuRef);
 
 signals:
 
 private:
     bool configureUblox();
     void updateAHRS(const ubx_esf_meas &meas);
+    void updateGNSS(const ubx_nav_pvt &pvt);
+
+    llh_t mEnuReference;
 
     Ublox mUblox;
     QSharedPointer<VehicleState> mVehicleState;

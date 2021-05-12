@@ -8,6 +8,7 @@
 #include <sdvp_qtcommon/vehiclestate.h>
 #include <sdvp_qtcommon/movementcontroller.h>
 #include <sdvp_qtcommon/waypointfollower.h>
+#include <sdvp_qtcommon/gnss/ubloxrover.h>
 
 class PacketInterfaceTCPServer : public QObject
 {
@@ -25,6 +26,9 @@ public:
     QSharedPointer<WaypointFollower> getWaypointFollower() const;
     void setWaypointFollower(const QSharedPointer<WaypointFollower> &waypointFollower);
 
+    QSharedPointer<UbloxRover> getUbloxRover() const;
+    void setUbloxRover(const QSharedPointer<UbloxRover> &uBloxRover);
+
 signals:
 
 private:
@@ -35,6 +39,7 @@ private:
     QSharedPointer<VehicleState> mVehicleState;
     QSharedPointer<MovementController> mMovementController;
     QSharedPointer<WaypointFollower> mWaypointFollower;
+    QSharedPointer<UbloxRover> mUbloxRover;
 
 };
 

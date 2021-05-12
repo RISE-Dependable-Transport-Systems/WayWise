@@ -19,7 +19,9 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
 //            qDebug() << "Got packet for id:" << recipientID << "cmd:" << commandID << "length:" << packetData.size();
 
         switch(commandID) {
-        case CMD_HEARTBEAT: break;
+        case CMD_HEARTBEAT: {
+            //qDebug() << "Received heartbeat";
+        }break;
 
         // --- Get state from vehicle
         case CMD_GET_STATE: {
@@ -50,8 +52,8 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
                 ret.vbAppendDouble32(0.0, 1e6); // magnet_x
                 ret.vbAppendDouble32(0.0, 1e6); // magnet_y
                 ret.vbAppendDouble32(0.0, 1e6); // magnet_z
-                ret.vbAppendDouble32(mVehicleState->getPosition(PosType::fused).getX(), 1e4);
-                ret.vbAppendDouble32(mVehicleState->getPosition(PosType::fused).getY(), 1e4);
+                ret.vbAppendDouble32(mVehicleState->getPosition(PosType::GNSS).getX(), 1e4); // Should be PosType::fused
+                ret.vbAppendDouble32(mVehicleState->getPosition(PosType::GNSS).getY(), 1e4); // Should be PosType::fused
                 ret.vbAppendDouble32(mVehicleState->getSpeed(), 1e6);
                 ret.vbAppendDouble32(-1.0, 1e6); // v_in
                 ret.vbAppendDouble32(-1.0, 1e6); // temp mos
@@ -70,6 +72,18 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
         } break;
         // --- Set state on vehicle
         case CMD_SET_POS:
+        case CMD_SET_ENU_REF: {
+            llh_t enuRef = {packetData.vbPopFrontDouble64(1e16), packetData.vbPopFrontDouble64(1e16), packetData.vbPopFrontDouble32(1e3)};
+            //qDebug() << "EnuRef received:" << enuRef.latitude << enuRef.longitude << enuRef.height;
+            mUbloxRover->setEnuRef(enuRef);
+
+            if (commandID == CMD_SET_ENU_REF) {
+                VByteArray ack;
+                ack.vbAppendUint8(mVehicleState->getId());
+                ack.vbAppendUint8(commandID);
+                mTcpServer.packet()->sendPacket(ack);
+            }
+        } break;
         case CMD_SET_POS_ACK: {
             PosPoint tmpPos = mVehicleState->getPosition();
             tmpPos.setX(packetData.vbPopFrontDouble32(1e4));
@@ -217,4 +231,9 @@ QSharedPointer<WaypointFollower> PacketInterfaceTCPServer::getWaypointFollower()
 void PacketInterfaceTCPServer::setWaypointFollower(const QSharedPointer<WaypointFollower> &waypointFollower)
 {
     mWaypointFollower = waypointFollower;
+}
+
+void PacketInterfaceTCPServer::setUbloxRover(const QSharedPointer<UbloxRover> &uBloxRover)
+{
+    mUbloxRover = uBloxRover;
 }
