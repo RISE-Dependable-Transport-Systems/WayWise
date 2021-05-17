@@ -83,7 +83,7 @@ void VESCMotorController::VESCServoController::requestSteering(float steering) /
 {
     VByteArray vb;
     vb.vbAppendInt8(VESC::COMM_SET_SERVO_POS);
-    vb.vbAppendDouble16(steering, 1000.0);
+    vb.vbAppendDouble16((steering + 1.0) / 2.0, 1000.0); // input steering in [-1.0:1.0], but VESC steering is [0.0:1.0]
     mVESCPacket->sendPacket(vb);
 }
 
