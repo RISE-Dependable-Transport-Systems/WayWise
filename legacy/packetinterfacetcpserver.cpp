@@ -15,13 +15,20 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
         CMD_PACKET commandID = (CMD_PACKET)(quint8)data.at(1);
         memcpy(packetData.data(), data.data()+2, packetData.size());
 
-//        if (commandID != CMD_GET_STATE)
-//            qDebug() << "Got packet for id:" << recipientID << "cmd:" << commandID << "length:" << packetData.size();
+        if (commandID != CMD_GET_STATE)
+            qDebug() << "Got packet for id:" << recipientID << "cmd:" << commandID << "length:" << packetData.size();
 
         switch(commandID) {
         case CMD_HEARTBEAT: {
             //qDebug() << "Received heartbeat";
+            // Set diffdrivevehiclestate speeds to zero if no heartbeat for 1sec. Emit heartbeat with 300ms intervals.
         }break;
+
+        // --- Use differential corrections data from control station
+        case CMD_SEND_RTCM_USB: {
+            qDebug() << "Are we getting data?";
+            mUbloxRover->writeRtcmToUblox(packetData);
+        }
 
         // --- Get state from vehicle
         case CMD_GET_STATE: {

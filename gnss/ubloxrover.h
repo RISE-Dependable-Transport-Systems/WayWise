@@ -19,6 +19,7 @@ public:
     UbloxRover(QSharedPointer<VehicleState> vehicleState);
     bool connectSerial(const QSerialPortInfo &serialPortInfo);
     void setEnuRef(llh_t enuRef);
+    void writeRtcmToUblox(QByteArray data);
 
 signals:
 
