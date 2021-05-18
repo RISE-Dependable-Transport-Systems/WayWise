@@ -11,9 +11,9 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
         VByteArray packetData;
         // drop id & cmd and copy actual data, TODO: unnecessary to copy
         packetData.resize(data.size()-2);
-        quint8 recipientID = data.at(data.at(0));
-        CMD_PACKET commandID = (CMD_PACKET)(quint8)data.at(data.at(0)+1);
-        memcpy(packetData.data(), data.data()+data.at(0)+2, packetData.size());
+        quint8 recipientID = data.at(0);
+        CMD_PACKET commandID = (CMD_PACKET)(quint8)data.at(1);
+        memcpy(packetData.data(), data.data()+2, packetData.size());
 
 //        if (commandID != CMD_GET_STATE)
 //            qDebug() << "Got packet for id:" << recipientID << "cmd:" << commandID << "length:" << packetData.size();
