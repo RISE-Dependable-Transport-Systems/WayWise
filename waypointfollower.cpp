@@ -32,6 +32,8 @@ void WaypointFollower::stopFollowingRoute()
 {
     mUpdateStateTimer.stop();
     // TODO: brake
+    mMovementController->setDesiredSteering(0.0);
+    mMovementController->setDesiredSpeed(0.0);
 }
 
 void WaypointFollower::resetState()

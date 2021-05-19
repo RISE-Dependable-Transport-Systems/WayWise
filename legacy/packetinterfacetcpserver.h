@@ -9,6 +9,7 @@
 #include <sdvp_qtcommon/movementcontroller.h>
 #include <sdvp_qtcommon/waypointfollower.h>
 #include <sdvp_qtcommon/gnss/ubloxrover.h>
+#include <QTimer>
 
 class PacketInterfaceTCPServer : public QObject
 {
@@ -29,6 +30,8 @@ public:
     QSharedPointer<UbloxRover> getUbloxRover() const;
     void setUbloxRover(const QSharedPointer<UbloxRover> &uBloxRover);
 
+    void heartbeatTimeout();
+
 signals:
 
 private:
@@ -40,6 +43,10 @@ private:
     QSharedPointer<MovementController> mMovementController;
     QSharedPointer<WaypointFollower> mWaypointFollower;
     QSharedPointer<UbloxRover> mUbloxRover;
+
+    const unsigned mCountdown_ms = 1000;
+    QTimer mHeartbeatTimer;
+    bool mHeartbeat;
 
 };
 

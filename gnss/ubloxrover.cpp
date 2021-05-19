@@ -20,20 +20,20 @@ UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
     // Print nav-pvt message
     // Search for nav-pvt in following document:
     // https://www.u-blox.com/sites/default/files/ZED-F9R_Interfacedescription_UBX-19056845.pdf
-    connect(&mUblox, &Ublox::rxNavPvt, this, [](const ubx_nav_pvt &pvt){
-        qDebug() << "NAV-PVT data:\n"
-                 << "\nDate: " << pvt.year << pvt.month << pvt.day
-                 << "\nTime: " << pvt.hour << pvt.min << pvt.second
-                 << "\nFix Type: " << pvt.fix_type
-                 << "\nGNSS valid fix: " << pvt.gnss_fix_ok
-                 << "\nHeading valid: " << pvt.head_veh_valid
-                 << "\nNumber of satelites used: " << pvt.num_sv
-                 << "\nLongitude:" << pvt.lon << "Latitude:" << pvt.lat << "Height:" << pvt.height
-                 << "\nGround speed " << pvt.g_speed << "m/s"
-                 << "\nHeading of motion: " << pvt.head_mot
-                 << "\nHeading of vehicle: " << pvt.head_veh
-                << "\nDifferential corrections applied:" << pvt.diffsoln
-                 << "\n";});
+//    connect(&mUblox, &Ublox::rxNavPvt, this, [](const ubx_nav_pvt &pvt){
+//        qDebug() << "NAV-PVT data:\n"
+//                 << "\nDate: " << pvt.year << pvt.month << pvt.day
+//                 << "\nTime: " << pvt.hour << pvt.min << pvt.second
+//                 << "\nFix Type: " << pvt.fix_type
+//                 << "\nGNSS valid fix: " << pvt.gnss_fix_ok
+//                 << "\nHeading valid: " << pvt.head_veh_valid
+//                 << "\nNumber of satelites used: " << pvt.num_sv
+//                 << "\nLongitude:" << pvt.lon << "Latitude:" << pvt.lat << "Height:" << pvt.height
+//                 << "\nGround speed " << pvt.g_speed << "m/s"
+//                 << "\nHeading of motion: " << pvt.head_mot
+//                 << "\nHeading of vehicle: " << pvt.head_veh
+//                << "\nDifferential corrections applied:" << pvt.diffsoln
+//                 << "\n";});
 
     // Print esf-status message
     // Search for sensor data type in following document for explanation:
@@ -190,6 +190,11 @@ void UbloxRover::updateGNSS(const ubx_nav_pvt &pvt)
     gnssPos.setX(xyz.x);
     gnssPos.setY(xyz.y);
     gnssPos.setHeight(xyz.z);
+
+    // -- Only set if the receiver is in sensor fusion mode
+    if(pvt.head_veh_valid) {
+        gnssPos.setYaw(pvt.head_veh);
+    }
 
     mVehicleState->setPosition(gnssPos);
 }
