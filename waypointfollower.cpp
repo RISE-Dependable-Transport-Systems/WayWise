@@ -35,6 +35,20 @@ void WaypointFollower::stopFollowingRoute()
     mMovementController->setDesiredSpeed(0.0);
 }
 
+void WaypointFollower::startFollowMe()
+{
+    mCurrentState.stmState = FOLLOW_POINT_FOLLOWING;
+    mUpdateStateTimer.start(mUpdateStatePeriod_ms);
+}
+
+void WaypointFollower::stopFollowMe()
+{
+    mUpdateStateTimer.stop();
+    mMovementController->setDesiredSteering(0.0);
+    mMovementController->setDesiredSpeed(0.0);
+    mCurrentState.stmState = NONE;
+}
+
 void WaypointFollower::resetState()
 {
     mUpdateStateTimer.stop();
@@ -136,11 +150,23 @@ void WaypointFollower::updateState()
 
     // FOLLOW_POINT: we follow a point that is moving "follow me"
     case FOLLOW_POINT_FOLLOWING:
-        // TODO
+        mCurrentState.currentGoal = mWaypointList.at(0); // Should have input from camera here
+        mMovementController->setDesiredSteering(getCurvatureToPoint(mCurrentState.currentGoal.getPoint())); // TODO: steering should be proportional to curvature (but not necessarily equal)
+        mMovementController->setDesiredSpeed(mCurrentState.currentGoal.getSpeed());
+
+        if (QLineF(mMovementController->getVehicleState()->getPosition().getPoint(), mCurrentState.currentGoal.getPoint()).length() < mCurrentState.purePursuitRadius)
+            mCurrentState.stmState = FOLLOW_POINT_WAITING;
         break;
 
     case FOLLOW_POINT_WAITING:
-	 // TODO
+        mMovementController->setDesiredSteering(0.0);
+        mMovementController->setDesiredSpeed(0.0);
+        mCurrentState.currentGoal = mWaypointList.at(1); // Should have input from camera here
+
+        if (QLineF(mMovementController->getVehicleState()->getPosition().getPoint(), mCurrentState.currentGoal.getPoint()).length() > mCurrentState.purePursuitRadius)
+        {
+            mCurrentState.stmState = FOLLOW_POINT_FOLLOWING;
+        }
         break;
 
     // FOLLOW_ROUTE: waypoints describe a route to be followed waypoint by waypoint
@@ -234,6 +260,8 @@ void WaypointFollower::updateState()
         mCurrentState.currentWaypointIndex = mWaypointList.size();
         break;
 
+    default:
+        break;
     }
 }
 

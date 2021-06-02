@@ -7,6 +7,7 @@
 #include <QTimer>
 #include "vehiclestate.h"
 #include "movementcontroller.h"
+#include "sdvp_qtcommon/legacy/datatypes.h"
 
 enum WayPointFollowerSTMstates {NONE, FOLLOW_POINT_FOLLOWING, FOLLOW_POINT_WAITING, FOLLOW_ROUTE_INIT, FOLLOW_ROUTE_GOTO_BEGIN, FOLLOW_ROUTE_FOLLOWING, FOLLOW_ROUTE_FINISHED};
 struct WayPointFollowerState {
@@ -42,7 +43,11 @@ public:
     void stopFollowingRoute();
     void resetState();
 
-    static double getCurvatureToPoint(QSharedPointer<VehicleState> vehicleState, const QPointF& point, PosType vehiclePosType = PosType::simulated);
+
+    void startFollowMe();
+    void stopFollowMe();
+
+    static double getCurvatureToPoint(QSharedPointer<VehicleState> vehicleState, const QPointF& point);
     double getCurvatureToPoint(const QPointF& point);
 
     double getInterpolatedSpeed(const PosPoint &currentGoal, const PosPoint &lastWaypoint, const PosPoint &nextWaypoint);

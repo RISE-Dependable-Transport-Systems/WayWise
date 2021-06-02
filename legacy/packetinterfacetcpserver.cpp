@@ -198,18 +198,38 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
                 } else
                     qDebug() << "WARNING: unhandled CMD_AP_CLEAR_POINTS";
             } break;
+            case CMD_SET_AP_MODE: {
+                if (mWaypointFollower) {
+                    WayPointFollowerState wpFollowerState;
+                    wpFollowerState = mWaypointFollower->getCurrentState();
+                    wpFollowerState.mode = (AP_MODE)packetData.vbPopFrontUint8();
+                    mWaypointFollower->setCurrentState(wpFollowerState);
+                }
+            } break;
             case CMD_AP_SET_ACTIVE: {
                 if (mWaypointFollower)  {
                     bool activateAutopilot = packetData.vbPopFrontInt8();
                     bool resetAutopilotState = packetData.vbPopFrontInt8();
-                    if (activateAutopilot)
-                        mWaypointFollower->startFollowingRoute(resetAutopilotState);
-                    else {
-                        mWaypointFollower->stopFollowingRoute();
-                        if (resetAutopilotState)
-                            mWaypointFollower->resetState();
-                    }
 
+                    switch (mWaypointFollower->getCurrentState().mode) {
+                    case AP_MODE_FOLLOW_ROUTE:
+                        if (activateAutopilot)
+                            mWaypointFollower->startFollowingRoute(resetAutopilotState);
+                        else {
+                            mWaypointFollower->stopFollowingRoute();
+                            if (resetAutopilotState)
+                                mWaypointFollower->resetState();
+                        }
+                        break;
+                    case AP_MODE_FOLLOW_ME:
+                        if (activateAutopilot)
+                            mWaypointFollower->startFollowMe();
+                        else
+                            mWaypointFollower->stopFollowMe();
+                        break;
+                    default:
+                        break;
+                    }
                     // Send ack
                     VByteArray ack;
                     ack.vbAppendUint8(mVehicleState->getId());
@@ -218,6 +238,7 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
                 } else
                     qDebug() << "WARNING: unhandled CMD_AP_SET_ACTIVE";
             } break;
+
             case CMD_REBOOT_SYSTEM: {
                 if (mUbloxRover) {
                     if (packetData.vbPopFrontUint8()) {
@@ -240,6 +261,7 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
                     qDebug() << "WARNING: unhandled CMD_REBOOT_SYSTEM";
                 break;
             }
+
             default:
                 qDebug() << "WARNING: unhandled packet with command id" << commandID;
                 break;
