@@ -75,7 +75,7 @@ WayPointFollowerState WaypointFollower::getCurrentState() const
     return mCurrentState;
 }
 
-void WaypointFollower::setCurrentState(const WayPointFollowerState&currentState)
+void WaypointFollower::setCurrentState(const WayPointFollowerState &currentState)
 {
     mCurrentState = currentState;
 }
@@ -188,23 +188,36 @@ void WaypointFollower::updateState()
             // 2. Set Goal depending on number of intersections found
             switch (intersections.size()) {
             case 0:
-                // We seem to have left the route (e.g., because of high speed), reuse previous goal to get back to route
+                // We seem to have left the route (e.g., because of high speed), reuse previous goal to  get back to route
                 break;
             case 1:
-                mCurrentState.currentGoal = PosPoint(intersections[0].x(), intersections[0].y());
+                mCurrentState.currentGoal.setX(intersections[0].x());
+                mCurrentState.currentGoal.setY(intersections[0].y());
+                mCurrentState.currentGoal.setSpeed(getInterpolatedSpeed(mCurrentState.currentGoal, mWaypointList.at(mCurrentState.currentWaypointIndex-1), mWaypointList.at(mCurrentState.currentWaypointIndex)));
+
                 break;
             case 2:
                 if (QLineF(intersections[0], currentWaypoint).length()
-                        < QLineF(intersections[1], currentWaypoint).length())
-                    mCurrentState.currentGoal = PosPoint(intersections[0].x(), intersections[0].y());
-                else
-                    mCurrentState.currentGoal = PosPoint(intersections[1].x(), intersections[1].y());
+                        < QLineF(intersections[1], currentWaypoint).length()) {
+                    mCurrentState.currentGoal.setX(intersections[0].x());
+                    mCurrentState.currentGoal.setY(intersections[0].y());
+                    mCurrentState.currentGoal.setSpeed(getInterpolatedSpeed(mCurrentState.currentGoal, mWaypointList.at(mCurrentState.currentWaypointIndex-1), mWaypointList.at(mCurrentState.currentWaypointIndex)));
+
+                }
+                else {
+                    mCurrentState.currentGoal.setX(intersections[1].x());
+                    mCurrentState.currentGoal.setY(intersections[1].y());
+                    mCurrentState.currentGoal.setSpeed(getInterpolatedSpeed(mCurrentState.currentGoal, mWaypointList.at(mCurrentState.currentWaypointIndex-1), mWaypointList.at(mCurrentState.currentWaypointIndex)));
+
+                }
+                break;
+            default:
                 break;
             }
 
             // 3. Update control for current goal
             mMovementController->setDesiredSteering(getCurvatureToPoint(mCurrentState.currentGoal.getPoint())); // TODO: steering should be proportional to curvature (but not necessarily equal)
-            mMovementController->setDesiredSpeed(mCurrentState.currentGoal.getSpeed()); // TODO interpolate speed between to points
+            mMovementController->setDesiredSpeed(mCurrentState.currentGoal.getSpeed());
         }
     } break;
 
@@ -227,4 +240,14 @@ double WaypointFollower::getPurePursuitRadius() const
 void WaypointFollower::setPurePursuitRadius(double value)
 {
     mCurrentState.purePursuitRadius = value;
+}
+
+double WaypointFollower::getInterpolatedSpeed(const PosPoint &currentGoal, const PosPoint &lastWaypoint, const PosPoint &nextWaypoint)
+{
+    // Linear interpolation
+    double distanceToNextWaypoint = currentGoal.getDistanceTo(nextWaypoint);
+    double distanceBetweenWaypoints = lastWaypoint.getDistanceTo(nextWaypoint);
+    double x = distanceBetweenWaypoints - distanceToNextWaypoint;
+
+    return lastWaypoint.getSpeed() + (nextWaypoint.getSpeed()-lastWaypoint.getSpeed())*(x/distanceBetweenWaypoints);
 }

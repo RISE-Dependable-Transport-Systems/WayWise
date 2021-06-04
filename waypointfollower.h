@@ -38,6 +38,8 @@ public:
     WayPointFollowerState getCurrentState() const;
     void setCurrentState(const WayPointFollowerState& currentState);
 
+    double getInterpolatedSpeed(const PosPoint &currentGoal, const PosPoint &lastWaypoint, const PosPoint &nextWaypoint);
+
 signals:
 
 private:
