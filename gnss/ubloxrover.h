@@ -24,6 +24,7 @@ public:
     void saveOnShutdown();
 
 signals:
+    void updatedGNSSPos(QSharedPointer<VehicleState> vehicleState);
 
 private:
     bool configureUblox();

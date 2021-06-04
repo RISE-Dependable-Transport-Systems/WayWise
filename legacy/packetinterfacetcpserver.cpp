@@ -78,8 +78,8 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
                     ret.vbAppendDouble32(0.0, 1e6); // magnet_x
                     ret.vbAppendDouble32(0.0, 1e6); // magnet_y
                     ret.vbAppendDouble32(0.0, 1e6); // magnet_z
-                    ret.vbAppendDouble32(mVehicleState->getPosition(PosType::fused).getX(), 1e4); // Should be PosType::fused
-                    ret.vbAppendDouble32(mVehicleState->getPosition(PosType::fused).getY(), 1e4); // Should be PosType::fused
+                    ret.vbAppendDouble32(mVehicleState->getPosition(PosType::fused).getX(), 1e4);
+                    ret.vbAppendDouble32(mVehicleState->getPosition(PosType::fused).getY(), 1e4);
                     ret.vbAppendDouble32(mVehicleState->getSpeed(), 1e6);
                     ret.vbAppendDouble32(-1.0, 1e6); // v_in
                     ret.vbAppendDouble32(-1.0, 1e6); // temp mos

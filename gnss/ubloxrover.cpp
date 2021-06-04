@@ -294,6 +294,7 @@ void UbloxRover::updateGNSS(const ubx_nav_pvt &pvt)
     }
 
     mVehicleState->setPosition(gnssPos);
+    emit updatedGNSSPos(mVehicleState);
 }
 
 void UbloxRover::updSosResponse(const ubx_upd_sos &sos)
