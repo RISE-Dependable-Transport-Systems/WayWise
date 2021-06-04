@@ -88,6 +88,7 @@ bool UbloxRover::configureUblox()
 
     //mUblox.ubxCfgMsg(UBX_CLASS_ESF, UBX_ESF_MEAS, 1);
     mUblox.ubxCfgMsg(UBX_CLASS_NAV, UBX_NAV_PVT, 1); // Choose update rate
+    mUblox.ubxCfgRate(100, 1, 0); // Navigation solution every 100 ms (10 Hz)
     //mUblox.ubxCfgMsg(UBX_CLASS_ESF, UBX_ESF_STATUS, 1); // Choose update rate
     return true;
 }
