@@ -23,6 +23,12 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
 //        if (commandID != CMD_GET_STATE)
 //            qDebug() << "Got packet for id:" << recipientID << "cmd:" << commandID << "length:" << packetData.size();
 
+        if (!mVehicleState) { // TODO: might make sense to set VehicleState in constructor as PacketInterfaceTCPServer does not make sense without it.
+            qDebug() << "WARNING: VehicleState unset in PacketInterfaceTCPServer, unable to handle messages.";
+            return;
+        }
+
+
         switch(commandID) {
         // --- Track base station heartbeat
         case CMD_HEARTBEAT: {
@@ -42,7 +48,10 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
         if(mHeartbeat) {
             // --- Use differential corrections data from control station
             case CMD_SEND_RTCM_USB: {
-                mUbloxRover->writeRtcmToUblox(packetData);
+                if (mUbloxRover)
+                    mUbloxRover->writeRtcmToUblox(packetData);
+                else
+                    qDebug() << "WARNING: unhandled CMD_SEND_RTCM_USB";
             } break;
 
             // --- Get state from vehicle
@@ -113,13 +122,17 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
             case CMD_SET_ENU_REF: {
                 llh_t enuRef = {packetData.vbPopFrontDouble64(1e16), packetData.vbPopFrontDouble64(1e16), packetData.vbPopFrontDouble32(1e3)};
                 //qDebug() << "EnuRef received:" << enuRef.latitude << enuRef.longitude << enuRef.height;
-                mUbloxRover->setEnuRef(enuRef);
 
-                // Send ack
-                VByteArray ack;
-                ack.vbAppendUint8(mVehicleState->getId());
-                ack.vbAppendUint8(commandID);
-                mTcpServer.packet()->sendPacket(ack);
+                if (mUbloxRover) {
+                    mUbloxRover->setEnuRef(enuRef);
+
+                    // Send ack
+                    VByteArray ack;
+                    ack.vbAppendUint8(mVehicleState->getId());
+                    ack.vbAppendUint8(commandID);
+                    mTcpServer.packet()->sendPacket(ack);
+                } else
+                    qDebug() << "WARNING: Unhandled CMD_SET_ENU_REF";
             } break;
             // --- Remote control vehicle
             case CMD_RC_CONTROL: {
