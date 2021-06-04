@@ -22,7 +22,11 @@ void CarMovementController::setDesiredSpeed(double desiredSpeed)
     if (mMotorController)
         mMotorController->requestRPM(desiredSpeed*getSpeedToRPMFactor());
     else {
-        qDebug() << "WARNING: CarMovementController has no MotorController connection. Simulating movement."; // TODO: create explicitly simulated controller
+        static bool warnedOnce = false;
+        if (!warnedOnce) {
+            qDebug() << "WARNING: CarMovementController has no MotorController connection. Simulating movement."; // TODO: create explicitly simulated controller
+            warnedOnce = true;
+        }
         getVehicleState().dynamicCast<CarState>()->setSpeed(desiredSpeed);
     }
 }
