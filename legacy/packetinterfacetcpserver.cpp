@@ -64,7 +64,7 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
                     ret.vbAppendUint8(firmware_version_minor);
                     ret.vbAppendDouble32(mVehicleState->getPosition(PosType::fused).getRoll(), 1e6);
                     ret.vbAppendDouble32(mVehicleState->getPosition(PosType::fused).getPitch(), 1e6);
-                    ret.vbAppendDouble32(mVehicleState->getPosition(PosType::fused).getYaw()/**180.0/M_PI*/, 1e6); // yaw in degrees
+                    ret.vbAppendDouble32(mVehicleState->getPosition(PosType::fused).getYaw(), 1e6); // yaw in degrees
                     ret.vbAppendDouble32(mVehicleState->getAccelerometerXYZ()[0], 1e6); // accel_x in g
                     ret.vbAppendDouble32(mVehicleState->getAccelerometerXYZ()[1], 1e6); // accel_y in g
                     ret.vbAppendDouble32(mVehicleState->getAccelerometerXYZ()[2], 1e6); // accel_z in g

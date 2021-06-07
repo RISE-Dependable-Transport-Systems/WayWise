@@ -126,6 +126,7 @@ void CarState::simulationStep(double dt_ms, PosType usePosType)
 {
     PosPoint currentPosition = getPosition(usePosType);
     double drivenDistance = getSpeed() * dt_ms / 1000;
+    double yawRad = currentPosition.getYaw() / (180.0/M_PI);
 
     // Bicycle kinematic model with rear axle as reference point
     if (fabs(getSteering()) > 1e-6) { // Turning
@@ -138,13 +139,13 @@ void CarState::simulationStep(double dt_ms, PosType usePosType)
 
         double yawChange = drivenDistance / ((turnRadiusRear + turnRadiusFront) / 2.0);
 
-        currentPosition.setX(currentPosition.getX() + turnRadiusRear * (sin(-currentPosition.getYaw() + yawChange) - sinf(-currentPosition.getYaw())));
-        currentPosition.setY(currentPosition.getY() + turnRadiusRear * (cos(-currentPosition.getYaw() - yawChange) - cosf(-currentPosition.getYaw())));
+        currentPosition.setX(currentPosition.getX() + turnRadiusRear * (sin(-yawRad + yawChange) - sinf(-yawRad)));
+        currentPosition.setY(currentPosition.getY() + turnRadiusRear * (cos(-yawRad - yawChange) - cosf(-yawRad)));
 
-        currentPosition.setYaw(currentPosition.getYaw() - yawChange);
+        currentPosition.setYaw((yawRad - yawChange) * (180.0/M_PI)); // -> yaw in degrees
     } else { // Driving forward
-        currentPosition.setX(currentPosition.getX() + cos(-currentPosition.getYaw()) * drivenDistance);
-        currentPosition.setY(currentPosition.getY() + sin(-currentPosition.getYaw()) * drivenDistance);
+        currentPosition.setX(currentPosition.getX() + cos(-yawRad) * drivenDistance);
+        currentPosition.setY(currentPosition.getY() + sin(-yawRad) * drivenDistance);
     }
 
     setPosition(currentPosition);
