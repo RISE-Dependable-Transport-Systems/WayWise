@@ -29,8 +29,8 @@ signals:
 private:
     bool configureUblox();
     void updateAHRS(const ubx_esf_meas &meas);
-    void updateGNSS(const ubx_nav_pvt &pvt);
     void updSosResponse(const ubx_upd_sos &sos);
+    void updateGNSSPosition(const ubx_nav_pvt &pvt);
 
     llh_t mEnuReference;
 

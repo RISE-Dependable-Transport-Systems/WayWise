@@ -26,8 +26,10 @@ enum class PosType {
     simulated,
     fused,
     odom,
+    IMU,
     GNSS,
-    UWB
+    UWB,
+    _LAST_
 };
 
 class PosPoint : public QObject

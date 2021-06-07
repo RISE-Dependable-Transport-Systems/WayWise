@@ -15,7 +15,7 @@ UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
     connect(&mUblox, &Ublox::rxEsfMeas, this, &UbloxRover::updateAHRS);
 
     // Use GNSS reception to update location
-    connect(&mUblox, &Ublox::rxNavPvt, this, &UbloxRover::updateGNSS);
+    connect(&mUblox, &Ublox::rxNavPvt, this, &UbloxRover::updateGNSSPosition);
 
     // Save-on-shutdown feature
     connect(&mUblox, &Ublox::rxUpdSos, this, &UbloxRover::updSosResponse);
@@ -266,7 +266,7 @@ void UbloxRover::updateAHRS(const ubx_esf_meas &meas)
 
         // Print Euler angles
         FusionEulerAngles eulerAngles = FusionQuaternionToEulerAngles(FusionAhrsGetQuaternion(&mFusionAhrs));
-        PosPoint tmppos = mVehicleState->getPosition(PosType::GNSS);
+        PosPoint tmppos = mVehicleState->getPosition(PosType::IMU);
         tmppos.setRoll(eulerAngles.angle.roll);
         tmppos.setPitch(-eulerAngles.angle.pitch);
         float newYaw = -eulerAngles.angle.yaw+180.0f;
@@ -279,7 +279,7 @@ void UbloxRover::updateAHRS(const ubx_esf_meas &meas)
     }
 }
 
-void UbloxRover::updateGNSS(const ubx_nav_pvt &pvt)
+void UbloxRover::updateGNSSPosition(const ubx_nav_pvt &pvt)
 {
     //qDebug() << "Current enuRef:" << mEnuReference.latitude << mEnuReference.longitude << mEnuReference.height;
     llh_t llh = {pvt.lat, pvt.lon, pvt.height};

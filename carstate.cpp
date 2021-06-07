@@ -1,5 +1,6 @@
 #include "carstate.h"
 #include <QDebug>
+#include <QDateTime>
 
 CarState::CarState(int id, Qt::GlobalColor color) : VehicleState(id, color)
 {
@@ -148,6 +149,7 @@ void CarState::simulationStep(double dt_ms, PosType usePosType)
         currentPosition.setY(currentPosition.getY() + sin(-yawRad) * drivenDistance);
     }
 
+    currentPosition.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()).msecsSinceStartOfDay());
     setPosition(currentPosition);
 }
 

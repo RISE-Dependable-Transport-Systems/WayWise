@@ -93,9 +93,7 @@ private:
     Qt::GlobalColor mColor;
 
     // Dynamic state
-    PosPoint mPosition;
-    PosPoint mPositionGNSS;
-    PosPoint mPositionUWB;
+    PosPoint mPosition[(int)PosType::_LAST_];
     PosPoint mApGoal;
     qint32 mTime;
     double mSpeed = 0.0; // [m/s]

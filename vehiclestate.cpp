@@ -29,9 +29,18 @@ VehicleState::VehicleState(int id, Qt::GlobalColor color)
     mLength = 0.8;
     mWidth = 0.335;
 
-    mPosition.setType(PosType::fused);
-    mPositionGNSS.setType(PosType::GNSS);
-    mPositionUWB.setType(PosType::UWB);
+
+    for (int i = 0; i < (int)PosType::_LAST_; i++)
+        switch((PosType) i) {
+            case PosType::simulated: mPosition[i].setType(PosType::simulated); break;
+            case PosType::fused: mPosition[i].setType(PosType::fused); break;
+            case PosType::odom: mPosition[i].setType(PosType::odom); break;
+            case PosType::IMU: mPosition[i].setType(PosType::IMU); break;
+            case PosType::GNSS: mPosition[i].setType(PosType::GNSS); break;
+            case PosType::UWB: mPosition[i].setType(PosType::UWB); break;
+        case PosType::_LAST_: qDebug() << "This should not have happended."; break;
+
+        }
 }
 
 int VehicleState::getId() const
@@ -61,11 +70,8 @@ void VehicleState::setName(QString name)
 
 void VehicleState::setPosition(PosPoint &point)
 {
-    switch (point.getType()) {
-        case PosType::fused:    mPosition = point; break;
-        case PosType::GNSS:     mPositionGNSS = point; break;
-        case PosType::UWB:      mPositionUWB = point; break;
-    }
+    mPosition[(int)point.getType()] = point;
+
     emit positionUpdated();
 }
 
@@ -181,11 +187,5 @@ void VehicleState::setWidth(double width)
 
 PosPoint VehicleState::getPosition(PosType type) const
 {
-    switch (type) {
-        case PosType::fused:    return mPosition;
-        case PosType::GNSS:     return mPositionGNSS;
-        case PosType::UWB:      return mPositionUWB;
-    }
-
-    return mPosition;
+    return mPosition[(int)type];
 }
