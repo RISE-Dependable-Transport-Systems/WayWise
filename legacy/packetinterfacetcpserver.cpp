@@ -62,13 +62,9 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
                     ret.vbAppendUint8(commandID);
                     ret.vbAppendUint8(firmware_version_major);
                     ret.vbAppendUint8(firmware_version_minor);
-                    // TODO: conf GNSS/Odo orientation fuse from PacketInterface
-                    //                ret.vbAppendDouble32(mVehicleState->getPosition(PosType::GNSS).getRoll(), 1e6);
-                    //                ret.vbAppendDouble32(mVehicleState->getPosition(PosType::GNSS).getPitch(), 1e6);
-                    //                ret.vbAppendDouble32(mVehicleState->getPosition(PosType::GNSS).getYaw(), 1e6); // yaw in degrees
-                    ret.vbAppendDouble32(mVehicleState->getPosition().getRoll(), 1e6);
-                    ret.vbAppendDouble32(mVehicleState->getPosition().getPitch(), 1e6);
-                    ret.vbAppendDouble32(mVehicleState->getPosition().getYaw()*180.0/M_PI, 1e6); // yaw in degrees
+                    ret.vbAppendDouble32(mVehicleState->getPosition(PosType::fused).getRoll(), 1e6);
+                    ret.vbAppendDouble32(mVehicleState->getPosition(PosType::fused).getPitch(), 1e6);
+                    ret.vbAppendDouble32(mVehicleState->getPosition(PosType::fused).getYaw()/**180.0/M_PI*/, 1e6); // yaw in degrees
                     ret.vbAppendDouble32(mVehicleState->getAccelerometerXYZ()[0], 1e6); // accel_x in g
                     ret.vbAppendDouble32(mVehicleState->getAccelerometerXYZ()[1], 1e6); // accel_y in g
                     ret.vbAppendDouble32(mVehicleState->getAccelerometerXYZ()[2], 1e6); // accel_z in g
@@ -99,7 +95,7 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
             // --- Set state on vehicle
             case CMD_SET_POS:
             case CMD_SET_POS_ACK: {
-                PosPoint tmpPos = mVehicleState->getPosition();
+                PosPoint tmpPos = mVehicleState->getPosition(PosType::fused);
                 tmpPos.setX(packetData.vbPopFrontDouble32(1e4));
                 tmpPos.setY(packetData.vbPopFrontDouble32(1e4));
                 tmpPos.setYaw(packetData.vbPopFrontDouble32(1e6) * M_PI/180.0);

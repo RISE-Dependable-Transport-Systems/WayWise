@@ -41,20 +41,21 @@ public:
     void stopFollowingRoute();
     void resetState();
 
-    static double getCurvatureToPoint(QSharedPointer<VehicleState> vehicleState, const QPointF& point);
+    static double getCurvatureToPoint(QSharedPointer<VehicleState> vehicleState, const QPointF& point, PosType vehiclePosType = PosType::simulated);
     double getCurvatureToPoint(const QPointF& point);
 
     double getInterpolatedSpeed(const PosPoint &currentGoal, const PosPoint &lastWaypoint, const PosPoint &nextWaypoint);
 
+    PosType getPosTypeUsed() const;
+    void setPosTypeUsed(const PosType &posTypeUsed);
+
 signals:
 
 private:
-
-
-
     void updateState();
     WayPointFollowerState mCurrentState;
 
+    PosType mPosTypeUsed = PosType::simulated; // The type of position (unspecified, GNSS, UWB, ...) that should be used for planning
     QSharedPointer<MovementController> mMovementController;
     QList <PosPoint> mWaypointList;
     const unsigned mUpdateStatePeriod_ms = 50;

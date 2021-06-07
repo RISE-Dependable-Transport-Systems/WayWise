@@ -23,8 +23,9 @@
 #include <QString>
 
 enum class PosType {
-    unspecified,
-    fused = unspecified, // Default to fused position
+    simulated,
+    fused,
+    odom,
     GNSS,
     UWB
 };
@@ -37,7 +38,7 @@ public:
     PosPoint(double x = 0, double y = 0, double height = 0, double roll = 0,
              double pitch = 0, double yaw = 0, double speed = 0.5, double radius = 5.0,
              double sigma = 0.0, qint32 time = 0,
-             int id = 0, bool drawLine = true, quint32 attributes = 0, PosType type = PosType::unspecified);
+             int id = 0, bool drawLine = true, quint32 attributes = 0, PosType type = PosType::simulated);
     PosPoint(const PosPoint &point);
 
     PosType getType() const;

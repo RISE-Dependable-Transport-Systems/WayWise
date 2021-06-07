@@ -58,7 +58,7 @@ public:
     void setMaxAcceleration(double maxAcceleration);
 
     // Dynamic state
-    PosPoint getPosition(PosType type = PosType::fused) const;
+    PosPoint getPosition(PosType type = PosType::simulated) const;
     void setPosition(PosPoint &point);
     qint32 getTime() const;
     void setTime(const qint32 &time);
@@ -70,7 +70,7 @@ public:
     void setDrawStatusText(bool drawStatusText);
     bool getDrawStatusText() const;
 
-    virtual void simulationStep(double dt_ms) = 0; // Take current state and simulate step forward for dt_ms milliseconds, update state accordingly
+    virtual void simulationStep(double dt_ms, PosType usePosType = PosType::simulated) = 0; // Take current state and simulate step forward for dt_ms milliseconds, update state accordingly
 
     // For debugging and logging
     std::array<float, 3> getGyroscopeXYZ() const;

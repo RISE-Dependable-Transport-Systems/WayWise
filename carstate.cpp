@@ -122,9 +122,9 @@ void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTrans
 }
 #endif
 
-void CarState::simulationStep(double dt_ms)
+void CarState::simulationStep(double dt_ms, PosType usePosType)
 {
-    PosPoint currentPosition = getPosition();
+    PosPoint currentPosition = getPosition(usePosType);
     double drivenDistance = getSpeed() * dt_ms / 1000;
 
     // Bicycle kinematic model with rear axle as reference point

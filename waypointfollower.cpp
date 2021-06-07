@@ -43,16 +43,18 @@ void WaypointFollower::resetState()
     mCurrentState.currentWaypointIndex = mWaypointList.size();
 }
 
-double WaypointFollower::getCurvatureToPoint(QSharedPointer<VehicleState> vehicleState, const QPointF &point)
+double WaypointFollower::getCurvatureToPoint(QSharedPointer<VehicleState> vehicleState, const QPointF &point, PosType vehiclePosType)
 {
-    // vehicleState and point in ENU frame
+    // vehicleState and point assumed in ENU frame
+    const PosPoint vehiclePos = vehicleState->getPosition(vehiclePosType);
+
     // 1. transform point to vehicle frame, TODO: general transform in vehicleState?
     QPointF pointInVehicleFrame;
     // translate
-    pointInVehicleFrame.setX(point.x()-vehicleState->getPosition().getX());
-    pointInVehicleFrame.setY(point.y()-vehicleState->getPosition().getY());
+    pointInVehicleFrame.setX(point.x()-vehiclePos.getX());
+    pointInVehicleFrame.setY(point.y()-vehiclePos.getY());
     // rotate
-    double currYaw = vehicleState->getPosition().getYaw();
+    double currYaw = vehiclePos.getYaw();
     const double newX = cos(currYaw)*pointInVehicleFrame.x() - sin(currYaw)*pointInVehicleFrame.y();
     const double newY = sin(currYaw)*pointInVehicleFrame.x() + cos(currYaw)*pointInVehicleFrame.y();
     pointInVehicleFrame.setX(newX);
@@ -66,7 +68,7 @@ double WaypointFollower::getCurvatureToPoint(QSharedPointer<VehicleState> vehicl
 
 double WaypointFollower::getCurvatureToPoint(const QPointF &point)
 {
-    return getCurvatureToPoint(mMovementController->getVehicleState(), point);
+    return getCurvatureToPoint(mMovementController->getVehicleState(), point, mPosTypeUsed);
 }
 
 // TODO: utility function, move to a more central place
@@ -155,12 +157,12 @@ void WaypointFollower::updateState()
         mMovementController->setDesiredSteering(getCurvatureToPoint(mCurrentState.currentGoal.getPoint())); // TODO: steering should be proportional to curvature (but not necessarily equal)
         mMovementController->setDesiredSpeed(mCurrentState.currentGoal.getSpeed());
 
-        if (QLineF(mMovementController->getVehicleState()->getPosition().getPoint(), mCurrentState.currentGoal.getPoint()).length() < mCurrentState.purePursuitRadius) // TODO: initially bigger distance (might be coming from bad angle)?
+        if (QLineF(mMovementController->getVehicleState()->getPosition(mPosTypeUsed).getPoint(), mCurrentState.currentGoal.getPoint()).length() < mCurrentState.purePursuitRadius) // TODO: initially bigger distance (might be coming from bad angle)?
             mCurrentState.stmState = FOLLOW_ROUTE_FOLLOWING;
         break;
 
     case FOLLOW_ROUTE_FOLLOWING: {
-        QPointF currentVehiclePosition = mMovementController->getVehicleState()->getPosition().getPoint();
+        QPointF currentVehiclePosition = mMovementController->getVehicleState()->getPosition(mPosTypeUsed).getPoint();
         QPointF currentWaypoint = mWaypointList.at(mCurrentState.currentWaypointIndex).getPoint();
 
         if (QLineF(currentVehiclePosition, currentWaypoint).length() < mCurrentState.purePursuitRadius) // consider previous waypoint as reached
@@ -219,6 +221,16 @@ void WaypointFollower::updateState()
         break;
 
     }
+}
+
+PosType WaypointFollower::getPosTypeUsed() const
+{
+    return mPosTypeUsed;
+}
+
+void WaypointFollower::setPosTypeUsed(const PosType &posTypeUsed)
+{
+    mPosTypeUsed = posTypeUsed;
 }
 
 double WaypointFollower::getPurePursuitRadius() const

@@ -18,7 +18,7 @@ public:
 #ifdef QT_GUI_LIB
     virtual void draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected = true);
 #endif
-    virtual void simulationStep(double dt_ms);
+    virtual void simulationStep(double dt_ms, PosType usePosType = PosType::simulated);
 
     // Static state
     double getAxisDistance() const;
