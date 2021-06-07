@@ -1,6 +1,7 @@
 #include "ubloxrover.h"
 #include "sdvp_qtcommon/coordinatetransforms.h"
 #include <QDebug>
+#include <QDateTime>
 
 UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
 {
@@ -287,6 +288,8 @@ void UbloxRover::updateGNSS(const ubx_nav_pvt &pvt)
     gnssPos.setX(xyz.x);
     gnssPos.setY(xyz.y);
     gnssPos.setHeight(xyz.z);
+    gnssPos.setTime(pvt.i_tow);
+    qDebug() << "UbloxRover, iTOW - msSinceTodayUTC:" << pvt.i_tow - QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()).msecsSinceStartOfDay();
 
     // -- Only set if the receiver is in sensor fusion mode
     if(pvt.head_veh_valid) {
