@@ -2,6 +2,7 @@
 #include "sdvp_qtcommon/coordinatetransforms.h"
 #include <QDebug>
 #include <QDateTime>
+#include <cmath>
 
 UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
 {
@@ -15,7 +16,7 @@ UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
     connect(&mUblox, &Ublox::rxEsfMeas, this, &UbloxRover::updateAHRS);
 
     // Use GNSS reception to update location
-    connect(&mUblox, &Ublox::rxNavPvt, this, &UbloxRover::updateGNSSPosition);
+    connect(&mUblox, &Ublox::rxNavPvt, this, &UbloxRover::updateGNSSPositionAndYaw);
 
     // Save-on-shutdown feature
     connect(&mUblox, &Ublox::rxUpdSos, this, &UbloxRover::updSosResponse);
@@ -126,6 +127,7 @@ bool UbloxRover::connectSerial(const QSerialPortInfo &serialPortInfo)
 void UbloxRover::setEnuRef(llh_t enuRef)
 {
     mEnuReference = enuRef;
+    mEnuReferenceSet = true;
 }
 
 void UbloxRover::writeRtcmToUblox(QByteArray data)
@@ -246,7 +248,7 @@ void UbloxRover::updateAHRS(const ubx_esf_meas &meas)
         mVehicleState->setAccelerometerXYZ({acc_xyz[0], acc_xyz[1], acc_xyz[2]});
     }
 
-    if (gotGyro && gotAcc) { // Update AHRS only when a new pair of measurements has arrived
+    if (gotGyro && gotAcc) { // Update AHRS only when a new pair of measurements has arrived. TODO: how to handle faster updates in one compared to the other?
         gotGyro = false;
         gotAcc = false;
 
@@ -264,7 +266,7 @@ void UbloxRover::updateAHRS(const ubx_esf_meas &meas)
         // Update AHRS algorithm
         FusionAhrsUpdateWithoutMagnetometer(&mFusionAhrs, calibratedGyroscope, calibratedAccelerometer, mIMUSamplePeriod);
 
-        // Print Euler angles
+        // Get Euler angles
         FusionEulerAngles eulerAngles = FusionQuaternionToEulerAngles(FusionAhrsGetQuaternion(&mFusionAhrs));
         PosPoint tmppos = mVehicleState->getPosition(PosType::IMU);
         tmppos.setRoll(eulerAngles.angle.roll);
@@ -275,29 +277,51 @@ void UbloxRover::updateAHRS(const ubx_esf_meas &meas)
         while (newYaw >  180.0)
             newYaw -= 360.0;
         tmppos.setYaw(newYaw);
+
+        tmppos.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()).msecsSinceStartOfDay()); // TODO: can meas.time_tag be mapped to UTC/iTOW?
         mVehicleState->setPosition(tmppos);
+
+        emit updatedIMUOrientation(mVehicleState);
     }
 }
 
-void UbloxRover::updateGNSSPosition(const ubx_nav_pvt &pvt)
+void UbloxRover::updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt)
 {
-    //qDebug() << "Current enuRef:" << mEnuReference.latitude << mEnuReference.longitude << mEnuReference.height;
+    static bool firstTimeCalled = true;
     llh_t llh = {pvt.lat, pvt.lon, pvt.height};
-    xyz_t xyz = coordinateTransforms::llhToEnu(mEnuReference, llh);
+    xyz_t xyz = {0.0, 0.0, 0.0};
+
+    if (!mEnuReferenceSet) {
+        mEnuReference = llh;
+        mEnuReferenceSet = true;
+    } else
+        xyz = coordinateTransforms::llhToEnu(mEnuReference, llh);
+
+    // Position
     PosPoint gnssPos = mVehicleState->getPosition(PosType::GNSS);
     gnssPos.setX(xyz.x);
     gnssPos.setY(xyz.y);
     gnssPos.setHeight(xyz.z);
+
+    // Yaw --- based on last GNSS position if fusion (F9R) unavailable
+    static xyz_t lastXyz;
+    if(pvt.head_veh_valid)
+        gnssPos.setYaw(pvt.head_veh);
+    else
+        gnssPos.setYaw(-atan2(xyz.y - lastXyz.y, xyz.x - lastXyz.x) * 180.0 / M_PI);
+
+    // Additional information
     gnssPos.setTime(pvt.i_tow);
     qDebug() << "UbloxRover, iTOW - msSinceTodayUTC:" << pvt.i_tow - QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()).msecsSinceStartOfDay();
-
-    // -- Only set if the receiver is in sensor fusion mode
-    if(pvt.head_veh_valid) {
-        gnssPos.setYaw(pvt.head_veh);
-    }
+    gnssPos.setSpeed(pvt.g_speed);
 
     mVehicleState->setPosition(gnssPos);
-    emit updatedGNSSPos(mVehicleState);
+    lastXyz = xyz;
+
+    if (!firstTimeCalled) // Initialization only in first call
+        emit updatedGNSSPositionAndYaw(mVehicleState, pvt.head_veh_valid);
+
+    firstTimeCalled = false;
 }
 
 void UbloxRover::updSosResponse(const ubx_upd_sos &sos)

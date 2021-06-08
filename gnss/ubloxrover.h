@@ -24,15 +24,17 @@ public:
     void saveOnShutdown();
 
 signals:
-    void updatedGNSSPos(QSharedPointer<VehicleState> vehicleState);
+    void updatedGNSSPositionAndYaw(QSharedPointer<VehicleState> vehicleState, bool fused);
+    void updatedIMUOrientation(QSharedPointer<VehicleState> vehicleState);
 
 private:
     bool configureUblox();
     void updateAHRS(const ubx_esf_meas &meas);
     void updSosResponse(const ubx_upd_sos &sos);
-    void updateGNSSPosition(const ubx_nav_pvt &pvt);
+    void updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt);
 
     llh_t mEnuReference;
+    bool mEnuReferenceSet = false;
 
     Ublox mUblox;
     QSharedPointer<VehicleState> mVehicleState;
