@@ -22,6 +22,7 @@ public:
     void writeRtcmToUblox(QByteArray data);
     void writeOdoToUblox(ubx_esf_datatype_enum dataType, uint32_t dataField);
     void saveOnShutdown();
+    void setEnableIMUOrientationUpdate(bool enabled);
 
 signals:
     void updatedGNSSPositionAndYaw(QSharedPointer<VehicleState> vehicleState, bool fused);

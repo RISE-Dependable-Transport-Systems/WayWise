@@ -138,6 +138,10 @@ void UbloxRover::writeRtcmToUblox(QByteArray data)
 void UbloxRover::writeOdoToUblox(ubx_esf_datatype_enum dataType, uint32_t dataField)
 {
     mUblox.ubloxOdometerInput(dataType, dataField);
+
+void UbloxRover::setEnableIMUOrientationUpdate(bool enabled)
+{
+    mUblox.ubxCfgMsg(UBX_CLASS_ESF, UBX_ESF_MEAS, (enabled ? 1 : 0)); // TODO: not sure whether we want to disable this for performance reasons when fusion active
 }
 
 bool UbloxRover::configureUblox()
