@@ -141,7 +141,7 @@ void UbloxRover::writeOdoToUblox(ubx_esf_datatype_enum dataType, uint32_t dataFi
 
 void UbloxRover::setEnableIMUOrientationUpdate(bool enabled)
 {
-    mUblox.ubxCfgMsg(UBX_CLASS_ESF, UBX_ESF_MEAS, (enabled ? 1 : 0)); // TODO: not sure whether we want to disable this for performance reasons when fusion active
+    mUblox.ubxCfgMsg(UBX_CLASS_ESF, UBX_ESF_MEAS, (enabled ? 1 : 0)); // TODO: disable in fusion mode and use UBX-NAV-ATT instead
 }
 
 bool UbloxRover::configureUblox()
