@@ -34,7 +34,7 @@ void CarMovementController::setDesiredSpeed(double desiredSpeed)
 void CarMovementController::setMotorController(const QSharedPointer<MotorController> motorController)
 {
     mMotorController = motorController;
-    connect(mMotorController.get(), &MotorController::statusValuesReceived, this, &CarMovementController::updateVehicleState);
+    connect(mMotorController.get(), &MotorController::gotStatusValues, this, &CarMovementController::updateVehicleState);
 }
 
 void CarMovementController::setServoController(const QSharedPointer<ServoController> servoController)
@@ -52,9 +52,10 @@ void CarMovementController::setSpeedToRPMFactor(double speedToRPMFactor)
     mSpeedToRPMFactor = speedToRPMFactor;
 }
 
-void CarMovementController::updateVehicleState(double rpm, int tachometer, double voltageInput, double temperature, int errorID)
+void CarMovementController::updateVehicleState(double rpm, int tachometer, int tachometer_abs, double voltageInput, double temperature, int errorID)
 {
     Q_UNUSED(tachometer) // TODO: use for odometry
+    Q_UNUSED(tachometer_abs) // TODO: use for odometry
     Q_UNUSED(voltageInput)
     Q_UNUSED(temperature)
     Q_UNUSED(errorID)

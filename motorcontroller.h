@@ -12,7 +12,7 @@ public:
 
 signals:
     void firmwareVersionReceived(QPair<int,int>); // Major and minor firmware version
-    void statusValuesReceived(double rpm, int tachometer, double voltageInput, double temperature, int errorID);
+    void gotStatusValues(double rpm, int tachometer, int tachometer_abs, double voltageInput, double temperature, int errorID);
 
 };
 

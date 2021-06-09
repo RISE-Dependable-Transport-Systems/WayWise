@@ -25,7 +25,7 @@ public:
 
 
 private:
-    void updateVehicleState(double rpm, int tachometer, double voltageInput, double temperature, int errorID);
+    void updateVehicleState(double rpm, int tachometer, int tachometer_abs, double voltageInput, double temperature, int errorID);
 
     QSharedPointer<MotorController> mMotorController;
     QSharedPointer<ServoController> mServoController;

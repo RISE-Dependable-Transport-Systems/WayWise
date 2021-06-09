@@ -23,7 +23,15 @@ public:
     virtual void pollFirmwareVersion();
     virtual void requestRPM(int32_t rpm);
 
+    void setEnableIMUOrientationUpdate(bool enabled);
+
     QSharedPointer<ServoController> getServoController();
+
+    int getPollValuesPeriod() const;
+    void setPollValuesPeriod(int milliseconds);
+
+signals:
+    void gotIMUOrientation(double roll, double pitch, double yaw);
 
 private:
     // internal class to avoid mutli-inheritance from QObject
@@ -46,13 +54,22 @@ private:
     const unsigned RPM_MASK = ((uint32_t)1 << 7);
     const unsigned VIN_MASK = ((uint32_t)1 << 8);
     const unsigned TACHO_MASK = ((uint32_t)1 << 13);
+    const unsigned TACHO_ABS_MASK = ((uint32_t)1 << 14);
     const unsigned FAULT_MASK = ((uint32_t)1 << 15);
-    const unsigned SELECT_VALUES_MASK = TMOS_MASK | RPM_MASK | VIN_MASK | TACHO_MASK | FAULT_MASK;
-    const int pollValuesPeriod_ms = 20;
+    const unsigned SELECT_VALUES_MASK = TMOS_MASK | RPM_MASK | VIN_MASK | TACHO_MASK | TACHO_ABS_MASK | FAULT_MASK;
+
+    const unsigned ROLL_MASK = ((uint32_t)1 << 0);
+    const unsigned PITCH_MASK = ((uint32_t)1 << 1);
+    const unsigned YAW_MASK = ((uint32_t)1 << 2);
+    const unsigned SELECT_IMU_DATA_MASK = ROLL_MASK | PITCH_MASK | YAW_MASK;
+
+    int pollValuesPeriod_ms = 50;
     QTimer mPollValuesTimer;
 
     VESC::Packet mVESCPacket;
     VESC::FW_RX_PARAMS mVescFirmwareInfo;
+
+    bool mEnableIMUOrientationUpdate = false;
 
     void processVESCPacket(QByteArray &data);
     QString VESCFaultToStr(VESC::mc_fault_code fault);

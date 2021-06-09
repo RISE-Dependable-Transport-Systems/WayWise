@@ -2,6 +2,7 @@
 #include "ext/vesc/datatypes.h"
 #include "vbytearray.h"
 #include <QDebug>
+#include <cmath>
 
 VESCMotorController::VESCMotorController()
 {
@@ -26,12 +27,20 @@ VESCMotorController::VESCMotorController()
         mVESCPacket.sendPacket(vb);});
     mHeartbeatTimer.start(heartbeatPeriod_ms);
 
-    // periodically poll VESC state
+    // periodically poll VESC state and optionally IMU
     connect(&mPollValuesTimer, &QTimer::timeout, this, [this](){
-        VByteArray vb;
-        vb.vbAppendInt8(VESC::COMM_GET_VALUES_SELECTIVE);
-        vb.vbAppendUint32(SELECT_VALUES_MASK);
-        mVESCPacket.sendPacket(vb);});
+        VByteArray packetData;
+        packetData.vbAppendUint8(VESC::COMM_GET_VALUES_SELECTIVE);
+        packetData.vbAppendUint32(SELECT_VALUES_MASK);
+        mVESCPacket.sendPacket(packetData);
+
+        if (mEnableIMUOrientationUpdate) {
+            packetData.clear();
+            packetData.vbAppendUint8(VESC::COMM_GET_IMU_DATA);
+            packetData.vbAppendUint16(SELECT_IMU_DATA_MASK);
+            mVESCPacket.sendPacket(packetData);
+        }
+    });
     mPollValuesTimer.start(pollValuesPeriod_ms);
 }
 
@@ -79,6 +88,11 @@ void VESCMotorController::requestRPM(int32_t rpm)
     mVESCPacket.sendPacket(vb);
 }
 
+void VESCMotorController::setEnableIMUOrientationUpdate(bool enabled)
+{
+    mEnableIMUOrientationUpdate = enabled;
+}
+
 void VESCMotorController::VESCServoController::requestSteering(float steering) // TODO: smoothen servo input
 {
     VByteArray vb;
@@ -90,6 +104,17 @@ void VESCMotorController::VESCServoController::requestSteering(float steering) /
 QSharedPointer<ServoController> VESCMotorController::getServoController()
 {
     return mVESCServoController;
+}
+
+int VESCMotorController::getPollValuesPeriod() const
+{
+    return pollValuesPeriod_ms;
+}
+
+void VESCMotorController::setPollValuesPeriod(int milliseconds)
+{
+    pollValuesPeriod_ms = milliseconds;
+    mPollValuesTimer.start(pollValuesPeriod_ms);
 }
 
 void VESCMotorController::processVESCPacket(QByteArray &data)
@@ -134,99 +159,39 @@ void VESCMotorController::processVESCPacket(QByteArray &data)
 
         emit firmwareVersionReceived(firmwareVersionPair);
     } break;
-    case VESC::COMM_GET_VALUES:
+
     case VESC::COMM_GET_VALUES_SELECTIVE: {
         VESC::MC_VALUES values;
 
-        uint32_t mask = 0xFFFFFFFF;
-        if (id == VESC::COMM_GET_VALUES_SELECTIVE) {
-            mask = vb.vbPopFrontUint32();
-        }
+        uint32_t mask = vb.vbPopFrontUint32();
+        if (mask != SELECT_VALUES_MASK)
+            qDebug() << "Warning: VescMotorController got COMM_GET_VALUES_SELECTIVE but mask does not match selected values.";
 
-        if (mask & (uint32_t(1) << 0)) {
-            values.temp_mos = vb.vbPopFrontDouble16(1e1);
-        }
-        if (mask & (uint32_t(1) << 1)) {
-            values.temp_motor = vb.vbPopFrontDouble16(1e1);
-        }
-        if (mask & (uint32_t(1) << 2)) {
-            values.current_motor = vb.vbPopFrontDouble32(1e2);
-        }
-        if (mask & (uint32_t(1) << 3)) {
-            values.current_in = vb.vbPopFrontDouble32(1e2);
-        }
-        if (mask & (uint32_t(1) << 4)) {
-            values.id = vb.vbPopFrontDouble32(1e2);
-        }
-        if (mask & (uint32_t(1) << 5)) {
-            values.iq = vb.vbPopFrontDouble32(1e2);
-        }
-        if (mask & (uint32_t(1) << 6)) {
-            values.duty_now = vb.vbPopFrontDouble16(1e3);
-        }
-        if (mask & (uint32_t(1) << 7)) {
-            values.rpm = vb.vbPopFrontDouble32(1e0);
-        }
-        if (mask & (uint32_t(1) << 8)) {
-            values.v_in = vb.vbPopFrontDouble16(1e1);
-        }
-        if (mask & (uint32_t(1) << 9)) {
-            values.amp_hours = vb.vbPopFrontDouble32(1e4);
-        }
-        if (mask & (uint32_t(1) << 10)) {
-            values.amp_hours_charged = vb.vbPopFrontDouble32(1e4);
-        }
-        if (mask & (uint32_t(1) << 11)) {
-            values.watt_hours = vb.vbPopFrontDouble32(1e4);
-        }
-        if (mask & (uint32_t(1) << 12)) {
-            values.watt_hours_charged = vb.vbPopFrontDouble32(1e4);
-        }
-        if (mask & (uint32_t(1) << 13)) {
-            values.tachometer = vb.vbPopFrontInt32();
-        }
-        if (mask & (uint32_t(1) << 14)) {
-            values.tachometer_abs = vb.vbPopFrontInt32();
-        }
-        if (mask & (uint32_t(1) << 15)) {
-            values.fault_code = VESC::mc_fault_code(vb.vbPopFrontInt8());
-            values.fault_str = VESCFaultToStr(values.fault_code);
-        }
+        values.temp_mos = vb.vbPopFrontDouble16(1e1);
+        values.rpm = vb.vbPopFrontDouble32(1e0);
+        values.v_in = vb.vbPopFrontDouble16(1e1);
+        values.tachometer = vb.vbPopFrontInt32();
+        values.tachometer_abs = vb.vbPopFrontInt32();
+        values.fault_code = VESC::mc_fault_code(vb.vbPopFrontInt8());
+        values.fault_str = VESCFaultToStr(values.fault_code);
 
-        if (vb.size() >= 4) {
-            if (mask & (uint32_t(1) << 16)) {
-                values.position = vb.vbPopFrontDouble32(1e6);
-            }
-        } else {
-            values.position = -1.0;
-        }
+//        qDebug() << "Temp.:" << values.temp_mos << "RPM:" << values.rpm << "VIN:" << values.v_in << "Tacho.:" << values.tachometer << "Tacho. Abs.:" << values.tachometer_abs << "Error:" << values.fault_str;
+        emit gotStatusValues(values.rpm, values.tachometer,  values.tachometer_abs, values.v_in, values.temp_mos, values.fault_code);
+    } break;
 
-        if (vb.size() >= 1) {
-            if (mask & (uint32_t(1) << 17)) {
-                values.vesc_id = vb.vbPopFrontUint8();
-            }
-        } else {
-            values.vesc_id = 255;
-        }
+    case VESC::COMM_GET_IMU_DATA: {
+        VESC::IMU_VALUES values;
 
-        if (vb.size() >= 6) {
-            if (mask & (uint32_t(1) << 18)) {
-                values.temp_mos_1 = vb.vbPopFrontDouble16(1e1);
-                values.temp_mos_2 = vb.vbPopFrontDouble16(1e1);
-                values.temp_mos_3 = vb.vbPopFrontDouble16(1e1);
-            }
-        }
+        uint32_t mask = vb.vbPopFrontUint16();
+        if (mask != SELECT_IMU_DATA_MASK)
+            qDebug() << "Warning: VescMotorController got COMM_GET_IMU_DATA but mask does not match selected values.";
 
-        if (vb.size() >= 8) {
-            if (mask & (uint32_t(1) << 19)) {
-                values.vd = vb.vbPopFrontDouble32(1e3);
-            }
-            if (mask & (uint32_t(1) << 20)) {
-                values.vq = vb.vbPopFrontDouble32(1e3);
-            }
-        }
-//        qDebug() << "Temp.:" << values.temp_mos << "RPM:" << values.rpm << "VIN:" << values.v_in << "Tacho.:" << values.tachometer << "Error:" << values.fault_str;
-        emit statusValuesReceived(values.rpm, values.tachometer, values.v_in, values.temp_mos, values.fault_code);
+        values.roll = vb.vbPopFrontDouble32Auto();
+        values.pitch = vb.vbPopFrontDouble32Auto();
+        values.yaw = vb.vbPopFrontDouble32Auto();
+
+//        qDebug() << values.roll* 180.0 / M_PI << values. pitch* 180.0 / M_PI << values.yaw* 180.0 / M_PI;
+        emit gotIMUOrientation(values.roll * 180.0 / M_PI, values.pitch * 180.0 / M_PI, values.yaw * 180.0 / M_PI);
     } break;
     default:
         qDebug() << "WARNING: unhandled VESC command with id" << id;
