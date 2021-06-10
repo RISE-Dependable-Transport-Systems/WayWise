@@ -34,6 +34,8 @@ private:
     void updSosResponse(const ubx_upd_sos &sos);
     void updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt);
 
+    const int ms_per_day = 24 * 60 * 60 * 1000;
+
     llh_t mEnuReference;
     bool mEnuReferenceSet = false;
 

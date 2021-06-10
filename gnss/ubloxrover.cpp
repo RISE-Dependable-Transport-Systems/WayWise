@@ -291,41 +291,47 @@ void UbloxRover::updateAHRS(const ubx_esf_meas &meas)
 
 void UbloxRover::updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt)
 {
-    static bool firstTimeCalled = true;
-    llh_t llh = {pvt.lat, pvt.lon, pvt.height};
-    xyz_t xyz = {0.0, 0.0, 0.0};
+    static bool initializationDone = false;
+    static int leapSeconds_ms = 0;
 
-    if (!mEnuReferenceSet) {
-        mEnuReference = llh;
-        mEnuReferenceSet = true;
-    } else
-        xyz = coordinateTransforms::llhToEnu(mEnuReference, llh);
+    if (!initializationDone && pvt.valid_time) {
+        leapSeconds_ms =  (pvt.i_tow % ms_per_day) - ((pvt.hour * 60 * 60 + pvt.min * 60 + pvt.second) * 1000);
+        qDebug() << "UbloxRover: assuming" << leapSeconds_ms / 1000 << "seconds difference between GNSS time and UTC.";
+        initializationDone = true;
+    } else {
+        PosPoint gnssPos = mVehicleState->getPosition(PosType::GNSS);
 
-    // Position
-    PosPoint gnssPos = mVehicleState->getPosition(PosType::GNSS);
-    gnssPos.setX(xyz.x);
-    gnssPos.setY(xyz.y);
-    gnssPos.setHeight(xyz.z);
+        llh_t llh = {pvt.lat, pvt.lon, pvt.height};
+        xyz_t xyz = {0.0, 0.0, 0.0};
 
-    // Yaw --- based on last GNSS position if fusion (F9R) unavailable
-    static xyz_t lastXyz;
-    if(pvt.head_veh_valid)
-        gnssPos.setYaw(pvt.head_veh);
-    else
-        gnssPos.setYaw(-atan2(xyz.y - lastXyz.y, xyz.x - lastXyz.x) * 180.0 / M_PI);
+        if (!mEnuReferenceSet) {
+            mEnuReference = llh;
+            mEnuReferenceSet = true;
+        } else
+            xyz = coordinateTransforms::llhToEnu(mEnuReference, llh);
 
-    // Additional information
-    gnssPos.setTime(pvt.i_tow);
-    qDebug() << "UbloxRover, iTOW - msSinceTodayUTC:" << pvt.i_tow - QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()).msecsSinceStartOfDay();
-    gnssPos.setSpeed(pvt.g_speed);
+        // Position
+        gnssPos.setX(xyz.x);
+        gnssPos.setY(xyz.y);
+        gnssPos.setHeight(xyz.z);
 
-    mVehicleState->setPosition(gnssPos);
-    lastXyz = xyz;
+        // Yaw --- based on last GNSS position if fusion (F9R) unavailable
+        static xyz_t lastXyz;
+        if(pvt.head_veh_valid)
+            gnssPos.setYaw(pvt.head_veh);
+        else
+            gnssPos.setYaw(-atan2(xyz.y - lastXyz.y, xyz.x - lastXyz.x) * 180.0 / M_PI);
 
-    if (!firstTimeCalled) // Initialization only in first call
+        // Time and speed
+        gnssPos.setTime((pvt.i_tow % ms_per_day) - leapSeconds_ms);
+//        qDebug() << "UbloxRover, gnssPos.getTime() - msSinceTodayUTC:" << QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()).msecsSinceStartOfDay() - gnssPos.getTime();
+        gnssPos.setSpeed(pvt.g_speed);
+
+        mVehicleState->setPosition(gnssPos);
+        lastXyz = xyz;
+
         emit updatedGNSSPositionAndYaw(mVehicleState, pvt.head_veh_valid);
-
-    firstTimeCalled = false;
+    }
 }
 
 void UbloxRover::updSosResponse(const ubx_upd_sos &sos)
