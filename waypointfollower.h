@@ -14,6 +14,7 @@ struct WayPointFollowerState {
     PosPoint currentGoal;
     int currentWaypointIndex;
     double purePursuitRadius = 1.0;
+    int numWaypointsLookahead = 8;
 };
 
 class WaypointFollower : public QObject
@@ -55,7 +56,7 @@ private:
     void updateState();
     WayPointFollowerState mCurrentState;
 
-    PosType mPosTypeUsed = PosType::simulated; // The type of position (unspecified, GNSS, UWB, ...) that should be used for planning
+    PosType mPosTypeUsed = PosType::fused; // The type of position (Odom, GNSS, UWB, ...) that should be used for planning
     QSharedPointer<MovementController> mMovementController;
     QList <PosPoint> mWaypointList;
     const unsigned mUpdateStatePeriod_ms = 50;

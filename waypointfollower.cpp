@@ -172,9 +172,22 @@ void WaypointFollower::updateState()
             mCurrentState.stmState = FOLLOW_ROUTE_FINISHED;
         else {
             // --- Calculate current goal on route (which lies between two waypoints)
-            // 1. Find intersection between circle around vehicle and route (TODO: look a number of points ahead)
-            QLineF currentLineSegment(mWaypointList.at(mCurrentState.currentWaypointIndex-1).getPoint(), currentWaypoint);
-            QVector<QPointF> intersections = findIntersectionsBetweenCircleAndLine(QPair<QPointF, double>(currentVehiclePosition, mCurrentState.purePursuitRadius), currentLineSegment);
+            // 1. Find intersection between circle around vehicle and route
+            // look a number of points ahead and jump forward on route if applicable
+            QVector<QPointF> intersections;
+            const int lookaheadWaypointStartIndex = (mCurrentState.currentWaypointIndex + mCurrentState.numWaypointsLookahead - 1  < mWaypointList.size()) ?
+                        (mCurrentState.currentWaypointIndex + mCurrentState.numWaypointsLookahead - 1) : mWaypointList.size() - 1;
+            for (int i = lookaheadWaypointStartIndex; i >= mCurrentState.currentWaypointIndex; i--) { // step backwards through lookahead window until intersection is found
+                QPointF iWaypoint = mWaypointList.at(i).getPoint();
+                QLineF iLineSegment(mWaypointList.at(i-1).getPoint(), iWaypoint);
+
+                intersections = findIntersectionsBetweenCircleAndLine(QPair<QPointF, double>(currentVehiclePosition, mCurrentState.purePursuitRadius), iLineSegment);
+                if (intersections.size() > 0) {
+                    mCurrentState.currentWaypointIndex = i;
+                    currentWaypoint = iWaypoint;
+                    break;
+                }
+            }
 
             // 2. Set Goal depending on number of intersections found
             switch (intersections.size()) {
@@ -188,6 +201,7 @@ void WaypointFollower::updateState()
 
                 break;
             case 2:
+                // Take intersection closest to current waypoint (most progress)
                 if (QLineF(intersections[0], currentWaypoint).length()
                         < QLineF(intersections[1], currentWaypoint).length()) {
                     mCurrentState.currentGoal.setX(intersections[0].x());
