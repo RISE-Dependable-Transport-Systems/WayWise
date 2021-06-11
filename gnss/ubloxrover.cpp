@@ -113,15 +113,20 @@ UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
 
 bool UbloxRover::connectSerial(const QSerialPortInfo &serialPortInfo)
 {
-    if (mUblox.connectSerial(serialPortInfo))
+    if (mUblox.connectSerial(serialPortInfo)) {
         if (configureUblox())
             return true;
         else {
             mUblox.disconnectSerial();
             return false;
         }
-    else
+    } else
         return false;
+}
+
+bool UbloxRover::isSerialConnected()
+{
+    return mUblox.isSerialConnected();
 }
 
 void UbloxRover::setEnuRef(llh_t enuRef)

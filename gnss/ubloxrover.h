@@ -18,6 +18,7 @@ class UbloxRover : public QObject
 public:
     UbloxRover(QSharedPointer<VehicleState> vehicleState);
     bool connectSerial(const QSerialPortInfo &serialPortInfo);
+    bool isSerialConnected();
     void setEnuRef(llh_t enuRef);
     void writeRtcmToUblox(QByteArray data);
     void writeOdoToUblox(ubx_esf_datatype_enum dataType, uint32_t dataField);
