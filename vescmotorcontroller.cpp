@@ -25,7 +25,6 @@ VESCMotorController::VESCMotorController()
         VByteArray vb;
         vb.vbAppendInt8(VESC::COMM_ALIVE);
         mVESCPacket.sendPacket(vb);});
-    mHeartbeatTimer.start(heartbeatPeriod_ms);
 
     // periodically poll VESC state and optionally IMU
     connect(&mPollValuesTimer, &QTimer::timeout, this, [this](){
@@ -41,7 +40,6 @@ VESCMotorController::VESCMotorController()
             mVESCPacket.sendPacket(packetData);
         }
     });
-    mPollValuesTimer.start(pollValuesPeriod_ms);
 }
 
 bool VESCMotorController::connectSerial(const QSerialPortInfo &serialPortInfo)
@@ -64,6 +62,10 @@ bool VESCMotorController::connectSerial(const QSerialPortInfo &serialPortInfo)
     mSerialPort.setFlowControl(QSerialPort::NoFlowControl);
 
     pollFirmwareVersion();
+
+
+    mPollValuesTimer.start(pollValuesPeriod_ms);
+    mHeartbeatTimer.start(heartbeatPeriod_ms);
 
     return true;
 }
