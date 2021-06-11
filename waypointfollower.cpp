@@ -54,9 +54,9 @@ double WaypointFollower::getCurvatureToPoint(QSharedPointer<VehicleState> vehicl
     pointInVehicleFrame.setX(point.x()-vehiclePos.getX());
     pointInVehicleFrame.setY(point.y()-vehiclePos.getY());
     // rotate
-    double currYaw = vehiclePos.getYaw();
-    const double newX = cos(currYaw)*pointInVehicleFrame.x() - sin(currYaw)*pointInVehicleFrame.y();
-    const double newY = sin(currYaw)*pointInVehicleFrame.x() + cos(currYaw)*pointInVehicleFrame.y();
+    double currYaw_rad = vehiclePos.getYaw() * M_PI / 180.0;
+    const double newX = cos(currYaw_rad)*pointInVehicleFrame.x() - sin(currYaw_rad)*pointInVehicleFrame.y();
+    const double newY = sin(currYaw_rad)*pointInVehicleFrame.x() + cos(currYaw_rad)*pointInVehicleFrame.y();
     pointInVehicleFrame.setX(newX);
     pointInVehicleFrame.setY(newY);
 
