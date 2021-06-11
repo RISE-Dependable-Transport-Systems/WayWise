@@ -23,6 +23,7 @@ public:
     void writeOdoToUblox(ubx_esf_datatype_enum dataType, uint32_t dataField);
     void saveOnShutdown();
     void setEnableIMUOrientationUpdate(bool enabled);
+    void setIMUOrientationOffset(double roll_deg, double pitch_deg, double yaw_deg);
 
 signals:
     void updatedGNSSPositionAndYaw(QSharedPointer<VehicleState> vehicleState, bool fused);
@@ -47,6 +48,7 @@ private:
     FusionAhrs mFusionAhrs;
     FusionVector3 gyroscopeSensitivity = {{0.1f, 0.1f, 0.1f},}; // TODO: replace these values with actual sensitivity in degrees per second per lsb as specified in gyroscope datasheet
     FusionVector3 accelerometerSensitivity = {{0.03f, 0.03f, 0.03f},}; // TODO: replace these values with actual sensitivity in g per lsb as specified in accelerometer datasheet
+    FusionRotationMatrix mIMUOrientationOffset = FUSION_ROTATION_MATRIX_IDENTITY;
 };
 
 #endif // UBLOXROVER_H

@@ -144,6 +144,20 @@ void UbloxRover::setEnableIMUOrientationUpdate(bool enabled)
     mUblox.ubxCfgMsg(UBX_CLASS_ESF, UBX_ESF_MEAS, (enabled ? 1 : 0)); // TODO: disable in fusion mode and use UBX-NAV-ATT instead
 }
 
+void UbloxRover::setIMUOrientationOffset(double roll_deg, double pitch_deg, double yaw_deg)
+{
+    float sin_roll = sinf(roll_deg * M_PI / 180.0f);
+    float cos_roll = cosf(roll_deg * M_PI / 180.0f);
+    float sin_pitch = sinf(pitch_deg * M_PI / 180.0f);
+    float cos_pitch = cosf(pitch_deg * M_PI / 180.0f);
+    float sin_yaw = sinf(yaw_deg * M_PI / 180.0f);
+    float cos_yaw = cosf(yaw_deg * M_PI / 180.0f);
+
+    mIMUOrientationOffset = {.array = {cos_yaw * cos_pitch, cos_yaw * sin_pitch * sin_roll - cos_roll * sin_yaw, sin_yaw * sin_roll + cos_yaw * cos_roll * sin_pitch,
+                                    cos_pitch * sin_yaw, cos_yaw * cos_roll + sin_yaw * sin_pitch * sin_roll, cos_roll * sin_yaw * sin_pitch - cos_yaw * sin_roll,
+                                    -sin_pitch,          cos_pitch * sin_roll,                                cos_pitch * cos_roll                               }};
+}
+
 bool UbloxRover::configureUblox()
 {
     // The u-blox receiver detects the previously stored data in the flash.
@@ -258,11 +272,11 @@ void UbloxRover::updateAHRS(const ubx_esf_meas &meas)
 
         // Calibrate gyroscope
         FusionVector3 uncalibratedGyroscope = { {gyro_xyz[0], gyro_xyz[1], gyro_xyz[2]},};
-        FusionVector3 calibratedGyroscope = FusionCalibrationInertial(uncalibratedGyroscope, FUSION_ROTATION_MATRIX_IDENTITY, gyroscopeSensitivity, FUSION_VECTOR3_ZERO);
+        FusionVector3 calibratedGyroscope = FusionCalibrationInertial(uncalibratedGyroscope, mIMUOrientationOffset, gyroscopeSensitivity, FUSION_VECTOR3_ZERO);
 
         // Calibrate accelerometer
         FusionVector3 uncalibratedAccelerometer = { {acc_xyz[0], acc_xyz[1], acc_xyz[2]},};
-        FusionVector3 calibratedAccelerometer = FusionCalibrationInertial(uncalibratedAccelerometer, FUSION_ROTATION_MATRIX_IDENTITY, accelerometerSensitivity, FUSION_VECTOR3_ZERO);
+        FusionVector3 calibratedAccelerometer = FusionCalibrationInertial(uncalibratedAccelerometer, mIMUOrientationOffset, accelerometerSensitivity, FUSION_VECTOR3_ZERO);
 
         // Update gyroscope bias correction algorithm
         calibratedGyroscope = FusionBiasUpdate(&mFusionBias, calibratedGyroscope);
