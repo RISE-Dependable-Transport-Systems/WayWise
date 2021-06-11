@@ -9,7 +9,13 @@ class ServoController : public QObject
 public:
     virtual void requestSteering(float steering) = 0;
 
+    bool getInvertOutput() const;
+    void setInvertOutput(bool getInvertOutput);
+
 signals:
+
+private:
+    bool mInvertOutput = false;
 
 };
 
