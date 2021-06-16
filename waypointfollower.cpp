@@ -28,7 +28,7 @@ void WaypointFollower::startFollowingRoute(bool fromBeginning)
     mUpdateStateTimer.start(mUpdateStatePeriod_ms);
 }
 
-void WaypointFollower::stopFollowingRoute()
+void WaypointFollower::stop()
 {
     mUpdateStateTimer.stop();
     mMovementController->setDesiredSteering(0.0);
@@ -39,14 +39,6 @@ void WaypointFollower::startFollowMe()
 {
     mCurrentState.stmState = FOLLOW_POINT_FOLLOWING;
     mUpdateStateTimer.start(mUpdateStatePeriod_ms);
-}
-
-void WaypointFollower::stopFollowMe()
-{
-    mUpdateStateTimer.stop();
-    mMovementController->setDesiredSteering(0.0);
-    mMovementController->setDesiredSpeed(0.0);
-    mCurrentState.stmState = NONE;
 }
 
 void WaypointFollower::resetState()

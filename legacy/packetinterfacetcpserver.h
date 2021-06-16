@@ -48,6 +48,7 @@ private:
     const unsigned mCountdown_ms = 1000;
     QTimer mHeartbeatTimer;
     bool mHeartbeat;
+    AP_MODE mode;
 
 };
 

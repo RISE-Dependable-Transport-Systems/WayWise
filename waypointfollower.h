@@ -40,12 +40,11 @@ public:
     void addWaypoint(const PosPoint &point);
 
     void startFollowingRoute(bool fromBeginning);
-    void stopFollowingRoute();
+    void stop();
     void resetState();
 
 
     void startFollowMe();
-    void stopFollowMe();
 
     static double getCurvatureToPoint(QSharedPointer<VehicleState> vehicleState, const QPointF& point, PosType vehiclePosType = PosType::simulated);
     double getCurvatureToPoint(const QPointF& point);

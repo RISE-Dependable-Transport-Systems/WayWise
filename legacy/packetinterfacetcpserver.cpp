@@ -199,37 +199,30 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
                     qDebug() << "WARNING: unhandled CMD_AP_CLEAR_POINTS";
             } break;
             case CMD_SET_AP_MODE: {
-                if (mWaypointFollower) {
-                    WayPointFollowerState wpFollowerState;
-                    wpFollowerState = mWaypointFollower->getCurrentState();
-                    wpFollowerState.mode = (AP_MODE)packetData.vbPopFrontUint8();
-                    mWaypointFollower->setCurrentState(wpFollowerState);
-                }
+                mode = (AP_MODE)packetData.vbPopFrontUint8();
             } break;
             case CMD_AP_SET_ACTIVE: {
                 if (mWaypointFollower)  {
                     bool activateAutopilot = packetData.vbPopFrontInt8();
                     bool resetAutopilotState = packetData.vbPopFrontInt8();
 
-                    switch (mWaypointFollower->getCurrentState().mode) {
-                    case AP_MODE_FOLLOW_ROUTE:
-                        if (activateAutopilot)
+                    if (activateAutopilot) {
+                        switch (mode) {
+                        case AP_MODE_FOLLOW_ROUTE:
                             mWaypointFollower->startFollowingRoute(resetAutopilotState);
-                        else {
-                            mWaypointFollower->stopFollowingRoute();
+                            break;
+                        case AP_MODE_FOLLOW_ME:
+                            mWaypointFollower->startFollowMe();
+                            break;
+                        default:
+                            break;
+                        }
+                    } else {
+                            mWaypointFollower->stop();
                             if (resetAutopilotState)
                                 mWaypointFollower->resetState();
                         }
-                        break;
-                    case AP_MODE_FOLLOW_ME:
-                        if (activateAutopilot)
-                            mWaypointFollower->startFollowMe();
-                        else
-                            mWaypointFollower->stopFollowMe();
-                        break;
-                    default:
-                        break;
-                    }
+
                     // Send ack
                     VByteArray ack;
                     ack.vbAppendUint8(mVehicleState->getId());
@@ -316,7 +309,7 @@ void PacketInterfaceTCPServer::heartbeatTimeout()
     qDebug() << "Heartbeat timeout";
 
     if (mWaypointFollower) {
-        mWaypointFollower->stopFollowingRoute();
+        mWaypointFollower->stop();
      }
      if (mMovementController) {
               mMovementController->setDesiredSteering(0.0);
