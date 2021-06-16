@@ -9,10 +9,8 @@
 #include "movementcontroller.h"
 
 enum WayPointFollowerSTMstates {NONE, FOLLOW_POINT_FOLLOWING, FOLLOW_POINT_WAITING, FOLLOW_ROUTE_INIT, FOLLOW_ROUTE_GOTO_BEGIN, FOLLOW_ROUTE_FOLLOWING, FOLLOW_ROUTE_FINISHED};
-enum WayPointFollowerModes {FOLLOW_ROUTE, FOLLOW_ME};
 struct WayPointFollowerState {
     WayPointFollowerSTMstates stmState = NONE;
-    WayPointFollowerModes mode = FOLLOW_ROUTE;
     PosPoint currentGoal;
     int currentWaypointIndex;
     double purePursuitRadius = 1.0;
@@ -33,9 +31,6 @@ public:
     PosPoint getCurrentGoal();
     void setCurrentGoal(PosPoint &point);
 
-    WayPointFollowerModes getMode();
-    void setMode(WayPointFollowerModes mode);
-
     WayPointFollowerSTMstates getSTMState();
     void setSTMState(WayPointFollowerSTMstates state);
 
@@ -48,9 +43,6 @@ public:
 
     static double getCurvatureToPoint(QSharedPointer<VehicleState> vehicleState, const QPointF& point);
     double getCurvatureToPoint(const QPointF& point);
-
-//    WayPointFollowerState getCurrentState() const;
-//    void setCurrentState(const WayPointFollowerState& currentState);
 
     double getInterpolatedSpeed(const PosPoint &currentGoal, const PosPoint &lastWaypoint, const PosPoint &nextWaypoint);
 

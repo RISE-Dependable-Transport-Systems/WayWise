@@ -56,46 +56,43 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
             // --- Get state from vehicle
             case CMD_GET_STATE: {
                 if (mVehicleState && mVehicleState->getId() == recipientID) {
-
-                    if (mWaypointFollower) {
-                        VByteArray ret;
-                        ret.vbAppendUint8(mVehicleState->getId());
-                        ret.vbAppendUint8(commandID);
-                        ret.vbAppendUint8(firmware_version_major);
-                        ret.vbAppendUint8(firmware_version_minor);
-                        // TODO: conf GNSS/Odo orientation fuse from PacketInterface
-                        //                ret.vbAppendDouble32(mVehicleState->getPosition(PosType::GNSS).getRoll(), 1e6);
-                        //                ret.vbAppendDouble32(mVehicleState->getPosition(PosType::GNSS).getPitch(), 1e6);
-                        //                ret.vbAppendDouble32(mVehicleState->getPosition(PosType::GNSS).getYaw(), 1e6); // yaw in degrees
-                        ret.vbAppendDouble32(mVehicleState->getPosition().getRoll(), 1e6);
-                        ret.vbAppendDouble32(mVehicleState->getPosition().getPitch(), 1e6);
-                        ret.vbAppendDouble32(mVehicleState->getPosition().getYaw()*180.0/M_PI, 1e6); // yaw in degrees
-                        ret.vbAppendDouble32(mVehicleState->getAccelerometerXYZ()[0], 1e6); // accel_x in g
-                        ret.vbAppendDouble32(mVehicleState->getAccelerometerXYZ()[1], 1e6); // accel_y in g
-                        ret.vbAppendDouble32(mVehicleState->getAccelerometerXYZ()[2], 1e6); // accel_z in g
-                        ret.vbAppendDouble32(mVehicleState->getGyroscopeXYZ()[0]*M_PI/180.0, 1e6); // roll_rate in radians per second
-                        ret.vbAppendDouble32(mVehicleState->getGyroscopeXYZ()[1]*M_PI/180.0, 1e6); // pitch_rate in radians per second
-                        ret.vbAppendDouble32(mVehicleState->getGyroscopeXYZ()[2]*M_PI/180.0, 1e6); // yaw_rate in radians per second
-                        ret.vbAppendDouble32(0.0, 1e6); // magnet_x
-                        ret.vbAppendDouble32(0.0, 1e6); // magnet_y
-                        ret.vbAppendDouble32(0.0, 1e6); // magnet_z
-                        ret.vbAppendDouble32(mVehicleState->getPosition(PosType::fused).getX(), 1e4); // Should be PosType::fused
-                        ret.vbAppendDouble32(mVehicleState->getPosition(PosType::fused).getY(), 1e4); // Should be PosType::fused
-                        ret.vbAppendDouble32(mVehicleState->getSpeed(), 1e6);
-                        ret.vbAppendDouble32(-1.0, 1e6); // v_in
-                        ret.vbAppendDouble32(-1.0, 1e6); // temp mos
-                        ret.vbAppendUint8(0); // MC Fault code
-                        ret.vbAppendDouble32(mVehicleState->getPosition(PosType::GNSS).getX(), 1e4);
-                        ret.vbAppendDouble32(mVehicleState->getPosition(PosType::GNSS).getY(), 1e4);
-                        ret.vbAppendDouble32(mWaypointFollower->getCurrentGoal().getX(), 1e4); // autopilot_goal_x
-                        ret.vbAppendDouble32(mWaypointFollower->getCurrentGoal().getY(), 1e4); // autopilot_goal_y
-                        ret.vbAppendDouble32(mWaypointFollower->getPurePursuitRadius(), 1e6); // autopilot_pp_radius
-                        ret.vbAppendInt32(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()).msecsSinceStartOfDay());
-                        ret.vbAppendInt16(0); // autopilot_route_left
-                        ret.vbAppendDouble32(mVehicleState->getPosition(PosType::UWB).getX(), 1e4); // UWB px
-                        ret.vbAppendDouble32(mVehicleState->getPosition(PosType::UWB).getY(), 1e4); // UWB PY
-                        mTcpServer.packet()->sendPacket(ret);
-                    }
+                    VByteArray ret;
+                    ret.vbAppendUint8(mVehicleState->getId());
+                    ret.vbAppendUint8(commandID);
+                    ret.vbAppendUint8(firmware_version_major);
+                    ret.vbAppendUint8(firmware_version_minor);
+                    // TODO: conf GNSS/Odo orientation fuse from PacketInterface
+                    //                ret.vbAppendDouble32(mVehicleState->getPosition(PosType::GNSS).getRoll(), 1e6);
+                    //                ret.vbAppendDouble32(mVehicleState->getPosition(PosType::GNSS).getPitch(), 1e6);
+                    //                ret.vbAppendDouble32(mVehicleState->getPosition(PosType::GNSS).getYaw(), 1e6); // yaw in degrees
+                    ret.vbAppendDouble32(mVehicleState->getPosition().getRoll(), 1e6);
+                    ret.vbAppendDouble32(mVehicleState->getPosition().getPitch(), 1e6);
+                    ret.vbAppendDouble32(mVehicleState->getPosition().getYaw()*180.0/M_PI, 1e6); // yaw in degrees
+                    ret.vbAppendDouble32(mVehicleState->getAccelerometerXYZ()[0], 1e6); // accel_x in g
+                    ret.vbAppendDouble32(mVehicleState->getAccelerometerXYZ()[1], 1e6); // accel_y in g
+                    ret.vbAppendDouble32(mVehicleState->getAccelerometerXYZ()[2], 1e6); // accel_z in g
+                    ret.vbAppendDouble32(mVehicleState->getGyroscopeXYZ()[0]*M_PI/180.0, 1e6); // roll_rate in radians per second
+                    ret.vbAppendDouble32(mVehicleState->getGyroscopeXYZ()[1]*M_PI/180.0, 1e6); // pitch_rate in radians per second
+                    ret.vbAppendDouble32(mVehicleState->getGyroscopeXYZ()[2]*M_PI/180.0, 1e6); // yaw_rate in radians per second
+                    ret.vbAppendDouble32(0.0, 1e6); // magnet_x
+                    ret.vbAppendDouble32(0.0, 1e6); // magnet_y
+                    ret.vbAppendDouble32(0.0, 1e6); // magnet_z
+                    ret.vbAppendDouble32(mVehicleState->getPosition(PosType::fused).getX(), 1e4); // Should be PosType::fused
+                    ret.vbAppendDouble32(mVehicleState->getPosition(PosType::fused).getY(), 1e4); // Should be PosType::fused
+                    ret.vbAppendDouble32(mVehicleState->getSpeed(), 1e6);
+                    ret.vbAppendDouble32(-1.0, 1e6); // v_in
+                    ret.vbAppendDouble32(-1.0, 1e6); // temp mos
+                    ret.vbAppendUint8(0); // MC Fault code
+                    ret.vbAppendDouble32(mVehicleState->getPosition(PosType::GNSS).getX(), 1e4);
+                    ret.vbAppendDouble32(mVehicleState->getPosition(PosType::GNSS).getY(), 1e4);
+                    ret.vbAppendDouble32(mWaypointFollower ? mWaypointFollower->getCurrentGoal().getX() : 0.0, 1e4); // autopilot_goal_x
+                    ret.vbAppendDouble32(mWaypointFollower ? mWaypointFollower->getCurrentGoal().getY() : 0.0, 1e4); // autopilot_goal_y
+                    ret.vbAppendDouble32(mWaypointFollower ? mWaypointFollower->getPurePursuitRadius() : 0.0, 1e6); // autopilot_pp_radius
+                    ret.vbAppendInt32(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()).msecsSinceStartOfDay());
+                    ret.vbAppendInt16(0); // autopilot_route_left
+                    ret.vbAppendDouble32(mVehicleState->getPosition(PosType::UWB).getX(), 1e4); // UWB px
+                    ret.vbAppendDouble32(mVehicleState->getPosition(PosType::UWB).getY(), 1e4); // UWB PY
+                    mTcpServer.packet()->sendPacket(ret);
                 }
             } break;
             // --- Set state on vehicle

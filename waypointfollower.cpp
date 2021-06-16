@@ -31,7 +31,6 @@ void WaypointFollower::startFollowingRoute(bool fromBeginning)
 void WaypointFollower::stopFollowingRoute()
 {
     mUpdateStateTimer.stop();
-    // TODO: brake
     mMovementController->setDesiredSteering(0.0);
     mMovementController->setDesiredSpeed(0.0);
 }
@@ -69,16 +68,6 @@ double WaypointFollower::getCurvatureToPoint(const QPointF &point)
 {
     return getCurvatureToPoint(mMovementController->getVehicleState(), point);
 }
-
-//WayPointFollowerState WaypointFollower::getCurrentState() const
-//{
-//    return mCurrentState;
-//}
-
-//void WaypointFollower::setCurrentState(const WayPointFollowerState &currentState)
-//{
-//    mCurrentState = currentState;
-//}
 
 // TODO: utility function, move to a more central place
 QVector<QPointF> findIntersectionsBetweenCircleAndLine(QPair<QPointF,double> circle, QLineF line) {
@@ -260,16 +249,6 @@ PosPoint WaypointFollower::getCurrentGoal()
 void WaypointFollower::setCurrentGoal(PosPoint &point)
 {
     mCurrentState.currentGoal = point;
-}
-
-WayPointFollowerModes WaypointFollower::getMode()
-{
-    return mCurrentState.mode;
-}
-
-void WaypointFollower::setMode(WayPointFollowerModes mode)
-{
-    mCurrentState.mode = mode;
 }
 
 WayPointFollowerSTMstates WaypointFollower::getSTMState()

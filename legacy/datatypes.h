@@ -362,6 +362,7 @@ typedef enum {
     CMD_IO_BOARD_SET_VALVE,
     CMD_HYDRAULIC_MOVE,
     CMD_HEARTBEAT,
+    CMD_SET_AP_MODE,
 
     // Car commands
     CMD_GET_STATE = 120,
@@ -386,6 +387,12 @@ typedef enum {
     RC_MODE_PID,
     RC_MODE_CURRENT_BRAKE
 } RC_MODE;
+
+// Autopilot mode
+typedef enum {
+    AP_MODE_FOLLOW_ROUTE = 0,
+    AP_MODE_FOLLOW_ME
+} AP_MODE;
 
 typedef enum {
     HYDRAULIC_POS_FRONT = 0,

@@ -9,6 +9,7 @@
 #include <sdvp_qtcommon/movementcontroller.h>
 #include <sdvp_qtcommon/waypointfollower.h>
 #include <sdvp_qtcommon/gnss/ubloxrover.h>
+#include <sdvp_qtcommon/legacy/datatypes.h>
 #include <QTimer>
 
 class PacketInterfaceTCPServer : public QObject
