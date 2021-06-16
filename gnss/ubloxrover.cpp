@@ -43,6 +43,10 @@ UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
 //                 << "\nVersion: " << status.version
 //                 << "\nFusion mode: " << status.fusion_mode
 //                 << "\nNumber of sensors: " << status.num_sens
+//                 << "\nIMUinitialization: " << status.imuInitStatus
+//                 << "\nIMU-mount alignment: " << status.mntAlgStatus
+//                 << "\nWheel tick sensor: " << status.wtInitStatus
+//                 << "\nINS initialization: " << status.insInitStatus
 //                 << "\n";
 //        for (int i = 0;i < status.num_sens;i++) {
 //            qDebug() << "Sensor data type: " << status.sensors[i].type

@@ -70,15 +70,15 @@ double WaypointFollower::getCurvatureToPoint(const QPointF &point)
     return getCurvatureToPoint(mMovementController->getVehicleState(), point);
 }
 
-WayPointFollowerState WaypointFollower::getCurrentState() const
-{
-    return mCurrentState;
-}
+//WayPointFollowerState WaypointFollower::getCurrentState() const
+//{
+//    return mCurrentState;
+//}
 
-void WaypointFollower::setCurrentState(const WayPointFollowerState &currentState)
-{
-    mCurrentState = currentState;
-}
+//void WaypointFollower::setCurrentState(const WayPointFollowerState &currentState)
+//{
+//    mCurrentState = currentState;
+//}
 
 // TODO: utility function, move to a more central place
 QVector<QPointF> findIntersectionsBetweenCircleAndLine(QPair<QPointF,double> circle, QLineF line) {
@@ -149,7 +149,7 @@ void WaypointFollower::updateState()
         break;
 
     case FOLLOW_POINT_WAITING:
-        // TODO
+	 // TODO
         break;
 
     // FOLLOW_ROUTE: waypoints describe a route to be followed waypoint by waypoint
@@ -240,6 +240,46 @@ double WaypointFollower::getPurePursuitRadius() const
 void WaypointFollower::setPurePursuitRadius(double value)
 {
     mCurrentState.purePursuitRadius = value;
+}
+
+int WaypointFollower::getCurrentWaypointindex()
+{
+    return mCurrentState.currentWaypointIndex;
+}
+
+void WaypointFollower::setCurrentWaypointindex(int value)
+{
+    mCurrentState.currentWaypointIndex = value;
+}
+
+PosPoint WaypointFollower::getCurrentGoal()
+{
+    return mCurrentState.currentGoal;
+}
+
+void WaypointFollower::setCurrentGoal(PosPoint &point)
+{
+    mCurrentState.currentGoal = point;
+}
+
+WayPointFollowerModes WaypointFollower::getMode()
+{
+    return mCurrentState.mode;
+}
+
+void WaypointFollower::setMode(WayPointFollowerModes mode)
+{
+    mCurrentState.mode = mode;
+}
+
+WayPointFollowerSTMstates WaypointFollower::getSTMState()
+{
+    return mCurrentState.stmState;
+}
+
+void WaypointFollower::setSTMState(WayPointFollowerSTMstates state)
+{
+    mCurrentState.stmState = state;
 }
 
 double WaypointFollower::getInterpolatedSpeed(const PosPoint &currentGoal, const PosPoint &lastWaypoint, const PosPoint &nextWaypoint)
