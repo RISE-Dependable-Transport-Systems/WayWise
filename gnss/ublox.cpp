@@ -1014,6 +1014,9 @@ void Ublox::ubx_decode(uint8_t msg_class, uint8_t id, uint8_t *msg, int len)
          case UBX_ESF_STATUS:
             ubx_decode_esf_status(msg, len);
             break;
+        case UBX_ESF_ALG:
+           ubx_decode_esf_alg(msg, len);
+           break;
          default:
             break;
         }
@@ -1440,4 +1443,32 @@ void Ublox::ubx_decode_esf_status(uint8_t *msg, int len)
     }
 
     emit rxEsfStatus(status);
+}
+
+void Ublox::ubx_decode_esf_alg(uint8_t *msg, int len)
+{
+    (void)len;
+
+    static ubx_esf_alg alg;
+    int ind = 0;
+    uint8_t flags;
+
+    alg.i_tow       = ubx_get_U4(msg, &ind); // 0
+    alg.version     = ubx_get_U1(msg, &ind); // 4
+
+    flags           = ubx_get_U1(msg, &ind); // 5
+    alg.autoMntAlgOn= (flags >> 0) & 1;
+    alg.status      = (flags >> 1) & 7;
+
+    flags           = ubx_get_U1(msg, &ind); // 6
+    alg.tiltAlgError= (flags >> 0) & 1;
+    alg.yawAlgError = (flags >> 1) & 1;
+    alg.angleError  = (flags >> 2) & 1;
+
+    ind++; // 7 reserved
+    alg.yaw         = ubx_get_U4(msg, &ind) * 1e-2; // 8
+    alg.pitch       = ubx_get_I2(msg, &ind) * 1e-2; // 12
+    alg.roll        = ubx_get_I2(msg, &ind) * 1e-2; // 14
+
+    emit rxEsfAlg(alg);
 }

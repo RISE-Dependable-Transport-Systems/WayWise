@@ -249,6 +249,19 @@ typedef struct {
 } ubx_esf_status;
 
 typedef struct {
+    uint32_t i_tow;
+    uint8_t version;
+    bool autoMntAlgOn;
+    uint8_t status;
+    bool tiltAlgError;
+    bool yawAlgError;
+    bool angleError;
+    double yaw;
+    double pitch;
+    double roll;
+} ubx_esf_alg;
+
+typedef struct {
     uint32_t baudrate;
     bool in_rtcm3;
     bool in_rtcm2;
@@ -589,6 +602,7 @@ signals:
     void rxCfgGnss(const ubx_cfg_gnss &gnss);
     void rxEsfMeas(const ubx_esf_meas &meas);
     void rxEsfStatus(const ubx_esf_status &status);
+    void rxEsfAlg(const ubx_esf_alg &alg);
     void rxMonVer(const QString &sw, const QString &hw, const QStringList &extensions);
     void ubxRx(const QByteArray &data);
     void rtcmRx(const QByteArray &data, const int &type);
@@ -634,6 +648,7 @@ private:
     void ubx_decode_mon_ver(uint8_t *msg, int len);
     void ubx_decode_esf_meas(uint8_t *msg, int len);
     void ubx_decode_esf_status(uint8_t *msg, int len);
+    void ubx_decode_esf_alg(uint8_t *msg, int len);
 };
 
 // Message classes
@@ -672,6 +687,7 @@ private:
 // External sensor fusion (ESF) messages
 #define UBX_ESF_MEAS                    0x02
 #define UBX_ESF_STATUS                  0x10
+#define UBX_ESF_ALG                     0x14
 
 // Configuration messages
 #define UBX_CFG_PRT						0x00

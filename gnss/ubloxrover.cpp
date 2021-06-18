@@ -20,44 +20,55 @@ UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
     // Print nav-pvt message
     // Search for nav-pvt in following document:
     // https://www.u-blox.com/sites/default/files/ZED-F9R_Interfacedescription_UBX-19056845.pdf
-//    connect(&mUblox, &Ublox::rxNavPvt, this, [](const ubx_nav_pvt &pvt){
-//        qDebug() << "NAV-PVT data:\n"
+    connect(&mUblox, &Ublox::rxNavPvt, this, [](const ubx_nav_pvt &pvt){
+        static int count = 0;
+        if (count++%5)
+            return;
+        qDebug() << "NAV-PVT data:"
 //                 << "\nDate: " << pvt.year << pvt.month << pvt.day
 //                 << "\nTime: " << pvt.hour << pvt.min << pvt.second
-//                 << "\nFix Type: " << pvt.fix_type
+                 << "\nFix Type: " << pvt.fix_type
 //                 << "\nGNSS valid fix: " << pvt.gnss_fix_ok
-//                 << "\nHeading valid: " << pvt.head_veh_valid
+                 << "\nHeading valid: " << pvt.head_veh_valid
 //                 << "\nNumber of satelites used: " << pvt.num_sv
 //                 << "\nLongitude:" << pvt.lon << "Latitude:" << pvt.lat << "Height:" << pvt.height
-//                 << "\nGround speed " << pvt.g_speed << "m/s"
+                 << "\nGround speed " << pvt.g_speed << "m/s"
 //                 << "\nHeading of motion: " << pvt.head_mot
 //                 << "\nHeading of vehicle: " << pvt.head_veh
-//                << "\nDifferential corrections applied:" << pvt.diffsoln
-//                 << "\n";});
+                << "\nDifferential corrections applied:" << pvt.diffsoln;
+    });
 
     // Print esf-status message
     // Search for sensor data type in following document for explanation:
     // https://www.u-blox.com/sites/default/files/ZED-F9R_Integrationmanual_UBX-20039643.pdf
-//    connect(&mUblox, &Ublox::rxEsfStatus, this, [](const ubx_esf_status &status){
-//        qDebug() << "ESF-STATUS data:\n"
+    connect(&mUblox, &Ublox::rxEsfStatus, this, [](const ubx_esf_status &status){
+        static int count = 0;
+        if (count++%5)
+            return;
+        qDebug() << "ESF-STATUS data:"
 //                 << "\nVersion: " << status.version
-//                 << "\nFusion mode: " << status.fusion_mode
-//                 << "\nNumber of sensors: " << status.num_sens
-//                 << "\nIMUinitialization: " << status.imuInitStatus
-//                 << "\nIMU-mount alignment: " << status.mntAlgStatus
-//                 << "\nWheel tick sensor: " << status.wtInitStatus
-//                 << "\nINS initialization: " << status.insInitStatus
-//                 << "\n";
-//        for (int i = 0;i < status.num_sens;i++) {
-//            qDebug() << "Sensor data type: " << status.sensors[i].type
+                 << "\nFusion mode: " << status.fusion_mode
+//                 << "\nNumber of sensors: " << status.num_sens;
+                    ;
+        for (int i = 0;i < status.num_sens;i++) {
+            qDebug() << "Sensor data type: " << status.sensors[i].type
 //                     << "\nSensor data used: " << status.sensors[i].used
 //                     << "\nSensor data ready: " << status.sensors[i].ready
-//                     << "\nSensor calibration status: " << status.sensors[i].calib_status
+                     << "\nSensor calibration status: " << status.sensors[i].calib_status
 //                     << "\nSensor time status: " << status.sensors[i].time_status
 //                     << "\nSensor observation freq: " << status.sensors[i].freq
-//                     << "\n";
+                     ;
+        }});
 
-//        }});
+    connect(&mUblox, &Ublox::rxEsfAlg, this, [](const ubx_esf_alg &alg){
+        static int count = 0;
+        if (count++%5)
+            return;
+        qDebug() << "ESF-ALG data:"
+                 << "\nStatus:" << alg.status
+                 << "\nAuto mount alignmend enabled:" << alg.autoMntAlgOn
+                 << "\nRoll, Pitch, Yaw:" << alg.roll << alg.pitch << alg.yaw;
+    });
 }
 
 bool UbloxRover::connectSerial(const QSerialPortInfo &serialPortInfo)
@@ -90,10 +101,10 @@ bool UbloxRover::configureUblox()
     // If the rate configuration value is zero, then the corresponding message will not be output.
     // Values greater than zero indicate how often the message is output.
 
-    //mUblox.ubxCfgMsg(UBX_CLASS_ESF, UBX_ESF_MEAS, 1);
-    mUblox.ubxCfgMsg(UBX_CLASS_NAV, UBX_NAV_PVT, 1); // Choose update rate
+    mUblox.ubxCfgMsg(UBX_CLASS_NAV, UBX_NAV_PVT, 1);
     mUblox.ubxCfgRate(100, 1, 0); // Navigation solution every 100 ms (10 Hz)
-    //mUblox.ubxCfgMsg(UBX_CLASS_ESF, UBX_ESF_STATUS, 1); // Choose update rate
+    mUblox.ubxCfgMsg(UBX_CLASS_ESF, UBX_ESF_STATUS, 1);
+    mUblox.ubxCfgMsg(UBX_CLASS_ESF, UBX_ESF_ALG, 1);
     return true;
 }
 
