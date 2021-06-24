@@ -16,6 +16,7 @@ public:
     // MovementController interface
     virtual void setDesiredSteering(double desiredSteering) override;
     virtual void setDesiredSpeed(double desiredSpeed) override;
+    virtual void setDesiredSteeringCurvature(double desiredSteeringAngle) override;
 
     void setMotorController(const QSharedPointer<MotorController> motorController);
     void setServoController(const QSharedPointer<ServoController> servoController);
@@ -27,9 +28,10 @@ public:
 private:
     void updateVehicleState(double rpm, int tachometer, int tachometer_abs, double voltageInput, double temperature, int errorID);
 
+    QSharedPointer<CarState> mCarState;
     QSharedPointer<MotorController> mMotorController;
     QSharedPointer<ServoController> mServoController;
-    double mSpeedToRPMFactor = 4614;
+    double mSpeedToRPMFactor = 4123.3; // default for Traxxas Slash VXL
 
 };
 

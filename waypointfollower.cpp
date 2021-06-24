@@ -154,7 +154,7 @@ void WaypointFollower::updateState()
         break;
 
     case FOLLOW_ROUTE_GOTO_BEGIN:
-        mMovementController->setDesiredSteering(getCurvatureToPoint(mCurrentState.currentGoal.getPoint())); // TODO: steering should be proportional to curvature (but not necessarily equal)
+        mMovementController->setDesiredSteeringCurvature(getCurvatureToPoint(mCurrentState.currentGoal.getPoint()));
         mMovementController->setDesiredSpeed(mCurrentState.currentGoal.getSpeed());
 
         if (QLineF(mMovementController->getVehicleState()->getPosition(mPosTypeUsed).getPoint(), mCurrentState.currentGoal.getPoint()).length() < mCurrentState.purePursuitRadius) // TODO: initially bigger distance (might be coming from bad angle)?
@@ -221,7 +221,7 @@ void WaypointFollower::updateState()
             }
 
             // 3. Update control for current goal
-            mMovementController->setDesiredSteering(getCurvatureToPoint(mCurrentState.currentGoal.getPoint())); // TODO: steering should be proportional to curvature (but not necessarily equal)
+            mMovementController->setDesiredSteeringCurvature(getCurvatureToPoint(mCurrentState.currentGoal.getPoint()));
             mMovementController->setDesiredSpeed(mCurrentState.currentGoal.getSpeed());
         }
     } break;

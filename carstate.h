@@ -43,8 +43,8 @@ public:
 private:
     double mAxisDistance; // [m]
     double mSteering = 0.0; // [-1.0:1.0]
-	double mMaxSteeringAngle = 0.0; // [rad]
-	double mMinTurnRadiusRear = std::numeric_limits<double>::infinity(); // [m]
+    double mMaxSteeringAngle = 0.0; // [rad]
+    double mMinTurnRadiusRear = std::numeric_limits<double>::infinity(); // [m]
 
 };
 

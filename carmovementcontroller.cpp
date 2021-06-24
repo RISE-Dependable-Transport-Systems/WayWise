@@ -3,17 +3,27 @@
 
 CarMovementController::CarMovementController(QSharedPointer<CarState> vehicleState): MovementController(vehicleState)
 {
-
+    mCarState = getVehicleState().dynamicCast<CarState>();
 }
 
 void CarMovementController::setDesiredSteering(double desiredSteering)
 {
+    if (abs(desiredSteering) > 1.0)
+        desiredSteering = (desiredSteering > 0) ? 1.0 : -1.0;
+
     MovementController::setDesiredSteering(desiredSteering);
-    if (mServoController)
+
+    if (mServoController) {
+        // map from [-1.0:1.0] to actual servo range
+        // TODO: all of this should happen in ServoController!
+        desiredSteering = desiredSteering * (mServoController->getServoRange() / 2.0) + mServoController->getServoCenter();
+        if (mServoController->getInvertOutput())
+            desiredSteering *= -1.0;
         mServoController->requestSteering(desiredSteering);
+    }
 
     // update vehicleState in any case (we do not expect feedback from servo)
-    getVehicleState().dynamicCast<CarState>()->setSteering(desiredSteering);
+    mCarState->setSteering(desiredSteering);
 }
 
 void CarMovementController::setDesiredSpeed(double desiredSpeed)
@@ -27,8 +37,17 @@ void CarMovementController::setDesiredSpeed(double desiredSpeed)
             qDebug() << "WARNING: CarMovementController has no MotorController connection. Simulating movement."; // TODO: create explicitly simulated controller
             warnedOnce = true;
         }
-        getVehicleState().dynamicCast<CarState>()->setSpeed(desiredSpeed);
+        mCarState->setSpeed(desiredSpeed);
     }
+}
+
+void CarMovementController::setDesiredSteeringCurvature(double desiredSteeringCurvature)
+{
+    double steeringAngle_rad = atan(mCarState->getAxisDistance() * desiredSteeringCurvature);
+    if (abs(steeringAngle_rad) > mCarState->getMaxSteeringAngle())
+        steeringAngle_rad = mCarState->getMaxSteeringAngle() * ((steeringAngle_rad > 0) ? 1.0 : -1.0);
+
+    setDesiredSteering(steeringAngle_rad / mCarState->getMaxSteeringAngle());
 }
 
 void CarMovementController::setMotorController(const QSharedPointer<MotorController> motorController)

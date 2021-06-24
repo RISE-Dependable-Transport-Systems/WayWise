@@ -139,7 +139,7 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
                 //            steering *= mAutoPilot->autopilot_get_steering_scale();
                 //            mAutoPilot->autopilot_set_active(false);
                 mMovementController->setDesiredSteering(steering);
-                mMovementController->setDesiredSpeed(throttle*3.0); // TODO!
+                mMovementController->setDesiredSpeed(throttle*10.0); // TODO!
 
                 // TODO:
                 //            switch (mode) {
