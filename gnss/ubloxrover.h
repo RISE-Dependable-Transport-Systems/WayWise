@@ -43,13 +43,14 @@ private:
 
     Ublox mUblox;
     QSharedPointer<VehicleState> mVehicleState;
+    struct {double rollOffset_deg, pitchOffset_deg, yawOffset_deg;} mIMUOrientationOffset;
 
     const float mIMUSamplePeriod = 0.2f;
     FusionBias mFusionBias;
     FusionAhrs mFusionAhrs;
     FusionVector3 gyroscopeSensitivity = {{0.1f, 0.1f, 0.1f},}; // TODO: replace these values with actual sensitivity in degrees per second per lsb as specified in gyroscope datasheet
     FusionVector3 accelerometerSensitivity = {{0.03f, 0.03f, 0.03f},}; // TODO: replace these values with actual sensitivity in g per lsb as specified in accelerometer datasheet
-    FusionRotationMatrix mIMUOrientationOffset = FUSION_ROTATION_MATRIX_IDENTITY;
+    FusionRotationMatrix mIMUOrientationOffsetMatrix = FUSION_ROTATION_MATRIX_IDENTITY;
 };
 
 #endif // UBLOXROVER_H

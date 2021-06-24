@@ -65,6 +65,7 @@ UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
     // Print esf-status message
     // Search for sensor data type in following document for explanation:
     // https://www.u-blox.com/sites/default/files/ZED-F9R_Integrationmanual_UBX-20039643.pdf
+<<<<<<< HEAD
 //    connect(&mUblox, &Ublox::rxEsfStatus, this, [](const ubx_esf_status &status){
 //        static int count = 0;
 //        if (count++%5)
@@ -151,6 +152,8 @@ void UbloxRover::setEnableIMUOrientationUpdate(bool enabled)
 
 void UbloxRover::setIMUOrientationOffset(double roll_deg, double pitch_deg, double yaw_deg)
 {
+    mIMUOrientationOffset = {roll_deg, pitch_deg, yaw_deg};
+
     float sin_roll = sinf(roll_deg * M_PI / 180.0f);
     float cos_roll = cosf(roll_deg * M_PI / 180.0f);
     float sin_pitch = sinf(pitch_deg * M_PI / 180.0f);
@@ -158,9 +161,9 @@ void UbloxRover::setIMUOrientationOffset(double roll_deg, double pitch_deg, doub
     float sin_yaw = sinf(yaw_deg * M_PI / 180.0f);
     float cos_yaw = cosf(yaw_deg * M_PI / 180.0f);
 
-    mIMUOrientationOffset = {.array = {cos_yaw * cos_pitch, cos_yaw * sin_pitch * sin_roll - cos_roll * sin_yaw, sin_yaw * sin_roll + cos_yaw * cos_roll * sin_pitch,
-                                    cos_pitch * sin_yaw, cos_yaw * cos_roll + sin_yaw * sin_pitch * sin_roll, cos_roll * sin_yaw * sin_pitch - cos_yaw * sin_roll,
-                                    -sin_pitch,          cos_pitch * sin_roll,                                cos_pitch * cos_roll                               }};
+    mIMUOrientationOffsetMatrix = {.array = {cos_yaw * cos_pitch, cos_yaw * sin_pitch * sin_roll - cos_roll * sin_yaw, sin_yaw * sin_roll + cos_yaw * cos_roll * sin_pitch,
+                                             cos_pitch * sin_yaw, cos_yaw * cos_roll + sin_yaw * sin_pitch * sin_roll, cos_roll * sin_yaw * sin_pitch - cos_yaw * sin_roll,
+                                             -sin_pitch,          cos_pitch * sin_roll,                                cos_pitch * cos_roll                               }};
 }
 
 bool UbloxRover::configureUblox()
@@ -277,11 +280,11 @@ void UbloxRover::updateAHRS(const ubx_esf_meas &meas)
 
         // Calibrate gyroscope
         FusionVector3 uncalibratedGyroscope = { {gyro_xyz[0], gyro_xyz[1], gyro_xyz[2]},};
-        FusionVector3 calibratedGyroscope = FusionCalibrationInertial(uncalibratedGyroscope, mIMUOrientationOffset, gyroscopeSensitivity, FUSION_VECTOR3_ZERO);
+        FusionVector3 calibratedGyroscope = FusionCalibrationInertial(uncalibratedGyroscope, mIMUOrientationOffsetMatrix, gyroscopeSensitivity, FUSION_VECTOR3_ZERO);
 
         // Calibrate accelerometer
         FusionVector3 uncalibratedAccelerometer = { {acc_xyz[0], acc_xyz[1], acc_xyz[2]},};
-        FusionVector3 calibratedAccelerometer = FusionCalibrationInertial(uncalibratedAccelerometer, mIMUOrientationOffset, accelerometerSensitivity, FUSION_VECTOR3_ZERO);
+        FusionVector3 calibratedAccelerometer = FusionCalibrationInertial(uncalibratedAccelerometer, mIMUOrientationOffsetMatrix, accelerometerSensitivity, FUSION_VECTOR3_ZERO);
 
         // Update gyroscope bias correction algorithm
         calibratedGyroscope = FusionBiasUpdate(&mFusionBias, calibratedGyroscope);
@@ -337,7 +340,7 @@ void UbloxRover::updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt)
         // Yaw --- based on last GNSS position if fusion (F9R) unavailable
         static xyz_t lastXyz;
         if(pvt.head_veh_valid)
-            gnssPos.setYaw(pvt.head_veh);
+            gnssPos.setYaw(pvt.head_veh + mIMUOrientationOffset.yawOffset_deg);
         else
             gnssPos.setYaw(-atan2(xyz.y - lastXyz.y, xyz.x - lastXyz.x) * 180.0 / M_PI);
 
