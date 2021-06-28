@@ -181,12 +181,18 @@ void CarState::setMinTurnRadiusRear(double minTurnRadius_m) {
 }
 
 double CarState::getBrakingDistance() const {
+    return getBrakingDistance(-getMinAcceleration());
+}
+
+double CarState::getBrakingDistance(double deceleration) const
+{
     double brakingDistance = 0.0;
     if (getSpeed() != 0.0)
         brakingDistance = getSpeed() * getTotalReactionTime() -
-                ((getSpeed() >= 0.0) ? 0.5 : -0.5) * pow(abs(getSpeed()) + getMaxAcceleration() * getTotalReactionTime(), 2.0) / getMinAcceleration();
+                ((getSpeed() >= 0.0) ? 0.5 : -0.5) * pow(abs(getSpeed()) + getMaxAcceleration() * getTotalReactionTime(), 2.0) / -deceleration;
 
     return brakingDistance;
+
 }
 
 double CarState::getThreeSecondsDistance() const
