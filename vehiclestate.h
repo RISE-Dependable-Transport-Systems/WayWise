@@ -101,8 +101,8 @@ private:
     double mSpeed = 0.0; // [m/s]
     Velocity mVelocity = {0.0, 0.0, 0.0}; // [m/s]
 
-    std::array<float,3> mGyroscopeXYZ = {0.0, 0.0, 0.0}; // [deg/s]
-    std::array<float,3> mAccelerometerXYZ = {0.0, 0.0, 0.0}; // [g]
+    std::array<float,3> mGyroscopeXYZ = std::array<float,3>({0.0, 0.0, 0.0}); // [deg/s]
+    std::array<float,3> mAccelerometerXYZ = std::array<float,3>({0.0, 0.0, 0.0}); // [g]
 
     bool mDrawStatusText = true;
 };
