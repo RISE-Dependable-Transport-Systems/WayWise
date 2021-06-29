@@ -142,18 +142,20 @@ void WaypointFollower::updateState()
 
     // FOLLOW_POINT: we follow a point that is moving "follow me"
     case FOLLOW_POINT_FOLLOWING:
-        mCurrentState.currentGoal = mWaypointList.at(0); // Should have input from camera here
-        mMovementController->setDesiredSteering(getCurvatureToPoint(mCurrentState.currentGoal.getPoint())); // TODO: steering should be proportional to curvature (but not necessarily equal)
-        mMovementController->setDesiredSpeed(mCurrentState.currentGoal.getSpeed());
+        mCurrentState.currentGoal = vehicleToEnuTransform(mMovementController->getVehicleState(), mDepthAiCamera.getTargetPosition());
 
         if (QLineF(mMovementController->getVehicleState()->getPosition().getPoint(), mCurrentState.currentGoal.getPoint()).length() < mCurrentState.purePursuitRadius)
             mCurrentState.stmState = FOLLOW_POINT_WAITING;
+        else {
+            mMovementController->setDesiredSteering(getCurvatureToPoint(mCurrentState.currentGoal.getPoint())); // TODO: steering should be proportional to curvature (but not necessarily equal)
+            mMovementController->setDesiredSpeed(mCurrentState.currentGoal.getSpeed());
+        }
         break;
 
     case FOLLOW_POINT_WAITING:
         mMovementController->setDesiredSteering(0.0);
         mMovementController->setDesiredSpeed(0.0);
-        mCurrentState.currentGoal = mWaypointList.at(1); // Should have input from camera here
+        mCurrentState.currentGoal = vehicleToEnuTransform(mMovementController->getVehicleState(), mDepthAiCamera.getTargetPosition());
 
         if (QLineF(mMovementController->getVehicleState()->getPosition().getPoint(), mCurrentState.currentGoal.getPoint()).length() > mCurrentState.purePursuitRadius)
         {
@@ -315,4 +317,25 @@ double WaypointFollower::getInterpolatedSpeed(const PosPoint &currentGoal, const
     double x = distanceBetweenWaypoints - distanceToNextWaypoint;
 
     return lastWaypoint.getSpeed() + (nextWaypoint.getSpeed()-lastWaypoint.getSpeed())*(x/distanceBetweenWaypoints);
+}
+
+PosPoint WaypointFollower::vehicleToEnuTransform(QSharedPointer<VehicleState> vehicleState, const PosPoint point)
+{
+    // 1. transform point from vehicle frame to ENU frame
+    PosPoint pointInEnuFrame;
+
+    pointInEnuFrame.setX(point.getX());
+    pointInEnuFrame.setY(point.getY()); // TODO: Take into account where on the car the camera is placed
+
+    // clockwise rotation
+    double currYaw = vehicleState->getPosition().getYaw() + (90*M_PI)/180;
+    const double newX = cos(currYaw)*pointInEnuFrame.getX() + sin(currYaw)*pointInEnuFrame.getY();
+    const double newY = -sin(currYaw)*pointInEnuFrame.getX() + cos(currYaw)*pointInEnuFrame.getY();
+    pointInEnuFrame.setX(newX);
+    pointInEnuFrame.setY(newY);
+    // translation
+    pointInEnuFrame.setX(pointInEnuFrame.getX()+vehicleState->getPosition().getX());
+    pointInEnuFrame.setY(pointInEnuFrame.getY()+vehicleState->getPosition().getY());
+
+    return pointInEnuFrame;
 }
