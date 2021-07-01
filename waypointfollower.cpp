@@ -22,9 +22,11 @@ void WaypointFollower::addWaypoint(const PosPoint &point)
 void WaypointFollower::startFollowingRoute(bool fromBeginning)
 {
     if (fromBeginning)
-        resetState();
+        mCurrentState.stmState = FOLLOW_ROUTE_INIT;
 
-    mCurrentState.stmState = FOLLOW_ROUTE_INIT;
+    if (mCurrentState.stmState == FOLLOW_POINT_FOLLOWING || mCurrentState.stmState == FOLLOW_POINT_WAITING)
+        mCurrentState.stmState = WayPointFollowerSTMstates::NONE;
+
     mUpdateStateTimer.start(mUpdateStatePeriod_ms);
 }
 
@@ -165,6 +167,13 @@ void WaypointFollower::updateState()
 
     // FOLLOW_ROUTE: waypoints describe a route to be followed waypoint by waypoint
     case FOLLOW_ROUTE_INIT:
+        // Emergency brake if object detected.
+        if (mDepthAiCamera.getTargetPosition().getY() > 0 && mDepthAiCamera.getTargetPosition().getY() < 10) { // TODO: decide how close the objects need to be
+            mMovementController->setDesiredSteering(0.0);
+            mMovementController->setDesiredSpeed(0.0);
+            mUpdateStateTimer.stop();
+                    break;
+        }
         if (mWaypointList.size()) {
             mCurrentState.currentWaypointIndex = 0;
             mCurrentState.currentGoal = mWaypointList.at(0);
@@ -174,6 +183,13 @@ void WaypointFollower::updateState()
         break;
 
     case FOLLOW_ROUTE_GOTO_BEGIN:
+        // Emergency brake if object detected
+        if (mDepthAiCamera.getTargetPosition().getY() > 0 && mDepthAiCamera.getTargetPosition().getY() < 10) { // TODO: decide how close the objects need to be
+            mMovementController->setDesiredSteering(0.0);
+            mMovementController->setDesiredSpeed(0.0);
+            mUpdateStateTimer.stop();
+                    break;
+        }
         mMovementController->setDesiredSteeringCurvature(getCurvatureToPoint(mCurrentState.currentGoal.getPoint()));
         mMovementController->setDesiredSpeed(mCurrentState.currentGoal.getSpeed());
 
@@ -182,7 +198,15 @@ void WaypointFollower::updateState()
         break;
 
     case FOLLOW_ROUTE_FOLLOWING: {
-        QPointF currentVehiclePosition = mMovementController->getVehicleState()->getPosition(mPosTypeUsed).getPoint();
+        // Emergency brake if object detected
+        if (mDepthAiCamera.getTargetPosition().getY() > 0 && mDepthAiCamera.getTargetPosition().getY() < 10) { // TODO: decide how close the objects need to be
+            mMovementController->setDesiredSteering(0.0);
+            mMovementController->setDesiredSpeed(0.0);
+            mUpdateStateTimer.stop();
+                    break;
+        }
+        QPointF currentVehiclePosition = mMovementController->getVehicleState()->getPosition().getPoint();
+
         QPointF currentWaypoint = mWaypointList.at(mCurrentState.currentWaypointIndex).getPoint();
 
         if (QLineF(currentVehiclePosition, currentWaypoint).length() < mCurrentState.purePursuitRadius) // consider previous waypoint as reached
