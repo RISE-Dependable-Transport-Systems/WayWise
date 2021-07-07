@@ -13,13 +13,13 @@ void DepthAiCamera::cameraInput(const QJsonArray& jsonArray)
     // 3D position x,y,z in meters from the camera.
 
     // Objects detected, save only the closest one
-    double closestObject = 1000;
+    double closeObject = 1000;
     for (int i=0; i<jsonArray.size(); i++) {
-        if (closestObject > jsonArray.at(i).toObject().value("depth_z").toDouble()) {
+        if (closeObject > jsonArray.at(i).toObject().value("depth_z").toDouble()) {
             mCameraData.setX(jsonArray.at(i).toObject().value("depth_x").toDouble());
             mCameraData.setY(jsonArray.at(i).toObject().value("depth_z").toDouble());
             mCameraData.setHeight(jsonArray.at(i).toObject().value("depth_y").toDouble());
-            closestObject = mCameraData.getY();
+            closeObject = mCameraData.getY();
         }
     }
 
@@ -30,11 +30,8 @@ void DepthAiCamera::cameraInput(const QJsonArray& jsonArray)
         mCameraData.setHeight(0);
     }
 
+    emit closestObject(mCameraData);
+
 //    qDebug() << jsonArray
 //             << "\nsize:" << jsonArray.size();
-}
-
-PosPoint DepthAiCamera::getTargetPosition()
-{
-    return mCameraData;
 }

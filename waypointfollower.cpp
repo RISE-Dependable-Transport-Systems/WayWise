@@ -144,7 +144,7 @@ void WaypointFollower::updateState()
 
     // FOLLOW_POINT: we follow a point that is moving "follow me"
     case FOLLOW_POINT_FOLLOWING:
-        mCurrentState.currentGoal = vehicleToEnuTransform(mMovementController->getVehicleState(), mDepthAiCamera.getTargetPosition());
+        mCurrentState.currentGoal = vehicleToEnuTransform(mMovementController->getVehicleState(), mFollowMePoint);
 
         if (QLineF(mMovementController->getVehicleState()->getPosition().getPoint(), mCurrentState.currentGoal.getPoint()).length() < mCurrentState.purePursuitRadius)
             mCurrentState.stmState = FOLLOW_POINT_WAITING;
@@ -157,7 +157,7 @@ void WaypointFollower::updateState()
     case FOLLOW_POINT_WAITING:
         mMovementController->setDesiredSteering(0.0);
         mMovementController->setDesiredSpeed(0.0);
-        mCurrentState.currentGoal = vehicleToEnuTransform(mMovementController->getVehicleState(), mDepthAiCamera.getTargetPosition());
+        mCurrentState.currentGoal = vehicleToEnuTransform(mMovementController->getVehicleState(), mFollowMePoint);
 
         if (QLineF(mMovementController->getVehicleState()->getPosition().getPoint(), mCurrentState.currentGoal.getPoint()).length() > mCurrentState.purePursuitRadius)
         {
@@ -168,7 +168,7 @@ void WaypointFollower::updateState()
     // FOLLOW_ROUTE: waypoints describe a route to be followed waypoint by waypoint
     case FOLLOW_ROUTE_INIT:
         // Emergency brake if object detected.
-        if (mDepthAiCamera.getTargetPosition().getY() > 0 && mDepthAiCamera.getTargetPosition().getY() < 10) { // TODO: decide how close the objects need to be
+        if (mFollowMePoint.getY() > 0 && mFollowMePoint.getY() < 10) { // TODO: decide how close the objects need to be
             mMovementController->setDesiredSteering(0.0);
             mMovementController->setDesiredSpeed(0.0);
             mUpdateStateTimer.stop();
@@ -184,7 +184,7 @@ void WaypointFollower::updateState()
 
     case FOLLOW_ROUTE_GOTO_BEGIN:
         // Emergency brake if object detected
-        if (mDepthAiCamera.getTargetPosition().getY() > 0 && mDepthAiCamera.getTargetPosition().getY() < 10) { // TODO: decide how close the objects need to be
+        if (mFollowMePoint.getY() > 0 && mFollowMePoint.getY() < 10) { // TODO: decide how close the objects need to be
             mMovementController->setDesiredSteering(0.0);
             mMovementController->setDesiredSpeed(0.0);
             mUpdateStateTimer.stop();
@@ -199,7 +199,7 @@ void WaypointFollower::updateState()
 
     case FOLLOW_ROUTE_FOLLOWING: {
         // Emergency brake if object detected
-        if (mDepthAiCamera.getTargetPosition().getY() > 0 && mDepthAiCamera.getTargetPosition().getY() < 10) { // TODO: decide how close the objects need to be
+        if (mFollowMePoint.getY() > 0 && mFollowMePoint.getY() < 10) { // TODO: decide how close the objects need to be
             mMovementController->setDesiredSteering(0.0);
             mMovementController->setDesiredSpeed(0.0);
             mUpdateStateTimer.stop();
@@ -362,4 +362,9 @@ PosPoint WaypointFollower::vehicleToEnuTransform(QSharedPointer<VehicleState> ve
     pointInEnuFrame.setY(pointInEnuFrame.getY()+vehicleState->getPosition().getY());
 
     return pointInEnuFrame;
+}
+
+void WaypointFollower::updateFollowMePoint(const PosPoint &point)
+{
+    mFollowMePoint = point;
 }

@@ -11,8 +11,8 @@ class DepthAiCamera : public QObject
 public:
     DepthAiCamera();
 
-    PosPoint getTargetPosition();
 signals:
+    void closestObject(const PosPoint &obj);
 
 private:
     JsonStreamParserTcp mJsonParser;
