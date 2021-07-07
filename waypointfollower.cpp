@@ -25,7 +25,10 @@ void WaypointFollower::startFollowingRoute(bool fromBeginning)
         mCurrentState.stmState = FOLLOW_ROUTE_INIT;
 
     if (mCurrentState.stmState == FOLLOW_POINT_FOLLOWING || mCurrentState.stmState == FOLLOW_POINT_WAITING)
+    {
         mCurrentState.stmState = WayPointFollowerSTMstates::NONE;
+        qDebug() << "Command not allowed! Press reset button to start following route";
+    }
 
     mUpdateStateTimer.start(mUpdateStatePeriod_ms);
 }
