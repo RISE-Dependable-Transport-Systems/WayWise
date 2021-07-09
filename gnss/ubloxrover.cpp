@@ -101,10 +101,28 @@ bool UbloxRover::configureUblox()
     // If the rate configuration value is zero, then the corresponding message will not be output.
     // Values greater than zero indicate how often the message is output.
 
+    //mUblox.ubxCfgMsg(UBX_CLASS_ESF, UBX_ESF_MEAS, 1);
     mUblox.ubxCfgMsg(UBX_CLASS_NAV, UBX_NAV_PVT, 1);
     mUblox.ubxCfgRate(100, 1, 0); // Navigation solution every 100 ms (10 Hz)
     mUblox.ubxCfgMsg(UBX_CLASS_ESF, UBX_ESF_STATUS, 1);
     mUblox.ubxCfgMsg(UBX_CLASS_ESF, UBX_ESF_ALG, 1);
+
+    //mUblox.ubloxCfgValset(unsigned char *values, int len, bool ram, bool bbr, bool flash);
+//        unsigned char buffer[512];
+//        int ind = 0;
+//        mUblox.ubloxCfgAppendMntalg(buffer, &ind, true);
+//        mUblox.ubloxCfgAppendRate(buffer, &ind, 10);
+//        mUblox.ubloxCfgValset(buffer, ind, true, true, true);
+
+    //mUblox.ubloxCfgValset(unsigned char *values, int len, bool ram, bool bbr, bool flash);
+//        unsigned char buffer[512];
+//        int ind = 0;
+//        mUblox.ubloxCfgAppendEnableGps(buffer, &ind, true, true, true);
+//        mUblox.ubloxCfgAppendEnableGal(buffer, &ind, true, true, true);
+//        mUblox.ubloxCfgAppendEnableBds(buffer, &ind, true, true, true);
+//        mUblox.ubloxCfgAppendEnableGlo(buffer, &ind, true, true, true);
+//        mUblox.ubloxCfgValset(buffer, ind, true, true, true);
+
     return true;
 }
 

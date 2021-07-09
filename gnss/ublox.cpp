@@ -778,6 +778,65 @@ void Ublox::ubloxCfgAppendUart1OutProt(unsigned char *buffer, int *ind, bool ubx
     ubx_put_U1(buffer, ind, rtcm3x);
 }
 
+void Ublox::ubloxCfgAppendEnableSf(unsigned char *buffer, int *ind, bool ena)
+{
+    ubx_put_X4(buffer, ind, CFG_SFCORE_USE_SF);
+    ubx_put_U1(buffer, ind, ena); // Use ADR/UDR sensor fusion
+}
+
+void Ublox::ubloxCfgAppendMntalg(unsigned char *buffer, int *ind, bool ena, uint32_t yaw, int16_t pitch, int16_t roll)
+{
+    // It is strongly recommended to use the automatic IMU-mount alignment
+    ubx_put_X4(buffer, ind, CFG_SFIMU_AUTO_MNTALG_ENA);
+    ubx_put_U1(buffer, ind, ena); // Enable automatic IMU-mount alignment
+//    ubx_put_X4(buffer, ind, CFG_SFIMU_IMU_MNTALG_YAW);
+//    ubx_put_I2(buffer, ind, yaw); // User-defined IMU-mount yaw angle [0, 360] in deg
+//    ubx_put_X4(buffer, ind, CFG_SFIMU_IMU_MNTALG_PITCH);
+//    ubx_put_I1(buffer, ind, pitch); // User-defined IMU-mount pitch angle [-90, 90] in deg
+//    ubx_put_X4(buffer, ind, CFG_SFIMU_IMU_MNTALG_ROLL);
+//    ubx_put_I2(buffer, ind, roll); // User-defined IMU-mount roll angle [-180, 180] in deg
+}
+
+/**
+ * Set the measurement rate, navigation rate, navigation rate prio and time reference.
+ *
+ * @param prio
+ * When not zero, the receiver outputs navigation data as a set of messages with two priority levels: 1)
+ * Priority messages:
+ * Navigation solution data are computed and output with high rate and low latency; 2)
+ * Non-priority messages auxiliary navigation data are computed and output with low rate and higher latency.
+ * When zero, the receiver outputs the navigation data as a set of messages with the same priority.
+ *
+ * @param meas
+ * The elapsed time between GNSS measurements, which defines the rate,
+ * e.g. 100ms => 10Hz, 1000ms => 1Hz, 10000ms => 0.1Hz
+ *
+ * @param nav
+ * The ratio between the number of measurements and the number of navigation
+ * solutions, e.g. 5 means five measurements for every navigation solution.
+ * Max. value is 127. (This parameter is ignored and the navRate is fixed to 1
+ * in protocol versions less than 18)
+ *
+ * @param timeref
+ * The time system to which measurements are aligned:
+ * 0: UTC time
+ * 1: GPS time
+ * 2: GLONASS time (not supported in protocol versions less than 18)
+ * 3: BeiDou time (not supported in protocol versions less than 18)
+ * 4: Galileo time (not supported in protocol versions less than 18)
+ */
+void Ublox::ubloxCfgAppendRate(unsigned char *buffer, int *ind, uint8_t prio, uint16_t nav, uint16_t meas, uint8_t timeref)
+{
+    ubx_put_X4(buffer, ind, CFG_RATE_NAV_PRIO);
+    ubx_put_U1(buffer, ind, prio); // Output rate of priority navigation mode messages  (0-30 Hz)
+//    ubx_put_X4(buffer, ind, CFG_RATE_NAV);
+//    ubx_put_U2(buffer, ind, nav); // Ratio of number of measurements to number of navigation solutions (0-128)
+//    ubx_put_X4(buffer,ind, CFG_RATE_MEAS);
+//    ubx_put_U2(buffer, ind, meas); // Nominal time between GNSS measurements (25- )
+//    ubx_put_X4(buffer, ind, CFG_RATE_TIMEREF);
+//    ubx_put_U1(buffer, ind, timeref); // Time system to which measurements are aligned (0-4)
+}
+
 void Ublox::serialDataAvailable()
 {
     while (mSerialPort->bytesAvailable() > 0) {

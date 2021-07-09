@@ -589,6 +589,9 @@ public:
     void ubloxCfgAppendUart1Baud(unsigned char *buffer, int *ind, uint32_t baudrate);
     void ubloxCfgAppendUart1InProt(unsigned char *buffer, int *ind, bool ubx, bool nmea, bool rtcm3x);
     void ubloxCfgAppendUart1OutProt(unsigned char *buffer, int *ind, bool ubx, bool nmea, bool rtcm3x);
+    void ubloxCfgAppendMntalg(unsigned char *buffer, int *ind, bool ena, uint32_t yaw = 0, int16_t pitch = 0, int16_t roll = 0);
+    void ubloxCfgAppendEnableSf(unsigned char *buffer, int *ind, bool ena);
+    void ubloxCfgAppendRate(unsigned char *buffer, int *ind, uint8_t prio = 0, uint16_t nav = 1, uint16_t meas = 25, uint8_t timeref = 0);
 
 signals:
     void rxNavSol(const ubx_nav_sol &sol);
@@ -707,6 +710,7 @@ private:
 #define UBX_MON_VER                     0x04
 
 // Configuration Keys
+// https://www.u-blox.com/en/docs/UBX-19056845 chapter 5
 #define CFG_SIGNAL_GPS_ENA              0x1031001F // GPS enable
 #define CFG_SIGNAL_GPS_L1C_ENA          0x10310001 // GPS L1C/A
 #define CFG_SIGNAL_GPS_L2C_ENA          0x10310003 // GPS L2C (only on u-blox F9)
@@ -727,6 +731,46 @@ private:
 #define CFG_UART1OUTPROT_UBX            0x10740001
 #define CFG_UART1OUTPROT_NMEA           0x10740002
 #define CFG_UART1OUTPROT_RTCM3X         0x10740004
+
+#define CFG_SFIMU_GYRO_TC_UPDATE_PERIOD 0x30060007
+#define CFG_SFIMU_GYRO_RMSTHDL          0x20060008
+#define CFG_SFIMU_GYRO_FREQUENCY        0x20060009
+#define CFG_SFIMU_GYRO_LATENCY          0x3006000A
+#define CFG_SFIMU_GYRO_ACCURACY         0x3006000B
+#define CFG_SFIMU_ACCEL_RMSTHDL         0x20060015
+#define CFG_SFIMU_ACCEL_FREQUENCY       0x20060016
+#define CFG_SFIMU_ACCEL_LATENCY         0x30060017
+#define CFG_SFIMU_ACCEL_ACCURACY        0x30060018
+#define CFG_SFIMU_IMU_EN                0x1006001D
+#define CFG_SFIMU_IMU_I2C_SCL_PIO       0x2006001E
+#define CFG_SFIMU_IMU_I2C_SDA_PIO       0x2006001F
+#define CFG_SFIMU_AUTO_MNTALG_ENA       0x10060027
+#define CFG_SFIMU_IMU_MNTALG_YAW        0x4006002D
+#define CFG_SFIMU_IMU_MNTALG_PITCH      0x3006002E
+#define CFG_SFIMU_IMU_MNTALG_ROLL       0x3006002F
+
+#define CFG_SFODO_COMBINE_TICKS         0x10070001
+#define CFG_SFODO_USE_SPEED             0x10070003
+#define CFG_SFODO_DIS_AUTOCOUNTMAX      0x10070004
+#define CFG_SFODO_DIS_AUTODIRPINPOL     0x10070005
+#define CFG_SFODO_DIS_AUTOSPEED         0x10070006
+#define CFG_SFODO_FACTOR                0x40070007
+#define CFG_SFODO_QUANT_ERROR           0x40070008
+#define CFG_SFODO_COUNT_MAX             0x40070009
+#define CFG_SFODO_LATENCY               0x3007000A
+#define CFG_SFODO_FREQUENCY             0x2007000B
+#define CFG_SFODO_CNT_BOTH_EDGES        0x1007000D
+#define CFG_SFODO_SPEED_BAND            0x3007000E
+#define CFG_SFODO_USE_WT_PIN            0x1007000F
+#define CFG_SFODO_DIR_PINPOL            0x10070010
+#define CFG_SFODO_DIS_AUTOSW            0x10070011
+
+#define CFG_SFCORE_USE_SF               0x10080001
+
+#define CFG_RATE_MEAS                   0x30210001
+#define CFG_RATE_NAV                    0x30210002
+#define CFG_RATE_TIMEREF                0x20210003
+#define CFG_RATE_NAV_PRIO               0x20210004
 
 // RTCM3 messages
 #define UBX_RTCM3_1005					0x05 // Stationary RTK reference station ARP
