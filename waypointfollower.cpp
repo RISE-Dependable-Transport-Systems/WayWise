@@ -149,7 +149,7 @@ void WaypointFollower::updateState()
     case FOLLOW_POINT_FOLLOWING:
         mCurrentState.currentGoal = vehicleToEnuTransform(mMovementController->getVehicleState(), mFollowMePoint);
 
-        if (QLineF(mMovementController->getVehicleState()->getPosition().getPoint(), mCurrentState.currentGoal.getPoint()).length() < mCurrentState.purePursuitRadius)
+        if (QLineF(mMovementController->getVehicleState()->getPosition(mPosTypeUsed).getPoint(), mCurrentState.currentGoal.getPoint()).length() < mCurrentState.purePursuitRadius)
             mCurrentState.stmState = FOLLOW_POINT_WAITING;
         else {
             mMovementController->setDesiredSteering(getCurvatureToPoint(mCurrentState.currentGoal.getPoint())); // TODO: steering should be proportional to curvature (but not necessarily equal)
@@ -162,7 +162,7 @@ void WaypointFollower::updateState()
         mMovementController->setDesiredSpeed(0.0);
         mCurrentState.currentGoal = vehicleToEnuTransform(mMovementController->getVehicleState(), mFollowMePoint);
 
-        if (QLineF(mMovementController->getVehicleState()->getPosition().getPoint(), mCurrentState.currentGoal.getPoint()).length() > mCurrentState.purePursuitRadius)
+        if (QLineF(mMovementController->getVehicleState()->getPosition(mPosTypeUsed).getPoint(), mCurrentState.currentGoal.getPoint()).length() > mCurrentState.purePursuitRadius)
         {
             mCurrentState.stmState = FOLLOW_POINT_FOLLOWING;
         }
@@ -355,14 +355,14 @@ PosPoint WaypointFollower::vehicleToEnuTransform(QSharedPointer<VehicleState> ve
     pointInEnuFrame.setY(point.getY()); // TODO: Take into account where on the car the camera is placed
 
     // clockwise rotation
-    double currYaw = vehicleState->getPosition().getYaw() + (90*M_PI)/180;
+    double currYaw = vehicleState->getPosition(mPosTypeUsed).getYaw() + (90*M_PI)/180;
     const double newX = cos(currYaw)*pointInEnuFrame.getX() + sin(currYaw)*pointInEnuFrame.getY();
     const double newY = -sin(currYaw)*pointInEnuFrame.getX() + cos(currYaw)*pointInEnuFrame.getY();
     pointInEnuFrame.setX(newX);
     pointInEnuFrame.setY(newY);
     // translation
-    pointInEnuFrame.setX(pointInEnuFrame.getX()+vehicleState->getPosition().getX());
-    pointInEnuFrame.setY(pointInEnuFrame.getY()+vehicleState->getPosition().getY());
+    pointInEnuFrame.setX(pointInEnuFrame.getX()+vehicleState->getPosition(mPosTypeUsed).getX());
+    pointInEnuFrame.setY(pointInEnuFrame.getY()+vehicleState->getPosition(mPosTypeUsed).getY());
 
     return pointInEnuFrame;
 }
