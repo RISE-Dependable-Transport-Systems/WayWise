@@ -69,6 +69,22 @@ UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
                  << "\nAuto mount alignmend enabled:" << alg.autoMntAlgOn
                  << "\nRoll, Pitch, Yaw:" << alg.roll << alg.pitch << alg.yaw;
     });
+
+    // Print config recevied from valget
+    connect(&mUblox, &Ublox::rxCfgValget, this, [](const ubx_cfg_valget &valget){
+        qDebug() << "\n--- Polled UBX-CFG-VALGET ---"
+                 << "\nVersion:" << valget.version
+                 << "\nLayer:" << valget.layer
+                 << "\nPosition:" << valget.position;
+
+        for (int i=0; i<int(sizeof(valget.cfgData)/sizeof(*valget.cfgData)); i++) {
+            if (valget.key[i] != 0) {
+                qDebug() << "Key:" << hex << valget.key[i]
+                            << "Config:" << hex << valget.cfgData[i];
+            }
+        }
+        qDebug() << "--- End of poll ---\n";
+    });
 }
 
 bool UbloxRover::connectSerial(const QSerialPortInfo &serialPortInfo)
@@ -122,6 +138,23 @@ bool UbloxRover::configureUblox()
 //        mUblox.ubloxCfgAppendEnableBds(buffer, &ind, true, true, true);
 //        mUblox.ubloxCfgAppendEnableGlo(buffer, &ind, true, true, true);
 //        mUblox.ubloxCfgValset(buffer, ind, true, true, true);
+
+    // Poll request UBX-CFG-VALGET
+    // This message is limited to containing a maximum of 64 key-value pairs
+    unsigned char buffer[64];
+    int ind = 0;
+    uint8_t layer = 0;
+    mUblox.ubloxCfgAppendKey(buffer, &ind, CFG_SFIMU_AUTO_MNTALG_ENA);
+    mUblox.ubloxCfgAppendKey(buffer, &ind, CFG_SIGNAL_GPS_ENA);
+    mUblox.ubloxCfgAppendKey(buffer, &ind, CFG_SIGNAL_GAL_ENA);
+    mUblox.ubloxCfgValget(buffer, ind, layer);
+
+    qDebug() << "--- Poll request UBX-CFG-VALGET ---"
+             << "\nCFG_SFIMU_AUTO_MNTALG_ENA:" << hex <<  CFG_SFIMU_AUTO_MNTALG_ENA
+             << "\nCFG_SIGNAL_GPS_ENA:" << hex << CFG_SIGNAL_GPS_ENA
+             << "\nCFG_SIGNAL_GAL_ENA:" << hex << CFG_SIGNAL_GAL_ENA
+             << "\nLayer:" << layer
+             << "\n--- End of poll request ---\n";
 
     return true;
 }

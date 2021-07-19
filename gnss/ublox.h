@@ -552,6 +552,14 @@ typedef struct {
     char bdsTalkerId[2];
 } ubx_cfg_nmea;
 
+typedef struct {
+    uint8_t version;
+    uint8_t layer;
+    uint16_t position;
+    uint32_t key[64];
+    uint8_t cfgData[64];
+} ubx_cfg_valget;
+
 class Ublox : public QObject
 {
     Q_OBJECT
@@ -577,7 +585,10 @@ public:
     bool ubloxCfgNmea(ubx_cfg_nmea *nmea);
     bool ubloxCfgValset(unsigned char *values, int len,
                         bool ram, bool bbr, bool flash);
+    bool ubloxCfgValget(unsigned char *keys, int len,
+                        uint8_t layer, uint16_t position = 0);
 
+    void ubloxCfgAppendKey(unsigned char *buffer, int * ind, uint32_t key);
     void ubloxCfgAppendEnableGps(unsigned char *buffer, int *ind,
                                  bool en, bool en_l1c, bool en_l2c);
     void ubloxCfgAppendEnableGal(unsigned char *buffer, int *ind,
@@ -603,6 +614,7 @@ signals:
     void rxRawx(const ubx_rxm_rawx &rawx);
     void rxNavSat(const ubx_nav_sat &sat);
     void rxCfgGnss(const ubx_cfg_gnss &gnss);
+    void rxCfgValget(const ubx_cfg_valget &valget);
     void rxEsfMeas(const ubx_esf_meas &meas);
     void rxEsfStatus(const ubx_esf_status &status);
     void rxEsfAlg(const ubx_esf_alg &alg);
@@ -648,6 +660,7 @@ private:
     void ubx_decode_rawx(uint8_t *msg, int len);
     void ubx_decode_nav_sat(uint8_t *msg, int len);
     void ubx_decode_cfg_gnss(uint8_t *msg, int len);
+    void ubx_decode_cfg_valget(uint8_t *msg, int len);
     void ubx_decode_mon_ver(uint8_t *msg, int len);
     void ubx_decode_esf_meas(uint8_t *msg, int len);
     void ubx_decode_esf_status(uint8_t *msg, int len);

@@ -708,6 +708,56 @@ bool Ublox::ubloxCfgValset(unsigned char *values, int len,
     return ubx_encode_send(UBX_CLASS_CFG, UBX_CFG_VALSET, buffer, ind, 100);
 }
 
+/**
+ *This message is used to get configuration values by providing a list of configuration key IDs, which
+ *identify the configuration items to retrieve.
+ *
+ *This message can specify the configuration layer where the values of the specified configuration items
+ *are retrieved from.
+ *
+ *This message is limited to containing a maximum of 64 key IDs.
+ *
+ *This message returns a UBX-ACK-NAK:
+ *if any key is unknown to the receiver FW
+ *if the layer field specifies an invalid layer to get the value from
+ *if the keys array specifies more than 64 key IDs
+ *
+ * @param keys
+ * Configuration key IDs of the configuration items to be retrieved
+ *
+ * @param len
+ * Number of key value pairs to retrieve
+ *
+ * @param layer
+ * The layer from which the configuration items should be retrieved:
+ * 0: RAM layer
+ * 1: BBR layer
+ * 2: Flash layer
+ * 7: Default layer
+ *
+ * @param position
+ * Skip this many key values before constructing output message
+ */
+bool Ublox::ubloxCfgValget(unsigned char *keys, int len, uint8_t layer, uint16_t position)
+{
+    uint8_t buffer[len + 4];
+    int ind = 0;
+
+    ubx_put_U1(buffer, &ind, 0);
+    ubx_put_U1(buffer, &ind, layer);
+    ubx_put_U2(buffer, &ind, position);
+
+    memcpy(buffer + ind, keys, len);
+    ind += len;
+
+    return ubx_encode_send(UBX_CLASS_CFG, UBX_CFG_VALGET, buffer, ind, 100);
+}
+
+void Ublox::ubloxCfgAppendKey(unsigned char *buffer, int *ind, uint32_t key)
+{
+    ubx_put_U4(buffer, ind, key);
+}
+
 void Ublox::ubloxCfgAppendEnableGps(unsigned char *buffer, int *ind,
                                     bool en, bool en_l1c, bool en_l2c)
 {
@@ -1095,6 +1145,9 @@ void Ublox::ubx_decode(uint8_t msg_class, uint8_t id, uint8_t *msg, int len)
         switch (id) {
         case UBX_CFG_GNSS:
             ubx_decode_cfg_gnss(msg, len);
+            break;
+        case UBX_CFG_VALGET:
+            ubx_decode_cfg_valget(msg, len);
             break;
         default:
             break;
@@ -1530,4 +1583,21 @@ void Ublox::ubx_decode_esf_alg(uint8_t *msg, int len)
     alg.roll        = ubx_get_I2(msg, &ind) * 1e-2; // 14
 
     emit rxEsfAlg(alg);
+}
+
+void Ublox::ubx_decode_cfg_valget(uint8_t *msg, int len)
+{
+    static ubx_cfg_valget valget;
+    int ind = 0;
+
+    valget.version      = ubx_get_U1(msg, &ind);
+    valget.layer        = ubx_get_U1(msg, &ind);
+    valget.position     = ubx_get_U2(msg, &ind);
+
+    for (int i=0; i<len; i++) {
+        valget.key[i]          = ubx_get_X4(msg, &ind);
+        valget.cfgData[i]      = ubx_get_U1(msg, &ind);
+    }
+
+    emit rxCfgValget(valget);
 }
