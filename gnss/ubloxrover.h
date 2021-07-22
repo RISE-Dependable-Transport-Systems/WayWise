@@ -20,6 +20,7 @@ public:
     bool connectSerial(const QSerialPortInfo &serialPortInfo);
     void setEnuRef(llh_t enuRef);
     void writeRtcmToUblox(QByteArray data);
+    void saveOnShutdown();
 
 signals:
 
@@ -27,6 +28,7 @@ private:
     bool configureUblox();
     void updateAHRS(const ubx_esf_meas &meas);
     void updateGNSS(const ubx_nav_pvt &pvt);
+    void updSosResponse(const ubx_upd_sos &sos);
 
     llh_t mEnuReference;
 

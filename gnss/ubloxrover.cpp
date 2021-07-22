@@ -7,7 +7,6 @@ UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
     mVehicleState = vehicleState;
     mEnuReference = {57.6828, 11.9637, 0}; // AztaZero {57.7810, 12.7692, 0}, Klätterlabbet {57.6876, 11.9807, 0};
 
-
     // Initialize AHRS algorithm from Fusion library.
     // This provides orientation data if the u-blox device contains an IMU (e.g., F9R), even without GNSS reception
     FusionBiasInitialise(&mFusionBias, 0.5f, mIMUSamplePeriod); // stationary threshold = 0.5 degrees per second, expected period 20 ms
@@ -17,74 +16,77 @@ UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
     // Use GNSS reception to update location
     connect(&mUblox, &Ublox::rxNavPvt, this, &UbloxRover::updateGNSS);
 
+    // Save-on-shutdown feature
+    connect(&mUblox, &Ublox::rxUpdSos, this, &UbloxRover::updSosResponse);
+
     // Print nav-pvt message
     // Search for nav-pvt in following document:
     // https://www.u-blox.com/sites/default/files/ZED-F9R_Interfacedescription_UBX-19056845.pdf
-    connect(&mUblox, &Ublox::rxNavPvt, this, [](const ubx_nav_pvt &pvt){
-        static int count = 0;
-        if (count++%5)
-            return;
-        qDebug() << "NAV-PVT data:"
-//                 << "\nDate: " << pvt.year << pvt.month << pvt.day
-//                 << "\nTime: " << pvt.hour << pvt.min << pvt.second
-                 << "\nFix Type: " << pvt.fix_type
-//                 << "\nGNSS valid fix: " << pvt.gnss_fix_ok
-                 << "\nHeading valid: " << pvt.head_veh_valid
-//                 << "\nNumber of satelites used: " << pvt.num_sv
-//                 << "\nLongitude:" << pvt.lon << "Latitude:" << pvt.lat << "Height:" << pvt.height
-                 << "\nGround speed " << pvt.g_speed << "m/s"
-//                 << "\nHeading of motion: " << pvt.head_mot
-//                 << "\nHeading of vehicle: " << pvt.head_veh
-                << "\nDifferential corrections applied:" << pvt.diffsoln;
-    });
+//    connect(&mUblox, &Ublox::rxNavPvt, this, [](const ubx_nav_pvt &pvt){
+//        static int count = 0;
+//        if (count++%5)
+//            return;
+//        qDebug() << "NAV-PVT data:"
+////                 << "\nDate: " << pvt.year << pvt.month << pvt.day
+////                 << "\nTime: " << pvt.hour << pvt.min << pvt.second
+//                 << "\nFix Type: " << pvt.fix_type
+////                 << "\nGNSS valid fix: " << pvt.gnss_fix_ok
+//                 << "\nHeading valid: " << pvt.head_veh_valid
+////                 << "\nNumber of satelites used: " << pvt.num_sv
+////                 << "\nLongitude:" << pvt.lon << "Latitude:" << pvt.lat << "Height:" << pvt.height
+//                 << "\nGround speed " << pvt.g_speed << "m/s"
+////                 << "\nHeading of motion: " << pvt.head_mot
+////                 << "\nHeading of vehicle: " << pvt.head_veh
+//                << "\nDifferential corrections applied:" << pvt.diffsoln;
+//    });
 
     // Print esf-status message
     // Search for sensor data type in following document for explanation:
     // https://www.u-blox.com/sites/default/files/ZED-F9R_Integrationmanual_UBX-20039643.pdf
-    connect(&mUblox, &Ublox::rxEsfStatus, this, [](const ubx_esf_status &status){
-        static int count = 0;
-        if (count++%5)
-            return;
-        qDebug() << "ESF-STATUS data:"
-//                 << "\nVersion: " << status.version
-                 << "\nFusion mode: " << status.fusion_mode
-//                 << "\nNumber of sensors: " << status.num_sens;
-                    ;
-        for (int i = 0;i < status.num_sens;i++) {
-            qDebug() << "Sensor data type: " << status.sensors[i].type
-//                     << "\nSensor data used: " << status.sensors[i].used
-//                     << "\nSensor data ready: " << status.sensors[i].ready
-                     << "\nSensor calibration status: " << status.sensors[i].calib_status
-//                     << "\nSensor time status: " << status.sensors[i].time_status
-//                     << "\nSensor observation freq: " << status.sensors[i].freq
-                     ;
-        }});
+//    connect(&mUblox, &Ublox::rxEsfStatus, this, [](const ubx_esf_status &status){
+//        static int count = 0;
+//        if (count++%5)
+//            return;
+//        qDebug() << "ESF-STATUS data:"
+////                 << "\nVersion: " << status.version
+//                 << "\nFusion mode: " << status.fusion_mode
+////                 << "\nNumber of sensors: " << status.num_sens;
+//                    ;
+//        for (int i = 0;i < status.num_sens;i++) {
+//            qDebug() << "Sensor data type: " << status.sensors[i].type
+////                     << "\nSensor data used: " << status.sensors[i].used
+////                     << "\nSensor data ready: " << status.sensors[i].ready
+//                     << "\nSensor calibration status: " << status.sensors[i].calib_status
+////                     << "\nSensor time status: " << status.sensors[i].time_status
+////                     << "\nSensor observation freq: " << status.sensors[i].freq
+//                     ;
+//        }});
 
-    connect(&mUblox, &Ublox::rxEsfAlg, this, [](const ubx_esf_alg &alg){
-        static int count = 0;
-        if (count++%5)
-            return;
-        qDebug() << "ESF-ALG data:"
-                 << "\nStatus:" << alg.status
-                 << "\nAuto mount alignmend enabled:" << alg.autoMntAlgOn
-                 << "\nRoll, Pitch, Yaw:" << alg.roll << alg.pitch << alg.yaw;
-    });
+//    connect(&mUblox, &Ublox::rxEsfAlg, this, [](const ubx_esf_alg &alg){
+//        static int count = 0;
+//        if (count++%5)
+//            return;
+//        qDebug() << "ESF-ALG data:"
+//                 << "\nStatus:" << alg.status
+//                 << "\nAuto mount alignmend enabled:" << alg.autoMntAlgOn
+//                 << "\nRoll, Pitch, Yaw:" << alg.roll << alg.pitch << alg.yaw;
+//    });
 
     // Print config recevied from valget
-    connect(&mUblox, &Ublox::rxCfgValget, this, [](const ubx_cfg_valget &valget){
-        qDebug() << "\n--- Polled UBX-CFG-VALGET ---"
-                 << "\nVersion:" << valget.version
-                 << "\nLayer:" << valget.layer
-                 << "\nPosition:" << valget.position;
+//    connect(&mUblox, &Ublox::rxCfgValget, this, [](const ubx_cfg_valget &valget){
+//        qDebug() << "\n--- Polled UBX-CFG-VALGET ---"
+//                 << "\nVersion:" << valget.version
+//                 << "\nLayer:" << valget.layer
+//                 << "\nPosition:" << valget.position;
 
-        for (int i=0; i<int(sizeof(valget.cfgData)/sizeof(*valget.cfgData)); i++) {
-            if (valget.key[i] != 0) {
-                qDebug() << "Key:" << hex << valget.key[i]
-                            << "Config:" << hex << valget.cfgData[i];
-            }
-        }
-        qDebug() << "--- End of poll ---\n";
-    });
+//        for (int i=0; i<int(sizeof(valget.cfgData)/sizeof(*valget.cfgData)); i++) {
+//            if (valget.key[i] != 0) {
+//                qDebug() << "Key:" << hex << valget.key[i]
+//                            << "Config:" << hex << valget.cfgData[i];
+//            }
+//        }
+//        qDebug() << "--- End of poll ---\n";
+//    });
 }
 
 bool UbloxRover::connectSerial(const QSerialPortInfo &serialPortInfo)
@@ -112,6 +114,10 @@ void UbloxRover::writeRtcmToUblox(QByteArray data)
 
 bool UbloxRover::configureUblox()
 {
+    // The u-blox receiver detects the previously stored data in the flash.
+    // It restores the corresponding memory and reports the success of the operation
+    mUblox.ubloxUpdSos(7);
+
     // The rate of NMEA and UBX protocol output messages are configurable
     // and it is possible to enable or disable single NMEA or UBX messages individually.
     // If the rate configuration value is zero, then the corresponding message will not be output.
@@ -141,21 +147,20 @@ bool UbloxRover::configureUblox()
 
     // Poll request UBX-CFG-VALGET
     // This message is limited to containing a maximum of 64 key-value pairs
-    unsigned char buffer[64];
-    int ind = 0;
-    uint8_t layer = 0;
-    mUblox.ubloxCfgAppendKey(buffer, &ind, CFG_SFIMU_AUTO_MNTALG_ENA);
-    mUblox.ubloxCfgAppendKey(buffer, &ind, CFG_SIGNAL_GPS_ENA);
-    mUblox.ubloxCfgAppendKey(buffer, &ind, CFG_SIGNAL_GAL_ENA);
-    mUblox.ubloxCfgValget(buffer, ind, layer);
+//    unsigned char buffer[64];
+//    int ind = 0;
+//    uint8_t layer = 0;
+//    mUblox.ubloxCfgAppendKey(buffer, &ind, CFG_SFIMU_AUTO_MNTALG_ENA);
+//    mUblox.ubloxCfgAppendKey(buffer, &ind, CFG_SIGNAL_GPS_ENA);
+//    mUblox.ubloxCfgAppendKey(buffer, &ind, CFG_SIGNAL_GAL_ENA);
+//    mUblox.ubloxCfgValget(buffer, ind, layer);
 
-    qDebug() << "--- Poll request UBX-CFG-VALGET ---"
-             << "\nCFG_SFIMU_AUTO_MNTALG_ENA:" << hex <<  CFG_SFIMU_AUTO_MNTALG_ENA
-             << "\nCFG_SIGNAL_GPS_ENA:" << hex << CFG_SIGNAL_GPS_ENA
-             << "\nCFG_SIGNAL_GAL_ENA:" << hex << CFG_SIGNAL_GAL_ENA
-             << "\nLayer:" << layer
-             << "\n--- End of poll request ---\n";
-
+//    qDebug() << "--- Poll request UBX-CFG-VALGET ---"
+//             << "\nCFG_SFIMU_AUTO_MNTALG_ENA:" << hex <<  CFG_SFIMU_AUTO_MNTALG_ENA
+//             << "\nCFG_SIGNAL_GPS_ENA:" << hex << CFG_SIGNAL_GPS_ENA
+//             << "\nCFG_SIGNAL_GAL_ENA:" << hex << CFG_SIGNAL_GAL_ENA
+//             << "\nLayer:" << layer
+//             << "\n--- End of poll request ---\n";
     return true;
 }
 
@@ -264,4 +269,40 @@ void UbloxRover::updateGNSS(const ubx_nav_pvt &pvt)
     }
 
     mVehicleState->setPosition(gnssPos);
+}
+
+void UbloxRover::updSosResponse(const ubx_upd_sos &sos)
+{
+    if(sos.cmd == 2){
+        qDebug() << "\n--- Response from UBX-UPD-SOS ---"
+                 << "\nBackup creation acknowledge"
+                 << "\n0 = Not acknowledged"
+                 << "\n1 = Acknowledged"
+                 << "\nResponse:" << sos.response
+                 << "\n--- End of response --\n";
+    } else if(sos.cmd == 3) {
+        qDebug() << "\n--- Response from UBX-UPD-SOS ---"
+                 << "\nSystem restored from backup"
+                 << "\n0 = Unknown"
+                 << "\n1 = Failed restoring from backup"
+                 << "\n2 = Restored from backup"
+                 << "\n3 = Not restored (no backup)"
+                 << "\nResponse:" << sos.response
+                 << "\n--- End of response --\n";
+        if(sos.response == 2) {
+            // Once the u-blox receiver has started up it is recommended to delete the stored data
+            mUblox.ubloxUpdSos(1);
+        }
+    }
+}
+
+void UbloxRover::saveOnShutdown()
+{
+    // With the UBX-CFG-RST message, the host commands the u-blox receiver to stop, specifying
+    // a BBR mask 0 ("Hotstart") and a reset mode of 0x08 ("Controlled GNSS stop")
+    mUblox.ubxCfgRst(8, 0);
+
+    // The host commands the saving of the contents of BBR to the flash memory using the UBX-
+    // UPD-SOS-BACKUP message
+    mUblox.ubloxUpdSos(0);
 }

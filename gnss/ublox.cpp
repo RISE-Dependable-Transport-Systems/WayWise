@@ -467,6 +467,42 @@ bool Ublox::ubxCfgRate(uint16_t meas_rate_ms, uint16_t nav_rate_ms, uint16_t tim
     return ubx_encode_send(UBX_CLASS_CFG, UBX_CFG_RATE, buffer, ind, 10);
 }
 
+/**
+ * Reset receiver / Clear backup data structures
+ *
+ * @param navBbrMask
+ * BBR sections to clear. The following special sets apply:
+ * 0x0000 Hot start
+ * 0x0001 Warm start
+ * 0xFFFF Cold start
+ *
+ * @param resetMode
+ * Reset Type:
+ * 0x00 = Hardware reset (watchdog) immediately
+ * 0x01 = Controlled software reset
+ * 0x02 = Controlled software reset (GNSS only)
+ * 0x04 = Hardware reset (watchdog) after shutdown
+ * 0x08 = Controlled GNSS stop
+ * 0x09 = Controlled GNSS start
+ *
+ * @return
+ * true: ack or nak received
+ * false: timeout
+ * Do not expect this message to be acknowledged by the receiver
+ * Newer FW version will not acknowledge this message at all.
+ */
+bool Ublox::ubxCfgRst(uint16_t navBbrMask, uint8_t resetMode)
+{
+    uint8_t buffer[4];
+    int ind = 0;
+
+    ubx_put_X2(buffer, &ind, navBbrMask);
+    ubx_put_U1(buffer, &ind, resetMode);
+    ubx_put_U1(buffer, &ind, 0); // Reserved
+
+    return ubx_encode_send(UBX_CLASS_CFG, UBX_CFG_CFG, buffer, ind, 10);
+}
+
 bool Ublox::ubloxCfgCfg(ubx_cfg_cfg *cfg)
 {
     uint8_t buffer[13];
@@ -887,6 +923,30 @@ void Ublox::ubloxCfgAppendRate(unsigned char *buffer, int *ind, uint8_t prio, ui
 //    ubx_put_U1(buffer, ind, timeref); // Time system to which measurements are aligned (0-4)
 }
 
+/**
+ * Reset receiver / Clear backup data structures
+ *
+ * @param cmd
+ * 0 Create backup in flash
+ * 1 Clear backup in flash
+ * 7 Poll backup restore status
+ */
+void Ublox::ubloxUpdSos(uint8_t cmd)
+{
+    if (cmd == 7){
+        ubx_encode_send(UBX_CLASS_UPD, UBX_UPD_SOS, 0, 0);
+    } else if(cmd == 0 || cmd == 1){
+        uint8_t buffer[4];
+        int ind = 0;
+
+        ubx_put_U1(buffer, &ind, cmd);
+        ubx_put_U1(buffer, &ind, 0); // Reserved
+        ubx_put_U1(buffer, &ind, 0); // Reserved
+        ubx_put_U1(buffer, &ind, 0); // Reserved
+        ubx_encode_send(UBX_CLASS_UPD, UBX_UPD_SOS, buffer, ind, 0);
+    }
+}
+
 void Ublox::serialDataAvailable()
 {
     while (mSerialPort->bytesAvailable() > 0) {
@@ -1158,6 +1218,16 @@ void Ublox::ubx_decode(uint8_t msg_class, uint8_t id, uint8_t *msg, int len)
         switch (id) {
         case UBX_MON_VER:
             ubx_decode_mon_ver(msg, len);
+            break;
+        default:
+            break;
+        }
+    } break;
+
+    case UBX_CLASS_UPD: {
+        switch (id) {
+        case UBX_UPD_SOS:
+            ubx_decode_upd_sos(msg, len);
             break;
         default:
             break;
@@ -1583,6 +1653,21 @@ void Ublox::ubx_decode_esf_alg(uint8_t *msg, int len)
     alg.roll        = ubx_get_I2(msg, &ind) * 1e-2; // 14
 
     emit rxEsfAlg(alg);
+}
+
+void Ublox::ubx_decode_upd_sos(uint8_t *msg, int len)
+{
+    (void)len;
+
+    static ubx_upd_sos sos;
+    int ind = 0;
+
+    sos.cmd = ubx_get_U1(msg, &ind);
+    ind += 3; // Reserved 1-3
+    sos.response = ubx_get_U1(msg, &ind);
+    ind += 3; // Reserved 5-7
+
+    emit rxUpdSos(sos);
 }
 
 void Ublox::ubx_decode_cfg_valget(uint8_t *msg, int len)

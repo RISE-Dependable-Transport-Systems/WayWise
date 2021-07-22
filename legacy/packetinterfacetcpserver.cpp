@@ -1,6 +1,7 @@
 #include "packetinterfacetcpserver.h"
 #include <QTime>
 #include <QDateTime>
+#include <QCoreApplication>
 
 PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(parent)
 {
@@ -221,6 +222,28 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
                 } else
                     qDebug() << "WARNING: unhandled CMD_AP_SET_ACTIVE";
             } break;
+            case CMD_REBOOT_SYSTEM: {
+                if (mUbloxRover) {
+                    if (packetData.vbPopFrontUint8()) {
+                        qDebug() << "\nSystem shutdown...";
+                        mUbloxRover->saveOnShutdown();
+                        QTimer::singleShot(3000, &QCoreApplication::quit);
+                        // TODO: implement hardware shutdown
+                    } else {
+                        qDebug() << "\nSystem reboot...";
+                        mUbloxRover->saveOnShutdown();
+                        // TODO: implement hardware reboot
+                    }
+
+                    // Send ack
+                    VByteArray ack;
+                    ack.vbAppendUint8(mVehicleState->getId());
+                    ack.vbAppendUint8(CMD_REBOOT_SYSTEM_ACK);
+                    mTcpServer.packet()->sendPacket(ack);
+                } else
+                    qDebug() << "WARNING: unhandled CMD_REBOOT_SYSTEM";
+                break;
+            }
             default:
                 qDebug() << "WARNING: unhandled packet with command id" << commandID;
                 break;

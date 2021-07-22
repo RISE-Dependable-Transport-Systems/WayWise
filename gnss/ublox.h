@@ -560,6 +560,11 @@ typedef struct {
     uint8_t cfgData[64];
 } ubx_cfg_valget;
 
+typedef struct {
+    uint8_t cmd;
+    uint8_t response;
+} ubx_upd_sos;
+
 class Ublox : public QObject
 {
     Q_OBJECT
@@ -577,6 +582,7 @@ public:
     bool ubxCfgPrtUart(ubx_cfg_prt_uart *cfg);
     bool ubxCfgTmode3(ubx_cfg_tmode3 *cfg);
     bool ubxCfgMsg(uint8_t msg_class, uint8_t id, uint8_t rate);
+    bool ubxCfgRst(uint16_t navBbrMask, uint8_t resetMode);
     bool ubxCfgRate(uint16_t meas_rate_ms, uint16_t nav_rate_ms, uint16_t time_ref);
     bool ubloxCfgCfg(ubx_cfg_cfg *cfg);
     bool ubxCfgNav5(ubx_cfg_nav5 *cfg);
@@ -604,6 +610,8 @@ public:
     void ubloxCfgAppendEnableSf(unsigned char *buffer, int *ind, bool ena);
     void ubloxCfgAppendRate(unsigned char *buffer, int *ind, uint8_t prio = 0, uint16_t nav = 1, uint16_t meas = 25, uint8_t timeref = 0);
 
+    void ubloxUpdSos(uint8_t cmd);
+
 signals:
     void rxNavSol(const ubx_nav_sol &sol);
     void rxNavPvt(const ubx_nav_pvt &pvt);
@@ -621,6 +629,7 @@ signals:
     void rxMonVer(const QString &sw, const QString &hw, const QStringList &extensions);
     void ubxRx(const QByteArray &data);
     void rtcmRx(const QByteArray &data, const int &type);
+    void rxUpdSos(const ubx_upd_sos &sos);
 
 public slots:
 
@@ -665,6 +674,7 @@ private:
     void ubx_decode_esf_meas(uint8_t *msg, int len);
     void ubx_decode_esf_status(uint8_t *msg, int len);
     void ubx_decode_esf_alg(uint8_t *msg, int len);
+    void ubx_decode_upd_sos(uint8_t *msg, int len);
 };
 
 // Message classes
@@ -705,9 +715,13 @@ private:
 #define UBX_ESF_STATUS                  0x10
 #define UBX_ESF_ALG                     0x14
 
+// Receiver firmware on flash
+#define UBX_UPD_SOS                     0x14
+
 // Configuration messages
 #define UBX_CFG_PRT						0x00
 #define UBX_CFG_MSG						0x01
+#define UBX_CFG_RST                     0x04
 #define UBX_CFG_RATE					0x08
 #define UBX_CFG_CFG						0x09
 #define UBX_CFG_NAV5					0x24
