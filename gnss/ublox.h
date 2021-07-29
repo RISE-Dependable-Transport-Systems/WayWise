@@ -202,7 +202,19 @@ typedef struct {
 } ubx_rxm_rawx;
 
 #define MAX_ESF_NUM_MEAS 16
-enum ubx_esf_datatype_enum {GYRO_Z=5, GYRO_Y=13, GYRO_X=14, ACC_X=16, ACC_Y=17, ACC_Z=18};
+enum ubx_esf_datatype_enum {
+    GYRO_Z=5, // deg/s *2^-12
+    REAR_LEFT_WHEEL_TICKS=8,
+    REAR_RIGHT_WHEEL_TICKS=9,
+    SINGLE_TICK=10, // Bits 0-22: unsigned tick value. Bit 23: direction indicator (0=forward, 1=backward)
+    SPEED=11, // m/s * 1e-3
+    GYRO_TEMP=12, // deg Celsius * 1e-2
+    GYRO_Y=13,
+    GYRO_X=14,
+    ACC_X=16, // m/s^2 *2^-10
+    ACC_Y=17,
+    ACC_Z=18
+};
 
 inline float esfMeas2Float(unsigned meas, uint8_t exp) {
     return (((meas & 0b100000000000000000000000) ?
@@ -611,6 +623,7 @@ public:
     void ubloxCfgAppendRate(unsigned char *buffer, int *ind, uint8_t prio = 0, uint16_t nav = 1, uint16_t meas = 25, uint8_t timeref = 0);
 
     void ubloxUpdSos(uint8_t cmd);
+    void ubloxOdometerInput(ubx_esf_datatype_enum dataType, uint32_t dataField);
 
 signals:
     void rxNavSol(const ubx_nav_sol &sol);

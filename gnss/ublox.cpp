@@ -19,6 +19,7 @@
 #include <QEventLoop>
 #include <cmath>
 #include <QDebug>
+#include <QDateTime>
 
 namespace {
 static uint8_t ubx_get_U1(uint8_t *msg, int *ind) {
@@ -943,8 +944,40 @@ void Ublox::ubloxUpdSos(uint8_t cmd)
         ubx_put_U1(buffer, &ind, 0); // Reserved
         ubx_put_U1(buffer, &ind, 0); // Reserved
         ubx_put_U1(buffer, &ind, 0); // Reserved
+
         ubx_encode_send(UBX_CLASS_UPD, UBX_UPD_SOS, buffer, ind, 0);
     }
+}
+
+/**
+ * Input external wheel tick or speed measurements from a host to ZED-F9R.
+ * It is strongly recommended to use the absolute wheel tick sensors to ensure robust
+ * measurement processing even after sensor failures or outages
+ *
+ * @param dataType
+ * Data type 10 shall be used for single-tick odometer data and data type 11 shall be used for
+ * speed odometer data
+ * @param dataField
+ * Bits 0-22: unsigned tick value. Bit 23: direction indicator (0=forward, 1=backward)
+ * The speed data shall be delivered in meters per second.
+ */
+void Ublox::ubloxOdometerInput(ubx_esf_datatype_enum dataType, uint32_t dataField)
+{
+    uint8_t buffer[12];
+    int ind = 0;
+
+    uint32_t data = 0;
+    data |= dataField << 0;
+    data |= dataType << 24;
+
+    uint32_t timeTag = QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()).msecsSinceStartOfDay();
+
+    ubx_put_U4(buffer, &ind, timeTag); // TODO: Time  tag  of  measurement  generated  by  external sensor?
+    ubx_put_X2(buffer, &ind, 4096); // Binary: 0001000000000000. Flags. Set all unused bits to zero. We have 1 measurement
+    ubx_put_U2(buffer, &ind, 0); // Identification number of data provider?
+    ubx_put_X4(buffer, &ind, data);
+
+    ubx_encode_send(UBX_CLASS_ESF, UBX_ESF_MEAS, buffer, ind, 0);
 }
 
 void Ublox::serialDataAvailable()

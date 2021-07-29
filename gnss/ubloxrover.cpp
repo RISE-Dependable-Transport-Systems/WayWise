@@ -40,6 +40,26 @@ UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
 //                << "\nDifferential corrections applied:" << pvt.diffsoln;
 //    });
 
+    // Print esf-meas
+//    connect(&mUblox, &Ublox::rxEsfMeas, this, [](const ubx_esf_meas &meas){
+//        static int count = 0;
+//        if (count++%100)
+//            return;
+//        qDebug() << "ESF-MEAS data:"
+//                 << "\ntimeTag: " << meas.time_tag
+//                 << "\ntimeMarkSent: " << meas.time_mark_sent
+//                 << "\ntimeMarkEdge: " << meas.time_mark_edge
+//                 << "\ncalibTtagValid:" << meas.calib_t_tag_valid
+//                 << "\nnumMeas:" << meas.num_meas
+//                 << "\nid:" << meas.id;
+//        for (int i = 0;i < meas.num_meas;i++) {
+//            qDebug() << "\ndataType:" << meas.data_type[i]
+//                     << "dataField:" << bin << meas.data_field[i];
+//        }
+//        if (meas.calib_t_tag_valid)
+//            qDebug() << "\ncalibTtag:" << meas.calib_t_tag;
+//    });
+
     // Print esf-status message
     // Search for sensor data type in following document for explanation:
     // https://www.u-blox.com/sites/default/files/ZED-F9R_Integrationmanual_UBX-20039643.pdf
@@ -48,17 +68,17 @@ UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
 //        if (count++%5)
 //            return;
 //        qDebug() << "ESF-STATUS data:"
-////                 << "\nVersion: " << status.version
+//                 << "\nVersion: " << status.version
 //                 << "\nFusion mode: " << status.fusion_mode
-////                 << "\nNumber of sensors: " << status.num_sens;
+//                 << "\nNumber of sensors: " << status.num_sens;
 //                    ;
 //        for (int i = 0;i < status.num_sens;i++) {
 //            qDebug() << "Sensor data type: " << status.sensors[i].type
-////                     << "\nSensor data used: " << status.sensors[i].used
-////                     << "\nSensor data ready: " << status.sensors[i].ready
+//                     << "\nSensor data used: " << status.sensors[i].used
+//                     << "\nSensor data ready: " << status.sensors[i].ready
 //                     << "\nSensor calibration status: " << status.sensors[i].calib_status
-////                     << "\nSensor time status: " << status.sensors[i].time_status
-////                     << "\nSensor observation freq: " << status.sensors[i].freq
+//                     << "\nSensor time status: " << status.sensors[i].time_status
+//                     << "\nSensor observation freq: " << status.sensors[i].freq
 //                     ;
 //        }});
 
@@ -112,6 +132,11 @@ void UbloxRover::writeRtcmToUblox(QByteArray data)
     mUblox.writeRaw(data);
 }
 
+void UbloxRover::writeOdoToUblox(ubx_esf_datatype_enum dataType, uint32_t dataField)
+{
+    mUblox.ubloxOdometerInput(dataType, dataField);
+}
+
 bool UbloxRover::configureUblox()
 {
     // The u-blox receiver detects the previously stored data in the flash.
@@ -123,7 +148,7 @@ bool UbloxRover::configureUblox()
     // If the rate configuration value is zero, then the corresponding message will not be output.
     // Values greater than zero indicate how often the message is output.
 
-    //mUblox.ubxCfgMsg(UBX_CLASS_ESF, UBX_ESF_MEAS, 1);
+    mUblox.ubxCfgMsg(UBX_CLASS_ESF, UBX_ESF_MEAS, 1);
     mUblox.ubxCfgMsg(UBX_CLASS_NAV, UBX_NAV_PVT, 1);
     mUblox.ubxCfgRate(100, 1, 0); // Navigation solution every 100 ms (10 Hz)
     mUblox.ubxCfgMsg(UBX_CLASS_ESF, UBX_ESF_STATUS, 1);

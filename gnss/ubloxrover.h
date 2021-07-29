@@ -20,6 +20,7 @@ public:
     bool connectSerial(const QSerialPortInfo &serialPortInfo);
     void setEnuRef(llh_t enuRef);
     void writeRtcmToUblox(QByteArray data);
+    void writeOdoToUblox(ubx_esf_datatype_enum dataType, uint32_t dataField);
     void saveOnShutdown();
 
 signals:
