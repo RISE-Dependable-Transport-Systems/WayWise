@@ -65,7 +65,6 @@ UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
     // Print esf-status message
     // Search for sensor data type in following document for explanation:
     // https://www.u-blox.com/sites/default/files/ZED-F9R_Integrationmanual_UBX-20039643.pdf
-<<<<<<< HEAD
 //    connect(&mUblox, &Ublox::rxEsfStatus, this, [](const ubx_esf_status &status){
 //        static int count = 0;
 //        if (count++%5)
@@ -144,6 +143,7 @@ void UbloxRover::writeRtcmToUblox(QByteArray data)
 void UbloxRover::writeOdoToUblox(ubx_esf_datatype_enum dataType, uint32_t dataField)
 {
     mUblox.ubloxOdometerInput(dataType, dataField);
+}
 
 void UbloxRover::setEnableIMUOrientationUpdate(bool enabled)
 {

@@ -47,7 +47,7 @@ public:
     void startFollowMe();
     void stopFollowMe();
 
-    static double getCurvatureToPoint(QSharedPointer<VehicleState> vehicleState, const QPointF& point);
+    static double getCurvatureToPoint(QSharedPointer<VehicleState> vehicleState, const QPointF& point, PosType vehiclePosType = PosType::simulated);
     double getCurvatureToPoint(const QPointF& point);
 
     double getInterpolatedSpeed(const PosPoint &currentGoal, const PosPoint &lastWaypoint, const PosPoint &nextWaypoint);
