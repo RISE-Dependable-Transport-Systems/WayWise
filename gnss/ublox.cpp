@@ -865,23 +865,54 @@ void Ublox::ubloxCfgAppendUart1OutProt(unsigned char *buffer, int *ind, bool ubx
     ubx_put_U1(buffer, ind, rtcm3x);
 }
 
+/**
+ * The HPS feature can be enabled and disabled with the CFG-SFCORE-USE_SF key.
+ * If HPS is disabled, the receiver outputs a GNSS-only solution.
+ * IMU sensor measurements are still available in UBX-ESF-MEAS and UBX-ESF-RAW messages.
+ *
+ * @param ena
+ * Enable automatic IMU-mount alignment
+ */
 void Ublox::ubloxCfgAppendEnableSf(unsigned char *buffer, int *ind, bool ena)
 {
     ubx_put_X4(buffer, ind, CFG_SFCORE_USE_SF);
-    ubx_put_U1(buffer, ind, ena); // Use ADR/UDR sensor fusion
+    ubx_put_U1(buffer, ind, ena);
 }
 
-void Ublox::ubloxCfgAppendMntalg(unsigned char *buffer, int *ind, bool ena, uint32_t yaw, int16_t pitch, int16_t roll)
+/**
+ * The automatic IMU-mount alignment engine automatically estimates the IMU-mount roll, pitch and
+ * yaw angles. It requires an initialization phase during which no INS/GNSS fusion can be achieved
+ * It is strongly recommended to use the automatic IMU-mount alignment.
+ *
+ * https://www.u-blox.com/en/ubx-viewer/view/ZED-F9R_Integrationmanual_UBX-20039643?url=https%3A%2F%2Fwww.u-blox.com%2Fsites%2Fdefault%2Ffiles%2FZED-F9R_Integrationmanual_UBX-20039643.pdf#%5B%7B%22num%22%3A370%2C%22gen%22%3A0%7D%2C%7B%22name%22%3A%22XYZ%22%7D%2C59.527%2C140.168%2Cnull%5D
+ * 3.2.3.1.1 Automatic IMU-mount alignment
+ * 3.2.3.1.2 User-defined IMU-mount alignment
+ *
+ * @param automatic
+ * Enable automatic IMU-mount alignment
+ *
+ * @param yaw
+ * User-defined IMU-mount yaw angle [0, 360] in deg
+ *
+ * @param pitch
+ * User-defined IMU-mount pitch angle [-90, 90] in deg
+ *
+ * @param roll
+ * User-defined IMU-mount roll angle [-180, 180] in deg
+ */
+void Ublox::ubloxCfgAppendMntalg(unsigned char *buffer, int *ind, bool automatic, uint32_t yaw, int16_t pitch, int16_t roll)
 {
-    // It is strongly recommended to use the automatic IMU-mount alignment
+    if (automatic) {
     ubx_put_X4(buffer, ind, CFG_SFIMU_AUTO_MNTALG_ENA);
-    ubx_put_U1(buffer, ind, ena); // Enable automatic IMU-mount alignment
-//    ubx_put_X4(buffer, ind, CFG_SFIMU_IMU_MNTALG_YAW);
-//    ubx_put_I2(buffer, ind, yaw); // User-defined IMU-mount yaw angle [0, 360] in deg
-//    ubx_put_X4(buffer, ind, CFG_SFIMU_IMU_MNTALG_PITCH);
-//    ubx_put_I1(buffer, ind, pitch); // User-defined IMU-mount pitch angle [-90, 90] in deg
-//    ubx_put_X4(buffer, ind, CFG_SFIMU_IMU_MNTALG_ROLL);
-//    ubx_put_I2(buffer, ind, roll); // User-defined IMU-mount roll angle [-180, 180] in deg
+    ubx_put_U1(buffer, ind, automatic);
+    } else {
+    ubx_put_X4(buffer, ind, CFG_SFIMU_IMU_MNTALG_YAW);
+    ubx_put_I2(buffer, ind, yaw);
+    ubx_put_X4(buffer, ind, CFG_SFIMU_IMU_MNTALG_PITCH);
+    ubx_put_I1(buffer, ind, pitch);
+    ubx_put_X4(buffer, ind, CFG_SFIMU_IMU_MNTALG_ROLL);
+    ubx_put_I2(buffer, ind, roll);
+    }
 }
 
 /**
@@ -893,16 +924,17 @@ void Ublox::ubloxCfgAppendMntalg(unsigned char *buffer, int *ind, bool ena, uint
  * Navigation solution data are computed and output with high rate and low latency; 2)
  * Non-priority messages auxiliary navigation data are computed and output with low rate and higher latency.
  * When zero, the receiver outputs the navigation data as a set of messages with the same priority.
- *
- * @param meas
- * The elapsed time between GNSS measurements, which defines the rate,
- * e.g. 100ms => 10Hz, 1000ms => 1Hz, 10000ms => 0.1Hz
+ * The allowed range for the priority navigation mode is 0-30 Hz.
  *
  * @param nav
  * The ratio between the number of measurements and the number of navigation
  * solutions, e.g. 5 means five measurements for every navigation solution.
  * Max. value is 127. (This parameter is ignored and the navRate is fixed to 1
  * in protocol versions less than 18)
+ *
+ * @param meas
+ * The elapsed time between GNSS measurements, which defines the rate,
+ * e.g. 100ms => 10Hz, 1000ms => 1Hz, 10000ms => 0.1Hz. The minimum value is 25.
  *
  * @param timeref
  * The time system to which measurements are aligned:
@@ -915,13 +947,13 @@ void Ublox::ubloxCfgAppendMntalg(unsigned char *buffer, int *ind, bool ena, uint
 void Ublox::ubloxCfgAppendRate(unsigned char *buffer, int *ind, uint8_t prio, uint16_t nav, uint16_t meas, uint8_t timeref)
 {
     ubx_put_X4(buffer, ind, CFG_RATE_NAV_PRIO);
-    ubx_put_U1(buffer, ind, prio); // Output rate of priority navigation mode messages  (0-30 Hz)
-//    ubx_put_X4(buffer, ind, CFG_RATE_NAV);
-//    ubx_put_U2(buffer, ind, nav); // Ratio of number of measurements to number of navigation solutions (0-128)
-//    ubx_put_X4(buffer,ind, CFG_RATE_MEAS);
-//    ubx_put_U2(buffer, ind, meas); // Nominal time between GNSS measurements (25- )
-//    ubx_put_X4(buffer, ind, CFG_RATE_TIMEREF);
-//    ubx_put_U1(buffer, ind, timeref); // Time system to which measurements are aligned (0-4)
+    ubx_put_U1(buffer, ind, prio);
+    ubx_put_X4(buffer, ind, CFG_RATE_NAV);
+    ubx_put_U2(buffer, ind, nav);
+    ubx_put_X4(buffer,ind, CFG_RATE_MEAS);
+    ubx_put_U2(buffer, ind, meas);
+    ubx_put_X4(buffer, ind, CFG_RATE_TIMEREF);
+    ubx_put_U1(buffer, ind, timeref);
 }
 
 /**

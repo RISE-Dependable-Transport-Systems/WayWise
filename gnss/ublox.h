@@ -618,7 +618,7 @@ public:
     void ubloxCfgAppendUart1Baud(unsigned char *buffer, int *ind, uint32_t baudrate);
     void ubloxCfgAppendUart1InProt(unsigned char *buffer, int *ind, bool ubx, bool nmea, bool rtcm3x);
     void ubloxCfgAppendUart1OutProt(unsigned char *buffer, int *ind, bool ubx, bool nmea, bool rtcm3x);
-    void ubloxCfgAppendMntalg(unsigned char *buffer, int *ind, bool ena, uint32_t yaw = 0, int16_t pitch = 0, int16_t roll = 0);
+    void ubloxCfgAppendMntalg(unsigned char *buffer, int *ind, bool automatic, uint32_t yaw = 0, int16_t pitch = 0, int16_t roll = 0);
     void ubloxCfgAppendEnableSf(unsigned char *buffer, int *ind, bool ena);
     void ubloxCfgAppendRate(unsigned char *buffer, int *ind, uint8_t prio = 0, uint16_t nav = 1, uint16_t meas = 25, uint8_t timeref = 0);
 
