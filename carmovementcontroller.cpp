@@ -16,9 +16,9 @@ void CarMovementController::setDesiredSteering(double desiredSteering)
     if (mServoController) {
         // map from [-1.0:1.0] to actual servo range
         // TODO: all of this should happen in ServoController!
-        desiredSteering = desiredSteering * (mServoController->getServoRange() / 2.0) + mServoController->getServoCenter();
         if (mServoController->getInvertOutput())
             desiredSteering *= -1.0;
+        desiredSteering = desiredSteering * (mServoController->getServoRange() / 2.0) + mServoController->getServoCenter();
         mServoController->requestSteering(desiredSteering);
     }
 
