@@ -21,6 +21,20 @@ UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
     // Save-on-shutdown feature
     connect(&mUblox, &Ublox::rxUpdSos, this, &UbloxRover::updSosResponse);
 
+    // Automatic IMU orientation alignment feature
+    connect(&mUblox, &Ublox::rxEsfAlg, this, [this](const ubx_esf_alg &alg){
+        if (alg.autoMntAlgOn)
+            setIMUOrientationOffset(alg.roll, alg.pitch, alg.yaw);
+
+    //        static int count = 0;
+    //        if (count++%5)
+    //            return;
+    //        qDebug() << "ESF-ALG data:"
+    //                 << "\nStatus:" << alg.status
+    //                 << "\nAuto mount alignmend enabled:" << alg.autoMntAlgOn
+    //                 << "\nRoll, Pitch, Yaw:" << alg.roll << alg.pitch << alg.yaw;
+    });
+
     // Print nav-pvt message
     // Search for nav-pvt in following document:
     // https://www.u-blox.com/sites/default/files/ZED-F9R_Interfacedescription_UBX-19056845.pdf
@@ -29,16 +43,16 @@ UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
 //        if (count++%5)
 //            return;
 //        qDebug() << "NAV-PVT data:"
-////                 << "\nDate: " << pvt.year << pvt.month << pvt.day
-////                 << "\nTime: " << pvt.hour << pvt.min << pvt.second
+//                 << "\nDate: " << pvt.year << pvt.month << pvt.day
+//                 << "\nTime: " << pvt.hour << pvt.min << pvt.second
 //                 << "\nFix Type: " << pvt.fix_type
-////                 << "\nGNSS valid fix: " << pvt.gnss_fix_ok
+//                 << "\nGNSS valid fix: " << pvt.gnss_fix_ok
 //                 << "\nHeading valid: " << pvt.head_veh_valid
-////                 << "\nNumber of satelites used: " << pvt.num_sv
-////                 << "\nLongitude:" << pvt.lon << "Latitude:" << pvt.lat << "Height:" << pvt.height
+//                 << "\nNumber of satelites used: " << pvt.num_sv
+//                 << "\nLongitude:" << pvt.lon << "Latitude:" << pvt.lat << "Height:" << pvt.height
 //                 << "\nGround speed " << pvt.g_speed << "m/s"
-////                 << "\nHeading of motion: " << pvt.head_mot
-////                 << "\nHeading of vehicle: " << pvt.head_veh
+//                 << "\nHeading of motion: " << pvt.head_mot
+//                 << "\nHeading of vehicle: " << pvt.head_veh
 //                << "\nDifferential corrections applied:" << pvt.diffsoln;
 //    });
 
@@ -83,16 +97,6 @@ UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
 //                     << "\nSensor observation freq: " << status.sensors[i].freq
 //                     ;
 //        }});
-
-//    connect(&mUblox, &Ublox::rxEsfAlg, this, [](const ubx_esf_alg &alg){
-//        static int count = 0;
-//        if (count++%5)
-//            return;
-//        qDebug() << "ESF-ALG data:"
-//                 << "\nStatus:" << alg.status
-//                 << "\nAuto mount alignmend enabled:" << alg.autoMntAlgOn
-//                 << "\nRoll, Pitch, Yaw:" << alg.roll << alg.pitch << alg.yaw;
-//    });
 
     // Print config recevied from valget
 //    connect(&mUblox, &Ublox::rxCfgValget, this, [](const ubx_cfg_valget &valget){
@@ -176,19 +180,16 @@ bool UbloxRover::configureUblox()
     // and it is possible to enable or disable single NMEA or UBX messages individually.
     // If the rate configuration value is zero, then the corresponding message will not be output.
     // Values greater than zero indicate how often the message is output.
-
     mUblox.ubxCfgMsg(UBX_CLASS_ESF, UBX_ESF_MEAS, 1);
     mUblox.ubxCfgMsg(UBX_CLASS_NAV, UBX_NAV_PVT, 1);
-    mUblox.ubxCfgRate(100, 1, 0); // Navigation solution every 100 ms (10 Hz)
     mUblox.ubxCfgMsg(UBX_CLASS_ESF, UBX_ESF_STATUS, 1);
     mUblox.ubxCfgMsg(UBX_CLASS_ESF, UBX_ESF_ALG, 1);
 
-    //mUblox.ubloxCfgValset(unsigned char *values, int len, bool ram, bool bbr, bool flash);
-//        unsigned char buffer[512];
-//        int ind = 0;
-//        mUblox.ubloxCfgAppendMntalg(buffer, &ind, true);
-//        mUblox.ubloxCfgAppendRate(buffer, &ind, 10);
-//        mUblox.ubloxCfgValset(buffer, ind, true, true, true);
+    unsigned char buffer[512];
+    int ind = 0;
+    mUblox.ubloxCfgAppendMntalg(buffer, &ind, true); // enable auto mount alignment
+    mUblox.ubloxCfgAppendRate(buffer, &ind, 100, 1, 0, 30); // nav prio mode
+    mUblox.ubloxCfgValset(buffer, ind, true, true, true);
 
     //mUblox.ubloxCfgValset(unsigned char *values, int len, bool ram, bool bbr, bool flash);
 //        unsigned char buffer[512];
