@@ -152,8 +152,8 @@ void WaypointFollower::updateState()
         if (QLineF(mMovementController->getVehicleState()->getPosition(mPosTypeUsed).getPoint(), mCurrentState.currentGoal.getPoint()).length() < mCurrentState.purePursuitRadius)
             mCurrentState.stmState = FOLLOW_POINT_WAITING;
         else {
-            mMovementController->setDesiredSteering(getCurvatureToPoint(mCurrentState.currentGoal.getPoint())); // TODO: steering should be proportional to curvature (but not necessarily equal)
-            mMovementController->setDesiredSpeed(mCurrentState.currentGoal.getSpeed());
+            mMovementController->setDesiredSteeringCurvature(getCurvatureToPoint(mCurrentState.currentGoal.getPoint()));
+            mMovementController->setDesiredSpeed(mCurrentState.followPointSpeed);
         }
         break;
 
@@ -208,7 +208,7 @@ void WaypointFollower::updateState()
             mUpdateStateTimer.stop();
                     break;
         }
-        QPointF currentVehiclePosition = mMovementController->getVehicleState()->getPosition().getPoint();
+        QPointF currentVehiclePosition = mMovementController->getVehicleState()->getPosition(mPosTypeUsed).getPoint();
 
         QPointF currentWaypoint = mWaypointList.at(mCurrentState.currentWaypointIndex).getPoint();
 
@@ -355,9 +355,9 @@ PosPoint WaypointFollower::vehicleToEnuTransform(QSharedPointer<VehicleState> ve
     pointInEnuFrame.setY(point.getY()); // TODO: Take into account where on the car the camera is placed
 
     // clockwise rotation
-    double currYaw = vehicleState->getPosition(mPosTypeUsed).getYaw() + (90*M_PI)/180;
-    const double newX = cos(currYaw)*pointInEnuFrame.getX() + sin(currYaw)*pointInEnuFrame.getY();
-    const double newY = -sin(currYaw)*pointInEnuFrame.getX() + cos(currYaw)*pointInEnuFrame.getY();
+    double currYaw_rad = (vehicleState->getPosition(mPosTypeUsed).getYaw() + 90.0) * (M_PI / 180.0);
+    const double newX = cos(currYaw_rad)*pointInEnuFrame.getX() + sin(currYaw_rad)*pointInEnuFrame.getY();
+    const double newY = -sin(currYaw_rad)*pointInEnuFrame.getX() + cos(currYaw_rad)*pointInEnuFrame.getY();
     pointInEnuFrame.setX(newX);
     pointInEnuFrame.setY(newY);
     // translation
@@ -370,4 +370,14 @@ PosPoint WaypointFollower::vehicleToEnuTransform(QSharedPointer<VehicleState> ve
 void WaypointFollower::updateFollowMePoint(const PosPoint &point)
 {
     mFollowMePoint = point;
+}
+
+double WaypointFollower::getFollowPointSpeed() const
+{
+    return mCurrentState.followPointSpeed;
+}
+
+void WaypointFollower::setFollowPointSpeed(double value)
+{
+    mCurrentState.followPointSpeed = value;
 }

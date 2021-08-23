@@ -15,7 +15,10 @@ struct WayPointFollowerState {
     PosPoint currentGoal;
     int currentWaypointIndex;
     double purePursuitRadius = 1.0;
+    // Follow Route
     int numWaypointsLookahead = 8;
+    // Follow Point
+    double followPointSpeed = 1.5;
 };
 
 class WaypointFollower : public QObject
@@ -26,6 +29,9 @@ public:
 
     double getPurePursuitRadius() const;
     void setPurePursuitRadius(double value);
+
+    double getFollowPointSpeed() const;
+    void setFollowPointSpeed(double value);
 
     int getCurrentWaypointindex();
     void setCurrentWaypointindex(int value);
