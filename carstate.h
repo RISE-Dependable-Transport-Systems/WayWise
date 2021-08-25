@@ -23,6 +23,11 @@ public:
     // Static state
     double getAxisDistance() const;
 	void setAxisDistance(double axisDistance);
+	double getRearOverhang() const;
+	void setRearOverhang(double rearOverhang);
+	double getFrontOverhang() const;
+	void setFrontOverhang(double frontOverhang);
+
 	inline double getMaxSteeringAngle() const { return mMaxSteeringAngle < M_PI/180.0 ? M_PI/4.0 : mMaxSteeringAngle; } // 45° assumed if unset
 	void setMaxSteeringAngle(double steeringAngle_rad);
 	void setMinTurnRadiusRear(double minTurnRadius_m);
@@ -41,6 +46,8 @@ public:
     inline double getMinTurnRadiusRear() const { return qMax(qMin(getAxisDistance() / tanf(getMaxSteeringAngle()), mMinTurnRadiusRear), pow(getSpeed(), 2)/(0.21*9.81)); }
 
 private:
+	double mRearOverhang = 0.0; //[m]
+	double mFrontOverhang = 0.0; //[m]
     double mAxisDistance; // [m]
     double mSteering = 0.0; // [-1.0:1.0]
 	double mMaxSteeringAngle = 0.0; // [rad]
