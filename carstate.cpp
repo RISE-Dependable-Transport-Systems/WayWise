@@ -163,6 +163,28 @@ void CarState::setAxisDistance(double axisDistance)
     mAxisDistance = axisDistance;
 }
 
+double CarState::getRearOverhang() const
+{
+	return mRearOverhang;
+}
+
+void CarState::setRearOverhang(double rearOverhang)
+{
+	//TODO:: Set this using objectPhysics/displacement/xd/value which is currently not sent to SafetyZone
+	mRearOverhang = rearOverhang;
+}
+
+double CarState::getFrontOverhang() const
+{
+	return mFrontOverhang;
+}
+
+void CarState::setFrontOverhang(double frontOverhang)
+{
+	//TODO:: Set this using objectPhysics/displacement/xd/value which is currently not sent to SafetyZone
+	mFrontOverhang = frontOverhang;
+}
+
 double CarState::getSteering() const
 {
     return mSteering;
