@@ -77,9 +77,9 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
                     ret.vbAppendDouble32(mVehicleState->getPosition(PosType::fused).getX(), 1e4);
                     ret.vbAppendDouble32(mVehicleState->getPosition(PosType::fused).getY(), 1e4);
                     ret.vbAppendDouble32(mVehicleState->getSpeed(), 1e6);
-                    ret.vbAppendDouble32(-1.0, 1e6); // v_in
-                    ret.vbAppendDouble32(-1.0, 1e6); // temp mos
-                    ret.vbAppendUint8(0); // MC Fault code
+                    ret.vbAppendDouble32(mMotorControllerStatus.voltageInput, 1e6);
+                    ret.vbAppendDouble32(mMotorControllerStatus.temperature, 1e6);
+                    ret.vbAppendUint8(mMotorControllerStatus.errorID);
                     ret.vbAppendDouble32(mVehicleState->getPosition(PosType::GNSS).getX(), 1e4);
                     ret.vbAppendDouble32(mVehicleState->getPosition(PosType::GNSS).getY(), 1e4);
                     ret.vbAppendDouble32(mWaypointFollower ? mWaypointFollower->getCurrentGoal().getX() : 0.0, 1e4); // autopilot_goal_x
@@ -319,4 +319,9 @@ void PacketInterfaceTCPServer::heartbeatTimeout()
     // ToDo: Set action for CMD_EMERGENCY_STOP in base station.
     // When connection is reestablished, a CMD_AP_SET_ACTIVE needs to be sent from RControlStation to
     // reactivate the autopilot.
+}
+
+void PacketInterfaceTCPServer::updateMotorControllerStatus(double rpm, int tachometer, int tachometer_abs, double voltageInput, double temperature, int errorID)
+{
+    mMotorControllerStatus = {rpm, tachometer, tachometer_abs, voltageInput, temperature, errorID};
 }

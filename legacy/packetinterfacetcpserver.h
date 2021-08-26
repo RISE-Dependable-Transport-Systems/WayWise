@@ -33,6 +33,8 @@ public:
 
     void heartbeatTimeout();
 
+    void updateMotorControllerStatus(double rpm, int tachometer, int tachometer_abs, double voltageInput, double temperature, int errorID);
+
 signals:
 
 private:
@@ -49,6 +51,16 @@ private:
     QTimer mHeartbeatTimer;
     bool mHeartbeat;
     AP_MODE mode;
+
+    // NOTE: quite VESC specific, but OK in legacy parts
+    struct {
+        double rpm;
+        int tachometer;
+        int tachometer_abs;
+        double voltageInput;
+        double temperature;
+        int errorID;
+    } mMotorControllerStatus;
 
 };
 
