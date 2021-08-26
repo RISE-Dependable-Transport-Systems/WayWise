@@ -12,6 +12,8 @@ void CarMovementController::setDesiredSteering(double desiredSteering)
         desiredSteering = (desiredSteering > 0) ? 1.0 : -1.0;
 
     MovementController::setDesiredSteering(desiredSteering);
+    // update vehicleState in any case (we do not expect feedback from servo)
+    mCarState->setSteering(desiredSteering);
 
     if (mServoController) {
         // map from [-1.0:1.0] to actual servo range
@@ -22,8 +24,6 @@ void CarMovementController::setDesiredSteering(double desiredSteering)
         mServoController->requestSteering(desiredSteering);
     }
 
-    // update vehicleState in any case (we do not expect feedback from servo)
-    mCarState->setSteering(desiredSteering);
 }
 
 void CarMovementController::setDesiredSpeed(double desiredSpeed)
