@@ -143,7 +143,15 @@ void CarState::simulationStep(double dt_ms, PosType usePosType)
         currentPosition.setX(currentPosition.getX() + turnRadiusRear * (sin(-yawRad + yawChange) - sinf(-yawRad)));
         currentPosition.setY(currentPosition.getY() + turnRadiusRear * (cos(-yawRad - yawChange) - cosf(-yawRad)));
 
-        currentPosition.setYaw((yawRad - yawChange) * (180.0/M_PI)); // -> yaw in degrees
+        double newYaw_deg = (yawRad - yawChange) * (180.0/M_PI);
+
+        // normalize
+        while (newYaw_deg < 0.0)
+            newYaw_deg += 360.0;
+        while (newYaw_deg > 360.0)
+            newYaw_deg -= 360.0;
+
+        currentPosition.setYaw(newYaw_deg);
     } else { // Driving forward
         currentPosition.setX(currentPosition.getX() + cos(-yawRad) * drivenDistance);
         currentPosition.setY(currentPosition.getY() + sin(-yawRad) * drivenDistance);
