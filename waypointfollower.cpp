@@ -147,7 +147,7 @@ void WaypointFollower::updateState()
 
     // FOLLOW_POINT: we follow a point that is moving "follow me"
     case FOLLOW_POINT_FOLLOWING:
-        mCurrentState.currentGoal = vehicleToEnuTransform(mMovementController->getVehicleState(), mFollowMePoint);
+        mCurrentState.currentGoal = mFollowMePoint;
 
         if (QLineF(mMovementController->getVehicleState()->getPosition(mPosTypeUsed).getPoint(), mCurrentState.currentGoal.getPoint()).length() < mCurrentState.purePursuitRadius)
             mCurrentState.stmState = FOLLOW_POINT_WAITING;
@@ -160,7 +160,7 @@ void WaypointFollower::updateState()
     case FOLLOW_POINT_WAITING:
         mMovementController->setDesiredSteering(0.0);
         mMovementController->setDesiredSpeed(0.0);
-        mCurrentState.currentGoal = vehicleToEnuTransform(mMovementController->getVehicleState(), mFollowMePoint);
+        mCurrentState.currentGoal = mFollowMePoint;
 
         if (QLineF(mMovementController->getVehicleState()->getPosition(mPosTypeUsed).getPoint(), mCurrentState.currentGoal.getPoint()).length() > mCurrentState.purePursuitRadius)
         {
@@ -344,27 +344,6 @@ double WaypointFollower::getInterpolatedSpeed(const PosPoint &currentGoal, const
     double x = distanceBetweenWaypoints - distanceToNextWaypoint;
 
     return lastWaypoint.getSpeed() + (nextWaypoint.getSpeed()-lastWaypoint.getSpeed())*(x/distanceBetweenWaypoints);
-}
-
-PosPoint WaypointFollower::vehicleToEnuTransform(QSharedPointer<VehicleState> vehicleState, const PosPoint point)
-{
-    // 1. transform point from vehicle frame to ENU frame
-    PosPoint pointInEnuFrame;
-
-    pointInEnuFrame.setX(point.getX());
-    pointInEnuFrame.setY(point.getY()); // TODO: Take into account where on the car the camera is placed
-
-    // clockwise rotation
-    double currYaw_rad = (vehicleState->getPosition(mPosTypeUsed).getYaw() + 90.0) * (M_PI / 180.0);
-    const double newX = cos(currYaw_rad)*pointInEnuFrame.getX() + sin(currYaw_rad)*pointInEnuFrame.getY();
-    const double newY = -sin(currYaw_rad)*pointInEnuFrame.getX() + cos(currYaw_rad)*pointInEnuFrame.getY();
-    pointInEnuFrame.setX(newX);
-    pointInEnuFrame.setY(newY);
-    // translation
-    pointInEnuFrame.setX(pointInEnuFrame.getX()+vehicleState->getPosition(mPosTypeUsed).getX());
-    pointInEnuFrame.setY(pointInEnuFrame.getY()+vehicleState->getPosition(mPosTypeUsed).getY());
-
-    return pointInEnuFrame;
 }
 
 void WaypointFollower::updateFollowMePoint(const PosPoint &point)

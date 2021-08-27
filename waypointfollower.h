@@ -59,15 +59,13 @@ public:
     PosType getPosTypeUsed() const;
     void setPosTypeUsed(const PosType &posTypeUsed);
 
-    PosPoint vehicleToEnuTransform(QSharedPointer<VehicleState> vehicleState, const PosPoint point);
-
 signals:
 
 public slots:
     void updateFollowMePoint(const PosPoint &point);
 
 private:
-    PosPoint mFollowMePoint;
+    PosPoint mFollowMePoint; // always in ENU
 
     void updateState();
     WayPointFollowerState mCurrentState;
