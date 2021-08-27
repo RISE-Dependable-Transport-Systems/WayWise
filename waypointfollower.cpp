@@ -33,6 +33,11 @@ void WaypointFollower::startFollowingRoute(bool fromBeginning)
     mUpdateStateTimer.start(mUpdateStatePeriod_ms);
 }
 
+bool WaypointFollower::isActive()
+{
+    return mUpdateStateTimer.isActive();
+}
+
 void WaypointFollower::stop()
 {
     mUpdateStateTimer.stop();

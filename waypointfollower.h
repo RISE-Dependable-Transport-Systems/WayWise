@@ -46,6 +46,7 @@ public:
     void addWaypoint(const PosPoint &point);
 
     void startFollowingRoute(bool fromBeginning);
+    bool isActive();
     void stop();
     void resetState();
 
