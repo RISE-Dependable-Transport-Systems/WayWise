@@ -351,7 +351,7 @@ double WaypointFollower::getInterpolatedSpeed(const PosPoint &currentGoal, const
     return lastWaypoint.getSpeed() + (nextWaypoint.getSpeed()-lastWaypoint.getSpeed())*(x/distanceBetweenWaypoints);
 }
 
-void WaypointFollower::updateFollowMePoint(const PosPoint &point)
+void WaypointFollower::updateFollowPoint(const PosPoint &point)
 {
     mFollowMePoint = point;
 }

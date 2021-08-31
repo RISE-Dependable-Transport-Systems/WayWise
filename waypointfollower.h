@@ -63,7 +63,7 @@ public:
 signals:
 
 public slots:
-    void updateFollowMePoint(const PosPoint &point);
+    void updateFollowPoint(const PosPoint &point);
 
 private:
     PosPoint mFollowMePoint; // always in ENU
