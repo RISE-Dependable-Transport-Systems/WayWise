@@ -21,7 +21,6 @@ void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTrans
     double y = pos.getY() * 1000.0;
 //        double x_gps = pos_gps.getX() * 1000.0;
 //        double y_gps = pos_gps.getY() * 1000.0;
-    double angle = pos.getYaw() * 180.0 / M_PI;
     painter.setTransform(drawTrans);
 
     QColor col_wheels;
@@ -54,7 +53,7 @@ void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTrans
     painter.setBrush(QBrush(col_wheels));
     painter.save();
     painter.translate(x, y);
-    painter.rotate(-angle);
+    painter.rotate(-pos.getYaw());
     // Wheels
     painter.drawRoundedRect(-car_len / 12.0,-(car_w / 2), car_len / 6.0, car_w, car_corner / 3, car_corner / 3);
     painter.drawRoundedRect(car_len - car_len / 2.5,-(car_w / 2), car_len / 6.0, car_w, car_corner / 3, car_corner / 3);
@@ -111,7 +110,7 @@ void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTrans
         QRectF statusTextRect;
         QString statusText = QString::number(getId());
 
-        statusTextPoint.setX(x + car_w + car_len * ((cos(getPosition().getYaw()) + 1) / 3));
+        statusTextPoint.setX(x + car_w + car_len * ((cos(getPosition().getYaw() * (M_PI/180.0)) + 1) / 3));
         statusTextPoint.setY(y - car_w / 2);
 
         painter.setTransform(txtTrans);
