@@ -67,6 +67,7 @@ public slots:
 
 private:
     PosPoint mFollowMePoint; // always in ENU
+    qint32 mFollowMeTimeStamp = 0;
 
     void updateState();
     WayPointFollowerState mCurrentState;

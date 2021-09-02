@@ -154,6 +154,15 @@ void WaypointFollower::updateState()
     case FOLLOW_POINT_FOLLOWING:
         mCurrentState.currentGoal = mFollowMePoint;
 
+        if (!(mCurrentState.currentGoal.getTime() > mFollowMeTimeStamp)) {
+            qDebug() << "WARNING: Data feed from camera is missing. Exiting follow me!";
+            mMovementController->setDesiredSteering(0.0);
+            mMovementController->setDesiredSpeed(0.0);
+            mUpdateStateTimer.stop();
+            break;
+        }
+        mFollowMeTimeStamp = mCurrentState.currentGoal.getTime();
+
         if (QLineF(mMovementController->getVehicleState()->getPosition(mPosTypeUsed).getPoint(), mCurrentState.currentGoal.getPoint()).length() < mCurrentState.purePursuitRadius)
             mCurrentState.stmState = FOLLOW_POINT_WAITING;
         else {
@@ -175,6 +184,11 @@ void WaypointFollower::updateState()
 
     // FOLLOW_ROUTE: waypoints describe a route to be followed waypoint by waypoint
     case FOLLOW_ROUTE_INIT:
+        if (mFollowMePoint.getTime() > mFollowMeTimeStamp)
+            mFollowMeTimeStamp = mCurrentState.currentGoal.getTime();
+        else
+            qDebug() << "WARNING: Data feed from camera is missing. Emergency brake deactivated!";
+
         // Emergency brake if object detected.
         if (mFollowMePoint.getY() > 0 && mFollowMePoint.getY() < 10) { // TODO: decide how close the objects need to be
             mMovementController->setDesiredSteering(0.0);
@@ -191,6 +205,11 @@ void WaypointFollower::updateState()
         break;
 
     case FOLLOW_ROUTE_GOTO_BEGIN:
+        if (mFollowMePoint.getTime() > mFollowMeTimeStamp)
+            mFollowMeTimeStamp = mCurrentState.currentGoal.getTime();
+        else
+            qDebug() << "WARNING: Data feed from camera is missing. Emergency brake deactivated!";
+
         // Emergency brake if object detected
         if (mFollowMePoint.getY() > 0 && mFollowMePoint.getY() < 10) { // TODO: decide how close the objects need to be
             mMovementController->setDesiredSteering(0.0);
@@ -206,6 +225,11 @@ void WaypointFollower::updateState()
         break;
 
     case FOLLOW_ROUTE_FOLLOWING: {
+        if (mFollowMePoint.getTime() > mFollowMeTimeStamp)
+            mFollowMeTimeStamp = mCurrentState.currentGoal.getTime();
+        else
+            qDebug() << "WARNING: Data feed from camera is missing. Emergency brake deactivated!";
+
         // Emergency brake if object detected
         if (mFollowMePoint.getY() > 0 && mFollowMePoint.getY() < 10) { // TODO: decide how close the objects need to be
             mMovementController->setDesiredSteering(0.0);
