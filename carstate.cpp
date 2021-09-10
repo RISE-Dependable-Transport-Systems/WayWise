@@ -108,7 +108,7 @@ void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTrans
     if (getDrawStatusText()) {
         QPointF statusTextPoint;
         QRectF statusTextRect;
-        QString statusText = QString::number(getId());
+		QString statusText = getName() + "\nID: " +QString::number(getId());
 
         statusTextPoint.setX(x + car_w + car_len * ((cos(getPosition().getYaw() * (M_PI/180.0)) + 1) / 3));
         statusTextPoint.setY(y - car_w / 2);
