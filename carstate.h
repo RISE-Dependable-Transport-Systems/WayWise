@@ -45,6 +45,10 @@ public:
     const QPointF getStoppingPointForTurnRadius(const double turnRadius) const;
     inline double getMinTurnRadiusRear() const { return qMax(qMin(getAxisDistance() / tanf(getMaxSteeringAngle()), mMinTurnRadiusRear), pow(getSpeed(), 2)/(0.21*9.81)); }
 
+	// Other
+	void setOrientationKnown(const bool known = true) { mIsOrientationKnown = known; }
+	bool isOrientationKnown() const { return mIsOrientationKnown; }
+
 private:
 	double mRearOverhang = 0.0; //[m]
 	double mFrontOverhang = 0.0; //[m]
@@ -52,7 +56,7 @@ private:
     double mSteering = 0.0; // [-1.0:1.0]
     double mMaxSteeringAngle = 0.0; // [rad]
     double mMinTurnRadiusRear = std::numeric_limits<double>::infinity(); // [m]
-
+	bool mIsOrientationKnown = false;
 };
 
 #endif // CARSTATE_H
