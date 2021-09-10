@@ -20,10 +20,10 @@
 #include <cmath>
 
 PosPoint::PosPoint(double x, double y, double height, double roll, double pitch, double yaw, double speed,
-                   double radius, double sigma, qint32 time, int id, bool drawLine, quint32 attributes, PosType type) :
+				   double radius, double sigma, qint32 time, int id, bool drawLine, quint32 attributes, PosType type) :
     mX(x), mY(y), mHeight(height), mRoll(roll), mPitch(pitch), mYaw(yaw), mSpeed(speed),
     mRadius(radius), mSigma(sigma), mTime(time), mId(id), mDrawLine(drawLine),
-    mAttributes(attributes), mType(type)
+	mAttributes(attributes), mType(type)
 {
 }
 
@@ -176,6 +176,21 @@ double PosPoint::getDistanceTo3d(const PosPoint &point) const
                 (point.mHeight - mHeight) * (point.mHeight - mHeight));
 }
 
+double PosPoint::getVarianceX() const
+{
+	return mVarianceX;
+}
+
+double PosPoint::getVarianceY() const
+{
+	return mVarianceY;
+}
+
+double PosPoint::getCovarianceXY() const
+{
+	return mCovarianceXY;
+}
+
 bool PosPoint::operator ==(const PosPoint &point)
 {
     if (    mX == point.mX &&
@@ -256,4 +271,19 @@ void PosPoint::setDrawLine(bool drawLine)
 void PosPoint::setAttributes(quint32 attributes)
 {
     mAttributes = attributes;
+}
+
+void PosPoint::setVarianceX(double varX)
+{
+	mVarianceX = varX;
+}
+
+void PosPoint::setVarianceY(double varY)
+{
+	mVarianceY = varY;
+}
+
+void PosPoint::setCovarianceXY(double covXY)
+{
+	mCovarianceXY = covXY;
 }
