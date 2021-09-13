@@ -45,6 +45,7 @@ void WaypointFollower::startFollowingRoute(bool fromBeginning)
         qDebug() << "Command not allowed! Press reset button to start following route";
     }
 
+    mSensorHeartbeatTimer.start(mCountdown_ms);
     mUpdateStateTimer.start(mUpdateStatePeriod_ms);
 }
 
@@ -67,8 +68,10 @@ void WaypointFollower::startFollowMe()
         mSensorHeartbeatTimer.start(mCountdown_ms);
         mCurrentState.stmState = FOLLOW_POINT_FOLLOWING;
         mUpdateStateTimer.start(mUpdateStatePeriod_ms);
-    } else
+    } else {
         qDebug() << "WARNING: Follow point sensor heartbeat missing. Exiting follow point!";
+        mCurrentState.stmState = WayPointFollowerSTMstates::NONE;
+    }
 }
 
 void WaypointFollower::resetState()
@@ -227,14 +230,14 @@ void WaypointFollower::updateState()
             mFollowMeTimeStamp = mFollowMePoint.getTime();
             mSensorHeartbeatTimer.start(mCountdown_ms);
             mSensorHeartbeat = true;
-        }
 
-        // Emergency brake if object detected
-        if (QLineF(currentVehiclePosition, mFollowMePoint.getPoint()).length() > 0.2 && QLineF(currentVehiclePosition, mFollowMePoint.getPoint()).length() < 10) { // TODO: decide how close the objects need to be
-            mMovementController->setDesiredSteering(0.0);
-            mMovementController->setDesiredSpeed(0.0);
-            mUpdateStateTimer.stop();
-                    break;
+            // Emergency brake if object detected
+            if (QLineF(currentVehiclePosition, mFollowMePoint.getPoint()).length() > 1 && QLineF(currentVehiclePosition, mFollowMePoint.getPoint()).length() < 10) { // TODO: decide how close the objects need to be
+                mMovementController->setDesiredSteering(0.0);
+                mMovementController->setDesiredSpeed(0.0);
+                mUpdateStateTimer.stop();
+                break;
+            }
         }
 
         if (mWaypointList.size()) {
@@ -256,14 +259,14 @@ void WaypointFollower::updateState()
             mFollowMeTimeStamp = mFollowMePoint.getTime();
             mSensorHeartbeatTimer.start(mCountdown_ms);
             mSensorHeartbeat = true;
-        }
 
-        // Emergency brake if object detected
-        if (QLineF(currentVehiclePosition, mFollowMePoint.getPoint()).length() > 0.2 && QLineF(currentVehiclePosition, mFollowMePoint.getPoint()).length() < 10) { // TODO: decide how close the objects need to be
-            mMovementController->setDesiredSteering(0.0);
-            mMovementController->setDesiredSpeed(0.0);
-            mUpdateStateTimer.stop();
-                    break;
+            // Emergency brake if object detected
+            if (QLineF(currentVehiclePosition, mFollowMePoint.getPoint()).length() > 1 && QLineF(currentVehiclePosition, mFollowMePoint.getPoint()).length() < 10) { // TODO: decide how close the objects need to be
+                mMovementController->setDesiredSteering(0.0);
+                mMovementController->setDesiredSpeed(0.0);
+                mUpdateStateTimer.stop();
+                break;
+            }
         }
 
         mMovementController->setDesiredSteeringCurvature(getCurvatureToPoint(mCurrentState.currentGoal.getPoint()));
@@ -285,14 +288,14 @@ void WaypointFollower::updateState()
             mFollowMeTimeStamp = mFollowMePoint.getTime();
             mSensorHeartbeatTimer.start(mCountdown_ms);
             mSensorHeartbeat = true;
-        }
 
-        // Emergency brake if object detected
-        if (QLineF(currentVehiclePosition, mFollowMePoint.getPoint()).length() > 0.2 && QLineF(currentVehiclePosition, mFollowMePoint.getPoint()).length() < 10) { // TODO: decide how close the objects need to be
-            mMovementController->setDesiredSteering(0.0);
-            mMovementController->setDesiredSpeed(0.0);
-            mUpdateStateTimer.stop();
-                    break;
+            // Emergency brake if object detected
+            if (QLineF(currentVehiclePosition, mFollowMePoint.getPoint()).length() > 1 && QLineF(currentVehiclePosition, mFollowMePoint.getPoint()).length() < 10) { // TODO: decide how close the objects need to be
+                mMovementController->setDesiredSteering(0.0);
+                mMovementController->setDesiredSpeed(0.0);
+                mUpdateStateTimer.stop();
+                break;
+            }
         }
 
         if (QLineF(currentVehiclePosition, currentWaypoint).length() < mCurrentState.purePursuitRadius) // consider previous waypoint as reached
