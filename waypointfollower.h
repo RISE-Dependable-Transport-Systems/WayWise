@@ -68,6 +68,9 @@ public slots:
 private:
     PosPoint mFollowMePoint; // always in ENU
     qint32 mFollowMeTimeStamp = 0;
+    const unsigned mCountdown_ms = 1000;
+    QTimer mSensorHeartbeatTimer;
+    bool mSensorHeartbeat;
 
     void updateState();
     WayPointFollowerState mCurrentState;

@@ -7,6 +7,21 @@ WaypointFollower::WaypointFollower(QSharedPointer<MovementController> movementCo
 {
     mMovementController = movementController;
     connect(&mUpdateStateTimer, &QTimer::timeout, this, &WaypointFollower::updateState);
+
+    // --- Handle heartbeat from sensor
+    mSensorHeartbeat = false;
+    WaypointFollower::mSensorHeartbeatTimer.setSingleShot(true);
+    connect(&mSensorHeartbeatTimer, &QTimer::timeout, this, [&](){
+        if ((mCurrentState.stmState == FOLLOW_POINT_FOLLOWING || mCurrentState.stmState == FOLLOW_POINT_WAITING) && this->isActive()) {
+            qDebug() << "WARNING: Follow point sensor heartbeat missing. Exiting follow me!";
+            mSensorHeartbeat =false;
+            this->stop();
+        } else if ((mCurrentState.stmState != NONE) && this->isActive()){
+            qDebug() << "WARNING: Visual sensor heartbeat missing. Emergency brake deactivated!";
+            mSensorHeartbeat = false;
+        } else
+            mSensorHeartbeat = false;
+    });
 }
 
 void WaypointFollower::clearRoute()
@@ -47,8 +62,13 @@ void WaypointFollower::stop()
 
 void WaypointFollower::startFollowMe()
 {
-    mCurrentState.stmState = FOLLOW_POINT_FOLLOWING;
-    mUpdateStateTimer.start(mUpdateStatePeriod_ms);
+    mCurrentState.currentGoal = mFollowMePoint;
+    if (mCurrentState.currentGoal.getTime() > mFollowMeTimeStamp) {
+        mSensorHeartbeatTimer.start(mCountdown_ms);
+        mCurrentState.stmState = FOLLOW_POINT_FOLLOWING;
+        mUpdateStateTimer.start(mUpdateStatePeriod_ms);
+    } else
+        qDebug() << "WARNING: Follow point sensor heartbeat missing. Exiting follow point!";
 }
 
 void WaypointFollower::resetState()
@@ -154,14 +174,14 @@ void WaypointFollower::updateState()
     case FOLLOW_POINT_FOLLOWING:
         mCurrentState.currentGoal = mFollowMePoint;
 
-        if (!(mCurrentState.currentGoal.getTime() > mFollowMeTimeStamp)) {
-            qDebug() << "WARNING: Data feed from camera is missing. Exiting follow me!";
-            mMovementController->setDesiredSteering(0.0);
-            mMovementController->setDesiredSpeed(0.0);
-            mUpdateStateTimer.stop();
-            break;
+        if (mCurrentState.currentGoal.getTime() > mFollowMeTimeStamp) {
+            if (!mSensorHeartbeat) {
+                qDebug() << "Follow point sensor heartbeat reset";
+            }
+            mFollowMeTimeStamp = mCurrentState.currentGoal.getTime();
+            mSensorHeartbeatTimer.start(mCountdown_ms);
+            mSensorHeartbeat = true;
         }
-        mFollowMeTimeStamp = mCurrentState.currentGoal.getTime();
 
         if (QLineF(mMovementController->getVehicleState()->getPosition(mPosTypeUsed).getPoint(), mCurrentState.currentGoal.getPoint()).length() < mCurrentState.purePursuitRadius)
             mCurrentState.stmState = FOLLOW_POINT_WAITING;
@@ -176,6 +196,15 @@ void WaypointFollower::updateState()
         mMovementController->setDesiredSpeed(0.0);
         mCurrentState.currentGoal = mFollowMePoint;
 
+        if (mCurrentState.currentGoal.getTime() > mFollowMeTimeStamp) {
+            if (!mSensorHeartbeat) {
+                qDebug() << "Follow point sensor heartbeat reset";
+            }
+            mFollowMeTimeStamp = mCurrentState.currentGoal.getTime();
+            mSensorHeartbeatTimer.start(mCountdown_ms);
+            mSensorHeartbeat = true;
+        }
+
         if (QLineF(mMovementController->getVehicleState()->getPosition(mPosTypeUsed).getPoint(), mCurrentState.currentGoal.getPoint()).length() > mCurrentState.purePursuitRadius)
         {
             mCurrentState.stmState = FOLLOW_POINT_FOLLOWING;
@@ -184,11 +213,14 @@ void WaypointFollower::updateState()
 
     // FOLLOW_ROUTE: waypoints describe a route to be followed waypoint by waypoint
     case FOLLOW_ROUTE_INIT:
-        if (mFollowMePoint.getTime() > mFollowMeTimeStamp)
-            mFollowMeTimeStamp = mCurrentState.currentGoal.getTime();
-        else
-            qDebug() << "WARNING: Data feed from camera is missing. Emergency brake deactivated!";
-
+        if (mFollowMePoint.getTime() > mFollowMeTimeStamp) {
+            if (!mSensorHeartbeat) {
+                qDebug() << "Emergency brake activated!";
+            }
+            mFollowMeTimeStamp = mFollowMePoint.getTime();
+            mSensorHeartbeatTimer.start(mCountdown_ms);
+            mSensorHeartbeat = true;
+        }
         // Emergency brake if object detected.
         if (mFollowMePoint.getY() > 0 && mFollowMePoint.getY() < 10) { // TODO: decide how close the objects need to be
             mMovementController->setDesiredSteering(0.0);
@@ -205,11 +237,14 @@ void WaypointFollower::updateState()
         break;
 
     case FOLLOW_ROUTE_GOTO_BEGIN:
-        if (mFollowMePoint.getTime() > mFollowMeTimeStamp)
-            mFollowMeTimeStamp = mCurrentState.currentGoal.getTime();
-        else
-            qDebug() << "WARNING: Data feed from camera is missing. Emergency brake deactivated!";
-
+        if (mFollowMePoint.getTime() > mFollowMeTimeStamp) {
+            if (!mSensorHeartbeat) {
+                qDebug() << "Emergency brake activated!";
+            }
+            mFollowMeTimeStamp = mFollowMePoint.getTime();
+            mSensorHeartbeatTimer.start(mCountdown_ms);
+            mSensorHeartbeat = true;
+        }
         // Emergency brake if object detected
         if (mFollowMePoint.getY() > 0 && mFollowMePoint.getY() < 10) { // TODO: decide how close the objects need to be
             mMovementController->setDesiredSteering(0.0);
@@ -225,11 +260,14 @@ void WaypointFollower::updateState()
         break;
 
     case FOLLOW_ROUTE_FOLLOWING: {
-        if (mFollowMePoint.getTime() > mFollowMeTimeStamp)
-            mFollowMeTimeStamp = mCurrentState.currentGoal.getTime();
-        else
-            qDebug() << "WARNING: Data feed from camera is missing. Emergency brake deactivated!";
-
+        if (mFollowMePoint.getTime() > mFollowMeTimeStamp) {
+            if (!mSensorHeartbeat) {
+                qDebug() << "Emergency brake activated!";
+            }
+            mFollowMeTimeStamp = mFollowMePoint.getTime();
+            mSensorHeartbeatTimer.start(mCountdown_ms);
+            mSensorHeartbeat = true;
+        }
         // Emergency brake if object detected
         if (mFollowMePoint.getY() > 0 && mFollowMePoint.getY() < 10) { // TODO: decide how close the objects need to be
             mMovementController->setDesiredSteering(0.0);
