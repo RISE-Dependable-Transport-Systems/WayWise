@@ -80,7 +80,7 @@ public:
     void setYOffset(double offset);
     void moveView(double px, double py);
     void clearTrace();
-    void addRoutePoint(double px, double py, double speed = 0.0, qint32 time = 0);
+	void addRoutePoint(double px, double py, double speed = 0.0, QTime time = QTime());
     QList<PosPoint> getRoute(int ind = -1);
     QList<QList<PosPoint> > getRoutes();
     void setRoute(const QList<PosPoint> &route);
@@ -129,8 +129,8 @@ public:
     int getRouteNow() const;
     void setRouteNow(int routeNow);
 
-    qint32 getRoutePointTime() const;
-    void setRoutePointTime(const qint32 &routePointTime);
+	QTime getRoutePointTime() const;
+	void setRoutePointTime(const QTime& routePointTime);
 
     double getTraceMinSpaceVehicle() const;
     void setTraceMinSpaceVehicle(double traceMinSpaceVehicle);
@@ -210,7 +210,7 @@ private:
     QList<QList<PosPoint> > mInfoTraces;
     QList<PosPoint> mVisibleInfoTracePoints;
     double mRoutePointSpeed;
-    qint32 mRoutePointTime;
+	QTime mRoutePointTime;
     quint32 mRoutePointAttributes;
     qint32 mAnchorId;
     double mAnchorHeight;
