@@ -257,18 +257,3 @@ void PosPoint::setAttributes(quint32 attributes)
 {
     mAttributes = attributes;
 }
-
-void PosPoint::setVarianceX(double varX)
-{
-	mVarianceX = varX;
-}
-
-void PosPoint::setVarianceY(double varY)
-{
-	mVarianceY = varY;
-}
-
-void PosPoint::setCovarianceXY(double covXY)
-{
-	mCovarianceXY = covXY;
-}
