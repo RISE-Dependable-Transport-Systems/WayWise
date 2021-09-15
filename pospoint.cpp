@@ -176,21 +176,6 @@ double PosPoint::getDistanceTo3d(const PosPoint &point) const
                 (point.mHeight - mHeight) * (point.mHeight - mHeight));
 }
 
-double PosPoint::getVarianceX() const
-{
-	return mVarianceX;
-}
-
-double PosPoint::getVarianceY() const
-{
-	return mVarianceY;
-}
-
-double PosPoint::getCovarianceXY() const
-{
-	return mCovarianceXY;
-}
-
 bool PosPoint::operator ==(const PosPoint &point)
 {
     if (    mX == point.mX &&
@@ -271,19 +256,4 @@ void PosPoint::setDrawLine(bool drawLine)
 void PosPoint::setAttributes(quint32 attributes)
 {
     mAttributes = attributes;
-}
-
-void PosPoint::setVarianceX(double varX)
-{
-	mVarianceX = varX;
-}
-
-void PosPoint::setVarianceY(double varY)
-{
-	mVarianceY = varY;
-}
-
-void PosPoint::setCovarianceXY(double covXY)
-{
-	mCovarianceXY = covXY;
 }
