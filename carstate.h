@@ -52,7 +52,6 @@ private:
     double mSteering = 0.0; // [-1.0:1.0]
     double mMaxSteeringAngle = 0.0; // [rad]
     double mMinTurnRadiusRear = std::numeric_limits<double>::infinity(); // [m]
-	bool mIsOrientationKnown = false;
 };
 
 #endif // CARSTATE_H
