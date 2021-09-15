@@ -27,50 +27,31 @@
 #endif
 
 #include "pospoint.h"
+#include "objectstate.h"
 #include <math.h>
 
-class VehicleState : public QObject
+class VehicleState : public ObjectState
 {
     Q_OBJECT
 public:
-    VehicleState(int id = 0, Qt::GlobalColor color = Qt::red);
-#ifdef QT_GUI_LIB
-    virtual void draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected = true) = 0;
-#endif
-    struct Velocity {
-        double x, y, z;
-    };
+	VehicleState(ObjectID_t id = 0, Qt::GlobalColor color = Qt::red);
 
-    // Static state
-    int getId() const;
-    void setId(int id, bool changeName = false);
-    QString getName() const;
-    void setName(QString name);
-    Qt::GlobalColor getColor() const;
-    void setColor(Qt::GlobalColor color);
-    double getLength() const;
-    void setLength(double length);
-    double getWidth() const;
-    void setWidth(double width);
-    double getMinAcceleration() const;
-    void setMinAcceleration(double minAcceleration);
-    double getMaxAcceleration() const;
-    void setMaxAcceleration(double maxAcceleration);
+	// Static state
+	double getLength() const { return mLength; }
+	void setLength(double length) { mLength = length; }
+	double getWidth() const { return mWidth; }
+	void setWidth(double width) { mWidth = width; }
+	double getMinAcceleration() const { return mMinAcceleration; }
+	void setMinAcceleration(double minAcceleration) { mMinAcceleration = minAcceleration; }
+	double getMaxAcceleration() const { return mMaxAcceleration; }
+	void setMaxAcceleration(double maxAcceleration) { mMaxAcceleration = maxAcceleration; }
 
-    // Dynamic state
-    PosPoint getPosition(PosType type = PosType::simulated) const;
-    void setPosition(PosPoint &point);
-    qint32 getTime() const;
-    void setTime(const qint32 &time);
-    virtual double getSpeed() const;
-    void setSpeed(double value);
-    Velocity getVelocity() const;
-    void setVelocity(const Velocity &velocity);
-
-    void setDrawStatusText(bool drawStatusText);
-    bool getDrawStatusText() const;
-
-    virtual void simulationStep(double dt_ms, PosType usePosType = PosType::simulated) = 0; // Take current state and simulate step forward for dt_ms milliseconds, update state accordingly
+	// Dynamic state
+	virtual PosPoint getPosition(PosType type) const;
+	virtual PosPoint getPosition() const override { return getPosition(PosType::simulated); }
+	virtual void setPosition(PosPoint &point) override;
+	virtual QTime getTime() const override { return mTime; }
+	virtual void setTime(const QTime &time) override { mTime = time; }
 
     // For debugging and logging
     std::array<float, 3> getGyroscopeXYZ() const;
@@ -78,31 +59,21 @@ public:
     std::array<float, 3> getAccelerometerXYZ() const;
     void setAccelerometerXYZ(const std::array<float, 3> &accelerometerXYZ);
 
-signals:
-    void positionUpdated();
-
 private:
-    // Static state
-    int mId;
-    QString mName;
+	// Static state
     double mLength; // [m]
     double mWidth; // [m]
     // TODO: reasonable default values? set here or move?
     double mMinAcceleration = -5.0; // [m/s²]
-    double mMaxAcceleration = 3.0; // [m/s²]
-    Qt::GlobalColor mColor;
+	double mMaxAcceleration = 3.0; // [m/s²]
 
     // Dynamic state
-    PosPoint mPosition[(int)PosType::_LAST_];
+	PosPoint mPositionBySource[(int)PosType::_LAST_];
     PosPoint mApGoal;
-    qint32 mTime;
-    double mSpeed = 0.0; // [m/s]
-    Velocity mVelocity = {0.0, 0.0, 0.0}; // [m/s]
+	QTime mTime;
 
     std::array<float,3> mGyroscopeXYZ = std::array<float,3>({0.0, 0.0, 0.0}); // [deg/s]
     std::array<float,3> mAccelerometerXYZ = std::array<float,3>({0.0, 0.0, 0.0}); // [g]
-
-    bool mDrawStatusText = true;
 };
 
 #endif // VEHICLESTATE_H
