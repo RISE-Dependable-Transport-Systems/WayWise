@@ -160,7 +160,7 @@ MapWidget::MapWidget(QWidget *parent) : QWidget(parent)
     xRealPos = 0;
     yRealPos = 0;
     mRoutePointSpeed = 1.0;
-    mRoutePointTime = 0.0;
+	mRoutePointTime = QTime();
     mRoutePointAttributes = 0;
     mAnchorId = 0;
     mAnchorHeight = 1.0;
@@ -374,7 +374,7 @@ void MapWidget::clearTrace()
     update();
 }
 
-void MapWidget::addRoutePoint(double px, double py, double speed, qint32 time)
+void MapWidget::addRoutePoint(double px, double py, double speed, QTime time)
 {
     PosPoint pos;
     pos.setXY(px, py);
@@ -949,12 +949,12 @@ void MapWidget::setTraceMinSpaceVehicle(double traceMinSpaceVehicle)
     mTraceMinSpaceVehicle = traceMinSpaceVehicle;
 }
 
-qint32 MapWidget::getRoutePointTime() const
+QTime MapWidget::getRoutePointTime() const
 {
     return mRoutePointTime;
 }
 
-void MapWidget::setRoutePointTime(const qint32 &routePointTime)
+void MapWidget::setRoutePointTime(const QTime &routePointTime)
 {
     mRoutePointTime = routePointTime;
 }
@@ -1740,7 +1740,7 @@ void MapWidget::drawRoute(QPainter& painter, QTransform drawTrans, QTransform tx
 
         // Draw text only for selected route
         if (isSelected && drawAnnotations) {
-            QTime t = QTime::fromMSecsSinceStartOfDay(route[i].getTime());
+			QTime t = route[i].getTime();
             pointLabel.sprintf("P: %d %s\n"
                         "%.1f km/h\n"
                         "%02d:%02d:%02d:%03d\n"

@@ -156,7 +156,7 @@ void CarState::simulationStep(double dt_ms, PosType usePosType)
         currentPosition.setY(currentPosition.getY() + sin(-yawRad) * drivenDistance);
     }
 
-    currentPosition.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()).msecsSinceStartOfDay());
+	currentPosition.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()));
     setPosition(currentPosition);
 }
 
