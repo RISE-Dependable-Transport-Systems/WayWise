@@ -64,9 +64,6 @@ public:
     quint32 getAttributes() const;
     double getDistanceTo(const PosPoint &point) const;
     double getDistanceTo3d(const PosPoint &point) const;
-	double getVarianceX() const;
-	double getVarianceY() const;
-	double getCovarianceXY() const;
 
     void setType(const PosType &type);
     void setX(double x);
