@@ -108,9 +108,6 @@ private:
     bool mDrawLine;
     quint32 mAttributes;
     PosType mType;
-	double mVarianceX = 0.0;
-	double mVarianceY = 0.0;
-	double mCovarianceXY = 0.0;
 
 };
 
