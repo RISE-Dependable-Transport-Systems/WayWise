@@ -86,9 +86,6 @@ public:
     void setId(int id);
     void setDrawLine(bool drawLine);
     void setAttributes(quint32 attributes);
-	void setVarianceX(double varX);
-	void setVarianceY(double varY);
-	void setCovarianceXY(double covXY);
 
     // Operators
     PosPoint& operator=(const PosPoint& point);
