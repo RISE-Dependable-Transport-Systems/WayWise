@@ -45,10 +45,6 @@ public:
     const QPointF getStoppingPointForTurnRadius(const double turnRadius) const;
     inline double getMinTurnRadiusRear() const { return qMax(qMin(getAxisDistance() / tanf(getMaxSteeringAngle()), mMinTurnRadiusRear), pow(getSpeed(), 2)/(0.21*9.81)); }
 
-	// Other
-	void setOrientationKnown(const bool known = true) { mIsOrientationKnown = known; }
-	bool isOrientationKnown() const { return mIsOrientationKnown; }
-
 private:
 	double mRearOverhang = 0.0; //[m]
 	double mFrontOverhang = 0.0; //[m]
