@@ -249,37 +249,59 @@ MapWidget::MapWidget(QWidget *parent) : QWidget(parent)
 
 QSharedPointer<VehicleState> MapWidget::getVehicleState(int vehicleID)
 {
-    for (int i = 0;i < mVehicleStateList.size();i++) {
-        if (mVehicleStateList[i]->getId() == vehicleID) {
-            return mVehicleStateList[i];
+	for (int i = 0;i < mObjectStateList.size();i++) {
+		if (mObjectStateList[i]->getId() == vehicleID) {
+			return mObjectStateList[i].dynamicCast<VehicleState>();
         }
     }
 
     return 0;
 }
 
+void MapWidget::addObject(QSharedPointer<ObjectState> objectState)
+{
+	mObjectStateList.append(objectState);
+	connect(objectState.get(), &ObjectState::positionUpdated, this, &MapWidget::objectPositionUpdated);
+}
 void MapWidget::addVehicle(QSharedPointer<VehicleState> vehicleState)
 {
-    mVehicleStateList.append(vehicleState);
-    connect(vehicleState.get(), &VehicleState::positionUpdated, this, &MapWidget::vehiclePositionUpdated);
+	mObjectStateList.append(vehicleState.dynamicCast<ObjectState>());
+	connect(vehicleState.get(), &VehicleState::positionUpdated, this, &MapWidget::objectPositionUpdated);
+}
+
+bool MapWidget::removeObject(int objectID)
+{
+	QMutableListIterator<QSharedPointer<ObjectState>> i(mObjectStateList);
+	while (i.hasNext()) {
+		if (i.next()->getId() == objectID) {
+			i.remove();
+			return true;
+		}
+	}
+	return false;
 }
 
 bool MapWidget::removeVehicle(int vehicleID)
 {
-    QMutableListIterator<QSharedPointer<VehicleState>> i(mVehicleStateList);
+	QMutableListIterator<QSharedPointer<ObjectState>> i(mObjectStateList);
     while (i.hasNext()) {
-        if (i.next()->getId() == vehicleID) {
+		if (i.next()->getId() == vehicleID
+				&& i.next().dynamicCast<VehicleState>() != nullptr) {
             i.remove();
             return true;
         }
     }
-
     return false;
+}
+
+void MapWidget::clearObjects()
+{
+	mObjectStateList.clear();
 }
 
 void MapWidget::clearVehicles()
 {
-    mVehicleStateList.clear();
+	clearObjects(); // TODO
 }
 
 PosPoint *MapWidget::getAnchor(int anchorId)
@@ -503,7 +525,7 @@ void MapWidget::timerSlot()
     updateTraces();
 }
 
-void MapWidget::vehiclePositionUpdated()
+void MapWidget::objectPositionUpdated()
 {
     update();
 }
@@ -636,13 +658,13 @@ void MapWidget::mousePressEvent(QMouseEvent *e)
     if (ctrl) {
         if (e->buttons() & Qt::LeftButton) {
             if (mSelectedVehicle >= 0) {
-                for (int i = 0;i < mVehicleStateList.size();i++) {
-                    QSharedPointer<VehicleState> VehicleState = mVehicleStateList[i];
-                    if (VehicleState->getId() == mSelectedVehicle) {
-                        PosPoint pos = VehicleState->getPosition();
+				for (int i = 0;i < mObjectStateList.size();i++) {
+					QSharedPointer<VehicleState> vehicleState = mObjectStateList[i].dynamicCast<VehicleState>();
+					if (vehicleState->getId() == mSelectedVehicle) {
+						PosPoint pos = vehicleState->getPosition();
                         QPoint p = getMousePosRelative();
                         pos.setXY(p.x() / 1000.0, p.y() / 1000.0);
-                        VehicleState->setPosition(pos);
+						vehicleState->setPosition(pos);
                         emit posSet(mSelectedVehicle, pos);
                     }
                 }
@@ -758,14 +780,14 @@ void MapWidget::wheelEvent(QWheelEvent *e)
     }
 
     if (ctrl && mSelectedVehicle >= 0) {
-        for (int i = 0;i < mVehicleStateList.size();i++) {
-            QSharedPointer<VehicleState> VehicleState = mVehicleStateList[i];
-            if (VehicleState->getId() == mSelectedVehicle) {
-                PosPoint pos = VehicleState->getPosition();
+		for (int i = 0;i < mObjectStateList.size();i++) {
+			QSharedPointer<VehicleState> vehicleState = mObjectStateList[i].dynamicCast<VehicleState>();
+			if (vehicleState->getId() == mSelectedVehicle) {
+				PosPoint pos = vehicleState->getPosition();
                 double angle = pos.getYaw() + (double)e->angleDelta().y() * 0.0005;
                 normalizeAngleRad(angle);
                 pos.setYaw(angle);
-                VehicleState->setPosition(pos);
+				vehicleState->setPosition(pos);
                 emit posSet(mSelectedVehicle, pos);
                 update();
             }
@@ -838,9 +860,21 @@ bool MapWidget::event(QEvent *event)
     return QWidget::event(event);
 }
 
+QList<QSharedPointer<ObjectState> > MapWidget::getObjectStateList() const
+{
+	return mObjectStateList;
+}
+
 QList<QSharedPointer<VehicleState> > MapWidget::getVehicleStateList() const
 {
-    return mVehicleStateList;
+	QList<QSharedPointer<VehicleState>> retval;
+	for (const auto& obj : mObjectStateList) {
+		auto veh = obj.dynamicCast<VehicleState>();
+		if (veh != nullptr) {
+			retval.append(veh);
+		}
+	}
+	return retval;
 }
 
 quint32 MapWidget::getRoutePointAttributes() const
@@ -1946,10 +1980,10 @@ void MapWidget::paint(QPainter &painter, int width, int height, bool highQuality
 
     // Optionally follow a vehicle
     if (mFollowVehicleId >= 0) {
-        for (int i = 0;i < mVehicleStateList.size();i++) {
-            QSharedPointer<VehicleState> VehicleState = mVehicleStateList[i];
-            if (VehicleState->getId() == mFollowVehicleId) {
-                PosPoint followLoc = VehicleState->getPosition();
+		for (int i = 0;i < mObjectStateList.size();i++) {
+			QSharedPointer<VehicleState> vehicleState = mObjectStateList[i].dynamicCast<VehicleState>();
+			if (vehicleState->getId() == mFollowVehicleId) {
+				PosPoint followLoc = vehicleState->getPosition();
                 mXOffset = -followLoc.getX() * 1000.0 * mScaleFactor;
                 mYOffset = -followLoc.getY() * 1000.0 * mScaleFactor;
             }
@@ -2061,8 +2095,8 @@ void MapWidget::paint(QPainter &painter, int width, int height, bool highQuality
 
     // Draw vehicles
     painter.setPen(QPen(QPalette::Foreground));
-    for(const auto& vehicleState : mVehicleStateList)
-        vehicleState->draw(painter, drawTrans, txtTrans, vehicleState->getId() == mSelectedVehicle);
+	for(const auto& obj : mObjectStateList)
+		obj->draw(painter, drawTrans, txtTrans, obj->getId() == mSelectedVehicle);
 
     painter.setPen(QPen(QPalette::Foreground));
 
@@ -2080,14 +2114,14 @@ void MapWidget::updateTraces()
 {
     // Store trace for the selected vehicle
     if (mTraceVehicle >= 0) {
-        for (int i = 0;i < mVehicleStateList.size();i++) {
-            QSharedPointer<VehicleState> VehicleState = mVehicleStateList[i];
-            if (VehicleState->getId() == mTraceVehicle) {
+		for (int i = 0;i < mObjectStateList.size();i++) {
+			QSharedPointer<ObjectState> objectState = mObjectStateList[i];
+			if (objectState->getId() == mTraceVehicle) {
                 if (mVehicleTrace.isEmpty()) {
-                    mVehicleTrace.append(VehicleState->getPosition());
+					mVehicleTrace.append(objectState->getPosition());
                 }
-                if (mVehicleTrace.last().getDistanceTo(VehicleState->getPosition()) > mTraceMinSpaceVehicle) {
-                    mVehicleTrace.append(VehicleState->getPosition());
+				if (mVehicleTrace.last().getDistanceTo(objectState->getPosition()) > mTraceMinSpaceVehicle) {
+					mVehicleTrace.append(objectState->getPosition());
                 }
 //                // GPS trace
 //                if (mVehicleTraceGps.isEmpty()) {
