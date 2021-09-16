@@ -35,6 +35,7 @@
 
 #include "pospoint.h"
 #include "vehiclestate.h"
+#include "objectstate.h"
 #include "osmclient.h"
 #include "coordinatetransforms.h"
 
@@ -61,13 +62,17 @@ public:
     } RoutePointType;
 
     explicit MapWidget(QWidget *parent = 0);
+	QSharedPointer<ObjectState> getObjectState(int objectID);
     QSharedPointer<VehicleState> getVehicleState(int vehicleID);
     void setFollowVehicle(int vehicleID);
     void setTraceVehicle(int vehicleID);
     void setSelectedVehicle(int vehicleID);
-    void addVehicle(QSharedPointer<VehicleState> vehicleState);
-    bool removeVehicle(int vehicleID);
+	void addObject(QSharedPointer<ObjectState> objectState);
+	void addVehicle(QSharedPointer<VehicleState> vehicleState);
+	bool removeObject(int objectID);
+	bool removeVehicle(int vehicleID);
     void clearVehicles();
+	void clearObjects();
     PosPoint* getAnchor(int anchorId);
     void addAnchor(const PosPoint &anchor);
     bool removeAnchor(int anchorId);
@@ -165,6 +170,7 @@ public:
     quint32 getRoutePointAttributes() const;
     void setRoutePointAttributes(const quint32 &routePointAttributes);
 
+	QList<QSharedPointer<ObjectState> > getObjectStateList() const;
     QList<QSharedPointer<VehicleState> > getVehicleStateList() const;
 
     double drawGrid(QPainter &painter, QTransform drawTrans, QTransform txtTrans, double gridWidth, double gridHeight);
@@ -190,7 +196,7 @@ private slots:
     void tileReady(OsmTile tile);
     void errorGetTile(QString reason);
     void timerSlot();
-    void vehiclePositionUpdated();
+	void objectPositionUpdated();
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -201,7 +207,7 @@ protected:
     bool event(QEvent *event) override;
 
 private:
-    QList<QSharedPointer<VehicleState>> mVehicleStateList;
+	QList<QSharedPointer<ObjectState>> mObjectStateList;
     QVector<PosPoint> mVehicleTrace;
     QVector<PosPoint> mVehicleTraceGNSS;
     QVector<PosPoint> mVehicleTraceUwb;
