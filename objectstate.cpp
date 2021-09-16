@@ -65,3 +65,8 @@ bool ObjectState::getDrawStatusText() const
 {
 	return mDrawStatusText;
 }
+
+QPainterPath ObjectState::getBoundingBox() const {
+	return QPainterPath();
+}
+

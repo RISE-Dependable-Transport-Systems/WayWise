@@ -19,6 +19,7 @@ public:
     virtual void draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected = true);
 #endif
     virtual void simulationStep(double dt_ms, PosType usePosType = PosType::simulated);
+	virtual QPainterPath getBoundingBox() const override;
 
     // Static state
     double getAxisDistance() const;

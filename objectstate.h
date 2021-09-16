@@ -66,6 +66,7 @@ public:
 
 	void setDrawStatusText(bool drawStatusText);
 	bool getDrawStatusText() const;
+	virtual QPainterPath getBoundingBox() const;
 
 	virtual void simulationStep(double dt_ms, PosType usePosType = PosType::simulated) = 0; // Take current state and simulate step forward for dt_ms milliseconds, update state accordingly
 

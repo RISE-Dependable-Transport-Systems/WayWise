@@ -122,6 +122,15 @@ void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTrans
 }
 #endif
 
+QPainterPath CarState::getBoundingBox() const {
+	QPainterPath carBoundingBox;
+
+	carBoundingBox.addRect(-mRearOverhang, -getWidth()/2, getLength(), getWidth());
+	carBoundingBox.closeSubpath();
+
+	return carBoundingBox;
+}
+
 void CarState::simulationStep(double dt_ms, PosType usePosType)
 {
     PosPoint currentPosition = getPosition(usePosType);
