@@ -64,9 +64,6 @@ public:
     quint32 getAttributes() const;
     double getDistanceTo(const PosPoint &point) const;
     double getDistanceTo3d(const PosPoint &point) const;
-	double getVarianceX() const;
-	double getVarianceY() const;
-	double getCovarianceXY() const;
 
     void setType(const PosType &type);
     void setX(double x);
@@ -86,9 +83,6 @@ public:
     void setId(int id);
     void setDrawLine(bool drawLine);
     void setAttributes(quint32 attributes);
-	void setVarianceX(double varX);
-	void setVarianceY(double varY);
-	void setCovarianceXY(double covXY);
 
     // Operators
     PosPoint& operator=(const PosPoint& point);
@@ -111,9 +105,6 @@ private:
     bool mDrawLine;
     quint32 mAttributes;
     PosType mType;
-	double mVarianceX = 0.0;
-	double mVarianceY = 0.0;
-	double mCovarianceXY = 0.0;
 
 };
 
