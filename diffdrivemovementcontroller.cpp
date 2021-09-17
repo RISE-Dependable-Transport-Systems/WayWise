@@ -3,23 +3,22 @@
 
 DiffDriveMovementController::DiffDriveMovementController(QSharedPointer<DiffDriveVehicleState> vehicleState): MovementController(vehicleState)
 {
-
+    mDiffDriveVehicleState = getVehicleState().dynamicCast<DiffDriveVehicleState>();
 }
 
 void DiffDriveMovementController::setDesiredSteering(double desiredSteering)
 {
     MovementController::setDesiredSteering(desiredSteering);
     // TODO: actual communication with motor controller
-    getVehicleState().dynamicCast<DiffDriveVehicleState>()->setSpeedLeft(getDesiredSpeed() + (getDesiredSpeed() * desiredSteering));
-    getVehicleState().dynamicCast<DiffDriveVehicleState>()->setSpeedRight(getDesiredSpeed() - (getDesiredSpeed() * desiredSteering));
+    mDiffDriveVehicleState->setSpeedLeft(getDesiredSpeed() + (getDesiredSpeed() * desiredSteering));
+    mDiffDriveVehicleState->setSpeedRight(getDesiredSpeed() - (getDesiredSpeed() * desiredSteering));
 }
 
 void DiffDriveMovementController::setDesiredSpeed(double desiredSpeed)
 {
     MovementController::setDesiredSpeed(desiredSpeed);
     // TODO: actual communication with motor controller
-    getVehicleState().dynamicCast<DiffDriveVehicleState>()->setSpeedLeft(desiredSpeed + desiredSpeed * getDesiredSteering());
-    getVehicleState().dynamicCast<DiffDriveVehicleState>()->setSpeedRight(desiredSpeed - desiredSpeed * getDesiredSteering());
+    mDiffDriveVehicleState->setSpeedLeft(desiredSpeed + desiredSpeed * getDesiredSteering());
+    mDiffDriveVehicleState->setSpeedRight(desiredSpeed - desiredSpeed * getDesiredSteering());
 
 }
-

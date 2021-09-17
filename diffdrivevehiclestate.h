@@ -8,7 +8,7 @@ class DiffDriveVehicleState : public VehicleState
 public:
     DiffDriveVehicleState();
 
-    virtual void simulationStep(double dt_ms) override;
+    virtual void simulationStep(double dt_ms, PosType usePosType) override;
 
     double getSpeedLeft() const;
     void setSpeedLeft(double getSpeedLeft);

@@ -54,6 +54,7 @@ void WaypointFollower::stop()
     mUpdateStateTimer.stop();
     mMovementController->setDesiredSteering(0.0);
     mMovementController->setDesiredSpeed(0.0);
+    mMovementController->setDesiredSteeringCurvature(0.0);
 }
 
 void WaypointFollower::startFollowPoint()
@@ -320,7 +321,9 @@ void WaypointFollower::updateState()
 
     case FOLLOW_ROUTE_FINISHED:
         mMovementController->setDesiredSteering(0.0);
+        mMovementController->setDesiredSteeringCurvature(0.0);
         mMovementController->setDesiredSpeed(0.0);
+        mMovementController->setDesiredAttributes(8); // TODO: lift all tools
         mUpdateStateTimer.stop();
         mCurrentState.stmState = NONE;
         mCurrentState.currentWaypointIndex = mWaypointList.size();

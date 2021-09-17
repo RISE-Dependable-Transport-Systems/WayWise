@@ -12,12 +12,16 @@ class DiffDriveMovementController : public MovementController
 public:
     DiffDriveMovementController(QSharedPointer<DiffDriveVehicleState> vehicleState);
 
-private:
-
     // MovementController interface
-public:
     virtual void setDesiredSteering(double desiredSteering) override;
     virtual void setDesiredSpeed(double desiredSpeed) override;
+
+private:
+
+    QSharedPointer<DiffDriveVehicleState> mDiffDriveVehicleState;
+    // TODO: include motorcontroller
+    // QSharedPointer<MotorController> mMotorController
+
 };
 
 #endif // DIFFDRIVEMOVEMENTCONTROLLER_H

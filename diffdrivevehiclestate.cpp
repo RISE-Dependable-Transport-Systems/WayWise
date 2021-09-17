@@ -6,7 +6,7 @@ DiffDriveVehicleState::DiffDriveVehicleState()
 
 }
 
-void DiffDriveVehicleState::simulationStep(double dt_ms)
+void DiffDriveVehicleState::simulationStep(double dt_ms, PosType usePosType)
 {
     PosPoint currentPosition = getPosition();
     double drivenDistance = getSpeed() * dt_ms / 1000;

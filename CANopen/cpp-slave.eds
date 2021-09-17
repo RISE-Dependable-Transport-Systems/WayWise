@@ -1,0 +1,722 @@
+[FileInfo]
+CreatedBy=Rickard Häll
+ModifiedBy=Rickard Häll
+Description=SDVP hest
+CreationTime=04:20PM
+CreationDate=23-09-2021
+ModificationTime=04:20PM
+ModificationDate=23-09-2021
+FileName=cpp-slave.eds
+FileVersion=001
+FileRevision=01
+
+[DeviceInfo]
+VendorName=Lely Industries N.V.
+VendorNumber=0x00000360
+ProductName=RPi
+ProductNumber=0x00000000
+RevisionNumber=0x00000000
+OrderCode=
+BaudRate_10=1
+BaudRate_20=1
+BaudRate_50=1
+BaudRate_125=1
+BaudRate_250=1
+BaudRate_500=1
+BaudRate_800=1
+BaudRate_1000=1
+SimpleBootUpMaster=0
+SimpleBootUpSlave=1
+Granularity=1
+DynamicChannelsSupported=0
+GroupMessaging=0
+NrOfRxPDO=2
+NrOfTxPDO=2
+LSS_Supported=1
+
+[DummyUsage]
+Dummy0001=1
+Dummy0002=1
+Dummy0003=1
+Dummy0004=1
+Dummy0005=1
+Dummy0006=1
+Dummy0007=1
+Dummy0010=1
+Dummy0011=1
+Dummy0012=1
+Dummy0013=1
+Dummy0014=1
+Dummy0015=1
+Dummy0016=1
+Dummy0018=1
+Dummy0019=1
+Dummy001A=1
+Dummy001B=1
+
+[Comments]
+Lines=7
+Line1=
+Line2=First release
+Line3=
+Line4=cpp-slave.eds 
+Line5=
+Line6=23/09/2021
+Line7=
+
+[MandatoryObjects]
+SupportedObjects=3
+1=0x1000
+2=0x1001
+3=0x1018
+
+[OptionalObjects]
+SupportedObjects=15
+1=0x1003
+2=0x1005
+3=0x1014
+4=0x1015
+5=0x1016
+6=0x1017
+7=0x1029
+8=0x1400
+9=0x1401
+10=0x1600
+11=0x1601
+12=0x1800
+13=0x1801
+14=0x1A00
+15=0x1A01
+
+[ManufacturerObjects]
+SupportedObjects=2
+1=0x2000
+2=0x2001
+
+[1000]
+ParameterName=Device Type
+DataType=0x0007
+AccessType=ro
+DefaultValue=0x00000000
+
+[1001]
+ParameterName=Error Register
+DataType=0x0005
+AccessType=ro
+
+[1003]
+ParameterName=Pre-defined error field
+ObjectType=0x08
+DataType=0x0007
+AccessType=ro
+CompactSubObj=254
+
+[1005]
+ParameterName=COB-ID SYNC message
+DataType=0x0007
+AccessType=rw
+DefaultValue=0x00000080
+
+[1014]
+ParameterName=COB-ID EMCY
+DataType=0x0007
+AccessType=rw
+DefaultValue=$NODEID+0x80
+
+[1015]
+ParameterName=Inhibit time EMCY
+DataType=0x0006
+AccessType=rw
+DefaultValue=0
+
+[1016]
+ParameterName=Consumer heartbeat time
+ObjectType=0x08
+DataType=0x0007
+AccessType=rw
+CompactSubObj=1
+
+[1017]
+ParameterName=Producer heartbeat time
+DataType=0x0006
+AccessType=rw
+
+[1018]
+SubNumber=5
+ParameterName=Identity object
+ObjectType=0x09
+
+[1018sub0]
+ParameterName=Highest sub-index supported
+DataType=0x0005
+AccessType=const
+LowLimit=1
+HighLimit=4
+DefaultValue=4
+
+[1018sub1]
+ParameterName=Vendor-ID
+DataType=0x0007
+AccessType=ro
+DefaultValue=0x00000360
+
+[1018sub2]
+ParameterName=Product code
+DataType=0x0007
+AccessType=ro
+
+[1018sub3]
+ParameterName=Revision number
+DataType=0x0007
+AccessType=ro
+
+[1018sub4]
+ParameterName=Serial number
+DataType=0x0007
+AccessType=ro
+
+[1029]
+ParameterName=Error behavior object
+ObjectType=0x08
+DataType=0x0005
+AccessType=rw
+CompactSubObj=1
+
+[1400]
+SubNumber=7
+ParameterName=RPDO communication parameter 0
+ObjectType=0x09
+
+[1400sub0]
+ParameterName=Number of entries
+ObjectType=0x7
+DataType=0x0005
+AccessType=ro
+DefaultValue=6
+LowLimit=0x02
+HighLimit=0x06
+
+[1400sub1]
+ParameterName=COB-ID used by RPDO
+ObjectType=0x7
+DataType=0x0007
+AccessType=rw
+DefaultValue=$NODEID+0x200
+LowLimit=0x00000001
+HighLimit=0xFFFFFFFF
+ParameterValue=$NODEID+0x200
+
+[1400sub2]
+ParameterName=Transmission Type
+ObjectType=0x7
+DataType=0x0005
+AccessType=rw
+DefaultValue=1
+PDOMapping=0
+ParameterValue=0x1
+
+[1400sub3]
+ParameterName=inhibit time
+DataType=0x0006
+AccessType=rw
+
+[1400sub4]
+ParameterName=compatibility entry
+DataType=0x0005
+AccessType=rw
+
+[1400sub5]
+ParameterName=event-timer
+DataType=0x0006
+AccessType=rw
+
+[1400sub6]
+ParameterName=SYNC start value
+DataType=0x0005
+AccessType=rw
+
+[1401]
+ParameterName=RPDO Communication Parameter 1
+ObjectType=0x9
+SubNumber=7
+
+[1401sub0]
+ParameterName=Number of entries
+ObjectType=0x7
+DataType=0x0005
+AccessType=ro
+DefaultValue=6
+LowLimit=0x02
+HighLimit=0x06
+
+[1401sub1]
+ParameterName=COB ID
+ObjectType=0x7
+DataType=0x0007
+AccessType=rw
+DefaultValue=$NODEID+0x300
+LowLimit=0x00000001
+HighLimit=0xFFFFFFFF
+ParameterValue=$NODEID+0x300
+
+[1401sub2]
+ParameterName=Transmission Type
+ObjectType=0x7
+DataType=0x0005
+AccessType=rw
+DefaultValue=1
+PDOMapping=0
+ParameterValue=0x1
+
+[1401sub3]
+ParameterName=inhibit time
+DataType=0x0006
+AccessType=rw
+
+[1401sub4]
+ParameterName=compatibility entry
+DataType=0x0005
+AccessType=rw
+
+[1401sub5]
+ParameterName=event-timer
+DataType=0x0006
+AccessType=rw
+
+[1401sub6]
+ParameterName=SYNC start value
+DataType=0x0005
+AccessType=rw
+
+[1600]
+ParameterName=Receive PDO Mapping Parameter 0
+ObjectType=0x9
+SubNumber=5
+
+[1600sub0]
+ParameterName=Number of entries
+ObjectType=0x7
+DataType=0x0005
+AccessType=rw
+DefaultValue=4
+PDOMapping=0
+LowLimit=0
+HighLimit=8
+ParameterValue=4
+
+[1600sub1]
+ParameterName=PDO Mapping Entry
+ObjectType=0x7
+DataType=0x0007
+AccessType=rw
+DefaultValue=0x20010610
+PDOMapping=0
+LowLimit=0
+HighLimit=0xFFFFFFFF
+ParameterValue=0x20010610
+
+[1600sub2]
+ParameterName=PDO Mapping Entry
+ObjectType=0x7
+DataType=0x0007
+AccessType=rw
+DefaultValue=0x20010720
+PDOMapping=0
+LowLimit=0
+HighLimit=0xFFFFFFFF
+ParameterValue=0x20010720
+
+[1600sub3]
+ParameterName=PDO Mapping Entry
+ObjectType=0x7
+DataType=0x0007
+AccessType=rw
+DefaultValue=0x20010408
+PDOMapping=0
+LowLimit=0
+HighLimit=0xFFFFFFFF
+ParameterValue=0x20010408
+
+[1600sub4]
+ParameterName=PDO Mapping Entry
+ObjectType=0x7
+DataType=0x0007
+AccessType=rw
+DefaultValue=0x20010108
+PDOMapping=0
+LowLimit=0
+HighLimit=0xFFFFFFFF
+ParameterValue=0x20010108
+
+[1601]
+ParameterName=Receive PDO Mapping Parameter 1
+ObjectType=0x9
+SubNumber=1
+
+[1601sub0]
+ParameterName=Number of entries
+ObjectType=0x7
+DataType=0x0005
+AccessType=rw
+DefaultValue=0
+PDOMapping=0
+LowLimit=0
+HighLimit=8
+ParameterValue=0
+
+[1800]
+ParameterName=Transmit PDO Communication Parameter 0
+ObjectType=0x9
+SubNumber=7
+
+[1800sub0]
+ParameterName=Number of entries
+ObjectType=0x7
+DataType=0x0005
+AccessType=ro
+DefaultValue=6
+PDOMapping=0
+LowLimit=0x02
+HighLimit=0x06
+
+[1800sub1]
+ParameterName=COB-ID used by TPDO
+ObjectType=0x7
+DataType=0x0007
+AccessType=rw
+DefaultValue=$NODEID+0x180
+PDOMapping=0
+LowLimit=0x00000001
+HighLimit=0xFFFFFFFF
+ParameterValue=$NODEID+0x180
+
+[1800sub2]
+ParameterName=Transmission Type
+ObjectType=0x7
+DataType=0x0005
+AccessType=rw
+DefaultValue=1
+LowLimit=0
+HighLimit=255
+ParameterValue=0x1
+
+[1800sub3]
+ParameterName=Inhibit Time
+ObjectType=0x7
+DataType=0x0006
+AccessType=rw
+DefaultValue=0x0000
+PDOMapping=0
+LowLimit=0
+HighLimit=65535
+
+[1800sub4]
+ParameterName=Reserved
+DataType=0x0005
+AccessType=rw
+
+[1800sub5]
+ParameterName=Event Timer
+ObjectType=0x7
+DataType=0x0006
+AccessType=rw
+DefaultValue=0
+PDOMapping=0
+LowLimit=0
+HighLimit=65535
+
+[1800sub6]
+ParameterName=SYNC start value
+DataType=0x0005
+AccessType=rw
+
+[1801]
+ParameterName=Transmit PDO Communication Parameter 1
+ObjectType=0x9
+SubNumber=7
+
+[1801sub0]
+ParameterName=Number of entries
+ObjectType=0x7
+DataType=0x0005
+AccessType=ro
+DefaultValue=6
+PDOMapping=0
+LowLimit=0x02
+HighLimit=0x06
+
+[1801sub1]
+ParameterName=COB-ID used by TPDO
+ObjectType=0x7
+DataType=0x0007
+AccessType=rw
+DefaultValue=$NODEID+0x280
+PDOMapping=0
+LowLimit=0x00000001
+HighLimit=0xFFFFFFFF
+ParameterValue=$NODEID+0x280
+
+[1801sub2]
+ParameterName=Transmission Type
+ObjectType=0x7
+DataType=0x0005
+AccessType=rw
+DefaultValue=1
+LowLimit=0x0
+HighLimit=0xFF
+ParameterValue=0x4
+
+[1801sub3]
+ParameterName=Inhibit Time
+ObjectType=0x7
+DataType=0x0006
+AccessType=rw
+DefaultValue=0x0000
+PDOMapping=0
+LowLimit=0
+HighLimit=65535
+
+[1801sub4]
+ParameterName=Reserved
+DataType=0x0005
+AccessType=rw
+
+[1801sub5]
+ParameterName=Event Timer
+ObjectType=0x7
+DataType=0x0006
+AccessType=rw
+DefaultValue=0
+PDOMapping=0
+LowLimit=0
+HighLimit=65535
+
+[1801sub6]
+ParameterName=SYNC start value
+DataType=0x0005
+AccessType=rw
+
+[1A00]
+ParameterName=Transmit PDO Mapping Parameter 0
+ObjectType=0x9
+SubNumber=4
+
+[1A00sub0]
+ParameterName=Number of entries
+ObjectType=0x7
+DataType=0x0005
+AccessType=rw
+DefaultValue=3
+PDOMapping=0
+LowLimit=0
+HighLimit=8
+ParameterValue=3
+
+[1A00sub1]
+ParameterName=PDO Mapping Entry
+ObjectType=0x7
+DataType=0x0007
+AccessType=rw
+DefaultValue=0x20000410
+PDOMapping=0
+LowLimit=0
+HighLimit=0xFFFFFFFF
+ParameterValue=0x20000410
+
+[1A00sub2]
+ParameterName=PDO Mapping Entry
+ObjectType=0x7
+DataType=0x0007
+AccessType=rw
+DefaultValue=0x20000520
+PDOMapping=0
+LowLimit=0
+HighLimit=0xFFFFFFFF
+ParameterValue=0x20000520
+
+[1A00sub3]
+ParameterName=PDO Mapping Entry
+ObjectType=0x7
+DataType=0x0007
+AccessType=rw
+DefaultValue=0x20000308
+PDOMapping=0
+LowLimit=0
+HighLimit=0xFFFFFFFF
+ParameterValue=0x20000308
+
+[1A01]
+ParameterName=Transmit PDO Mapping Parameter 1
+ObjectType=0x9
+SubNumber=1
+
+[1A01sub0]
+ParameterName=Number of entries
+ObjectType=0x7
+DataType=0x0005
+AccessType=rw
+DefaultValue=0
+PDOMapping=0
+LowLimit=0
+HighLimit=8
+ParameterValue=0
+
+[2000]
+ParameterName=ApplicationCommands
+ObjectType=0x9
+SubNumber=7
+
+[2000sub0]
+ParameterName=LastSubIndex
+ObjectType=0x7
+DataType=0x0005
+AccessType=ro
+DefaultValue=3
+PDOMapping=1
+LowLimit=0
+HighLimit=255
+ParameterValue=6
+
+[2000sub1]
+ParameterName=CommandSpeed [km/h]
+ObjectType=0x7
+DataType=0x0002
+AccessType=rw
+DefaultValue=0
+PDOMapping=1
+LowLimit=-30
+HighLimit=30
+
+[2000sub2]
+ParameterName=CommandSteeringRadius [m]
+ObjectType=0x7
+DataType=0x0003
+AccessType=rw
+DefaultValue=0
+PDOMapping=1
+LowLimit=-1000
+HighLimit=1000
+
+[2000sub3]
+ParameterName=CommandStatus
+ObjectType=0x7
+DataType=0x0005
+AccessType=rw
+DefaultValue=0
+PDOMapping=1
+LowLimit=0
+HighLimit=255
+
+[2000sub4]
+ParameterName=CommandSpeed [m/s]
+ObjectType=0x7
+DataType=0x0003
+AccessType=rw
+DefaultValue=0
+PDOMapping=1
+LowLimit=-0x000003E8
+HighLimit=0x000003E8
+
+[2000sub5]
+ParameterName=CommandSteeringCurvature [1/m]
+ObjectType=0x7
+DataType=0x0004
+AccessType=rw
+DefaultValue=0
+PDOMapping=1
+LowLimit=-0x000186A0
+HighLimit=0x000186A0
+
+[2000sub6]
+ParameterName=CommandAttributes
+ObjectType=0x7
+DataType=0x0005
+AccessType=rw
+DefaultValue=0
+PDOMapping=1
+
+[2001]
+ParameterName=ApplicationStatus
+ObjectType=0x9
+SubNumber=8
+
+[2001sub0]
+ParameterName=LastSubIndex
+ObjectType=0x7
+DataType=0x0005
+AccessType=ro
+DefaultValue=5
+PDOMapping=1
+LowLimit=0
+HighLimit=255
+ParameterValue=7
+
+[2001sub1]
+ParameterName=ActualStatus
+ObjectType=0x7
+DataType=0x0005
+AccessType=rw
+DefaultValue=0
+PDOMapping=1
+LowLimit=0
+HighLimit=255
+
+[2001sub2]
+ParameterName=ActualSpeed [km/h]
+ObjectType=0x7
+DataType=0x0002
+AccessType=rw
+DefaultValue=0
+PDOMapping=1
+LowLimit=-30
+HighLimit=30
+
+[2001sub3]
+ParameterName=ActualSteeringRadius [m]
+ObjectType=0x7
+DataType=0x0003
+AccessType=rw
+DefaultValue=0
+PDOMapping=1
+LowLimit=-1000
+HighLimit=1000
+
+[2001sub4]
+ParameterName=BatterySOC [%]
+ObjectType=0x7
+DataType=0x0005
+AccessType=rw
+DefaultValue=0
+PDOMapping=1
+LowLimit=0
+HighLimit=100
+
+[2001sub5]
+ParameterName=BatteryVoltage [deciV]
+ObjectType=0x7
+DataType=0x0006
+AccessType=rw
+DefaultValue=0
+PDOMapping=1
+LowLimit=0
+HighLimit=1000
+
+[2001sub6]
+ParameterName=ActualSpeed [m/s]
+ObjectType=0x7
+DataType=0x0003
+AccessType=rw
+DefaultValue=0
+PDOMapping=1
+LowLimit=-0x000003E8
+HighLimit=0x000003E8
+
+[2001sub7]
+ParameterName=ActualSteeringCurvature [1/m]
+ObjectType=0x7
+DataType=0x0004
+AccessType=rw
+DefaultValue=0
+PDOMapping=1
+LowLimit=-0x000186A0
+HighLimit=0x000186A0
