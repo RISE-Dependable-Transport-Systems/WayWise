@@ -55,7 +55,7 @@ public:
 	// Dynamic state
 	virtual PosPoint getPosition() const { return mPosition; }
 	virtual void setPosition(PosPoint &point);
-	virtual QTime getTime() const { return mPosition.getTime(); }
+	virtual QTime getTime() const { return getPosition().getTime(); }
 	virtual void setTime(const QTime &time) { mPosition.setTime(time); }
 	virtual double getSpeed() const;
 	virtual void setSpeed(double value);
