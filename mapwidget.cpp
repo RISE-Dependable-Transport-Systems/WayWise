@@ -154,9 +154,9 @@ MapWidget::MapWidget(QWidget *parent) : QWidget(parent)
     mYOffset = 0;
     mMouseLastX = 1000000;
     mMouseLastY = 1000000;
-    mFollowVehicleId = -1;
-    mTraceVehicle = -1;
-    mSelectedVehicle = -1;
+    mFollowObjectId = -1;
+    mTraceObject = -1;
+    mSelectedObject = -1;
     xRealPos = 0;
     yRealPos = 0;
     mRoutePointSpeed = 1.0;
@@ -171,7 +171,7 @@ MapWidget::MapWidget(QWidget *parent) : QWidget(parent)
     mRoutePointSelected = -1;
     mAnchorSelected = -1;
     mRouteNow = 0;
-    mTraceMinSpaceVehicle = 0.05;
+    mTraceMinSpaceObject = 0.05;
     mTraceMinSpaceGps = 0.05;
     mInfoTraceNow = 0;
     mAnchorMode = false;
@@ -385,9 +385,9 @@ void MapWidget::moveView(double px, double py)
 
 void MapWidget::clearTrace()
 {
-    mVehicleTrace.clear();
-    mVehicleTraceGNSS.clear();
-    mVehicleTraceUwb.clear();
+    mObjectTrace.clear();
+    mObjectTraceGNSS.clear();
+    mObjectTraceUwb.clear();
     update();
 }
 
@@ -525,27 +525,27 @@ void MapWidget::objectPositionUpdated()
     update();
 }
 
-void MapWidget::setFollowVehicle(int vehicleID)
+void MapWidget::setFollowObject(int objectID)
 {
-    int oldVehicle = mFollowVehicleId;
-    mFollowVehicleId = vehicleID;
+    int oldObject = mFollowObjectId;
+    mFollowObjectId = objectID;
 
-    if (oldVehicle != mFollowVehicleId) {
+    if (oldObject != mFollowObjectId) {
         update();
     }
 }
 
-void MapWidget::setTraceVehicle(int vehicleID)
+void MapWidget::setTraceObject(int objectID)
 {
-    mTraceVehicle = vehicleID;
+    mTraceObject = objectID;
 }
 
-void MapWidget::setSelectedVehicle(int vehicleID)
+void MapWidget::setSelectedObject(int objectID)
 {
-    int oldVehicle = mSelectedVehicle;
-    mSelectedVehicle = vehicleID;
+    int oldObject = mSelectedObject;
+    mSelectedObject = objectID;
 
-    if (oldVehicle != mSelectedVehicle) {
+    if (oldObject != mSelectedObject) {
         update();
     }
 }
@@ -652,15 +652,15 @@ void MapWidget::mousePressEvent(QMouseEvent *e)
 
     if (ctrl) {
         if (e->buttons() & Qt::LeftButton) {
-            if (mSelectedVehicle >= 0) {
+            if (mSelectedObject >= 0) {
 				for (int i = 0;i < mObjectStateList.size();i++) {
 					QSharedPointer<VehicleState> vehicleState = mObjectStateList[i].dynamicCast<VehicleState>();
-					if (vehicleState->getId() == mSelectedVehicle) {
+                    if (vehicleState->getId() == mSelectedObject) {
 						PosPoint pos = vehicleState->getPosition();
                         QPoint p = getMousePosRelative();
                         pos.setXY(p.x() / 1000.0, p.y() / 1000.0);
 						vehicleState->setPosition(pos);
-                        emit posSet(mSelectedVehicle, pos);
+                        emit posSet(mSelectedObject, pos);
                     }
                 }
             }
@@ -774,16 +774,16 @@ void MapWidget::wheelEvent(QWheelEvent *e)
         }
     }
 
-    if (ctrl && mSelectedVehicle >= 0) {
+    if (ctrl && mSelectedObject >= 0) {
 		for (int i = 0;i < mObjectStateList.size();i++) {
 			QSharedPointer<VehicleState> vehicleState = mObjectStateList[i].dynamicCast<VehicleState>();
-			if (vehicleState->getId() == mSelectedVehicle) {
+            if (vehicleState->getId() == mSelectedObject) {
 				PosPoint pos = vehicleState->getPosition();
                 double angle = pos.getYaw() + (double)e->angleDelta().y() * 0.0005;
                 normalizeAngleRad(angle);
                 pos.setYaw(angle);
 				vehicleState->setPosition(pos);
-                emit posSet(mSelectedVehicle, pos);
+                emit posSet(mSelectedObject, pos);
                 update();
             }
         }
@@ -968,14 +968,14 @@ void MapWidget::setTraceMinSpaceGps(double traceMinSpaceGps)
     mTraceMinSpaceGps = traceMinSpaceGps;
 }
 
-double MapWidget::getTraceMinSpaceVehicle() const
+double MapWidget::getTraceMinSpaceObject() const
 {
-    return mTraceMinSpaceVehicle;
+    return mTraceMinSpaceObject;
 }
 
-void MapWidget::setTraceMinSpaceVehicle(double traceMinSpaceVehicle)
+void MapWidget::setTraceMinSpaceObject(double traceMinSpaceObject)
 {
-    mTraceMinSpaceVehicle = traceMinSpaceVehicle;
+    mTraceMinSpaceObject = traceMinSpaceObject;
 }
 
 QTime MapWidget::getRoutePointTime() const
@@ -1974,10 +1974,10 @@ void MapWidget::paint(QPainter &painter, int width, int height, bool highQuality
     }
 
     // Optionally follow a vehicle
-    if (mFollowVehicleId >= 0) {
+    if (mFollowObjectId >= 0) {
 		for (int i = 0;i < mObjectStateList.size();i++) {
 			QSharedPointer<VehicleState> vehicleState = mObjectStateList[i].dynamicCast<VehicleState>();
-			if (vehicleState->getId() == mFollowVehicleId) {
+            if (vehicleState->getId() == mFollowObjectId) {
 				PosPoint followLoc = vehicleState->getPosition();
                 mXOffset = -followLoc.getX() * 1000.0 * mScaleFactor;
                 mYOffset = -followLoc.getY() * 1000.0 * mScaleFactor;
@@ -2047,9 +2047,9 @@ void MapWidget::paint(QPainter &painter, int width, int height, bool highQuality
     pen.setColor(Qt::red);
     painter.setPen(pen);
     painter.setTransform(drawTrans);
-    for (int i = 1;i < mVehicleTrace.size();i++) {
-        painter.drawLine(mVehicleTrace[i - 1].getX() * 1000.0, mVehicleTrace[i - 1].getY() * 1000.0,
-                mVehicleTrace[i].getX() * 1000.0, mVehicleTrace[i].getY() * 1000.0);
+    for (int i = 1;i < mObjectTrace.size();i++) {
+        painter.drawLine(mObjectTrace[i - 1].getX() * 1000.0, mObjectTrace[i - 1].getY() * 1000.0,
+                mObjectTrace[i].getX() * 1000.0, mObjectTrace[i].getY() * 1000.0);
     }
 
     // Draw GNSS trace for the selected vehicle
@@ -2057,9 +2057,9 @@ void MapWidget::paint(QPainter &painter, int width, int height, bool highQuality
     pen.setColor(Qt::magenta);
     painter.setPen(pen);
     painter.setTransform(drawTrans);
-    for (int i = 1;i < mVehicleTraceGNSS.size();i++) {
-        painter.drawLine(mVehicleTraceGNSS[i - 1].getX() * 1000.0, mVehicleTraceGNSS[i - 1].getY() * 1000.0,
-                mVehicleTraceGNSS[i].getX() * 1000.0, mVehicleTraceGNSS[i].getY() * 1000.0);
+    for (int i = 1;i < mObjectTraceGNSS.size();i++) {
+        painter.drawLine(mObjectTraceGNSS[i - 1].getX() * 1000.0, mObjectTraceGNSS[i - 1].getY() * 1000.0,
+                mObjectTraceGNSS[i].getX() * 1000.0, mObjectTraceGNSS[i].getY() * 1000.0);
     }
 
     // Draw UWB trace for the selected vehicle
@@ -2068,9 +2068,9 @@ void MapWidget::paint(QPainter &painter, int width, int height, bool highQuality
         pen.setColor(Qt::green);
         painter.setPen(pen);
         painter.setTransform(drawTrans);
-        for (int i = 1;i < mVehicleTraceUwb.size();i++) {
-            painter.drawLine(mVehicleTraceUwb[i - 1].getX() * 1000.0, mVehicleTraceUwb[i - 1].getY() * 1000.0,
-                    mVehicleTraceUwb[i].getX() * 1000.0, mVehicleTraceUwb[i].getY() * 1000.0);
+        for (int i = 1;i < mObjectTraceUwb.size();i++) {
+            painter.drawLine(mObjectTraceUwb[i - 1].getX() * 1000.0, mObjectTraceUwb[i - 1].getY() * 1000.0,
+                    mObjectTraceUwb[i].getX() * 1000.0, mObjectTraceUwb[i].getY() * 1000.0);
         }
     }
 
@@ -2091,7 +2091,7 @@ void MapWidget::paint(QPainter &painter, int width, int height, bool highQuality
     // Draw vehicles
     painter.setPen(QPen(QPalette::Foreground));
 	for(const auto& obj : mObjectStateList)
-		obj->draw(painter, drawTrans, txtTrans, obj->getId() == mSelectedVehicle);
+        obj->draw(painter, drawTrans, txtTrans, obj->getId() == mSelectedObject);
 
     painter.setPen(QPen(QPalette::Foreground));
 
@@ -2107,16 +2107,16 @@ void MapWidget::paint(QPainter &painter, int width, int height, bool highQuality
 
 void MapWidget::updateTraces()
 {
-    // Store trace for the selected vehicle
-    if (mTraceVehicle >= 0) {
+    // Store trace for the selected object
+    if (mTraceObject >= 0) {
 		for (int i = 0;i < mObjectStateList.size();i++) {
 			QSharedPointer<ObjectState> objectState = mObjectStateList[i];
-			if (objectState->getId() == mTraceVehicle) {
-                if (mVehicleTrace.isEmpty()) {
-					mVehicleTrace.append(objectState->getPosition());
+            if (objectState->getId() == mTraceObject) {
+                if (mObjectTrace.isEmpty()) {
+                    mObjectTrace.append(objectState->getPosition());
                 }
-				if (mVehicleTrace.last().getDistanceTo(objectState->getPosition()) > mTraceMinSpaceVehicle) {
-					mVehicleTrace.append(objectState->getPosition());
+                if (mObjectTrace.last().getDistanceTo(objectState->getPosition()) > mTraceMinSpaceObject) {
+                    mObjectTrace.append(objectState->getPosition());
                 }
 //                // GPS trace
 //                if (mVehicleTraceGps.isEmpty()) {
@@ -2137,15 +2137,15 @@ void MapWidget::updateTraces()
     }
 
     // Truncate traces
-    while (mVehicleTrace.size() > 5000) {
-        mVehicleTrace.removeFirst();
+    while (mObjectTrace.size() > 5000) {
+        mObjectTrace.removeFirst();
     }
 
-    while (mVehicleTraceGNSS.size() > 1800) {
-        mVehicleTraceGNSS.removeFirst();
+    while (mObjectTraceGNSS.size() > 1800) {
+        mObjectTraceGNSS.removeFirst();
     }
 
-    while (mVehicleTraceUwb.size() > 5000) {
-        mVehicleTraceUwb.removeFirst();
+    while (mObjectTraceUwb.size() > 5000) {
+        mObjectTraceUwb.removeFirst();
     }
 }
