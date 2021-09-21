@@ -67,7 +67,7 @@ public slots:
 
 private:
     PosPoint mFollowMePoint; // always in ENU
-    qint32 mFollowMeTimeStamp = 0;
+    QTime mFollowMeTimeStamp;
     const unsigned mCountdown_ms = 1000;
     QTimer mSensorHeartbeatTimer;
     bool mSensorHeartbeat;
