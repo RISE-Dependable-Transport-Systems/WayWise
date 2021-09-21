@@ -11,7 +11,7 @@ CarState::CarState(int id, Qt::GlobalColor color) : VehicleState(id, color)
 void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected)
 {
     PosPoint pos = getPosition();
-//        LocPoint pos_gps = VehicleState->getLocationGps();
+    //        LocPoint pos_gps = VehicleState->getLocationGps();
 
     const double car_len = getLength() * 1000.0;
     const double car_w = getWidth() * 1000.0;
@@ -19,8 +19,8 @@ void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTrans
 
     double x = pos.getX() * 1000.0;
     double y = pos.getY() * 1000.0;
-//        double x_gps = pos_gps.getX() * 1000.0;
-//        double y_gps = pos_gps.getY() * 1000.0;
+    //        double x_gps = pos_gps.getX() * 1000.0;
+    //        double y_gps = pos_gps.getY() * 1000.0;
     painter.setTransform(drawTrans);
 
     QColor col_wheels;
@@ -29,7 +29,7 @@ void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTrans
     QColor col_sigma = Qt::red;
     QColor col_hull = getColor();
     QColor col_center = Qt::blue;
-//        QColor col_gps = Qt::magenta;
+    //        QColor col_gps = Qt::magenta;
 
     if (isSelected) {
         col_wheels = Qt::black;
@@ -108,7 +108,7 @@ void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTrans
     if (getDrawStatusText()) {
         QPointF statusTextPoint;
         QRectF statusTextRect;
-		QString statusText = getName() + "\nID: " +QString::number(getId());
+        QString statusText = getName() + "\nID: " + QString::number(getId());
 
         statusTextPoint.setX(x + car_w + car_len * ((cos(getPosition().getYaw() * (M_PI/180.0)) + 1) / 3));
         statusTextPoint.setY(y - car_w / 2);
@@ -116,7 +116,7 @@ void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTrans
         painter.setTransform(txtTrans);
         statusTextPoint = drawTrans.map(statusTextPoint);
         statusTextRect.setCoords(statusTextPoint.x(), statusTextPoint.y(),
-                           statusTextPoint.x() + 400, statusTextPoint.y() + 100);
+                                 statusTextPoint.x() + 400, statusTextPoint.y() + 100);
         painter.drawText(statusTextRect, statusText);
     }
 }
@@ -156,13 +156,13 @@ void CarState::simulationStep(double dt_ms, PosType usePosType)
         currentPosition.setY(currentPosition.getY() + sin(-yawRad) * drivenDistance);
     }
 
-	currentPosition.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()));
+    currentPosition.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()));
     setPosition(currentPosition);
 }
 
 double CarState::getAxisDistance() const
 {
-	return fabs(mAxisDistance) < 0.001 ? 0.8*getLength() : mAxisDistance;
+    return fabs(mAxisDistance) < 0.001 ? 0.8*getLength() : mAxisDistance;
 }
 
 void CarState::setAxisDistance(double axisDistance)
@@ -172,24 +172,24 @@ void CarState::setAxisDistance(double axisDistance)
 
 double CarState::getRearOverhang() const
 {
-	return mRearOverhang;
+    return mRearOverhang;
 }
 
 void CarState::setRearOverhang(double rearOverhang)
 {
-	//TODO:: Set this using objectPhysics/displacement/xd/value which is currently not sent to SafetyZone
-	mRearOverhang = rearOverhang;
+    //TODO:: Set this using objectPhysics/displacement/xd/value which is currently not sent to SafetyZone
+    mRearOverhang = rearOverhang;
 }
 
 double CarState::getFrontOverhang() const
 {
-	return mFrontOverhang;
+    return mFrontOverhang;
 }
 
 void CarState::setFrontOverhang(double frontOverhang)
 {
-	//TODO:: Set this using objectPhysics/displacement/xd/value which is currently not sent to SafetyZone
-	mFrontOverhang = frontOverhang;
+    //TODO:: Set this using objectPhysics/displacement/xd/value which is currently not sent to SafetyZone
+    mFrontOverhang = frontOverhang;
 }
 
 double CarState::getSteering() const
@@ -205,11 +205,11 @@ void CarState::setSteering(double value)
 }
 
 void CarState::setMaxSteeringAngle(double steeringAngle_rad) {
-	mMaxSteeringAngle = fabs(steeringAngle_rad);
+    mMaxSteeringAngle = fabs(steeringAngle_rad);
 }
 
 void CarState::setMinTurnRadiusRear(double minTurnRadius_m) {
-	mMinTurnRadiusRear = fabs(minTurnRadius_m);
+    mMinTurnRadiusRear = fabs(minTurnRadius_m);
 }
 
 double CarState::getBrakingDistance() const {

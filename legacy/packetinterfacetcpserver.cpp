@@ -185,7 +185,7 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
                         newPoint.setY(packetData.vbPopFrontDouble32(1e4));
                         newPoint.setHeight(packetData.vbPopFrontDouble32(1e4));
                         newPoint.setSpeed(packetData.vbPopFrontDouble32(1e6));
-                        newPoint.setTime(packetData.vbPopFrontInt32());
+                        newPoint.setTime(QTime::fromMSecsSinceStartOfDay(packetData.vbPopFrontInt32()));
                         newPoint.setAttributes(packetData.vbPopFrontUint32());
                         mWaypointFollower->addWaypoint(newPoint);
                     }
