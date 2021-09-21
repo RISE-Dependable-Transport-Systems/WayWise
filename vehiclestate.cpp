@@ -20,20 +20,20 @@
 #include <QDebug>
 
 VehicleState::VehicleState(ObjectState::ObjectID_t id, Qt::GlobalColor color)
-	: ObjectState (id, color)
+    : ObjectState (id, color)
 {
-	mTime = QTime();
+    mTime = QTime();
     mLength = 0.8;
     mWidth = 0.335;
 
     for (int i = 0; i < (int)PosType::_LAST_; i++)
         switch((PosType) i) {
-			case PosType::simulated: mPositionBySource[i].setType(PosType::simulated); break;
-			case PosType::fused: mPositionBySource[i].setType(PosType::fused); break;
-			case PosType::odom: mPositionBySource[i].setType(PosType::odom); break;
-			case PosType::IMU: mPositionBySource[i].setType(PosType::IMU); break;
-			case PosType::GNSS: mPositionBySource[i].setType(PosType::GNSS); break;
-			case PosType::UWB: mPositionBySource[i].setType(PosType::UWB); break;
+        case PosType::simulated: mPositionBySource[i].setType(PosType::simulated); break;
+        case PosType::fused: mPositionBySource[i].setType(PosType::fused); break;
+        case PosType::odom: mPositionBySource[i].setType(PosType::odom); break;
+        case PosType::IMU: mPositionBySource[i].setType(PosType::IMU); break;
+        case PosType::GNSS: mPositionBySource[i].setType(PosType::GNSS); break;
+        case PosType::UWB: mPositionBySource[i].setType(PosType::UWB); break;
         case PosType::_LAST_: qDebug() << "This should not have happended."; break;
 
         }
@@ -42,7 +42,7 @@ VehicleState::VehicleState(ObjectState::ObjectID_t id, Qt::GlobalColor color)
 
 void VehicleState::setPosition(PosPoint &point)
 {
-	mPositionBySource[(int)point.getType()] = point;
+    mPositionBySource[(int)point.getType()] = point;
 
     emit positionUpdated();
 }
@@ -69,6 +69,6 @@ void VehicleState::setAccelerometerXYZ(const std::array<float, 3> &accelerometer
 
 PosPoint VehicleState::getPosition(PosType type) const
 {
-	return mPositionBySource[(int)type];
+    return mPositionBySource[(int)type];
 }
 

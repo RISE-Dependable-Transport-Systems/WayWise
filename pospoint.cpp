@@ -20,7 +20,7 @@
 #include <cmath>
 
 PosPoint::PosPoint(double x, double y, double height, double roll, double pitch, double yaw, double speed,
-				   double radius, double sigma, QTime time, int id, bool drawLine, quint32 attributes, PosType type) :
+                   double radius, double sigma, QTime time, int id, bool drawLine, quint32 attributes, PosType type) :
     mX(x), mY(y), mHeight(height), mRoll(roll), mPitch(pitch), mYaw(yaw), mSpeed(speed),
     mRadius(radius), mSigma(sigma), mTime(time), mId(id), mDrawLine(drawLine),
     mAttributes(attributes), mType(type)
