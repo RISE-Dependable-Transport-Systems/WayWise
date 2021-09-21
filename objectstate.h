@@ -22,7 +22,6 @@
 
 #include <QObject>
 #include <QVector>
-#include <QVector3D>
 #include <QTime>
 #include <QString>
 #ifdef QT_GUI_LIB
@@ -37,8 +36,8 @@ class ObjectState : public QObject
     Q_OBJECT
 public:
     typedef int ObjectID_t;
-    typedef QVector3D Velocity;
-    typedef QVector3D Acceleration;
+    typedef struct {double x, y, z;} Velocity;
+    typedef struct {double x, y, z;} Acceleration;
     ObjectState(ObjectID_t id = 0, Qt::GlobalColor color = Qt::red);
 #ifdef QT_GUI_LIB
     virtual void draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected = true) = 0;
@@ -82,6 +81,7 @@ private:
 protected:
     // Dynamic state
     PosPoint mPosition;
+    double mSpeed = 0.0; // [m/s]
     Velocity mVelocity = {0.0, 0.0, 0.0}; // [m/s]
     Acceleration mAcceleration = {0.0, 0.0, 0.0}; // [m/s²]
 };
