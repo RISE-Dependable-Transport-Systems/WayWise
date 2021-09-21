@@ -80,17 +80,17 @@ static inline void createEnuMatrix(double lat, double lon, double *enuMat)
     enuMat[8] = sa;
 
     // NED
-//    enuMat[0] = -sa * co;
-//    enuMat[1] = -sa * so;
-//    enuMat[2] = ca;
+    //    enuMat[0] = -sa * co;
+    //    enuMat[1] = -sa * so;
+    //    enuMat[2] = ca;
 
-//    enuMat[3] = -so;
-//    enuMat[4] = co;
-//    enuMat[5] = 0.0;
+    //    enuMat[3] = -so;
+    //    enuMat[4] = co;
+    //    enuMat[5] = 0.0;
 
-//    enuMat[6] = -ca * co;
-//    enuMat[7] = -ca * so;
-//    enuMat[8] = -sa;
+    //    enuMat[6] = -ca * co;
+    //    enuMat[7] = -ca * so;
+    //    enuMat[8] = -sa;
 }
 
 static inline xyz_t llhToEnu(const llh_t &iLlh, const llh_t &llh)

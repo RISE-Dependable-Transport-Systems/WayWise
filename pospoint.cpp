@@ -20,7 +20,7 @@
 #include <cmath>
 
 PosPoint::PosPoint(double x, double y, double height, double roll, double pitch, double yaw, double speed,
-                   double radius, double sigma, qint32 time, int id, bool drawLine, quint32 attributes, PosType type) :
+                   double radius, double sigma, QTime time, int id, bool drawLine, quint32 attributes, PosType type) :
     mX(x), mY(y), mHeight(height), mRoll(roll), mPitch(pitch), mYaw(yaw), mSpeed(speed),
     mRadius(radius), mSigma(sigma), mTime(time), mId(id), mDrawLine(drawLine),
     mAttributes(attributes), mType(type)
@@ -108,7 +108,7 @@ void PosPoint::setXY(double x, double y)
     mY = y;
 }
 
-void PosPoint::setTime(const qint32 &time)
+void PosPoint::setTime(const QTime &time)
 {
     mTime = time;
 }
@@ -123,7 +123,7 @@ QString PosPoint::getInfo() const
     return mInfo;
 }
 
-qint32 PosPoint::getTime() const
+QTime PosPoint::getTime() const
 {
     return mTime;
 }

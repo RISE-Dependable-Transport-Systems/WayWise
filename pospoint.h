@@ -21,6 +21,7 @@
 #include <QObject>
 #include <QPointF>
 #include <QString>
+#include <QTime>
 
 enum class PosType {
     simulated,
@@ -39,7 +40,7 @@ public:
 
     PosPoint(double x = 0, double y = 0, double height = 0, double roll = 0,
              double pitch = 0, double yaw = 0, double speed = 0.5, double radius = 5.0,
-             double sigma = 0.0, qint32 time = 0,
+             double sigma = 0.0, QTime time = QTime(),
              int id = 0, bool drawLine = true, quint32 attributes = 0, PosType type = PosType::simulated);
     PosPoint(const PosPoint &point);
 
@@ -57,7 +58,7 @@ public:
     double getSigma() const;
     QString getInfo() const;
     QColor getColor() const;
-    qint32 getTime() const;
+    QTime getTime() const;
     int getId() const;
     bool getDrawLine() const;
     quint32 getAttributes() const;
@@ -78,7 +79,7 @@ public:
     void setSigma(double sigma);
     void setInfo(const QString &info);
     void setColor(const QColor &color);
-    void setTime(const qint32 &time);
+    void setTime(const QTime &time);
     void setId(int id);
     void setDrawLine(bool drawLine);
     void setAttributes(quint32 attributes);
@@ -99,7 +100,7 @@ private:
     double mRadius;
     double mSigma;
     QString mInfo;
-    qint32 mTime;
+    QTime mTime;
     int mId;
     bool mDrawLine;
     quint32 mAttributes;

@@ -305,7 +305,7 @@ void UbloxRover::updateAHRS(const ubx_esf_meas &meas)
             newYaw -= 360.0;
         tmppos.setYaw(newYaw);
 
-        tmppos.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()).msecsSinceStartOfDay()); // TODO: can meas.time_tag be mapped to UTC/iTOW?
+        tmppos.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc())); // TODO: can meas.time_tag be mapped to UTC/iTOW?
         mVehicleState->setPosition(tmppos);
 
         emit updatedIMUOrientation(mVehicleState);
@@ -346,7 +346,7 @@ void UbloxRover::updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt)
             gnssPos.setYaw(-atan2(xyz.y - lastXyz.y, xyz.x - lastXyz.x) * 180.0 / M_PI);
 
         // Time and speed
-        gnssPos.setTime((pvt.i_tow % ms_per_day) - leapSeconds_ms);
+        gnssPos.setTime(QTime::fromMSecsSinceStartOfDay((pvt.i_tow % ms_per_day) - leapSeconds_ms));
 //        qDebug() << "UbloxRover, gnssPos.getTime() - msSinceTodayUTC:" << QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()).msecsSinceStartOfDay() - gnssPos.getTime();
         gnssPos.setSpeed(pvt.g_speed);
 

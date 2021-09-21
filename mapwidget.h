@@ -35,6 +35,7 @@
 
 #include "pospoint.h"
 #include "vehiclestate.h"
+#include "objectstate.h"
 #include "osmclient.h"
 #include "coordinatetransforms.h"
 
@@ -61,13 +62,17 @@ public:
     } RoutePointType;
 
     explicit MapWidget(QWidget *parent = 0);
+    QSharedPointer<ObjectState> getObjectState(int objectID);
     QSharedPointer<VehicleState> getVehicleState(int vehicleID);
-    void setFollowVehicle(int vehicleID);
-    void setTraceVehicle(int vehicleID);
-    void setSelectedVehicle(int vehicleID);
+    void setFollowObject(int objectID);
+    void setTraceObject(int objectID);
+    void setSelectedObject(int objectID);
+    void addObject(QSharedPointer<ObjectState> objectState);
     void addVehicle(QSharedPointer<VehicleState> vehicleState);
+    bool removeObject(int objectID);
     bool removeVehicle(int vehicleID);
     void clearVehicles();
+    void clearObjects();
     PosPoint* getAnchor(int anchorId);
     void addAnchor(const PosPoint &anchor);
     bool removeAnchor(int anchorId);
@@ -80,7 +85,7 @@ public:
     void setYOffset(double offset);
     void moveView(double px, double py);
     void clearTrace();
-    void addRoutePoint(double px, double py, double speed = 0.0, qint32 time = 0);
+    void addRoutePoint(double px, double py, double speed = 0.0, QTime time = QTime());
     QList<PosPoint> getRoute(int ind = -1);
     QList<QList<PosPoint> > getRoutes();
     void setRoute(const QList<PosPoint> &route);
@@ -129,11 +134,11 @@ public:
     int getRouteNow() const;
     void setRouteNow(int routeNow);
 
-    qint32 getRoutePointTime() const;
-    void setRoutePointTime(const qint32 &routePointTime);
+    QTime getRoutePointTime() const;
+    void setRoutePointTime(const QTime& routePointTime);
 
-    double getTraceMinSpaceVehicle() const;
-    void setTraceMinSpaceVehicle(double traceMinSpaceVehicle);
+    double getTraceMinSpaceObject() const;
+    void setTraceMinSpaceObject(double traceMinSpaceObject);
 
     double getTraceMinSpaceGps() const;
     void setTraceMinSpaceGps(double traceMinSpaceGps);
@@ -165,6 +170,7 @@ public:
     quint32 getRoutePointAttributes() const;
     void setRoutePointAttributes(const quint32 &routePointAttributes);
 
+    QList<QSharedPointer<ObjectState> > getObjectStateList() const;
     QList<QSharedPointer<VehicleState> > getVehicleStateList() const;
 
     double drawGrid(QPainter &painter, QTransform drawTrans, QTransform txtTrans, double gridWidth, double gridHeight);
@@ -190,7 +196,7 @@ private slots:
     void tileReady(OsmTile tile);
     void errorGetTile(QString reason);
     void timerSlot();
-    void vehiclePositionUpdated();
+    void objectPositionUpdated();
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -201,16 +207,16 @@ protected:
     bool event(QEvent *event) override;
 
 private:
-    QList<QSharedPointer<VehicleState>> mVehicleStateList;
-    QVector<PosPoint> mVehicleTrace;
-    QVector<PosPoint> mVehicleTraceGNSS;
-    QVector<PosPoint> mVehicleTraceUwb;
+    QList<QSharedPointer<ObjectState>> mObjectStateList;
+    QVector<PosPoint> mObjectTrace;
+    QVector<PosPoint> mObjectTraceGNSS;
+    QVector<PosPoint> mObjectTraceUwb;
     QList<PosPoint> mAnchors;
     QList<QList<PosPoint> > mRoutes;
     QList<QList<PosPoint> > mInfoTraces;
     QList<PosPoint> mVisibleInfoTracePoints;
     double mRoutePointSpeed;
-    qint32 mRoutePointTime;
+    QTime mRoutePointTime;
     quint32 mRoutePointAttributes;
     qint32 mAnchorId;
     double mAnchorHeight;
@@ -220,9 +226,9 @@ private:
     double mYOffset;
     int mMouseLastX;
     int mMouseLastY;
-    int mFollowVehicleId;
-    int mTraceVehicle;
-    int mSelectedVehicle;
+    int mFollowObjectId;
+    int mTraceObject;
+    int mSelectedObject;
     double xRealPos;
     double yRealPos;
     bool mAntialiasDrawings;
@@ -241,7 +247,7 @@ private:
     int mAnchorSelected;
     int mRouteNow;
     int mInfoTraceNow;
-    double mTraceMinSpaceVehicle;
+    double mTraceMinSpaceObject;
     double mTraceMinSpaceGps;
     QList<QPixmap> mPixmaps;
     bool mAnchorMode;
@@ -255,7 +261,7 @@ private:
 
     void updateClosestInfoPoint();
     int drawInfoPoints(QPainter &painter, const QList<PosPoint> &pts,
-                        QTransform drawTrans, QTransform txtTrans,
+                       QTransform drawTrans, QTransform txtTrans,
                        const QRectF& viewRect_mm,
                        double min_dist);
     int getClosestPoint(PosPoint p, QList<PosPoint> points, double &dist);
