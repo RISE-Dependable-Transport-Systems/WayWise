@@ -271,27 +271,22 @@ void MapWidget::addVehicle(QSharedPointer<VehicleState> vehicleState)
 
 bool MapWidget::removeObject(int objectID)
 {
-	QMutableListIterator<QSharedPointer<ObjectState>> i(mObjectStateList);
-	while (i.hasNext()) {
-		if (i.next()->getId() == objectID) {
-			i.remove();
-			return true;
-		}
-	}
-	return false;
+    const auto oldSize = mObjectStateList.size();
+    std::remove_if(mObjectStateList.begin(), mObjectStateList.end(),
+                   [objectID](const QSharedPointer<ObjectState>& st){
+        return st->getId() == objectID;
+    });
+    return oldSize != mObjectStateList.size();
 }
 
 bool MapWidget::removeVehicle(int vehicleID)
 {
-	QMutableListIterator<QSharedPointer<ObjectState>> i(mObjectStateList);
-    while (i.hasNext()) {
-		if (i.next()->getId() == vehicleID
-				&& i.next().dynamicCast<VehicleState>() != nullptr) {
-            i.remove();
-            return true;
-        }
-    }
-    return false;
+    const auto oldSize = mObjectStateList.size();
+    std::remove_if(mObjectStateList.begin(), mObjectStateList.end(),
+                   [vehicleID](const QSharedPointer<ObjectState>& st){
+        return st->getId() == vehicleID && st.dynamicCast<VehicleState>() != nullptr;
+    });
+    return oldSize != mObjectStateList.size();
 }
 
 void MapWidget::clearObjects()
