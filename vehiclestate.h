@@ -60,7 +60,7 @@ public:
     void setAccelerometerXYZ(const std::array<float, 3> &accelerometerXYZ);
 
 private:
-	// Static state
+    // Static state
     double mLength; // [m]
     double mWidth; // [m]
     // TODO: reasonable default values? set here or move?
@@ -70,7 +70,7 @@ private:
     // Dynamic state
 	PosPoint mPositionBySource[(int)PosType::_LAST_];
     PosPoint mApGoal;
-	QTime mTime;
+    QTime mTime;
 
     std::array<float,3> mGyroscopeXYZ = std::array<float,3>({0.0, 0.0, 0.0}); // [deg/s]
     std::array<float,3> mAccelerometerXYZ = std::array<float,3>({0.0, 0.0, 0.0}); // [g]

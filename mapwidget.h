@@ -64,9 +64,9 @@ public:
     explicit MapWidget(QWidget *parent = 0);
 	QSharedPointer<ObjectState> getObjectState(int objectID);
     QSharedPointer<VehicleState> getVehicleState(int vehicleID);
-    void setFollowVehicle(int vehicleID);
-    void setTraceVehicle(int vehicleID);
-    void setSelectedVehicle(int vehicleID);
+    void setFollowObject(int objectID);
+    void setTraceObject(int objectID);
+    void setSelectedObject(int objectID);
 	void addObject(QSharedPointer<ObjectState> objectState);
 	void addVehicle(QSharedPointer<VehicleState> vehicleState);
 	bool removeObject(int objectID);
@@ -137,8 +137,8 @@ public:
 	QTime getRoutePointTime() const;
 	void setRoutePointTime(const QTime& routePointTime);
 
-    double getTraceMinSpaceVehicle() const;
-    void setTraceMinSpaceVehicle(double traceMinSpaceVehicle);
+    double getTraceMinSpaceObject() const;
+    void setTraceMinSpaceObject(double traceMinSpaceObject);
 
     double getTraceMinSpaceGps() const;
     void setTraceMinSpaceGps(double traceMinSpaceGps);
@@ -207,10 +207,10 @@ protected:
     bool event(QEvent *event) override;
 
 private:
-	QList<QSharedPointer<ObjectState>> mObjectStateList;
-    QVector<PosPoint> mVehicleTrace;
-    QVector<PosPoint> mVehicleTraceGNSS;
-    QVector<PosPoint> mVehicleTraceUwb;
+    QList<QSharedPointer<ObjectState>> mObjectStateList;
+    QVector<PosPoint> mObjectTrace;
+    QVector<PosPoint> mObjectTraceGNSS;
+    QVector<PosPoint> mObjectTraceUwb;
     QList<PosPoint> mAnchors;
     QList<QList<PosPoint> > mRoutes;
     QList<QList<PosPoint> > mInfoTraces;
@@ -226,9 +226,9 @@ private:
     double mYOffset;
     int mMouseLastX;
     int mMouseLastY;
-    int mFollowVehicleId;
-    int mTraceVehicle;
-    int mSelectedVehicle;
+    int mFollowObjectId;
+    int mTraceObject;
+    int mSelectedObject;
     double xRealPos;
     double yRealPos;
     bool mAntialiasDrawings;
@@ -247,7 +247,7 @@ private:
     int mAnchorSelected;
     int mRouteNow;
     int mInfoTraceNow;
-    double mTraceMinSpaceVehicle;
+    double mTraceMinSpaceObject;
     double mTraceMinSpaceGps;
     QList<QPixmap> mPixmaps;
     bool mAnchorMode;
