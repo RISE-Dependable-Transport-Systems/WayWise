@@ -22,26 +22,26 @@ public:
     virtual void simulationStep(double dt_ms, PosType usePosType = PosType::simulated) override;
 
     // Static state
-    double getAxisDistance() const;
-    void setAxisDistance(double axisDistance);
-    double getRearOverhang() const;
-    void setRearOverhang(double rearOverhang);
-    double getFrontOverhang() const;
-    void setFrontOverhang(double frontOverhang);
+    double getAxisDistance() const { return fabs(mAxisDistance) < 0.001 ? 0.8*getLength() : mAxisDistance; }
+    void setAxisDistance(double axisDistance) { mAxisDistance = axisDistance; }
+    double getRearOverhang() const { return mRearOverhang; }
+    void setRearOverhang(double rearOverhang) { mRearOverhang = rearOverhang; }
+    double getFrontOverhang() const { return mFrontOverhang; }
+    void setFrontOverhang(double frontOverhang) { mFrontOverhang = frontOverhang; }
 
     inline double getMaxSteeringAngle() const { return mMaxSteeringAngle < M_PI/180.0 ? M_PI/4.0 : mMaxSteeringAngle; } // 45° assumed if unset
     void setMaxSteeringAngle(double steeringAngle_rad);
     void setMinTurnRadiusRear(double minTurnRadius_m);
 
     // Dynamic state
-    double getSteering() const;
+    double getSteering() const { return mSteering; }
     void setSteering(double value);
     inline double getTurnRadiusRear() const { return getAxisDistance() / -mSteering; } // steering in [-1.0:1.0] as a simple approximation of tan(steering angle)
     inline double getTurnRadiusFront() const { return sqrt(pow(getAxisDistance(),2) + pow(getTurnRadiusRear(),2)); }
     inline double getTotalReactionTime() const { return 0.3; } // TODO: needs to be calculated/estimated
     double getBrakingDistance() const;
     double getBrakingDistance(double deceleration) const;
-    double getThreeSecondsDistance() const; // Distance the vehicle can move within 3 seconds at current speed, Swedish "Tresekundersregeln"
+    double getThreeSecondsDistance() const { return 3.0*getSpeed(); } // Distance the vehicle can move within 3 seconds at current speed, Swedish "Tresekundersregeln"
     const QPointF getStoppingPointForTurnRadiusAndBrakingDistance(const double turnRadius, const double brakeDistance) const;
     const QPointF getStoppingPointForTurnRadius(const double turnRadius) const;
     inline double getMinTurnRadiusRear() const { return qMax(qMin(getAxisDistance() / tanf(getMaxSteeringAngle()), mMinTurnRadiusRear), pow(getSpeed(), 2)/(0.21*9.81)); }

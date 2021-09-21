@@ -170,43 +170,6 @@ void CarState::simulationStep(double dt_ms, PosType usePosType)
     setPosition(currentPosition);
 }
 
-double CarState::getAxisDistance() const
-{
-    return fabs(mAxisDistance) < 0.001 ? 0.8*getLength() : mAxisDistance;
-}
-
-void CarState::setAxisDistance(double axisDistance)
-{
-    mAxisDistance = axisDistance;
-}
-
-double CarState::getRearOverhang() const
-{
-    return mRearOverhang;
-}
-
-void CarState::setRearOverhang(double rearOverhang)
-{
-    //TODO:: Set this using objectPhysics/displacement/xd/value which is currently not sent to SafetyZone
-    mRearOverhang = rearOverhang;
-}
-
-double CarState::getFrontOverhang() const
-{
-    return mFrontOverhang;
-}
-
-void CarState::setFrontOverhang(double frontOverhang)
-{
-    //TODO:: Set this using objectPhysics/displacement/xd/value which is currently not sent to SafetyZone
-    mFrontOverhang = frontOverhang;
-}
-
-double CarState::getSteering() const
-{
-    return mSteering;
-}
-
 void CarState::setSteering(double value)
 {
     value = (value > tanf(getMaxSteeringAngle())) ? tanf(getMaxSteeringAngle()) : value;
@@ -235,11 +198,6 @@ double CarState::getBrakingDistance(double deceleration) const
 
     return brakingDistance;
 
-}
-
-double CarState::getThreeSecondsDistance() const
-{
-    return 3.0 * getSpeed();
 }
 
 const QPointF CarState::getStoppingPointForTurnRadiusAndBrakingDistance(const double turnRadius, const double brakingDistance) const
