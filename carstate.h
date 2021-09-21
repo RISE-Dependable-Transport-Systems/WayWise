@@ -16,9 +16,10 @@ class CarState : public VehicleState
 public:
     CarState(int id = 0, Qt::GlobalColor color = Qt::red);
 #ifdef QT_GUI_LIB
-    virtual void draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected = true);
+    virtual void draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected = true) override;
+    virtual QPainterPath getBoundingBox() const override;
 #endif
-    virtual void simulationStep(double dt_ms, PosType usePosType = PosType::simulated);
+    virtual void simulationStep(double dt_ms, PosType usePosType = PosType::simulated) override;
 
     // Static state
     double getAxisDistance() const;

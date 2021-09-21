@@ -41,6 +41,7 @@ public:
     ObjectState(ObjectID_t id = 0, Qt::GlobalColor color = Qt::red);
 #ifdef QT_GUI_LIB
     virtual void draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected = true) = 0;
+    virtual QPainterPath getBoundingBox() const { return QPainterPath(); }
 #endif
 
     // Static state
