@@ -34,24 +34,24 @@ class VehicleState : public ObjectState
 {
     Q_OBJECT
 public:
-	VehicleState(ObjectID_t id = 0, Qt::GlobalColor color = Qt::red);
+    VehicleState(ObjectID_t id = 0, Qt::GlobalColor color = Qt::red);
 
-	// Static state
-	double getLength() const { return mLength; }
-	void setLength(double length) { mLength = length; }
-	double getWidth() const { return mWidth; }
-	void setWidth(double width) { mWidth = width; }
-	double getMinAcceleration() const { return mMinAcceleration; }
-	void setMinAcceleration(double minAcceleration) { mMinAcceleration = minAcceleration; }
-	double getMaxAcceleration() const { return mMaxAcceleration; }
-	void setMaxAcceleration(double maxAcceleration) { mMaxAcceleration = maxAcceleration; }
+    // Static state
+    double getLength() const { return mLength; }
+    void setLength(double length) { mLength = length; }
+    double getWidth() const { return mWidth; }
+    void setWidth(double width) { mWidth = width; }
+    double getMinAcceleration() const { return mMinAcceleration; }
+    void setMinAcceleration(double minAcceleration) { mMinAcceleration = minAcceleration; }
+    double getMaxAcceleration() const { return mMaxAcceleration; }
+    void setMaxAcceleration(double maxAcceleration) { mMaxAcceleration = maxAcceleration; }
 
-	// Dynamic state
-	virtual PosPoint getPosition(PosType type) const;
-	virtual PosPoint getPosition() const override { return getPosition(PosType::simulated); }
-	virtual void setPosition(PosPoint &point) override;
-	virtual QTime getTime() const override { return mTime; }
-	virtual void setTime(const QTime &time) override { mTime = time; }
+    // Dynamic state
+    virtual PosPoint getPosition(PosType type) const;
+    virtual PosPoint getPosition() const override { return getPosition(PosType::simulated); }
+    virtual void setPosition(PosPoint &point) override;
+    virtual QTime getTime() const override { return mTime; }
+    virtual void setTime(const QTime &time) override { mTime = time; }
 
     // For debugging and logging
     std::array<float, 3> getGyroscopeXYZ() const;
@@ -60,17 +60,17 @@ public:
     void setAccelerometerXYZ(const std::array<float, 3> &accelerometerXYZ);
 
 private:
-	// Static state
+    // Static state
     double mLength; // [m]
     double mWidth; // [m]
     // TODO: reasonable default values? set here or move?
     double mMinAcceleration = -5.0; // [m/s²]
-	double mMaxAcceleration = 3.0; // [m/s²]
+    double mMaxAcceleration = 3.0; // [m/s²]
 
     // Dynamic state
-	PosPoint mPositionBySource[(int)PosType::_LAST_];
+    PosPoint mPositionBySource[(int)PosType::_LAST_];
     PosPoint mApGoal;
-	QTime mTime;
+    QTime mTime;
 
     std::array<float,3> mGyroscopeXYZ = std::array<float,3>({0.0, 0.0, 0.0}); // [deg/s]
     std::array<float,3> mAccelerometerXYZ = std::array<float,3>({0.0, 0.0, 0.0}); // [g]
