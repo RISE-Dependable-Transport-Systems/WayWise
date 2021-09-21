@@ -42,16 +42,6 @@ void ObjectState::setPosition(PosPoint &point)
     emit positionUpdated();
 }
 
-double ObjectState::getSpeed() const
-{
-    return mSpeed;
-}
-
-void ObjectState::setSpeed(double value)
-{
-    mSpeed = value;
-}
-
 void ObjectState::setDrawStatusText(bool drawStatusText)
 {
     mDrawStatusText = drawStatusText;
