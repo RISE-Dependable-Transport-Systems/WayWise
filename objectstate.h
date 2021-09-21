@@ -56,8 +56,8 @@ public:
     virtual void setPosition(PosPoint &point);
     virtual QTime getTime() const { return mPosition.getTime(); }
     virtual void setTime(const QTime &time) { mPosition.setTime(time); }
-    virtual double getSpeed() const;
-    virtual void setSpeed(double value);
+    virtual double getSpeed() const { return mSpeed; }
+    virtual void setSpeed(double value) { mSpeed = value; }
     virtual Velocity getVelocity() const { return mVelocity; }
     virtual void setVelocity(const Velocity &velocity) { mVelocity = velocity; }
     virtual Acceleration getAcceleration() const { return mAcceleration; }
