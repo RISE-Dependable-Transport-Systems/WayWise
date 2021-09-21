@@ -385,7 +385,7 @@ void MapWidget::moveView(double px, double py)
 
 void MapWidget::clearTrace()
 {
-    mVehicleTrace.clear();
+    mObjectTrace.clear();
     mVehicleTraceGNSS.clear();
     mVehicleTraceUwb.clear();
     update();
@@ -2047,9 +2047,9 @@ void MapWidget::paint(QPainter &painter, int width, int height, bool highQuality
     pen.setColor(Qt::red);
     painter.setPen(pen);
     painter.setTransform(drawTrans);
-    for (int i = 1;i < mVehicleTrace.size();i++) {
-        painter.drawLine(mVehicleTrace[i - 1].getX() * 1000.0, mVehicleTrace[i - 1].getY() * 1000.0,
-                mVehicleTrace[i].getX() * 1000.0, mVehicleTrace[i].getY() * 1000.0);
+    for (int i = 1;i < mObjectTrace.size();i++) {
+        painter.drawLine(mObjectTrace[i - 1].getX() * 1000.0, mObjectTrace[i - 1].getY() * 1000.0,
+                mObjectTrace[i].getX() * 1000.0, mObjectTrace[i].getY() * 1000.0);
     }
 
     // Draw GNSS trace for the selected vehicle
@@ -2107,16 +2107,16 @@ void MapWidget::paint(QPainter &painter, int width, int height, bool highQuality
 
 void MapWidget::updateTraces()
 {
-    // Store trace for the selected vehicle
+    // Store trace for the selected object
     if (mTraceVehicle >= 0) {
 		for (int i = 0;i < mObjectStateList.size();i++) {
 			QSharedPointer<ObjectState> objectState = mObjectStateList[i];
 			if (objectState->getId() == mTraceVehicle) {
-                if (mVehicleTrace.isEmpty()) {
-					mVehicleTrace.append(objectState->getPosition());
+                if (mObjectTrace.isEmpty()) {
+                    mObjectTrace.append(objectState->getPosition());
                 }
-				if (mVehicleTrace.last().getDistanceTo(objectState->getPosition()) > mTraceMinSpaceVehicle) {
-					mVehicleTrace.append(objectState->getPosition());
+                if (mObjectTrace.last().getDistanceTo(objectState->getPosition()) > mTraceMinSpaceVehicle) {
+                    mObjectTrace.append(objectState->getPosition());
                 }
 //                // GPS trace
 //                if (mVehicleTraceGps.isEmpty()) {
@@ -2137,8 +2137,8 @@ void MapWidget::updateTraces()
     }
 
     // Truncate traces
-    while (mVehicleTrace.size() > 5000) {
-        mVehicleTrace.removeFirst();
+    while (mObjectTrace.size() > 5000) {
+        mObjectTrace.removeFirst();
     }
 
     while (mVehicleTraceGNSS.size() > 1800) {

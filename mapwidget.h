@@ -208,7 +208,7 @@ protected:
 
 private:
 	QList<QSharedPointer<ObjectState>> mObjectStateList;
-    QVector<PosPoint> mVehicleTrace;
+    QVector<PosPoint> mObjectTrace;
     QVector<PosPoint> mVehicleTraceGNSS;
     QVector<PosPoint> mVehicleTraceUwb;
     QList<PosPoint> mAnchors;
