@@ -301,7 +301,7 @@ void MapWidget::clearObjects()
 
 void MapWidget::clearVehicles()
 {
-	clearObjects(); // TODO
+    clearObjects(); // TODO only remove vehicle type objects
 }
 
 PosPoint *MapWidget::getAnchor(int anchorId)
