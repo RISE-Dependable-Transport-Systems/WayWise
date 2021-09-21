@@ -44,16 +44,12 @@ void ObjectState::setPosition(PosPoint &point)
 
 double ObjectState::getSpeed() const
 {
-    return static_cast<double>(mVelocity.length());
+    return mSpeed;
 }
 
 void ObjectState::setSpeed(double value)
 {
-    if (mVelocity.isNull()) {
-        mVelocity.setX(1.0);
-    }
-    mVelocity.normalize();
-    mVelocity *= static_cast<float>(value);
+    mSpeed = value;
 }
 
 void ObjectState::setDrawStatusText(bool drawStatusText)
