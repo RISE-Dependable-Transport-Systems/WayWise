@@ -151,33 +151,15 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
                 throttle = packetData.vbPopFrontDouble32(1e4);
                 steering = packetData.vbPopFrontDouble32(1e6);
 
-                //            steering *= mAutoPilot->autopilot_get_steering_scale();
-                //            mAutoPilot->autopilot_set_active(false);
+                if (mWaypointFollower && mWaypointFollower->isActive())
+                    mWaypointFollower->stop();
+
+                // NOTE: mode is ignored. Instead, throttle [0.0:1.0] is multiplied by 10 m/s.
+                // Handling mode would allow interact more closely with motor controller using
+                // CMD_RC_CONTROL, but not currently not relevant for us.
+                Q_UNUSED(mode)
                 mMovementController->setDesiredSteering(steering);
-                mMovementController->setDesiredSpeed(throttle*10.0); // TODO!
-
-                // TODO:
-                //            switch (mode) {
-                //            case RC_MODE_CURRENT:
-                //                mMotor->setControl(MotorSim::MOTOR_CONTROL_CURRENT, throttle);
-                //                break;
-
-                //            case RC_MODE_DUTY:
-                //                utility::truncateNumber(&throttle, -1.0, 1.0);
-                //                mMotor->setControl(MotorSim::MOTOR_CONTROL_DUTY, throttle);
-                //                break;
-
-                //            case RC_MODE_PID: // In m/s
-                //                setMotorSpeed(throttle);
-                //                break;
-
-                //            case RC_MODE_CURRENT_BRAKE:
-                //                mMotor->setControl(MotorSim::MOTOR_CONTROL_CURRENT_BRAKE, throttle);
-                //                break;
-
-                //            default:
-                //                break;
-                //            }
+                mMovementController->setDesiredSpeed(throttle * 10.0);
             } break;
             // --- Autopilot
             case CMD_AP_CLEAR_POINTS: {
