@@ -19,12 +19,14 @@ public:
     UbloxRover(QSharedPointer<VehicleState> vehicleState);
     bool connectSerial(const QSerialPortInfo &serialPortInfo);
     bool isSerialConnected();
+    llh_t getEnuRef() const;
     void setEnuRef(llh_t enuRef);
     void writeRtcmToUblox(QByteArray data);
     void writeOdoToUblox(ubx_esf_datatype_enum dataType, uint32_t dataField);
     void saveOnShutdown();
     void setEnableIMUOrientationUpdate(bool enabled);
     void setIMUOrientationOffset(double roll_deg, double pitch_deg, double yaw_deg);
+
 
 signals:
     void updatedGNSSPositionAndYaw(QSharedPointer<VehicleState> vehicleState, bool fused);

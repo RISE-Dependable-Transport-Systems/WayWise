@@ -56,7 +56,7 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
 
             // --- Get state from vehicle
             case CMD_GET_STATE: {
-                if (mVehicleState && mVehicleState->getId() == recipientID) {
+                if (mVehicleState->getId() == recipientID) {
                     VByteArray ret;
                     ret.vbAppendUint8(mVehicleState->getId());
                     ret.vbAppendUint8(commandID);
@@ -109,7 +109,7 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
                     mTcpServer.packet()->sendPacket(ack);
                 }
             } break;
-            // --- Set base station reference point
+            // --- Set base station reference point on rover
             case CMD_SET_ENU_REF: {
                 llh_t enuRef = {packetData.vbPopFrontDouble64(1e16), packetData.vbPopFrontDouble64(1e16), packetData.vbPopFrontDouble32(1e3)};
                 //qDebug() << "EnuRef received:" << enuRef.latitude << enuRef.longitude << enuRef.height;
@@ -124,6 +124,21 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
                     mTcpServer.packet()->sendPacket(ack);
                 } else
                     qDebug() << "WARNING: Unhandled CMD_SET_ENU_REF";
+            } break;
+            // --- Get base station reference point from rover
+            case CMD_GET_ENU_REF: {
+                if (mUbloxRover && mVehicleState->getId() == recipientID) {
+                    llh_t enuRef = mUbloxRover->getEnuRef();
+
+                    VByteArray ret;
+                    ret.vbAppendUint8(mVehicleState->getId());
+                    ret.vbAppendUint8(commandID);
+                    ret.vbAppendDouble64(enuRef.latitude, 1e16);
+                    ret.vbAppendDouble64(enuRef.longitude, 1e16);
+                    ret.vbAppendDouble32(enuRef.height, 1e3);
+                    mTcpServer.packet()->sendPacket(ret);
+                } else
+                    qDebug() << "WARNING: Unhandled CMD_GET_ENU_REF";
             } break;
             // --- Remote control vehicle
             case CMD_RC_CONTROL: {

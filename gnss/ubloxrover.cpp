@@ -357,6 +357,11 @@ void UbloxRover::updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt)
     }
 }
 
+llh_t UbloxRover::getEnuRef() const
+{
+    return mEnuReference;
+}
+
 void UbloxRover::updSosResponse(const ubx_upd_sos &sos)
 {
     if(sos.cmd == 2){
