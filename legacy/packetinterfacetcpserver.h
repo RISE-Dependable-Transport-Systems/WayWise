@@ -60,7 +60,7 @@ private:
         double voltageInput;
         double temperature;
         int errorID;
-    } mMotorControllerStatus;
+    } mMotorControllerStatus = {0.0, 0, 0, 0.0, 0.0, 0};
 
 };
 
