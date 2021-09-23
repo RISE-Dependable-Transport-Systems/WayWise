@@ -25,6 +25,7 @@ int SimpleWatchdog::getTimeout() const
 void SimpleWatchdog::setTimeout(const int &value_ms)
 {
     timeout_ms = value_ms;
+    mWatchdogTimer.start(timeout_ms);
 }
 
 int SimpleWatchdog::getTimeoutTolerance() const
