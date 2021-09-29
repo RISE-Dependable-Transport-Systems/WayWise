@@ -26,6 +26,7 @@
 #include <QString>
 #ifdef QT_GUI_LIB
 #include <QPainter>
+#include <QPainterPath>
 #endif
 
 #include "pospoint.h"
