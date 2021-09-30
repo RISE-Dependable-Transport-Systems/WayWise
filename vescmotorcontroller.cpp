@@ -85,8 +85,13 @@ void VESCMotorController::pollFirmwareVersion()
 void VESCMotorController::requestRPM(int32_t rpm)
 {
     VByteArray vb;
-    vb.vbAppendInt8(VESC::COMM_SET_RPM);
-    vb.vbAppendInt32(rpm);
+    if (fabs(rpm) < 500) {
+        vb.vbAppendInt8(VESC::COMM_SET_CURRENT);
+        vb.vbAppendDouble32(0.0, 1000.0);
+    } else {
+        vb.vbAppendInt8(VESC::COMM_SET_RPM);
+        vb.vbAppendInt32(rpm);
+    }
     mVESCPacket.sendPacket(vb);
 }
 
@@ -178,10 +183,6 @@ void VESCMotorController::processVESCPacket(QByteArray &data)
         values.fault_str = VESCFaultToStr(values.fault_code);
 
         // qDebug() << "Temp.:" << values.temp_mos << "RPM:" << values.rpm << "VIN:" << values.v_in << "Tacho.:" << values.tachometer << "Tacho. Abs.:" << values.tachometer_abs << "Error:" << values.fault_str;
-
-        // NOTE: workaround for (defective?) VESC measuring around 400 RPM at standstill
-        if (fabs(values.rpm) < 500)
-            values.rpm = 0;
 
         emit gotStatusValues(values.rpm, values.tachometer,  values.tachometer_abs, values.v_in, values.temp_mos, values.fault_code);
     } break;
