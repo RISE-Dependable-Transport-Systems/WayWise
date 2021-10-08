@@ -301,28 +301,40 @@ void WaypointFollower::updateState()
         if (QLineF(currentVehiclePosition, currentWaypoint).length() < mCurrentState.purePursuitRadius) // consider previous waypoint as reached
             mCurrentState.currentWaypointIndex++;
 
-        if (mCurrentState.currentWaypointIndex == mWaypointList.size())
-            mCurrentState.stmState = FOLLOW_ROUTE_FINISHED;
+        if (mCurrentState.currentWaypointIndex == mWaypointList.size() && !mCurrentState.repeatRoute)
+                mCurrentState.stmState = FOLLOW_ROUTE_FINISHED;
         else {
             // --- Calculate current goal on route (which lies between two waypoints)
             // 1. Find intersection between circle around vehicle and route
-            // look a number of points ahead and jump forward on route if applicable
+            // look a number of points ahead and jump forward on route, if applicable
+            // and take care of index wrap in case route is repeated
+            QList<PosPoint> lookAheadWaypoints;
+            if (mCurrentState.repeatRoute) {
+                lookAheadWaypoints = mWaypointList.mid(mCurrentState.currentWaypointIndex - 1, mCurrentState.numWaypointsLookahead);
+
+                const int lookaheadWaypointEndIndex = mCurrentState.currentWaypointIndex + mCurrentState.numWaypointsLookahead - 1;
+                if (lookaheadWaypointEndIndex > mWaypointList.size()) // index wraparound
+                    lookAheadWaypoints.append(mWaypointList.mid(0, lookaheadWaypointEndIndex % mWaypointList.size()));
+                else if (mCurrentState.currentWaypointIndex == 0) // restarting from end to beginning
+                    lookAheadWaypoints.prepend(mWaypointList.last());
+            } else
+                lookAheadWaypoints = mWaypointList.mid(mCurrentState.currentWaypointIndex - 1,  mCurrentState.numWaypointsLookahead);
+
             QVector<QPointF> intersections;
-            const int lookaheadWaypointStartIndex = (mCurrentState.currentWaypointIndex + mCurrentState.numWaypointsLookahead - 1  < mWaypointList.size()) ?
-                        (mCurrentState.currentWaypointIndex + mCurrentState.numWaypointsLookahead - 1) : mWaypointList.size() - 1;
-            for (int i = lookaheadWaypointStartIndex; i >= mCurrentState.currentWaypointIndex; i--) { // step backwards through lookahead window until intersection is found
-                QPointF iWaypoint = mWaypointList.at(i).getPoint();
-                QLineF iLineSegment(mWaypointList.at(i-1).getPoint(), iWaypoint);
+            for (int i = lookAheadWaypoints.size() - 1; i > 0; i--) { // step backwards through lookahead window until intersection is found
+                QPointF iWaypoint = lookAheadWaypoints.at(i).getPoint();
+                QLineF iLineSegment(lookAheadWaypoints.at(i-1).getPoint(), iWaypoint);
 
                 intersections = findIntersectionsBetweenCircleAndLine(QPair<QPointF, double>(currentVehiclePosition, mCurrentState.purePursuitRadius), iLineSegment);
                 if (intersections.size() > 0) {
-                    mCurrentState.currentWaypointIndex = i;
+                    mCurrentState.currentWaypointIndex = (i + mCurrentState.currentWaypointIndex - 1) % mWaypointList.size();
                     currentWaypoint = iWaypoint;
                     break;
                 }
             }
 
             // 2. Set Goal depending on number of intersections found
+            int previousWaypointIndex = mCurrentState.currentWaypointIndex - 1 >= 0 ? mCurrentState.currentWaypointIndex - 1 : mWaypointList.size() - 1;
             switch (intersections.size()) {
             case 0:
                 // We seem to have left the route (e.g., because of high speed), reuse previous goal to  get back to route
@@ -330,7 +342,7 @@ void WaypointFollower::updateState()
             case 1:
                 mCurrentState.currentGoal.setX(intersections[0].x());
                 mCurrentState.currentGoal.setY(intersections[0].y());
-                mCurrentState.currentGoal.setSpeed(getInterpolatedSpeed(mCurrentState.currentGoal, mWaypointList.at(mCurrentState.currentWaypointIndex-1), mWaypointList.at(mCurrentState.currentWaypointIndex)));
+                mCurrentState.currentGoal.setSpeed(getInterpolatedSpeed(mCurrentState.currentGoal, mWaypointList.at(previousWaypointIndex), mWaypointList.at(mCurrentState.currentWaypointIndex)));
 
                 break;
             case 2:
@@ -339,13 +351,13 @@ void WaypointFollower::updateState()
                         < QLineF(intersections[1], currentWaypoint).length()) {
                     mCurrentState.currentGoal.setX(intersections[0].x());
                     mCurrentState.currentGoal.setY(intersections[0].y());
-                    mCurrentState.currentGoal.setSpeed(getInterpolatedSpeed(mCurrentState.currentGoal, mWaypointList.at(mCurrentState.currentWaypointIndex-1), mWaypointList.at(mCurrentState.currentWaypointIndex)));
+                    mCurrentState.currentGoal.setSpeed(getInterpolatedSpeed(mCurrentState.currentGoal, mWaypointList.at(previousWaypointIndex), mWaypointList.at(mCurrentState.currentWaypointIndex)));
 
                 }
                 else {
                     mCurrentState.currentGoal.setX(intersections[1].x());
                     mCurrentState.currentGoal.setY(intersections[1].y());
-                    mCurrentState.currentGoal.setSpeed(getInterpolatedSpeed(mCurrentState.currentGoal, mWaypointList.at(mCurrentState.currentWaypointIndex-1), mWaypointList.at(mCurrentState.currentWaypointIndex)));
+                    mCurrentState.currentGoal.setSpeed(getInterpolatedSpeed(mCurrentState.currentGoal, mWaypointList.at(previousWaypointIndex), mWaypointList.at(mCurrentState.currentWaypointIndex)));
 
                 }
                 break;
@@ -353,9 +365,9 @@ void WaypointFollower::updateState()
                 break;
             }
 
-            // 3. Update control for current goal
-            mMovementController->setDesiredSteeringCurvature(getCurvatureToPoint(mCurrentState.currentGoal.getPoint()));
-            mMovementController->setDesiredSpeed(mCurrentState.currentGoal.getSpeed());
+        // 3. Update control for current goal
+        mMovementController->setDesiredSteeringCurvature(getCurvatureToPoint(mCurrentState.currentGoal.getPoint()));
+        mMovementController->setDesiredSpeed(mCurrentState.currentGoal.getSpeed());
         }
     } break;
 
@@ -400,6 +412,16 @@ int WaypointFollower::getCurrentWaypointindex()
 void WaypointFollower::setCurrentWaypointindex(int value)
 {
     mCurrentState.currentWaypointIndex = value;
+}
+
+bool WaypointFollower::getRepeatRoute() const
+{
+    return mCurrentState.repeatRoute;
+}
+
+void WaypointFollower::setRepeatRoute(bool value)
+{
+    mCurrentState.repeatRoute = value;
 }
 
 PosPoint WaypointFollower::getCurrentGoal()

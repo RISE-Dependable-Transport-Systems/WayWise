@@ -17,6 +17,7 @@ struct WayPointFollowerState {
     double purePursuitRadius = 1.0;
     // Follow Route
     int numWaypointsLookahead = 8;
+    bool repeatRoute = false;
     // Follow Point
     double followPointSpeed = 1.5;
 };
@@ -35,6 +36,9 @@ public:
 
     int getCurrentWaypointindex();
     void setCurrentWaypointindex(int value);
+
+    bool getRepeatRoute() const;
+    void setRepeatRoute(bool value);
 
     PosPoint getCurrentGoal();
     void setCurrentGoal(PosPoint &point);
