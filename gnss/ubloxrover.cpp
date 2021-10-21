@@ -151,7 +151,7 @@ void UbloxRover::writeOdoToUblox(ubx_esf_datatype_enum dataType, uint32_t dataFi
 
 void UbloxRover::setEnableIMUOrientationUpdate(bool enabled)
 {
-    mUblox.ubxCfgMsg(UBX_CLASS_ESF, UBX_ESF_MEAS, (enabled ? 1 : 0)); // TODO: disable in fusion mode and use UBX-NAV-ATT instead
+    mUblox.ubxCfgMsg(UBX_CLASS_ESF, UBX_ESF_MEAS, (enabled ? 1 : 0));
 }
 
 void UbloxRover::setIMUOrientationOffset(double roll_deg, double pitch_deg, double yaw_deg)
@@ -180,7 +180,8 @@ bool UbloxRover::configureUblox()
     // and it is possible to enable or disable single NMEA or UBX messages individually.
     // If the rate configuration value is zero, then the corresponding message will not be output.
     // Values greater than zero indicate how often the message is output.
-    mUblox.ubxCfgMsg(UBX_CLASS_ESF, UBX_ESF_MEAS, 1);
+    // TODO: convert to VALSET msg
+    mUblox.ubxCfgMsg(UBX_CLASS_ESF, UBX_ESF_MEAS, 0);
     mUblox.ubxCfgMsg(UBX_CLASS_NAV, UBX_NAV_PVT, 1);
     mUblox.ubxCfgMsg(UBX_CLASS_ESF, UBX_ESF_STATUS, 1);
     mUblox.ubxCfgMsg(UBX_CLASS_ESF, UBX_ESF_ALG, 1);
