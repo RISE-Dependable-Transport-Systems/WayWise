@@ -2,6 +2,10 @@
 #include <cmath>
 #include <QDebug>
 #include <QLineF>
+#include <QDateTime>
+#include <iostream>
+#include <fstream>
+#include <string>
 
 WaypointFollower::WaypointFollower(QSharedPointer<MovementController> movementController)
 {
@@ -36,8 +40,17 @@ void WaypointFollower::addWaypoint(const PosPoint &point)
 
 void WaypointFollower::startFollowingRoute(bool fromBeginning)
 {
-    if (fromBeginning)
+    if (fromBeginning) {
         mCurrentState.stmState = FOLLOW_ROUTE_INIT;
+
+        if (mLogData) {
+            mDatalog = mDatalogFolderPath + "/logdata";
+            QString tid = QDateTime::currentDateTime().toString("_yyyy.MM.dd_hh:mm:ss");
+            mDatalog += tid;
+            mDatalog += ".txt";
+            mSlowBrakeCounter = 0;
+        }
+    }
 
     if (mCurrentState.stmState == FOLLOW_POINT_FOLLOWING || mCurrentState.stmState == FOLLOW_POINT_WAITING)
     {
@@ -168,11 +181,37 @@ QVector<QPointF> findIntersectionsBetweenCircleAndLine(QPair<QPointF,double> cir
 
 void WaypointFollower::updateState()
 {
+    std::ofstream myfile;
+
     QPointF currentVehiclePosition = mMovementController->getVehicleState()->getPosition(mPosTypeUsed).getPoint();
 
     switch (mCurrentState.stmState) {
     case NONE:
         qDebug() << "WARNING: WayPointFollower running uninitialized statemachine.";
+
+        if (mLogData) {
+            if (mSlowBrakeCounter < mSlowBrakeCounterMax) {
+                mMovementController->setDesiredSpeed(mMovementController->getDesiredSpeed()/mSlowBrakeParameter);
+                myfile.open(mDatalog.toStdString(), std::ios_base::app);
+                myfile << mMovementController->getVehicleState()->getPosition(PosType::fused).getX() << ","
+                       << mMovementController->getVehicleState()->getPosition(PosType::fused).getY() << ","
+                       << mMovementController->getVehicleState()->getPosition(PosType::GNSS).getX() << ","
+                       << mMovementController->getVehicleState()->getPosition(PosType::GNSS).getY() << ","
+                       << mMovementController->getVehicleState()->getPosition(PosType::IMU).getX() << ","
+                       << mMovementController->getVehicleState()->getPosition(PosType::IMU).getY() << ","
+                       << mMovementController->getVehicleState()->getPosition(PosType::odom).getX() << ","
+                       << mMovementController->getVehicleState()->getPosition(PosType::odom).getY() << ","
+                       << mMovementController->getVehicleState()->getPosition(PosType::GNSS).getTime().msecsSinceStartOfDay() << ","
+                       << mMovementController->getVehicleState()->getPosition(PosType::GNSS).getSpeed() << ","
+                       << 1 << "\n"; // Brake
+                myfile.close();
+            } else {
+                mMovementController->setDesiredSpeed(0.0);
+                mMovementController->setDesiredSteering(0.0);
+                mUpdateStateTimer.stop();
+            }
+            mSlowBrakeCounter++;
+        }
         break;
 
     // FOLLOW_POINT: we follow a point that is moving "follow me"
@@ -221,7 +260,6 @@ void WaypointFollower::updateState()
     // FOLLOW_ROUTE: waypoints describe a route to be followed waypoint by waypoint
     case FOLLOW_ROUTE_INIT:
         currentVehiclePosition = mMovementController->getVehicleState()->getPosition(mPosTypeUsed).getPoint();
-
         // Check heartbeat from visual sensor
         if (mFollowMePoint.getTime() > mFollowMeTimeStamp) {
             if (!mSensorHeartbeat) {
@@ -289,11 +327,44 @@ void WaypointFollower::updateState()
             mSensorHeartbeatTimer.start(mCountdown_ms);
             mSensorHeartbeat = true;
 
+            if (mLogData) {
+                myfile.open(mDatalog.toStdString(), std::ios_base::app);
+                myfile << mMovementController->getVehicleState()->getPosition(PosType::fused).getX() << ","
+                       << mMovementController->getVehicleState()->getPosition(PosType::fused).getY() << ","
+                       << mMovementController->getVehicleState()->getPosition(PosType::GNSS).getX() << ","
+                       << mMovementController->getVehicleState()->getPosition(PosType::GNSS).getY() << ","
+                       << mMovementController->getVehicleState()->getPosition(PosType::IMU).getX() << ","
+                       << mMovementController->getVehicleState()->getPosition(PosType::IMU).getY() << ","
+                       << mMovementController->getVehicleState()->getPosition(PosType::odom).getX() << ","
+                       << mMovementController->getVehicleState()->getPosition(PosType::odom).getY() << ","
+                       << mMovementController->getVehicleState()->getPosition(PosType::GNSS).getTime().msecsSinceStartOfDay() << ","
+                       << mMovementController->getVehicleState()->getPosition(PosType::GNSS).getSpeed() << ","
+                       << 0 << "\n"; // No brake
+                myfile.close();
+            }
+
             // Emergency brake if object detected
             if (QLineF(currentVehiclePosition, mFollowMePoint.getPoint()).length() > 1 && QLineF(currentVehiclePosition, mFollowMePoint.getPoint()).length() < 10) { // TODO: decide how close the objects need to be
-                mMovementController->setDesiredSteering(0.0);
-                mMovementController->setDesiredSpeed(0.0);
-                mUpdateStateTimer.stop();
+                if (mLogData) {
+                    myfile.open(mDatalog.toStdString(), std::ios_base::app);
+                    myfile << mMovementController->getVehicleState()->getPosition(PosType::fused).getX() << ","
+                           << mMovementController->getVehicleState()->getPosition(PosType::fused).getY() << ","
+                           << mMovementController->getVehicleState()->getPosition(PosType::GNSS).getX() << ","
+                           << mMovementController->getVehicleState()->getPosition(PosType::GNSS).getY() << ","
+                           << mMovementController->getVehicleState()->getPosition(PosType::IMU).getX() << ","
+                           << mMovementController->getVehicleState()->getPosition(PosType::IMU).getY() << ","
+                           << mMovementController->getVehicleState()->getPosition(PosType::odom).getX() << ","
+                           << mMovementController->getVehicleState()->getPosition(PosType::odom).getY() << ","
+                           << mMovementController->getVehicleState()->getPosition(PosType::GNSS).getTime().msecsSinceStartOfDay() << ","
+                           << mMovementController->getVehicleState()->getPosition(PosType::GNSS).getSpeed() << ","
+                           << 1 << "\n"; // Brake
+                    myfile.close();
+                    mCurrentState.stmState = NONE;
+                } else {
+                    mMovementController->setDesiredSteering(0.0);
+                    mMovementController->setDesiredSpeed(0.0);
+                    mUpdateStateTimer.stop();
+                }
                 break;
             }
         }
@@ -467,4 +538,10 @@ double WaypointFollower::getFollowPointSpeed() const
 void WaypointFollower::setFollowPointSpeed(double value)
 {
     mCurrentState.followPointSpeed = value;
+}
+
+void WaypointFollower::logData(bool active, QString folderPath)
+{
+    mLogData = active;
+    mDatalogFolderPath = folderPath;
 }
