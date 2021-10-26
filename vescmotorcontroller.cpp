@@ -86,8 +86,8 @@ void VESCMotorController::requestRPM(int32_t rpm)
 {
     VByteArray vb;
     if (fabs(rpm) < 500) {
-        vb.vbAppendInt8(VESC::COMM_SET_CURRENT_BRAKE);
-        vb.vbAppendDouble32(10.0, 1000.0);
+        vb.vbAppendInt8(VESC::COMM_SET_CURRENT);
+        vb.vbAppendDouble32(0.0, 1000.0);
     } else {
         vb.vbAppendInt8(VESC::COMM_SET_RPM);
         vb.vbAppendInt32(rpm);
