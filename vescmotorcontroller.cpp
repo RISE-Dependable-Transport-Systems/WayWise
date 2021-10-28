@@ -18,13 +18,15 @@ VESCMotorController::VESCMotorController()
     connect(&mVESCPacket, &VESC::Packet::dataToSend, this, [this](QByteArray &data){
         if (mSerialPort.isOpen()) {
             mSerialPort.write(data);
-        }});
+        }
+    });
 
     // send periodic heartbeats to prevent VESC timeout, TODO: connect to IP communication timeout?
     connect(&mHeartbeatTimer, &QTimer::timeout, this, [this](){
         VByteArray vb;
         vb.vbAppendInt8(VESC::COMM_ALIVE);
-        mVESCPacket.sendPacket(vb);});
+        mVESCPacket.sendPacket(vb);
+    });
 
     // periodically poll VESC state and optionally IMU
     connect(&mPollValuesTimer, &QTimer::timeout, this, [this](){
@@ -39,6 +41,21 @@ VESCMotorController::VESCMotorController()
             packetData.vbAppendUint16(SELECT_IMU_DATA_MASK);
             mVESCPacket.sendPacket(packetData);
         }
+    });
+
+    // periodically make sure no current is sent to motor when stopped (VESC behavior that can fry the motor)
+    connect(&mCheckCurrentTimer, &QTimer::timeout, this, [this](){
+        static bool setCurrentToZeroNextTime = false;
+
+        if (setCurrentToZeroNextTime) {
+            VByteArray vb;
+            vb.vbAppendInt8(VESC::COMM_SET_CURRENT);
+            vb.vbAppendDouble32(0.0, 1000.0);
+            mVESCPacket.sendPacket(vb);
+
+            setCurrentToZeroNextTime = false;
+        } else if (abs(mLastRPMrequest) < MAX_RPM_CONSIDERED_STOP)
+            setCurrentToZeroNextTime = true;
     });
 }
 
@@ -63,9 +80,9 @@ bool VESCMotorController::connectSerial(const QSerialPortInfo &serialPortInfo)
 
     pollFirmwareVersion();
 
-
     mPollValuesTimer.start(pollValuesPeriod_ms);
     mHeartbeatTimer.start(heartbeatPeriod_ms);
+    mCheckCurrentTimer.start(checkCurrentPeriod_ms);
 
     return true;
 }
@@ -84,15 +101,15 @@ void VESCMotorController::pollFirmwareVersion()
 
 void VESCMotorController::requestRPM(int32_t rpm)
 {
-    VByteArray vb;
-    if (fabs(rpm) < 500) {
-        vb.vbAppendInt8(VESC::COMM_SET_CURRENT);
-        vb.vbAppendDouble32(0.0, 1000.0);
-    } else {
+    // ignore repeated requests of low RPM (= stop) to ensure no current is sent to motor (handle VESC behavior)
+    if (!(abs(mLastRPMrequest) < MAX_RPM_CONSIDERED_STOP && abs(rpm) < MAX_RPM_CONSIDERED_STOP)) {
+        VByteArray vb;
         vb.vbAppendInt8(VESC::COMM_SET_RPM);
         vb.vbAppendInt32(rpm);
+        mVESCPacket.sendPacket(vb);
     }
-    mVESCPacket.sendPacket(vb);
+
+    mLastRPMrequest = rpm;
 }
 
 void VESCMotorController::setEnableIMUOrientationUpdate(bool enabled)

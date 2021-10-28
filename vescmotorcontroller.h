@@ -66,6 +66,11 @@ private:
     int pollValuesPeriod_ms = 50;
     QTimer mPollValuesTimer;
 
+    const int checkCurrentPeriod_ms = 100;
+    QTimer mCheckCurrentTimer;
+    int mLastRPMrequest = 0;
+    const int MAX_RPM_CONSIDERED_STOP = 500; // motor will not move when RPM lower than this are requested
+
     VESC::Packet mVESCPacket;
     VESC::FW_RX_PARAMS mVescFirmwareInfo;
 
