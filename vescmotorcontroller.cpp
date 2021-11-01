@@ -187,11 +187,14 @@ void VESCMotorController::processVESCPacket(QByteArray &data)
     case VESC::COMM_GET_VALUES_SELECTIVE: {
         VESC::MC_VALUES values;
 
+
         uint32_t mask = vb.vbPopFrontUint32();
         if (mask != SELECT_VALUES_MASK)
             qDebug() << "Warning: VescMotorController got COMM_GET_VALUES_SELECTIVE but mask does not match selected values.";
 
         values.temp_mos = vb.vbPopFrontDouble16(1e1);
+        values.current_motor = vb.vbPopFrontDouble32(1e2);
+        values.current_in = vb.vbPopFrontDouble32(1e2);
         values.rpm = vb.vbPopFrontDouble32(1e0);
         values.v_in = vb.vbPopFrontDouble16(1e1);
         values.tachometer = vb.vbPopFrontInt32();
@@ -199,7 +202,19 @@ void VESCMotorController::processVESCPacket(QByteArray &data)
         values.fault_code = VESC::mc_fault_code(vb.vbPopFrontInt8());
         values.fault_str = VESCFaultToStr(values.fault_code);
 
-        // qDebug() << "Temp.:" << values.temp_mos << "RPM:" << values.rpm << "VIN:" << values.v_in << "Tacho.:" << values.tachometer << "Tacho. Abs.:" << values.tachometer_abs << "Error:" << values.fault_str;
+//        // --- DEBUG ---
+//        static int throttleqDebug = 0;
+//        static double max_A_motor = 0;
+//        static double max_A_in = 0;
+//        static int wasFault = 0;
+//        max_A_motor = abs(values.current_motor) > max_A_motor ? values.current_motor : max_A_motor;
+//        max_A_in = abs(values.current_in) > max_A_in ? values.current_in : max_A_in;
+//        wasFault = values.fault_code != 0 ? values.fault_code : wasFault;
+//        if (throttleqDebug == 0) {
+//            qDebug() << "Temp.:" << values.temp_mos << "A_motor: " << values.current_motor << max_A_motor << "A_in: " << values.current_in << max_A_in << "RPM:" << values.rpm << "VIN:" << values.v_in << "Tacho.:" << values.tachometer << "Tacho. Abs.:" << values.tachometer_abs << "Error:" << values.fault_str << wasFault;
+//            throttleqDebug = 10;
+//        } else
+//            throttleqDebug--;
 
         emit gotStatusValues(values.rpm, values.tachometer,  values.tachometer_abs, values.v_in, values.temp_mos, values.fault_code);
     } break;

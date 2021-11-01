@@ -51,12 +51,14 @@ private:
 
     // Only request selected values
     const unsigned TMOS_MASK = ((uint32_t)1 << 0);
+    const unsigned CURRENT_MOTOR_MASK = ((uint32_t)1 << 2);
+    const unsigned CURRENT_IN_MASK = ((uint32_t)1 << 3);
     const unsigned RPM_MASK = ((uint32_t)1 << 7);
     const unsigned VIN_MASK = ((uint32_t)1 << 8);
     const unsigned TACHO_MASK = ((uint32_t)1 << 13);
     const unsigned TACHO_ABS_MASK = ((uint32_t)1 << 14);
     const unsigned FAULT_MASK = ((uint32_t)1 << 15);
-    const unsigned SELECT_VALUES_MASK = TMOS_MASK | RPM_MASK | VIN_MASK | TACHO_MASK | TACHO_ABS_MASK | FAULT_MASK;
+    const unsigned SELECT_VALUES_MASK = TMOS_MASK | CURRENT_MOTOR_MASK | CURRENT_IN_MASK | RPM_MASK | VIN_MASK | TACHO_MASK | TACHO_ABS_MASK | FAULT_MASK;
 
     const unsigned ROLL_MASK = ((uint32_t)1 << 0);
     const unsigned PITCH_MASK = ((uint32_t)1 << 1);
