@@ -233,6 +233,9 @@ void VESCMotorController::processVESCPacket(QByteArray &data)
 //        qDebug() << values.roll* 180.0 / M_PI << values. pitch* 180.0 / M_PI << values.yaw* 180.0 / M_PI;
         emit gotIMUOrientation(values.roll * 180.0 / M_PI, values.pitch * 180.0 / M_PI, values.yaw * 180.0 / M_PI);
     } break;
+    case VESC::COMM_PRINT:
+        qDebug() << QString::fromLatin1(vb);
+    break;
     default:
         qDebug() << "WARNING: unhandled VESC command with id" << id;
     }
