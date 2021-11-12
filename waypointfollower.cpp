@@ -215,7 +215,7 @@ void WaypointFollower::updateState()
         break;
 
     // FOLLOW_POINT: we follow a point that is moving "follow me"
-    case FOLLOW_POINT_FOLLOWING:
+    case FOLLOW_POINT_FOLLOWING: {
         currentVehiclePosition = mMovementController->getVehicleState()->getPosition(mPosTypeUsed).getPoint();
         mCurrentState.currentGoal = mFollowMePoint;
 
@@ -228,13 +228,16 @@ void WaypointFollower::updateState()
             mSensorHeartbeat = true;
         }
 
-        if (QLineF(currentVehiclePosition, mCurrentState.currentGoal.getPoint()).length() < mCurrentState.purePursuitRadius)
-            mCurrentState.stmState = FOLLOW_POINT_WAITING;
-        else {
-            mMovementController->setDesiredSteeringCurvature(getCurvatureToPoint(mCurrentState.currentGoal.getPoint()));
+        // draw straight line to follow point and apply purePursuitRadius to find intersection
+        QLineF carToFollowPointLine(currentVehiclePosition, mFollowMePoint.getPoint());
+        QVector<QPointF> intersections = findIntersectionsBetweenCircleAndLine(QPair<QPointF, double>(currentVehiclePosition, mCurrentState.purePursuitRadius), carToFollowPointLine);
+
+        if (intersections.size()) {
+            mMovementController->setDesiredSteeringCurvature(getCurvatureToPoint(intersections[0]));
             mMovementController->setDesiredSpeed(mCurrentState.followPointSpeed);
-        }
-        break;
+        } else // FollowPoint within circle -> wait
+            mCurrentState.stmState = FOLLOW_POINT_WAITING;
+    } break;
 
     case FOLLOW_POINT_WAITING:
         currentVehiclePosition = mMovementController->getVehicleState()->getPosition(mPosTypeUsed).getPoint();
@@ -286,7 +289,7 @@ void WaypointFollower::updateState()
             mCurrentState.stmState = FOLLOW_ROUTE_FINISHED;
         break;
 
-    case FOLLOW_ROUTE_GOTO_BEGIN:
+    case FOLLOW_ROUTE_GOTO_BEGIN: {
         currentVehiclePosition = mMovementController->getVehicleState()->getPosition(mPosTypeUsed).getPoint();
 
         // Check heartbeat from visual sensor
@@ -307,12 +310,16 @@ void WaypointFollower::updateState()
             }
         }
 
-        mMovementController->setDesiredSteeringCurvature(getCurvatureToPoint(mCurrentState.currentGoal.getPoint()));
-        mMovementController->setDesiredSpeed(mCurrentState.currentGoal.getSpeed());
+        // draw straight line to first point and apply purePursuitRadius to find intersection
+        QLineF carToStartLine(currentVehiclePosition, mWaypointList.at(0).getPoint());
+        QVector<QPointF> intersections = findIntersectionsBetweenCircleAndLine(QPair<QPointF, double>(currentVehiclePosition, mCurrentState.purePursuitRadius), carToStartLine);
 
-        if (QLineF(currentVehiclePosition, mCurrentState.currentGoal.getPoint()).length() < mCurrentState.purePursuitRadius) // TODO: initially bigger distance (might be coming from bad angle)?
+        if (intersections.size()) {
+            mMovementController->setDesiredSteeringCurvature(getCurvatureToPoint(intersections[0]));
+            mMovementController->setDesiredSpeed(mWaypointList.at(0).getSpeed());
+        } else // first waypoint within circle -> start route
             mCurrentState.stmState = FOLLOW_ROUTE_FOLLOWING;
-        break;
+    } break;
 
     case FOLLOW_ROUTE_FOLLOWING: {
         currentVehiclePosition = mMovementController->getVehicleState()->getPosition(mPosTypeUsed).getPoint();
