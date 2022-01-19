@@ -64,8 +64,6 @@ public:
     PosType getPosTypeUsed() const;
     void setPosTypeUsed(const PosType &posTypeUsed);
 
-    void logData(bool active = false, QString folderPath = "/home/ubuntu");
-
 signals:
 
 public slots:
@@ -77,12 +75,6 @@ private:
     const unsigned mCountdown_ms = 1000;
     QTimer mSensorHeartbeatTimer;
     bool mSensorHeartbeat;
-    bool mLogData;
-    QString mDatalog;
-    QString mDatalogFolderPath;
-    qint8 mSlowBrakeCounter = 0;
-    qint8 mSlowBrakeCounterMax = 20;
-    double mSlowBrakeParameter = 1.2;
 
     void updateState();
     WayPointFollowerState mCurrentState;
