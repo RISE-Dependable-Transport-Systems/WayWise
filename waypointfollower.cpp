@@ -59,7 +59,7 @@ void WaypointFollower::stop()
 void WaypointFollower::startFollowPoint()
 {
     // Check that we got a recent point to follow
-    if (mCurrentState.currentFollowPoint.getTime() > mCurrentState.currentGoal.getTime()) {
+    if (mCurrentState.currentFollowPointInVehicleFrame.getTime() > mCurrentState.currentGoal.getTime()) {
         mFollowPointHeartbeatTimer.start(mFollowPointTimeout_ms);
         mCurrentState.stmState = FOLLOW_POINT_FOLLOWING;
         mUpdateStateTimer.start(mUpdateStatePeriod_ms);
@@ -94,15 +94,21 @@ double WaypointFollower::getCurvatureToPointInENU(QSharedPointer<VehicleState> v
     pointInVehicleFrame.setX(newX);
     pointInVehicleFrame.setY(newY);
 
-    // 2. calc steering angle (pure pursuit)
-    double distanceSquared = pow(pointInVehicleFrame.x(), 2) + pow(pointInVehicleFrame.y(), 2);
-    double steeringAngleProportional = (2*pointInVehicleFrame.y()) / distanceSquared;
-    return -steeringAngleProportional;
+    return getCurvatureToPointInVehicleFrame(pointInVehicleFrame);
 }
 
 double WaypointFollower::getCurvatureToPointInENU(const QPointF &point)
 {
     return getCurvatureToPointInENU(mMovementController->getVehicleState(), point, mPosTypeUsed);
+}
+
+double WaypointFollower::getCurvatureToPointInVehicleFrame(const QPointF &point)
+{
+    // calc steering angle (pure pursuit)
+    double distanceSquared = pow(point.x(), 2) + pow(point.y(), 2);
+    double steeringAngleProportional = (2*point.y()) / distanceSquared;
+
+    return -steeringAngleProportional;
 }
 
 // TODO: utility function, move to a more central place
@@ -170,27 +176,36 @@ void WaypointFollower::updateState()
         qDebug() << "WARNING: WayPointFollower running uninitialized statemachine.";
         break;
 
-    // FOLLOW_POINT: we follow a point that is moving "follow me"
+    // FOLLOW_POINT: we follow a point that is moving "follow me", works on vehicle frame to be independent of positioning
     case FOLLOW_POINT_FOLLOWING: {
-        currentVehiclePosition = mMovementController->getVehicleState()->getPosition(mPosTypeUsed).getPoint();
-
         // draw straight line to follow point and apply purePursuitRadius to find intersection
-        QLineF carToFollowPointLine(currentVehiclePosition, mCurrentState.currentFollowPoint.getPoint());
+        QLineF carToFollowPointLine(QPointF(0,0), mCurrentState.currentFollowPointInVehicleFrame.getPoint());
         QVector<QPointF> intersections = findIntersectionsBetweenCircleAndLine(QPair<QPointF, double>(currentVehiclePosition, mCurrentState.purePursuitRadius), carToFollowPointLine);
 
         if (intersections.size()) {
-            mCurrentState.currentGoal.setXY(intersections[0].x(), intersections[0].y());
-            // Timestamp currentGoal for timeout in case currentFollowPoint is not updated anymore
-            mCurrentState.currentGoal.setTime(mCurrentState.currentFollowPoint.getTime());
+            // Translate to ENU for correct representation of currentGoal (when positioning is working), TODO: general transform in vehicleState?
+            PosPoint carPosition = mMovementController->getVehicleState()->getPosition(mPosTypeUsed);
 
-            mMovementController->setDesiredSteeringCurvature(getCurvatureToPointInENU(mCurrentState.currentGoal.getPoint()));
+            // clockwise rotation
+            double currYaw_rad = (carPosition.getYaw() + 90.0) * (M_PI / 180.0);
+            double newX = cos(currYaw_rad)*intersections[0].x() + sin(currYaw_rad)*intersections[0].y();
+            double newY = -sin(currYaw_rad)*intersections[0].x() + cos(currYaw_rad)*intersections[0].y();
+
+            // translation
+            newX += carPosition.getX();
+            newY += carPosition.getY();
+
+            mCurrentState.currentGoal.setXY(newX, newY);
+            // Timestamp currentGoal for timeout in case currentFollowPoint is not updated anymore
+            mCurrentState.currentGoal.setTime(mCurrentState.currentFollowPointInVehicleFrame.getTime());
+
+            mMovementController->setDesiredSteeringCurvature(getCurvatureToPointInVehicleFrame(QPointF(intersections[0].x(), intersections[0].y())));
             mMovementController->setDesiredSpeed(mCurrentState.followPointSpeed);
         } else // FollowPoint within circle -> wait
             mCurrentState.stmState = FOLLOW_POINT_WAITING;
     } break;
 
     case FOLLOW_POINT_WAITING:
-        currentVehiclePosition = mMovementController->getVehicleState()->getPosition(mPosTypeUsed).getPoint();
         mMovementController->setDesiredSteering(0.0);
         mMovementController->setDesiredSpeed(0.0);
 
@@ -361,12 +376,12 @@ double WaypointFollower::getInterpolatedSpeed(const PosPoint &currentGoal, const
     return lastWaypoint.getSpeed() + (nextWaypoint.getSpeed()-lastWaypoint.getSpeed())*(x/distanceBetweenWaypoints);
 }
 
-void WaypointFollower::updateFollowPoint(const PosPoint &point)
+void WaypointFollower::updateFollowPointInVehicleFrame(const PosPoint &point)
 {
-    mCurrentState.currentFollowPoint = point;
+    mCurrentState.currentFollowPointInVehicleFrame = point;
 
     if ((mCurrentState.stmState == FOLLOW_POINT_FOLLOWING || mCurrentState.stmState == FOLLOW_POINT_WAITING) &&
-         (mCurrentState.currentFollowPoint.getTime() > mCurrentState.currentGoal.getTime())) {
+         (mCurrentState.currentFollowPointInVehicleFrame.getTime() > mCurrentState.currentGoal.getTime())) {
         if (mCurrentState.followPointTimedOut) {
             qDebug() << "Follow Point: timeout reset.";
         }

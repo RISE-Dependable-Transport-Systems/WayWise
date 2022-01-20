@@ -19,7 +19,7 @@ struct WayPointFollowerState {
     int numWaypointsLookahead = 8;
     bool repeatRoute = false;
     // Follow Point
-    PosPoint currentFollowPoint; // always in ENU
+    PosPoint currentFollowPointInVehicleFrame; // independent of positioning
     double followPointSpeed = 1.5;
     bool followPointTimedOut = true;
 };
@@ -53,6 +53,7 @@ public:
 
     static double getCurvatureToPointInENU(QSharedPointer<VehicleState> vehicleState, const QPointF& point, PosType vehiclePosType = PosType::simulated);
     double getCurvatureToPointInENU(const QPointF& point);
+    static double getCurvatureToPointInVehicleFrame(const QPointF& point);
 
     double getInterpolatedSpeed(const PosPoint &currentGoal, const PosPoint &lastWaypoint, const PosPoint &nextWaypoint);
 
@@ -62,7 +63,7 @@ public:
 signals:
 
 public slots:
-    void updateFollowPoint(const PosPoint &point);
+    void updateFollowPointInVehicleFrame(const PosPoint &point);
 
 private:
     const unsigned mFollowPointTimeout_ms = 1000;
