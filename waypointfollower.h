@@ -19,7 +19,9 @@ struct WayPointFollowerState {
     int numWaypointsLookahead = 8;
     bool repeatRoute = false;
     // Follow Point
+    PosPoint currentFollowPoint; // always in ENU
     double followPointSpeed = 1.5;
+    bool followPointTimedOut = true;
 };
 
 class WaypointFollower : public QObject
@@ -54,10 +56,10 @@ public:
     void stop();
     void resetState();
 
-    void startFollowMe();
+    void startFollowPoint();
 
-    static double getCurvatureToPoint(QSharedPointer<VehicleState> vehicleState, const QPointF& point, PosType vehiclePosType = PosType::simulated);
-    double getCurvatureToPoint(const QPointF& point);
+    static double getCurvatureToPointInENU(QSharedPointer<VehicleState> vehicleState, const QPointF& point, PosType vehiclePosType = PosType::simulated);
+    double getCurvatureToPointInENU(const QPointF& point);
 
     double getInterpolatedSpeed(const PosPoint &currentGoal, const PosPoint &lastWaypoint, const PosPoint &nextWaypoint);
 
@@ -70,11 +72,8 @@ public slots:
     void updateFollowPoint(const PosPoint &point);
 
 private:
-    PosPoint mFollowMePoint; // always in ENU
-    QTime mFollowMeTimeStamp;
-    const unsigned mCountdown_ms = 1000;
-    QTimer mSensorHeartbeatTimer;
-    bool mSensorHeartbeat;
+    const unsigned mFollowPointTimeout_ms = 1000;
+    QTimer mFollowPointHeartbeatTimer;
 
     void updateState();
     WayPointFollowerState mCurrentState;

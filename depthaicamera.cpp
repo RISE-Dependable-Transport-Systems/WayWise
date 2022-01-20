@@ -13,7 +13,7 @@ void DepthAiCamera::cameraInput(const QJsonArray& jsonArray)
     // 3D position x,y,z in meters from the camera.
 
     // Objects detected, save only the closest one
-    double closeObject = 1000;
+    double closeObject = std::numeric_limits<double>::max();
     for (int i=0; i<jsonArray.size(); i++) {
         if (closeObject > jsonArray.at(i).toObject().value("depth_z").toDouble()) {
             mCameraData.setX(jsonArray.at(i).toObject().value("depth_x").toDouble());
