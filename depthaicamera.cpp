@@ -30,6 +30,7 @@ void DepthAiCamera::cameraInput(const QJsonArray& jsonArray)
         mCameraData.setHeight(0);
     }
 
+    mCameraData.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()));
     emit closestObject(mCameraData);
 
 //    qDebug() << jsonArray
