@@ -20,6 +20,7 @@ public:
 signals:
     void gotJsonArray(const QJsonArray& jsonArray);
     void gotJsonObject(const QJsonObject& jsonObject);
+    void connectionError(QTcpSocket::SocketError);
 private:
     void parseJson();
     void tcpError(QTcpSocket::SocketError error);

@@ -6,6 +6,9 @@ DepthAiCamera::DepthAiCamera()
     // Connect to camera stream
     mJsonParser.connectToHost(QHostAddress::LocalHost, 8070);
     QObject::connect(&mJsonParser, &JsonStreamParserTcp::gotJsonArray, this, &DepthAiCamera::cameraInput);
+    QObject::connect(&mJsonParser, &JsonStreamParserTcp::connectionError, [](QTcpSocket::SocketError error){
+        qDebug() << "Info: DepthAiCamera not connected, got" << error;
+    });
 }
 
 void DepthAiCamera::cameraInput(const QJsonArray& jsonArray)
