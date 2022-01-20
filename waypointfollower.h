@@ -36,17 +36,10 @@ public:
     double getFollowPointSpeed() const;
     void setFollowPointSpeed(double value);
 
-    int getCurrentWaypointindex();
-    void setCurrentWaypointindex(int value);
-
     bool getRepeatRoute() const;
     void setRepeatRoute(bool value);
 
-    PosPoint getCurrentGoal();
-    void setCurrentGoal(PosPoint &point);
-
-    WayPointFollowerSTMstates getSTMState();
-    void setSTMState(WayPointFollowerSTMstates state);
+    const PosPoint getCurrentGoal();
 
     void clearRoute();
     void addWaypoint(const PosPoint &point);

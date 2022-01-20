@@ -336,16 +336,6 @@ void WaypointFollower::setPurePursuitRadius(double value)
     mCurrentState.purePursuitRadius = value;
 }
 
-int WaypointFollower::getCurrentWaypointindex()
-{
-    return mCurrentState.currentWaypointIndex;
-}
-
-void WaypointFollower::setCurrentWaypointindex(int value)
-{
-    mCurrentState.currentWaypointIndex = value;
-}
-
 bool WaypointFollower::getRepeatRoute() const
 {
     return mCurrentState.repeatRoute;
@@ -356,24 +346,9 @@ void WaypointFollower::setRepeatRoute(bool value)
     mCurrentState.repeatRoute = value;
 }
 
-PosPoint WaypointFollower::getCurrentGoal()
+const PosPoint WaypointFollower::getCurrentGoal()
 {
     return mCurrentState.currentGoal;
-}
-
-void WaypointFollower::setCurrentGoal(PosPoint &point)
-{
-    mCurrentState.currentGoal = point;
-}
-
-WayPointFollowerSTMstates WaypointFollower::getSTMState()
-{
-    return mCurrentState.stmState;
-}
-
-void WaypointFollower::setSTMState(WayPointFollowerSTMstates state)
-{
-    mCurrentState.stmState = state;
 }
 
 double WaypointFollower::getInterpolatedSpeed(const PosPoint &currentGoal, const PosPoint &lastWaypoint, const PosPoint &nextWaypoint)
