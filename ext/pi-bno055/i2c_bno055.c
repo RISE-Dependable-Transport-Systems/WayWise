@@ -27,22 +27,22 @@ int i2cfd;       // I2C file descriptor
  * get_i2cbus() - Enables the I2C bus communication. Raspberry  *
  * Pi 2 uses i2c-1, RPI 1 used i2c-0, NanoPi also uses i2c-0.   *
  * ------------------------------------------------------------ */
-void get_i2cbus(char *i2cbus, char *i2caddr) {
+int get_i2cbus(char *i2cbus, char *i2caddr) {
 
    if((i2cfd = open(i2cbus, O_RDWR)) < 0) {
       printf("Error failed to open I2C bus [%s].\n", i2cbus);
-      exit(-1);
+      return (-1);
    }
-   if(verbose == 1) printf("Debug: I2C bus device: [%s]\n", i2cbus);
+//   if(verbose == 1) printf("Debug: I2C bus device: [%s]\n", i2cbus);
    /* --------------------------------------------------------- *
     * Set I2C device (BNO055 I2C address is  0x28 or 0x29)      *
     * --------------------------------------------------------- */
    int addr = (int)strtol(i2caddr, NULL, 16);
-   if(verbose == 1) printf("Debug: Sensor address: [0x%02X]\n", addr);
+//   if(verbose == 1) printf("Debug: Sensor address: [0x%02X]\n", addr);
 
    if(ioctl(i2cfd, I2C_SLAVE, addr) != 0) {
       printf("Error can't find sensor at address [0x%02X].\n", addr);
-      exit(-1);
+      return (-1);
    }
    /* --------------------------------------------------------- *
     * I2C communication test is the only way to confirm success *
@@ -50,8 +50,10 @@ void get_i2cbus(char *i2cbus, char *i2caddr) {
    char reg = BNO055_CHIP_ID_ADDR;
    if(write(i2cfd, &reg, 1) != 1) {
       printf("Error: I2C write failure register [0x%02X], sensor addr [0x%02X]?\n", reg, addr);
-      exit(-1);
+      return (-1);
    }
+
+   return 0;
 }
 
 /* --------------------------------------------------------------- *
@@ -129,7 +131,7 @@ int bno_reset() {
       printf("Error: I2C write failure for register 0x%02X\n", data[0]);
       exit(-1);
    }
-   if(verbose == 1) printf("Debug: BNO055 Sensor Reset complete\n");
+//   if(verbose == 1) printf("Debug: BNO055 Sensor Reset complete\n");
    
    /* ------------------------------------------------------------ *
     * After a reset, the sensor needs at leat 650ms to boot up.    *
@@ -156,13 +158,13 @@ int get_calstatus(struct bnocal *bno_ptr) {
    }
 
    bno_ptr->scal_st = (data & 0b11000000) >> 6; // system calibration status
-   if(verbose == 1) printf("Debug: sensor system calibration: [%d]\n", bno_ptr->scal_st);
+//   if(verbose == 1) printf("Debug: sensor system calibration: [%d]\n", bno_ptr->scal_st);
    bno_ptr->gcal_st = (data & 0b00110000) >> 4; // gyro calibration
-   if(verbose == 1) printf("Debug:     gyroscope calibration: [%d]\n", bno_ptr->gcal_st);
+//   if(verbose == 1) printf("Debug:     gyroscope calibration: [%d]\n", bno_ptr->gcal_st);
    bno_ptr->acal_st = (data & 0b00001100) >> 2; // accel calibration status
-   if(verbose == 1) printf("Debug: accelerometer calibration: [%d]\n", bno_ptr->acal_st);
+//   if(verbose == 1) printf("Debug: accelerometer calibration: [%d]\n", bno_ptr->acal_st);
    bno_ptr->mcal_st = (data & 0b00000011);      // magneto calibration status
-   if(verbose == 1) printf("Debug:  magnetometer calibration: [%d]\n", bno_ptr->mcal_st);
+//   if(verbose == 1) printf("Debug:  magnetometer calibration: [%d]\n", bno_ptr->mcal_st);
    return(0);
 }
 
@@ -183,70 +185,70 @@ int get_caloffset(struct bnocal *bno_ptr) {
       return(-1);
    }
 
-   if(verbose == 1) printf("Debug: I2C read %d bytes starting at register 0x%02X\n", CALIB_BYTECOUNT, reg);
+//   if(verbose == 1) printf("Debug: I2C read %d bytes starting at register 0x%02X\n", CALIB_BYTECOUNT, reg);
 
    char data[CALIB_BYTECOUNT] = {0};
    if(read(i2cfd, data, CALIB_BYTECOUNT) != CALIB_BYTECOUNT) {
       printf("Error: I2C calibration data read from 0x%02X\n", reg);
       return(-1);
    }
-   if(verbose == 1) {
-      int i = 0;
-      printf("Debug: Calibrationset:");
-      while(i<CALIB_BYTECOUNT) {
-         printf(" %02X", data[i]);
-         i++;
-      }
-      printf("\n");
-   }
+//   if(verbose == 1) {
+//      int i = 0;
+//      printf("Debug: Calibrationset:");
+//      while(i<CALIB_BYTECOUNT) {
+//         printf(" %02X", data[i]);
+//         i++;
+//      }
+//      printf("\n");
+//   }
 
    /* ------------------------------------------------------------ *
     * assigning accelerometer X-Y-Z offset, range per G-range      *
     * 16G = +/-16000, 8G = +/-8000, 4G = +/-4000, 2G = +/-2000     *
     * ------------------------------------------------------------ */
-   if(verbose == 1) printf("Debug: accelerometer offset: [%d] [%d] [%d] (X-Y-Z)\n",
-		           ((int16_t)data[1] << 8) | data[0],
-                           ((int16_t)data[3] << 8) | data[2],
-                           ((int16_t)data[5] << 8) | data[4]);
-   bno_ptr->aoff_x = ((int16_t)data[1] << 8) | data[0];
-   bno_ptr->aoff_y = ((int16_t)data[3] << 8) | data[2];
-   bno_ptr->aoff_z = ((int16_t)data[5] << 8) | data[4];
+//   if(verbose == 1) printf("Debug: accelerometer offset: [%d] [%d] [%d] (X-Y-Z)\n",
+//		           ((int16_t)data[1] << 8) | data[0],
+//                           ((int16_t)data[3] << 8) | data[2],
+//                           ((int16_t)data[5] << 8) | data[4]);
+//   bno_ptr->aoff_x = ((int16_t)data[1] << 8) | data[0];
+//   bno_ptr->aoff_y = ((int16_t)data[3] << 8) | data[2];
+//   bno_ptr->aoff_z = ((int16_t)data[5] << 8) | data[4];
 
    /* ------------------------------------------------------------ *
     * assigning magnetometer X-Y-Z offset, offset range is +/-6400 *
     * ------------------------------------------------------------ */
-   if(verbose == 1) printf("Debug:  magnetometer offset: [%d] [%d] [%d] (X-Y-Z)\n",
-                           ((int16_t)data[7] << 8) | data[6],
-                           ((int16_t)data[9] << 8) | data[8],
-                           ((int16_t)data[11] << 8) | data[10]);
-   bno_ptr->moff_x = ((int16_t)data[7] << 8) | data[6];
-   bno_ptr->moff_y = ((int16_t)data[9] << 8) | data[8];
-   bno_ptr->moff_z = ((int16_t)data[11] << 8) | data[10];
+//   if(verbose == 1) printf("Debug:  magnetometer offset: [%d] [%d] [%d] (X-Y-Z)\n",
+//                           ((int16_t)data[7] << 8) | data[6],
+//                           ((int16_t)data[9] << 8) | data[8],
+//                           ((int16_t)data[11] << 8) | data[10]);
+//   bno_ptr->moff_x = ((int16_t)data[7] << 8) | data[6];
+//   bno_ptr->moff_y = ((int16_t)data[9] << 8) | data[8];
+//   bno_ptr->moff_z = ((int16_t)data[11] << 8) | data[10];
 
    /* ------------------------------------------------------------ *
     * assigning gyroscope X-Y-Z offset, range depends on dps value *
     * 2000 = +/-32000, 1000 = +/-16000, 500 = +/-8000, etc         *
     * ------------------------------------------------------------ */
-   if(verbose == 1) printf("Debug:     gyroscope offset: [%d] [%d] [%d] (X-Y-Z)\n",
-                           ((int16_t)data[13] << 8) | data[12],
-                           ((int16_t)data[15] << 8) | data[14],
-                           ((int16_t)data[17] << 8) | data[16]);
-   bno_ptr->goff_x = ((int16_t)data[13] << 8) | data[12];
-   bno_ptr->goff_y = ((int16_t)data[15] << 8) | data[14];
-   bno_ptr->goff_z = ((int16_t)data[17] << 8) | data[16];
+//   if(verbose == 1) printf("Debug:     gyroscope offset: [%d] [%d] [%d] (X-Y-Z)\n",
+//                           ((int16_t)data[13] << 8) | data[12],
+//                           ((int16_t)data[15] << 8) | data[14],
+//                           ((int16_t)data[17] << 8) | data[16]);
+//   bno_ptr->goff_x = ((int16_t)data[13] << 8) | data[12];
+//   bno_ptr->goff_y = ((int16_t)data[15] << 8) | data[14];
+//   bno_ptr->goff_z = ((int16_t)data[17] << 8) | data[16];
 
    /* ------------------------------------------------------------ *
     * assigning accelerometer radius, range is +/-1000             *
     * ------------------------------------------------------------ */
-   if(verbose == 1) printf("Debug: accelerometer radius: [%d] (+/-1000)\n",
-                           ((int16_t)data[19] << 8) | data[18]);
-   bno_ptr->acc_rad = ((int16_t)data[19] << 8) | data[18];
+//   if(verbose == 1) printf("Debug: accelerometer radius: [%d] (+/-1000)\n",
+//                           ((int16_t)data[19] << 8) | data[18]);
+//   bno_ptr->acc_rad = ((int16_t)data[19] << 8) | data[18];
 
    /* ------------------------------------------------------------ *
     * assigning magnetometer radius, range is +/-960               *
     * ------------------------------------------------------------ */
-   if(verbose == 1) printf("Debug:  magnetometer radius: [%d] (+/- 960)\n",
-                           ((int16_t)data[21] << 8) | data[20]);
+//   if(verbose == 1) printf("Debug:  magnetometer radius: [%d] (+/- 960)\n",
+//                           ((int16_t)data[21] << 8) | data[20]);
    bno_ptr->mag_rad = ((int16_t)data[21] << 8) | data[20];
    set_mode(oldmode);
    return(0);
@@ -263,7 +265,7 @@ int save_cal(char *file) {
     * --------------------------------------------------------- */
    opmode_t oldmode = get_mode();
    set_mode(config);
-   int i = 0;
+//   int i = 0;
    //char reg = ACC_OFFSET_X_LSB_ADDR;
    char reg = BNO055_SIC_MATRIX_0_LSB_ADDR;
    if(write(i2cfd, &reg, 1) != 1) {
@@ -271,22 +273,22 @@ int save_cal(char *file) {
       return(-1);
    }
 
-   if(verbose == 1) printf("Debug: I2C read %d bytes starting at register 0x%02X\n",
-                           CALIB_BYTECOUNT, reg);
+//   if(verbose == 1) printf("Debug: I2C read %d bytes starting at register 0x%02X\n",
+//                           CALIB_BYTECOUNT, reg);
 
    char data[CALIB_BYTECOUNT] = {0};
    if(read(i2cfd, data, CALIB_BYTECOUNT) != CALIB_BYTECOUNT) {
       printf("Error: I2C calibration data read from 0x%02X\n", reg);
       return(-1);
    }
-   if(verbose == 1) {
-      printf("Debug: Calibrationset:");
-      while(i<CALIB_BYTECOUNT) {
-         printf(" %02X", data[i]);
-         i++;
-      }
-      printf("\n");
-   }
+//   if(verbose == 1) {
+//      printf("Debug: Calibrationset:");
+//      while(i<CALIB_BYTECOUNT) {
+//         printf(" %02X", data[i]);
+//         i++;
+//      }
+//      printf("\n");
+//   }
 
    /* -------------------------------------------------------- *
     *  Open the calibration data file for writing.             *
@@ -296,14 +298,14 @@ int save_cal(char *file) {
       printf("Error: Can't open %s for writing.\n", file);
       exit(-1);
    }
-   if(verbose == 1) printf("Debug:  Write to file: [%s]\n", file);
+//   if(verbose == 1) printf("Debug:  Write to file: [%s]\n", file);
 
    /* -------------------------------------------------------- *
     * write the bytes in data[] out                            *
     * -------------------------------------------------------- */
    int outbytes = fwrite(data, 1, CALIB_BYTECOUNT, calib);
    fclose(calib);
-   if(verbose == 1) printf("Debug:  Bytes to file: [%d]\n", outbytes);
+//   if(verbose == 1) printf("Debug:  Bytes to file: [%d]\n", outbytes);
    if(outbytes != CALIB_BYTECOUNT) {
       printf("Error: %d/%d bytes written to file.\n", outbytes, CALIB_BYTECOUNT);
       return(-1);
@@ -324,7 +326,7 @@ int load_cal(char *file) {
       printf("Error: Can't open %s for reading.\n", file);
       exit(-1);
    }
-   if(verbose == 1) printf("Debug: Load from file: [%s]\n", file);
+//   if(verbose == 1) printf("Debug: Load from file: [%s]\n", file);
 
    /* -------------------------------------------------------- *
     * Read 34 bytes from file into data[], starting at data[1] *
@@ -339,15 +341,15 @@ int load_cal(char *file) {
       printf("Error: %d/%d bytes read to file.\n", inbytes, CALIB_BYTECOUNT);
       return(-1);
    }
-   if(verbose == 1) {
-      printf("Debug: Calibrationset:");
-      int i = 1;
-      while(i<CALIB_BYTECOUNT+1) {
-         printf(" %02X", data[i]);
-         i++;
-      }
-      printf("\n");
-   }
+//   if(verbose == 1) {
+//      printf("Debug: Calibrationset:");
+//      int i = 1;
+//      while(i<CALIB_BYTECOUNT+1) {
+//         printf(" %02X", data[i]);
+//         i++;
+//      }
+//      printf("\n");
+//   }
 
    /* -------------------------------------------------------- *
     * Write 34 bytes from file into sensor registers from 0x43 *
@@ -378,17 +380,17 @@ int load_cal(char *file) {
       return(-1);
    }
 
-   if(verbose == 1) printf("Debug: Registerupdate:");
+//   if(verbose == 1) printf("Debug: Registerupdate:");
    int i = 0;
    while(i<CALIB_BYTECOUNT) {
       if(data[i+1] != newdata[i]) {
          printf("\nError: Calibration load failure %02X register 0x%02X\n", newdata[i], reg+i);
          //exit(-1);
       }
-      if(verbose == 1) printf(" %02X", newdata[i]);
+//      if(verbose == 1) printf(" %02X", newdata[i]);
       i++;
    }
-   if(verbose == 1) printf("\n");
+//   if(verbose == 1) printf("\n");
    set_mode(oldmode);
 
    /* -------------------------------------------------------- *
@@ -451,43 +453,43 @@ int get_inf(struct bnoinf *bno_ptr) {
    /* --------------------------------------------------------- *
     * 1-byte chip ID in register 0x00, default: 0xA0            *
     * --------------------------------------------------------- */
-   if(verbose == 1) printf("Debug: Sensor CHIP ID: [0x%02X]\n", data[0]);
+//   if(verbose == 1) printf("Debug: Sensor CHIP ID: [0x%02X]\n", data[0]);
    bno_ptr->chip_id = data[0];
 
    /* --------------------------------------------------------- *
     * 1-byte Accelerometer ID in register 0x01, default: 0xFB   *
     * --------------------------------------------------------- */
-   if(verbose == 1) printf("Debug: Sensor  ACC ID: [0x%02X]\n", data[1]);
+//   if(verbose == 1) printf("Debug: Sensor  ACC ID: [0x%02X]\n", data[1]);
    bno_ptr->acc_id = data[1];
 
    /* --------------------------------------------------------- *
     * 1-byte Magnetometer ID in register 0x02, default 0x32     *
     * --------------------------------------------------------- */
-   if(verbose == 1) printf("Debug: Sensor  MAG ID: [0x%02X]\n", data[2]);
+//   if(verbose == 1) printf("Debug: Sensor  MAG ID: [0x%02X]\n", data[2]);
    bno_ptr->mag_id = data[2];
 
    /* --------------------------------------------------------- *
     * 1-byte Gyroscope ID in register 0x03, default: 0x0F       *
     * --------------------------------------------------------- */
-   if(verbose == 1) printf("Debug: Sensor  GYR ID: [0x%02X]\n", data[3]);
+//   if(verbose == 1) printf("Debug: Sensor  GYR ID: [0x%02X]\n", data[3]);
    bno_ptr->gyr_id = data[3];
 
    /* --------------------------------------------------------- *
     * 1-byte SW Revsion ID LSB in register 0x04, default: 0x08  *
     * --------------------------------------------------------- */
-   if(verbose == 1) printf("Debug: SW  Rev-ID LSB: [0x%02X]\n", data[4]);
+//   if(verbose == 1) printf("Debug: SW  Rev-ID LSB: [0x%02X]\n", data[4]);
    bno_ptr->sw_lsb = data[4];
 
    /* --------------------------------------------------------- *
     * 1-byte SW Revision ID MSB in register 0x05, default: 0x03 *
     * --------------------------------------------------------- */
-   if(verbose == 1) printf("Debug: SW  Rev-ID MSB: [0x%02X]\n", data[5]);
+//   if(verbose == 1) printf("Debug: SW  Rev-ID MSB: [0x%02X]\n", data[5]);
    bno_ptr->sw_msb = data[5];
 
    /* --------------------------------------------------------- *
     * 1-byte BootLoader Revision ID register 0x06, no default   *
     * --------------------------------------------------------- */
-   if(verbose == 1) printf("Debug: Bootloader Ver: [0x%02X]\n", data[6]);
+//   if(verbose == 1) printf("Debug: Bootloader Ver: [0x%02X]\n", data[6]);
    bno_ptr->bl_rev = data[6];
 
    /* --------------------------------------------------------- *
@@ -524,7 +526,7 @@ int get_inf(struct bnoinf *bno_ptr) {
       printf("Error: I2C read failure for register data 0x%02X\n", reg);
       return(-1);
    }
-   if(verbose == 1) printf("Debug:  System Status: [0x%02X]\n", data[0]);
+//   if(verbose == 1) printf("Debug:  System Status: [0x%02X]\n", data[0]);
    bno_ptr->sys_stat = data[0];
 
    /* --------------------------------------------------------- *
@@ -541,7 +543,7 @@ int get_inf(struct bnoinf *bno_ptr) {
       printf("Error: I2C read failure for register data 0x%02X\n", reg);
       return(-1);
    }
-   if(verbose == 1) printf("Debug: Self-Test Mode: [0x%02X] 4bit [0x%02X]\n", data[0], data[0] & 0x0F);
+//   if(verbose == 1) printf("Debug: Self-Test Mode: [0x%02X] 4bit [0x%02X]\n", data[0], data[0] & 0x0F);
    bno_ptr->selftest = data[0] & 0x0F; // only get the lowest 4 bits
 
    /* --------------------------------------------------------- *
@@ -558,7 +560,7 @@ int get_inf(struct bnoinf *bno_ptr) {
       printf("Error: I2C read failure for register data 0x%02X\n", reg);
       return(-1);
    }
-   if(verbose == 1) printf("Debug: Internal Error: [0x%02X]\n", data[0]);
+//   if(verbose == 1) printf("Debug: Internal Error: [0x%02X]\n", data[0]);
    bno_ptr->sys_err = data[0];
 
    /* --------------------------------------------------------- *
@@ -575,15 +577,15 @@ int get_inf(struct bnoinf *bno_ptr) {
       printf("Error: I2C read failure for register data 0x%02X\n", reg);
       return(-1);
    }
-   if(verbose == 1) printf("Debug: UnitDefinition: [0x%02X]\n", data[0]);
+//   if(verbose == 1) printf("Debug: UnitDefinition: [0x%02X]\n", data[0]);
    bno_ptr->unitsel = data[0];
 
    /* --------------------------------------------------------- *
     * Extract the temperature unit from the unit selection data *
     * --------------------------------------------------------- */
-   char t_unit;
-   if((data[0] >> 4) & 0x01) t_unit = 'F';
-   else  t_unit = 'C';
+//   char t_unit;
+//   if((data[0] >> 4) & 0x01) t_unit = 'F';
+//   else  t_unit = 'C';
 
    /* --------------------------------------------------------- *
     * Read sensor temperature from register 0x34, no default    *
@@ -599,7 +601,7 @@ int get_inf(struct bnoinf *bno_ptr) {
       printf("Error: I2C read failure for register data 0x%02X\n", reg);
       return(-1);
    }
-   if(verbose == 1) printf("Debug:    Temperature: [0x%02X] [%d°%c]\n", data[0], data[0], t_unit);
+//   if(verbose == 1) printf("Debug:    Temperature: [0x%02X] [%d°%c]\n", data[0], data[0], t_unit);
    bno_ptr->temp_val = data[0];
 
    return(0);
@@ -621,15 +623,15 @@ int get_acc(struct bnoacc *bnod_ptr) {
    }
 
    int16_t buf = ((int16_t)data[1] << 8) | data[0];
-   if(verbose == 1) printf("Debug: Accelerometer Data X: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[0], data[1],buf);
+//   if(verbose == 1) printf("Debug: Accelerometer Data X: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[0], data[1],buf);
    bnod_ptr->adata_x = (double) buf;
 
    buf = ((int16_t)data[3] << 8) | data[2];
-   if(verbose == 1) printf("Debug: Accelerometer Data Y: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[2], data[3],buf);
+//   if(verbose == 1) printf("Debug: Accelerometer Data Y: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[2], data[3],buf);
    bnod_ptr->adata_y = (double) buf;
 
    buf = ((int16_t)data[5] << 8) | data[4];
-   if(verbose == 1) printf("Debug: Accelerometer Data Z: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[4], data[5],buf);
+//   if(verbose == 1) printf("Debug: Accelerometer Data Z: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[4], data[5],buf);
    bnod_ptr->adata_z = (double) buf;
    return(0);
 }
@@ -652,15 +654,15 @@ int get_mag(struct bnomag *bnod_ptr) {
    }
 
    int16_t buf = ((int16_t)data[1] << 8) | data[0]; 
-   if(verbose == 1) printf("Debug: Magnetometer Data X: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[0], data[1],buf);
+//   if(verbose == 1) printf("Debug: Magnetometer Data X: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[0], data[1],buf);
    bnod_ptr->mdata_x = (double) buf / 1.6;
 
    buf = ((int16_t)data[3] << 8) | data[2]; 
-   if(verbose == 1) printf("Debug: Magnetometer Data Y: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[2], data[3],buf);
+//   if(verbose == 1) printf("Debug: Magnetometer Data Y: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[2], data[3],buf);
    bnod_ptr->mdata_y = (double) buf / 1.6;
 
    buf = ((int16_t)data[5] << 8) | data[4]; 
-   if(verbose == 1) printf("Debug: Magnetometer Data Z: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[4], data[5],buf);
+//   if(verbose == 1) printf("Debug: Magnetometer Data Z: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[4], data[5],buf);
    bnod_ptr->mdata_z = (double) buf / 1.6;
    return(0);
 }
@@ -682,15 +684,15 @@ int get_gyr(struct bnogyr *bnod_ptr) {
    }
 
    int16_t buf = ((int16_t)data[1] << 8) | data[0];
-   if(verbose == 1) printf("Debug: Gyroscope Data X: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[0], data[1],buf);
+//   if(verbose == 1) printf("Debug: Gyroscope Data X: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[0], data[1],buf);
    bnod_ptr->gdata_x = (double) buf / 16.0;
 
    buf = ((int16_t)data[3] << 8) | data[2];
-   if(verbose == 1) printf("Debug: Gyrosscope Data Y: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[2], data[3],buf);
+//   if(verbose == 1) printf("Debug: Gyrosscope Data Y: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[2], data[3],buf);
    bnod_ptr->gdata_y = (double) buf / 16.0;
 
    buf = ((int16_t)data[5] << 8) | data[4];
-   if(verbose == 1) printf("Debug: Gyroscope Data Z: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[4], data[5],buf);
+//   if(verbose == 1) printf("Debug: Gyroscope Data Z: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[4], data[5],buf);
    bnod_ptr->gdata_z = (double) buf / 16.0;
    return(0);
 }
@@ -705,7 +707,7 @@ int get_eul(struct bnoeul *bnod_ptr) {
       return(-1);
    }
 
-   if(verbose == 1) printf("Debug: I2C read 6 bytes starting at register 0x%02X\n", reg);
+//   if(verbose == 1) printf("Debug: I2C read 6 bytes starting at register 0x%02X\n", reg);
 
    unsigned char data[6] = {0, 0, 0, 0, 0, 0};
    if(read(i2cfd, data, 6) != 6) {
@@ -714,15 +716,15 @@ int get_eul(struct bnoeul *bnod_ptr) {
    }
 
    int16_t buf = ((int16_t)data[1] << 8) | data[0]; 
-   if(verbose == 1) printf("Debug: Euler Orientation H: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[0], data[1],buf);
+//   if(verbose == 1) printf("Debug: Euler Orientation H: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[0], data[1],buf);
    bnod_ptr->eul_head = (double) buf / 16.0;
 
    buf = ((int16_t)data[3] << 8) | data[2]; 
-   if(verbose == 1) printf("Debug: Euler Orientation R: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[2], data[3],buf);
+//   if(verbose == 1) printf("Debug: Euler Orientation R: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[2], data[3],buf);
    bnod_ptr->eul_roll = (double) buf / 16.0;
 
    buf = ((int16_t)data[5] << 8) | data[4]; 
-   if(verbose == 1) printf("Debug: Euler Orientation P: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[4], data[5],buf);
+//   if(verbose == 1) printf("Debug: Euler Orientation P: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[4], data[5],buf);
    bnod_ptr->eul_pitc = (double) buf / 16.0;
    return(0);
 }
@@ -737,7 +739,7 @@ int get_qua(struct bnoqua *bnod_ptr) {
       return(-1);
    }
 
-   if(verbose == 1) printf("Debug: I2C read 8 bytes starting at register 0x%02X\n", reg);
+//   if(verbose == 1) printf("Debug: I2C read 8 bytes starting at register 0x%02X\n", reg);
 
    unsigned char data[8] = {0};
    if(read(i2cfd, data, 8) != 8) {
@@ -746,19 +748,19 @@ int get_qua(struct bnoqua *bnod_ptr) {
    }
 
    int16_t buf = ((int16_t)data[1] << 8) | data[0]; 
-   if(verbose == 1) printf("Debug: Quaternation W: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[0], data[1],buf);
+//   if(verbose == 1) printf("Debug: Quaternation W: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[0], data[1],buf);
    bnod_ptr->quater_w = (double) buf / 16384.0;
 
    buf = ((int16_t)data[3] << 8) | data[2]; 
-   if(verbose == 1) printf("Debug: Quaternation X: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[2], data[3],buf);
+//   if(verbose == 1) printf("Debug: Quaternation X: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[2], data[3],buf);
    bnod_ptr->quater_x = (double) buf / 16384.0;
 
    buf = ((int16_t)data[5] << 8) | data[4]; 
-   if(verbose == 1) printf("Debug: Quaternation Y: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[4], data[5],buf);
+//   if(verbose == 1) printf("Debug: Quaternation Y: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[4], data[5],buf);
    bnod_ptr->quater_y = (double) buf / 16384.0;
 
    buf = ((int16_t)data[7] << 8) | data[6]; 
-   if(verbose == 1) printf("Debug: Quaternation Z: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[6], data[7],buf);
+//   if(verbose == 1) printf("Debug: Quaternation Z: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[6], data[7],buf);
    bnod_ptr->quater_z = (double) buf / 16384.0;
    return(0);
 }
@@ -794,7 +796,7 @@ int get_gra(struct bnogra *bnod_ptr) {
       return(-1);
    }
 
-   if(verbose == 1) printf("Debug: I2C read 6 bytes starting at register 0x%02X\n", reg);
+//   if(verbose == 1) printf("Debug: I2C read 6 bytes starting at register 0x%02X\n", reg);
 
    unsigned char data[6] = {0, 0, 0, 0, 0, 0};
    if(read(i2cfd, data, 6) != 6) {
@@ -803,15 +805,15 @@ int get_gra(struct bnogra *bnod_ptr) {
    }
 
    int16_t buf = ((int16_t)data[1] << 8) | data[0];
-   if(verbose == 1) printf("Debug: Gravity Vector H: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[0], data[1],buf);
+//   if(verbose == 1) printf("Debug: Gravity Vector H: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[0], data[1],buf);
    bnod_ptr->gravityx = (double) buf / ufact;
 
    buf = ((int16_t)data[3] << 8) | data[2];
-   if(verbose == 1) printf("Debug: Gravity Vector M: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[2], data[3],buf);
+//   if(verbose == 1) printf("Debug: Gravity Vector M: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[2], data[3],buf);
    bnod_ptr->gravityy = (double) buf / ufact;
 
    buf = ((int16_t)data[5] << 8) | data[4];
-   if(verbose == 1) printf("Debug: Gravity Vector P: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[4], data[5],buf);
+//   if(verbose == 1) printf("Debug: Gravity Vector P: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[4], data[5],buf);
    bnod_ptr->gravityz = (double) buf / ufact;
    return(0);
 }
@@ -847,7 +849,7 @@ int get_lin(struct bnolin *bnod_ptr) {
       return(-1);
    }
 
-   if(verbose == 1) printf("Debug: I2C read 6 bytes starting at register 0x%02X\n", reg);
+//   if(verbose == 1) printf("Debug: I2C read 6 bytes starting at register 0x%02X\n", reg);
 
    unsigned char data[6] = {0, 0, 0, 0, 0, 0};
    if(read(i2cfd, data, 6) != 6) {
@@ -856,15 +858,15 @@ int get_lin(struct bnolin *bnod_ptr) {
    }
 
    int16_t buf = ((int16_t)data[1] << 8) | data[0];
-   if(verbose == 1) printf("Debug: Linear Acceleration H: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[0], data[1],buf);
+//   if(verbose == 1) printf("Debug: Linear Acceleration H: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[0], data[1],buf);
    bnod_ptr->linacc_x = (double) buf / ufact;
 
    buf = ((int16_t)data[3] << 8) | data[2];
-   if(verbose == 1) printf("Debug: Linear Acceleration M: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[2], data[3],buf);
+//   if(verbose == 1) printf("Debug: Linear Acceleration M: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[2], data[3],buf);
    bnod_ptr->linacc_y = (double) buf / ufact;
 
    buf = ((int16_t)data[5] << 8) | data[4];
-   if(verbose == 1) printf("Debug: Linear Acceleration P: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[4], data[5],buf);
+//   if(verbose == 1) printf("Debug: Linear Acceleration P: LSB [0x%02X] MSB [0x%02X] INT16 [%d]\n", data[4], data[5],buf);
    bnod_ptr->linacc_z = (double) buf / ufact;
    return(0);
 }
@@ -882,7 +884,7 @@ int set_mode(opmode_t newmode) {
    if(oldmode == newmode) return(0); // if new mode is the same
    else if(oldmode > 0 && newmode > 0) {  // switch to "config" first
       data[1] = 0x0;
-      if(verbose == 1) printf("Debug: Write opr_mode: [0x%02X] to register [0x%02X]\n", data[1], data[0]);
+//      if(verbose == 1) printf("Debug: Write opr_mode: [0x%02X] to register [0x%02X]\n", data[1], data[0]);
       if(write(i2cfd, data, 2) != 2) {
          printf("Error: I2C write failure for register 0x%02X\n", data[0]);
          return(-1);
@@ -894,7 +896,7 @@ int set_mode(opmode_t newmode) {
    }
 
    data[1] = newmode;
-   if(verbose == 1) printf("Debug: Write opr_mode: [0x%02X] to register [0x%02X]\n", data[1], data[0]);
+//   if(verbose == 1) printf("Debug: Write opr_mode: [0x%02X] to register [0x%02X]\n", data[1], data[0]);
    if(write(i2cfd, data, 2) != 2) {
       printf("Error: I2C write failure for register 0x%02X\n", data[0]);
       return(-1);
@@ -913,7 +915,7 @@ int set_mode(opmode_t newmode) {
  * Reads 1 byte from Operations Mode register 0x3d, and uses    *
  * only the lowest 4 bit. Bits 4-7 are unused, stripped off     *
  * ------------------------------------------------------------ */
-int get_mode() {
+opmode_t get_mode() {
    int reg = BNO055_OPR_MODE_ADDR;
    if(write(i2cfd, &reg, 1) != 1) {
       printf("Error: I2C write failure for register 0x%02X\n", reg);
@@ -926,7 +928,7 @@ int get_mode() {
       return(-1);
    }
 
-   if(verbose == 1) printf("Debug: Operation Mode: [0x%02X]\n", data & 0x0F);
+//   if(verbose == 1) printf("Debug: Operation Mode: [0x%02X]\n", data & 0x0F);
 
    return(data & 0x0F);  // only return the lowest 4 bits
 }
@@ -1001,7 +1003,7 @@ int set_power(power_t pwrmode) {
    if(oldmode > 0) {
       data[0] = BNO055_OPR_MODE_ADDR;
       data[1] = 0x0;
-      if(verbose == 1) printf("Debug: Write opr_mode: [0x%02X] to register [0x%02X]\n", data[1], data[0]);
+//      if(verbose == 1) printf("Debug: Write opr_mode: [0x%02X] to register [0x%02X]\n", data[1], data[0]);
       if(write(i2cfd, data, 2) != 2) {
          printf("Error: I2C write failure for register 0x%02X\n", data[0]);
          return(-1);
@@ -1014,7 +1016,7 @@ int set_power(power_t pwrmode) {
  * ------------------------------------------------------------ */
    data[0] = BNO055_PWR_MODE_ADDR;
    data[1] = pwrmode;
-   if(verbose == 1) printf("Debug: Write opr_mode: [0x%02X] to register [0x%02X]\n", data[1], data[0]);
+//   if(verbose == 1) printf("Debug: Write opr_mode: [0x%02X] to register [0x%02X]\n", data[1], data[0]);
    if(write(i2cfd, data, 2) != 2) {
       printf("Error: I2C write failure for register 0x%02X\n", data[0]);
       return(-1);
@@ -1027,7 +1029,7 @@ int set_power(power_t pwrmode) {
    if(oldmode > 0) {
       data[0] = BNO055_OPR_MODE_ADDR;
       data[1] = oldmode;
-      if(verbose == 1) printf("Debug: Write opr_mode: [0x%02X] to register [0x%02X]\n", data[1], data[0]);
+//      if(verbose == 1) printf("Debug: Write opr_mode: [0x%02X] to register [0x%02X]\n", data[1], data[0]);
       if(write(i2cfd, data, 2) != 2) {
          printf("Error: I2C write failure for register 0x%02X\n", data[0]);
          return(-1);
@@ -1043,7 +1045,7 @@ int set_power(power_t pwrmode) {
  * get_power() returns the sensor power mode from register 0x3e *
  * Only the lowest 2 bit are used, ignore the unused bits 2-7.  *
  * ------------------------------------------------------------ */
-int get_power() {
+power_t get_power() {
    int reg = BNO055_PWR_MODE_ADDR;
    if(write(i2cfd, &reg, 1) != 1) {
       printf("Error: I2C write failure for register 0x%02X\n", reg);
@@ -1056,7 +1058,7 @@ int get_power() {
       return(-1);
    }
 
-   if(verbose == 1) printf("Debug:     Power Mode: [0x%02X] 2bit [0x%02X]\n", data, data & 0x03);
+//   if(verbose == 1) printf("Debug:     Power Mode: [0x%02X] 2bit [0x%02X]\n", data, data & 0x03);
 
    return(data & 0x03);  // only return the lowest 2 bits
 }
@@ -1098,7 +1100,7 @@ int get_sstat() {
       return(-1);
    }
 
-   if(verbose == 1) printf("Debug:  System Status: [0x%02X]\n", data);
+//   if(verbose == 1) printf("Debug:  System Status: [0x%02X]\n", data);
 
    return(data);
 }
@@ -1160,7 +1162,7 @@ int get_remap(char mode) {
       return(-1);
    }
 
-   if(verbose == 1) printf("Debug: Axis Remap '%c': [0x%02X]\n", mode, data);
+//   if(verbose == 1) printf("Debug: Axis Remap '%c': [0x%02X]\n", mode, data);
 
    return(data);
 }
@@ -1236,7 +1238,7 @@ int set_page0() {
    char data[2] = {0};
    data[0] = BNO055_PAGE_ID_ADDR;
    data[1] = 0x0;
-   if(verbose == 1) printf("Debug: write page-ID: [0x%02X] to register [0x%02X]\n", data[1], data[0]);
+//   if(verbose == 1) printf("Debug: write page-ID: [0x%02X] to register [0x%02X]\n", data[1], data[0]);
    if(write(i2cfd, data, 2) != 2) {
       printf("Error: I2C write failure for register 0x%02X\n", data[0]);
       return(-1);
@@ -1251,7 +1253,7 @@ int set_page1() {
    char data[2] = {0};
    data[0] = BNO055_PAGE_ID_ADDR;
    data[1] = 0x1;
-   if(verbose == 1) printf("Debug: write page-ID: [0x%02X] to register [0x%02X]\n", data[1], data[0]);
+//   if(verbose == 1) printf("Debug: write page-ID: [0x%02X] to register [0x%02X]\n", data[1], data[0]);
    if(write(i2cfd, data, 2) != 2) {
       printf("Error: I2C write failure for register 0x%02X\n", data[0]);
       return(-1);
@@ -1277,7 +1279,7 @@ int get_clksrc() {
       return(-1);
    }
 
-   if(verbose == 1) printf("Debug: CLK_SEL bit-7 in register %d: [%d]\n", reg, (data & 0b10000000) >> 7);
+//   if(verbose == 1) printf("Debug: CLK_SEL bit-7 in register %d: [%d]\n", reg, (data & 0b10000000) >> 7);
    return (data & 0b10000000) >> 7; // system calibration status
 }
 
@@ -1313,11 +1315,11 @@ int get_acc_conf(struct bnoaconf *bnoc_ptr) {
    }
 
    bnoc_ptr->range   = (data & 0b00000011) >> 2; // accel range
-   if(verbose == 1) printf("Debug:       accelerometer range: [%d]\n", bnoc_ptr->pwrmode);
+//   if(verbose == 1) printf("Debug:       accelerometer range: [%d]\n", bnoc_ptr->pwrmode);
    bnoc_ptr->bandwth = (data & 0b00011100) >> 4; // accel bandwidth
-   if(verbose == 1) printf("Debug:   accelerometer bandwidth: [%d]\n", bnoc_ptr->bandwth);
+//   if(verbose == 1) printf("Debug:   accelerometer bandwidth: [%d]\n", bnoc_ptr->bandwth);
    bnoc_ptr->pwrmode = (data & 0b11100000) >> 6; // accel power mode
-   if(verbose == 1) printf("Debug:  accelerometer power mode: [%d]\n", bnoc_ptr->pwrmode);
+//   if(verbose == 1) printf("Debug:  accelerometer power mode: [%d]\n", bnoc_ptr->pwrmode);
 
    reg = BNO055_ACC_SLEEP_CONFIG_ADDR;
    if(write(i2cfd, &reg, 1) != 1) {
@@ -1334,9 +1336,9 @@ int get_acc_conf(struct bnoaconf *bnoc_ptr) {
    }
 
    bnoc_ptr->slpmode = (data & 0b00000011) >> 2; // accel sleep mode
-   if(verbose == 1) printf("Debug:  accelerometer sleep mode: [%d]\n", bnoc_ptr->slpmode);
+//   if(verbose == 1) printf("Debug:  accelerometer sleep mode: [%d]\n", bnoc_ptr->slpmode);
    bnoc_ptr->slpdur = (data & 0b00011100) >> 4; // accel sleep duration
-   if(verbose == 1) printf("Debug:   accelerometer sleep dur: [%d]\n", bnoc_ptr->slpdur);
+//   if(verbose == 1) printf("Debug:   accelerometer sleep dur: [%d]\n", bnoc_ptr->slpdur);
 
    set_page0();
    return(0);

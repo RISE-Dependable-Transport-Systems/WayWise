@@ -2,14 +2,23 @@
 #define IMUORIENTATIONUPDATER_H
 
 #include <QObject>
+#include <QSharedPointer>
+#include "vehiclestate.h"
 
 class IMUOrientationUpdater : public QObject
 {
     Q_OBJECT
 public:
-    explicit IMUOrientationUpdater(QObject *parent = nullptr);
+    IMUOrientationUpdater(QSharedPointer<VehicleState> vehicleState);
+    QSharedPointer<VehicleState> getVehicleState() const;
+    virtual bool setUpdateIntervall(int intervall_ms) = 0;
+
 
 signals:
+    void updatedIMUOrientation(QSharedPointer<VehicleState> vehicleState);
+
+private:
+    QSharedPointer<VehicleState> mVehicleState; // vehicle which's PosType::IMU is periodically updated
 
 };
 

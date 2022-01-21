@@ -228,9 +228,16 @@ void PosPoint::setPitch(double pitch)
     mPitch = pitch;
 }
 
-void PosPoint::setYaw(double alpha)
+void PosPoint::setYaw(double yaw)
 {
-    mYaw = alpha;
+    mYaw = yaw;
+}
+
+void PosPoint::setRollPitchYaw(double roll, double pitch, double yaw)
+{
+    mRoll = roll;
+    mPitch = pitch;
+    mYaw = yaw;
 }
 
 void PosPoint::setSpeed(double speed)

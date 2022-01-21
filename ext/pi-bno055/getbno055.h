@@ -168,7 +168,7 @@
 /* ------------------------------------------------------------ *
  * global variables                                             *
  * ------------------------------------------------------------ */
-extern int verbose;     // debug flag, 0 = normal, 1 = debug mode
+//extern int verbose;     // debug flag, 0 = normal, 1 = debug mode
 
 /* ------------------------------------------------------------ *
  * BNO055 versions, status data and other infos struct          *
@@ -309,7 +309,7 @@ typedef enum {
 /* ------------------------------------------------------------ *
  * external function prototypes for I2C bus communication code  *
  * ------------------------------------------------------------ */
-extern void get_i2cbus(char*, char*);     // get the I2C bus file handle
+extern int get_i2cbus(char*, char*);     // get the I2C bus file handle
 extern int set_page0();                   // set register map page 0
 extern int set_page1();                   // set register map page 1
 extern int get_calstatus(struct bnocal*); // read calibration status
@@ -325,11 +325,11 @@ extern int get_lin(struct bnolin*);       // read linar acceleration data
 extern int get_clksrc();                  // get the clock source setting
 extern void print_clksrc();               // print clock source setting
 extern int set_mode(opmode_t);            // set the sensor ops mode
-extern int get_mode();                    // get the sensor ops mode
+extern opmode_t get_mode();                    // get the sensor ops mode
 extern int print_mode(int);               // print ops mode string
 extern void print_unit(int);              // print SI unit configuration
 extern int set_power(power_t);            // set the sensor power mode
-extern int get_power();                   // get the sensor power mode
+extern power_t get_power();                   // get the sensor power mode
 extern int print_power(int);              // print power mode string
 extern int get_sstat();                   // get system status code
 extern int print_sstat(int);              // print system status string
@@ -346,6 +346,6 @@ extern int get_gyr_conf(struct bnogconf*);// get gyroscope config
 extern int set_acc_conf();                // set accelerometer config
 extern int set_mag_conf();                // set magnetometer config
 extern int set_gyr_conf();                // set gyroscope config
-extern void print_acc_conf();             // print accelerometer config
+extern void print_acc_conf(struct bnoaconf *bnoc_ptr);             // print accelerometer config
 extern void print_mag_conf();             // print magnetometer config
 extern void print_gyr_conf();             // print gyroscope config
