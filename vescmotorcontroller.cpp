@@ -130,6 +130,14 @@ QSharedPointer<ServoController> VESCMotorController::getServoController()
     return mVESCServoController;
 }
 
+QSharedPointer<IMUOrientationUpdater> VESCMotorController::getIMUOrientationUpdater(QSharedPointer<VehicleState> vehicleState)
+{
+    mVESCOrientationUpdater.reset(new VESCOrientationUpdater(vehicleState));
+    setEnableIMUOrientationUpdate(true);
+
+    return  mVESCOrientationUpdater;
+}
+
 int VESCMotorController::getPollValuesPeriod() const
 {
     return pollValuesPeriod_ms;
@@ -231,7 +239,7 @@ void VESCMotorController::processVESCPacket(QByteArray &data)
         values.yaw = vb.vbPopFrontDouble32Auto();
 
 //        qDebug() << values.roll* 180.0 / M_PI << values. pitch* 180.0 / M_PI << values.yaw* 180.0 / M_PI;
-        emit gotIMUOrientation(values.roll * 180.0 / M_PI, values.pitch * 180.0 / M_PI, values.yaw * 180.0 / M_PI);
+        mVESCOrientationUpdater->useIMUDataFromVESC(values.roll * 180.0 / M_PI, values.pitch * 180.0 / M_PI, values.yaw * 180.0 / M_PI);
     } break;
     case VESC::COMM_PRINT:
         qDebug() << QString::fromLatin1(vb);

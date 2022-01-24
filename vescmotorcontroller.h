@@ -5,6 +5,7 @@
 #include <QSharedPointer>
 #include "motorcontroller.h"
 #include "servocontroller.h"
+#include "imuorientationupdater.h"
 #include <QSerialPort>
 #include <QSerialPortInfo>
 #include <QByteArray>
@@ -23,18 +24,15 @@ public:
     virtual void pollFirmwareVersion();
     virtual void requestRPM(int32_t rpm);
 
-    void setEnableIMUOrientationUpdate(bool enabled);
 
     QSharedPointer<ServoController> getServoController();
+    QSharedPointer<IMUOrientationUpdater> getIMUOrientationUpdater(QSharedPointer<VehicleState> vehicleState);
 
     int getPollValuesPeriod() const;
     void setPollValuesPeriod(int milliseconds);
 
-signals:
-    void gotIMUOrientation(double roll, double pitch, double yaw);
-
 private:
-    // internal class to avoid mutli-inheritance from QObject
+    // internal classes to avoid mutli-inheritance from QObject
     class VESCServoController : public ServoController {
     public:
         VESCServoController(VESC::Packet* packet) {mVESCPacket = packet;};
@@ -43,6 +41,27 @@ private:
         VESC::Packet* mVESCPacket;
     };
     QSharedPointer<VESCServoController> mVESCServoController;
+
+    class VESCOrientationUpdater : public IMUOrientationUpdater {
+    public:
+        VESCOrientationUpdater(QSharedPointer<VehicleState> vehicleState) : IMUOrientationUpdater(vehicleState) {}
+        virtual bool setUpdateIntervall(int) override {
+            return false; // TODO
+        }
+    private:
+        void useIMUDataFromVESC(double roll, double pitch, double yaw) {
+            QSharedPointer<VehicleState> vehicleState = getVehicleState();
+            PosPoint currIMUPos = vehicleState->getPosition(PosType::IMU);
+
+            currIMUPos.setRollPitchYaw(roll, pitch, yaw);
+            currIMUPos.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()));
+            vehicleState->setPosition(currIMUPos);
+
+            emit updatedIMUOrientation(vehicleState);
+        };
+
+        friend class VESCMotorController;
+    };
 
     QSerialPort mSerialPort;
 
@@ -77,6 +96,8 @@ private:
     VESC::FW_RX_PARAMS mVescFirmwareInfo;
 
     bool mEnableIMUOrientationUpdate = false;
+    void setEnableIMUOrientationUpdate(bool enabled);
+    QSharedPointer<VESCOrientationUpdater> mVESCOrientationUpdater;
 
     void processVESCPacket(QByteArray &data);
     QString VESCFaultToStr(VESC::mc_fault_code fault);
