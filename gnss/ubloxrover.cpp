@@ -9,12 +9,6 @@ UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
     mVehicleState = vehicleState;
     mEnuReference = {57.6828, 11.9637, 0}; // AztaZero {57.7810, 12.7692, 0}, Klätterlabbet {57.6876, 11.9807, 0};
 
-    // Initialize AHRS algorithm from Fusion library.
-    // This provides orientation data if the u-blox device contains an IMU (e.g., F9R), even without GNSS reception
-    FusionBiasInitialise(&mFusionBias, 0.5f, mIMUSamplePeriod); // stationary threshold = 0.5 degrees per second, expected period 20 ms
-    FusionAhrsInitialise(&mFusionAhrs, 0.5f); // gain = 0.5
-    connect(&mUblox, &Ublox::rxEsfMeas, this, &UbloxRover::updateAHRS);
-
     // Use GNSS reception to update location
     connect(&mUblox, &Ublox::rxNavPvt, this, &UbloxRover::updateGNSSPositionAndYaw);
 
@@ -149,25 +143,9 @@ void UbloxRover::writeOdoToUblox(ubx_esf_datatype_enum dataType, uint32_t dataFi
     mUblox.ubloxOdometerInput(dataType, dataField);
 }
 
-void UbloxRover::setEnableIMUOrientationUpdate(bool enabled)
-{
-    mUblox.ubxCfgMsg(UBX_CLASS_ESF, UBX_ESF_MEAS, (enabled ? 1 : 0));
-}
-
 void UbloxRover::setIMUOrientationOffset(double roll_deg, double pitch_deg, double yaw_deg)
 {
     mIMUOrientationOffset = {roll_deg, pitch_deg, yaw_deg};
-
-    float sin_roll = sinf(roll_deg * M_PI / 180.0f);
-    float cos_roll = cosf(roll_deg * M_PI / 180.0f);
-    float sin_pitch = sinf(pitch_deg * M_PI / 180.0f);
-    float cos_pitch = cosf(pitch_deg * M_PI / 180.0f);
-    float sin_yaw = sinf(yaw_deg * M_PI / 180.0f);
-    float cos_yaw = cosf(yaw_deg * M_PI / 180.0f);
-
-    mIMUOrientationOffsetMatrix = {.array = {cos_yaw * cos_pitch, cos_yaw * sin_pitch * sin_roll - cos_roll * sin_yaw, sin_yaw * sin_roll + cos_yaw * cos_roll * sin_pitch,
-                                             cos_pitch * sin_yaw, cos_yaw * cos_roll + sin_yaw * sin_pitch * sin_roll, cos_roll * sin_yaw * sin_pitch - cos_yaw * sin_roll,
-                                             -sin_pitch,          cos_pitch * sin_roll,                                cos_pitch * cos_roll                               }};
 }
 
 bool UbloxRover::configureUblox()
@@ -218,99 +196,6 @@ bool UbloxRover::configureUblox()
 //             << "\nLayer:" << layer
 //             << "\n--- End of poll request ---\n";
     return true;
-}
-
-void UbloxRover::updateAHRS(const ubx_esf_meas &meas)
-{
-    const float G = 9.82f;
-    static unsigned lastGyroTtag = 0;
-    static float gyro_xyz[3] = {0.0, 0.0, 0.0};
-    static unsigned lastAccTtag = 0;
-    static float acc_xyz[3] = {0.0, 0.0, 0.0};
-    static bool gotGyro = false, gotAcc = false;
-
-    // Decode gyroscope/accelerometer data from UBX-ESF-MEAS message
-    for (int i = 0; i < meas.num_meas; i++) {
-        if (lastGyroTtag < meas.time_tag) { // Messages might arrive out of order -> discard old ones
-            switch(meas.data_type[i]) {
-            case GYRO_Z: {
-                gyro_xyz[2] = esfMeas2Float(meas.data_field[i], 12);
-                gotGyro = true;
-            } break;
-            case GYRO_Y: {
-                gyro_xyz[1] = esfMeas2Float(meas.data_field[i], 12);
-            } break;
-            case GYRO_X: {
-                gyro_xyz[0] = esfMeas2Float(meas.data_field[i], 12);
-            } break;
-            default:
-                break;
-            }
-        }
-
-        if (lastAccTtag < meas.time_tag) { // Messages might arrive out of order -> discard old ones
-            switch(meas.data_type[i]) {
-            case ACC_X: {
-                acc_xyz[0] = esfMeas2Float(meas.data_field[i], 10)/G;
-                gotAcc = true;
-            } break;
-            case ACC_Y: {
-                acc_xyz[1] = esfMeas2Float(meas.data_field[i], 10)/G;
-            } break;
-            case ACC_Z: {
-                acc_xyz[2] = esfMeas2Float(meas.data_field[i], 10)/G;
-            } break;
-            default:
-                break;
-            }
-        }
-    }
-
-    if (gotGyro) {
-        lastGyroTtag = meas.time_tag;
-        mVehicleState->setGyroscopeXYZ({gyro_xyz[0], gyro_xyz[1], gyro_xyz[2]});
-    }
-
-    if (gotAcc) {
-        lastAccTtag = meas.time_tag;
-        mVehicleState->setAccelerometerXYZ({acc_xyz[0], acc_xyz[1], acc_xyz[2]});
-    }
-
-    if (gotGyro && gotAcc) { // Update AHRS only when a new pair of measurements has arrived. TODO: how to handle faster updates in one compared to the other?
-        gotGyro = false;
-        gotAcc = false;
-
-        // Calibrate gyroscope
-        FusionVector3 uncalibratedGyroscope = { {gyro_xyz[0], gyro_xyz[1], gyro_xyz[2]},};
-        FusionVector3 calibratedGyroscope = FusionCalibrationInertial(uncalibratedGyroscope, mIMUOrientationOffsetMatrix, gyroscopeSensitivity, FUSION_VECTOR3_ZERO);
-
-        // Calibrate accelerometer
-        FusionVector3 uncalibratedAccelerometer = { {acc_xyz[0], acc_xyz[1], acc_xyz[2]},};
-        FusionVector3 calibratedAccelerometer = FusionCalibrationInertial(uncalibratedAccelerometer, mIMUOrientationOffsetMatrix, accelerometerSensitivity, FUSION_VECTOR3_ZERO);
-
-        // Update gyroscope bias correction algorithm
-        calibratedGyroscope = FusionBiasUpdate(&mFusionBias, calibratedGyroscope);
-
-        // Update AHRS algorithm
-        FusionAhrsUpdateWithoutMagnetometer(&mFusionAhrs, calibratedGyroscope, calibratedAccelerometer, mIMUSamplePeriod);
-
-        // Get Euler angles
-        FusionEulerAngles eulerAngles = FusionQuaternionToEulerAngles(FusionAhrsGetQuaternion(&mFusionAhrs));
-        PosPoint tmppos = mVehicleState->getPosition(PosType::IMU);
-        tmppos.setRoll(eulerAngles.angle.roll);
-        tmppos.setPitch(-eulerAngles.angle.pitch);
-        float newYaw = -eulerAngles.angle.yaw+180.0f;
-        while (newYaw < -180.0) // normalize
-            newYaw += 360.0;
-        while (newYaw >  180.0)
-            newYaw -= 360.0;
-        tmppos.setYaw(newYaw);
-
-        tmppos.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc())); // TODO: can meas.time_tag be mapped to UTC/iTOW?
-        mVehicleState->setPosition(tmppos);
-
-        emit updatedIMUOrientation(mVehicleState);
-    }
 }
 
 void UbloxRover::updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt)
