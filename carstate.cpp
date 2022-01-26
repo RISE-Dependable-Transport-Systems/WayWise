@@ -132,44 +132,6 @@ QPainterPath CarState::getBoundingBox() const
 }
 #endif
 
-void CarState::simulationStep(double dt_ms, PosType usePosType)
-{
-    PosPoint currentPosition = getPosition(usePosType);
-    double drivenDistance = getSpeed() * dt_ms / 1000;
-    double yawRad = currentPosition.getYaw() / (180.0/M_PI);
-
-    // Bicycle kinematic model with rear axle as reference point
-    if (fabs(getSteering()) > 1e-6) { // Turning
-        double turnRadiusRear = getTurnRadiusRear();
-        double turnRadiusFront = getTurnRadiusFront();
-
-        if (turnRadiusRear < 0.0) {
-            turnRadiusFront = -turnRadiusFront;
-        }
-
-        double yawChange = drivenDistance / ((turnRadiusRear + turnRadiusFront) / 2.0);
-
-        currentPosition.setX(currentPosition.getX() + turnRadiusRear * (sin(-yawRad + yawChange) - sinf(-yawRad)));
-        currentPosition.setY(currentPosition.getY() + turnRadiusRear * (cos(-yawRad - yawChange) - cosf(-yawRad)));
-
-        double newYaw_deg = (yawRad - yawChange) * (180.0/M_PI);
-
-        // normalize
-        while (newYaw_deg < 0.0)
-            newYaw_deg += 360.0;
-        while (newYaw_deg > 360.0)
-            newYaw_deg -= 360.0;
-
-        currentPosition.setYaw(newYaw_deg);
-    } else { // Driving forward
-        currentPosition.setX(currentPosition.getX() + cos(-yawRad) * drivenDistance);
-        currentPosition.setY(currentPosition.getY() + sin(-yawRad) * drivenDistance);
-    }
-
-    currentPosition.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()));
-    setPosition(currentPosition);
-}
-
 void CarState::setSteering(double value)
 {
     value = (value > tanf(getMaxSteeringAngle())) ? tanf(getMaxSteeringAngle()) : value;
@@ -211,4 +173,41 @@ const QPointF CarState::getStoppingPointForTurnRadiusAndBrakingDistance(const do
 const QPointF CarState::getStoppingPointForTurnRadius(const double turnRadius) const
 {
     return getStoppingPointForTurnRadiusAndBrakingDistance(turnRadius, getBrakingDistance());
+}
+
+void CarState::updateOdomPositionAndYaw(double drivenDistance, PosType usePosType)
+{
+    PosPoint currentPosition = getPosition(usePosType);
+    double yawRad = currentPosition.getYaw() / (180.0/M_PI);
+
+    // Bicycle kinematic model with rear axle as reference point
+    if (fabs(getSteering()) > 1e-6) { // Turning
+        double turnRadiusRear = getTurnRadiusRear();
+        double turnRadiusFront = getTurnRadiusFront();
+
+        if (turnRadiusRear < 0.0) {
+            turnRadiusFront = -turnRadiusFront;
+        }
+
+        double yawChange = drivenDistance / ((turnRadiusRear + turnRadiusFront) / 2.0);
+
+        currentPosition.setX(currentPosition.getX() + turnRadiusRear * (sin(-yawRad + yawChange) - sinf(-yawRad)));
+        currentPosition.setY(currentPosition.getY() + turnRadiusRear * (cos(-yawRad - yawChange) - cosf(-yawRad)));
+
+        double newYaw_deg = (yawRad - yawChange) * (180.0/M_PI);
+
+        // normalize
+        while (newYaw_deg < 0.0)
+            newYaw_deg += 360.0;
+        while (newYaw_deg > 360.0)
+            newYaw_deg -= 360.0;
+
+        currentPosition.setYaw(newYaw_deg);
+    } else { // Driving forward
+        currentPosition.setX(currentPosition.getX() + cos(-yawRad) * drivenDistance);
+        currentPosition.setY(currentPosition.getY() + sin(-yawRad) * drivenDistance);
+    }
+
+    currentPosition.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()));
+    setPosition(currentPosition);
 }

@@ -22,6 +22,7 @@ public:
     QSharedPointer<VehicleState> getVehicleState() const;
 
 signals:
+    void updatedOdomPositionAndYaw(QSharedPointer<VehicleState> vehicleState, double distanceMoved);
 
 private:
     QSharedPointer<VehicleState> mVehicleState;

@@ -224,7 +224,8 @@ void VESCMotorController::processVESCPacket(QByteArray &data)
 //        } else
 //            throttleqDebug--;
 
-        emit gotStatusValues(values.rpm, values.tachometer,  values.tachometer_abs, values.v_in, values.temp_mos, values.fault_code);
+        // Note: tachometer needs to be divided by 6, not sure why
+        emit gotStatusValues(values.rpm, values.tachometer/6,  values.tachometer_abs/6, values.v_in, values.temp_mos, values.fault_code);
     } break;
 
     case VESC::COMM_GET_IMU_DATA: {
