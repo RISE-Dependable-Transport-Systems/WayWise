@@ -2,6 +2,7 @@
 #include "sdvp_qtcommon/coordinatetransforms.h"
 #include <QDebug>
 #include <QDateTime>
+#include <QLineF>
 #include <cmath>
 
 UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
@@ -239,7 +240,7 @@ void UbloxRover::updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt)
         mVehicleState->setPosition(gnssPos);
         lastXyz = xyz;
 
-        emit updatedGNSSPositionAndYaw(mVehicleState, pvt.head_veh_valid);
+        emit updatedGNSSPositionAndYaw(mVehicleState, QLineF(QPointF(lastXyz.x, lastXyz.y), gnssPos.getPoint()).length(), pvt.head_veh_valid);
     }
 }
 

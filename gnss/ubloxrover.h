@@ -22,7 +22,7 @@ public:
     void setIMUOrientationOffset(double roll_deg, double pitch_deg, double yaw_deg);
 
 signals:
-    void updatedGNSSPositionAndYaw(QSharedPointer<VehicleState> vehicleState, bool fused);
+    void updatedGNSSPositionAndYaw(QSharedPointer<VehicleState> vehicleState, double distanceMoved, bool fused);
 
 private:
     bool configureUblox();
