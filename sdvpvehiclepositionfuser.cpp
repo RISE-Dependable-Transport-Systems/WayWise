@@ -5,18 +5,24 @@ SDVPVehiclePositionFuser::SDVPVehiclePositionFuser(QObject *parent) : QObject(pa
 
 }
 
+void SDVPVehiclePositionFuser::samplePosFused(const PosPoint &posFused)
+{
+    mPosFusedHistory[mPosFusedHistoryCurrentIdx++] = PosSample {posFused.getPoint(), posFused.getYaw(), posFused.getTime()};
+    if (mPosFusedHistoryCurrentIdx == POSFUSED_HISTORY_SIZE)
+        mPosFusedHistoryCurrentIdx = 0;
+}
 
-SDVPVehiclePositionFuser::PosSample SDVPVehiclePositionFuser::getClosestPosFusedSampleInTime(int msecsSinceStartOfDay)
+SDVPVehiclePositionFuser::PosSample SDVPVehiclePositionFuser::getClosestPosFusedSampleInTime(QTime timeUTC)
 {
     int lastSavedHistoryIdx = mPosFusedHistoryCurrentIdx - 1 >= 0 ? mPosFusedHistoryCurrentIdx - 1 : POSFUSED_HISTORY_SIZE - 1;
-    int smallestDiffFound = abs(msecsSinceStartOfDay - mPosFusedHistory[lastSavedHistoryIdx].timestamp.msecsSinceStartOfDay());
+    int smallestDiffFound = abs(timeUTC.msecsSinceStartOfDay() - mPosFusedHistory[lastSavedHistoryIdx].timestamp.msecsSinceStartOfDay());
     int posFusedHistoryClosestIdx = -1;
 
     for (int i = lastSavedHistoryIdx; i != mPosFusedHistoryCurrentIdx; i--) {
         if (i < 0)
             i = POSFUSED_HISTORY_SIZE-1;
 
-        int currentDiff = abs(msecsSinceStartOfDay - mPosFusedHistory[i].timestamp.msecsSinceStartOfDay());
+        int currentDiff = abs(timeUTC.msecsSinceStartOfDay() - mPosFusedHistory[i].timestamp.msecsSinceStartOfDay());
         if (currentDiff < smallestDiffFound) {
             smallestDiffFound = currentDiff;
             posFusedHistoryClosestIdx = i;
@@ -39,7 +45,7 @@ void SDVPVehiclePositionFuser::correctPositionAndYawGNSS(QSharedPointer<VehicleS
         posFused.setXY(posGNSS.getX(), posGNSS.getY());
     } else {
         // 1. GNSS position is precise, but old. Find sampled position at matching time to calculate error
-        PosSample closestPosFusedSample = getClosestPosFusedSampleInTime(posGNSS.getTime().msecsSinceStartOfDay());
+        PosSample closestPosFusedSample = getClosestPosFusedSampleInTime(posGNSS.getTime());
 
         // 2. Update yaw offset, limit max change depending on last driven distance reported by odometry (if available)
         double yawErrorCmpToGNSS = posGNSS.getYaw() - closestPosFusedSample.yaw;
@@ -63,6 +69,7 @@ void SDVPVehiclePositionFuser::correctPositionAndYawGNSS(QSharedPointer<VehicleS
     }
 
     posFused.setHeight(posGNSS.getHeight());
+    posFused.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()));
     vehicleState->setPosition(posFused);
 }
 
@@ -76,12 +83,10 @@ void SDVPVehiclePositionFuser::correctPositionAndYawOdom(QSharedPointer<VehicleS
         posFused.setXY(posFused.getX() + cos(-yawRad) * distanceDriven,
                        posFused.getY() + sin(-yawRad) * distanceDriven);
 
+        posFused.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()));
         vehicleState->setPosition(posFused);
 
-        // sample position to history
-        mPosFusedHistory[mPosFusedHistoryCurrentIdx++] = PosSample {posFused.getPoint(), posFused.getYaw(), posFused.getTime()};
-        if (mPosFusedHistoryCurrentIdx == POSFUSED_HISTORY_SIZE)
-            mPosFusedHistoryCurrentIdx = 0;
+        samplePosFused(posFused);
     }
 
     mPosOdomLastDistanceDriven = distanceDriven;
@@ -121,6 +126,7 @@ void SDVPVehiclePositionFuser::correctPositionAndYawIMU(QSharedPointer<VehicleSt
             yawResult -= 360.0;
         posFused.setYaw(yawResult);
 
+        posFused.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()));
         vehicleState->setPosition(posFused);
     }
 }

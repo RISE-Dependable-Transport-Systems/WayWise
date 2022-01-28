@@ -26,7 +26,8 @@ private:
       QTime timestamp;
     };
 
-    PosSample getClosestPosFusedSampleInTime(int msecsSinceStartOfDay);
+    void samplePosFused(const PosPoint &posFused);
+    PosSample getClosestPosFusedSampleInTime(QTime timeUTC);
 
     double mPosIMUyawOffset = 0.0;
     bool mPosGNSSisFused = false; // use GNSS pos as "fused" pos when true, e.g., F9R
