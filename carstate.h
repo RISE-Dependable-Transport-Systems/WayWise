@@ -20,6 +20,7 @@ public:
     virtual QPainterPath getBoundingBox() const override;
 #endif
     virtual void updateOdomPositionAndYaw(double drivenDistance, PosType usePosType = PosType::odom) override;
+    virtual double steeringCurvatureToSteering(double steeringCurvature) override;
 
     // Static state
     double getAxisDistance() const { return fabs(mAxisDistance) < 0.001 ? 0.8*getLength() : mAxisDistance; }
@@ -34,9 +35,8 @@ public:
     void setMinTurnRadiusRear(double minTurnRadius_m);
 
     // Dynamic state
-    double getSteering() const { return mSteering; }
-    void setSteering(double value);
-    inline double getTurnRadiusRear() const { return getAxisDistance() / -mSteering; } // steering in [-1.0:1.0] as a simple approximation of tan(steering angle)
+    void setSteering(double steering) override;
+    inline double getTurnRadiusRear() const { return getAxisDistance() / -getSteering(); } // steering in [-1.0:1.0] as a simple approximation of tan(steering angle)
     inline double getTurnRadiusFront() const { return sqrt(pow(getAxisDistance(),2) + pow(getTurnRadiusRear(),2)); }
     inline double getTotalReactionTime() const { return 0.3; } // TODO: needs to be calculated/estimated
     double getBrakingDistance() const;
@@ -50,7 +50,6 @@ private:
     double mRearOverhang = 0.0; //[m]
     double mFrontOverhang = 0.0; //[m]
     double mAxisDistance; // [m]
-    double mSteering = 0.0; // [-1.0:1.0]
     double mMaxSteeringAngle = 0.0; // [rad]
     double mMinTurnRadiusRear = std::numeric_limits<double>::infinity(); // [m]
 

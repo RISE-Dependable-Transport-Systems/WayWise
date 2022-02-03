@@ -132,11 +132,11 @@ QPainterPath CarState::getBoundingBox() const
 }
 #endif
 
-void CarState::setSteering(double value)
+void CarState::setSteering(double steering)
 {
-    value = (value > tanf(getMaxSteeringAngle())) ? tanf(getMaxSteeringAngle()) : value;
-    value = (value < -tanf(getMaxSteeringAngle())) ? -tanf(getMaxSteeringAngle()) : value;
-    mSteering = value;
+    steering = (steering > tanf(getMaxSteeringAngle())) ? tanf(getMaxSteeringAngle()) : steering;
+    steering = (steering < -tanf(getMaxSteeringAngle())) ? -tanf(getMaxSteeringAngle()) : steering;
+    VehicleState::setSteering(steering);
 }
 
 void CarState::setMaxSteeringAngle(double steeringAngle_rad) {
@@ -210,4 +210,13 @@ void CarState::updateOdomPositionAndYaw(double drivenDistance, PosType usePosTyp
 
     currentPosition.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()));
     setPosition(currentPosition);
+}
+
+double CarState::steeringCurvatureToSteering(double steeringCurvature)
+{
+    double steeringAngle_rad = atan(getAxisDistance() * steeringCurvature);
+    if (abs(steeringAngle_rad) > getMaxSteeringAngle())
+        steeringAngle_rad = getMaxSteeringAngle() * ((steeringAngle_rad > 0) ? 1.0 : -1.0);
+
+    return steeringAngle_rad / getMaxSteeringAngle();
 }

@@ -3,48 +3,54 @@
 
 #include <QObject>
 #include "sdvp_qtcommon/movementcontroller.h"
-#include "sdvp_qtcommon/diffdrivevehiclestate.h"
+#include "canopencontrollerinterface.h"
 #include <QSharedPointer>
+
+struct CANOpenAutopilotControlState {
+    bool emergencyStop = true;
+    bool autoPilot = false;
+    bool followMe = false;
+    bool pause = false;
+    bool resume = false;
+};
 
 class CANopenMovementController : public MovementController
 {
     Q_OBJECT
 public:
-    CANopenMovementController(QSharedPointer<DiffDriveVehicleState> vehicleState);
+    CANopenMovementController(QSharedPointer<VehicleState> vehicleState);
 
     // MovementController interface
     virtual void setDesiredSpeed(double desiredSpeed) override;
-    virtual void setDesiredSteeringCurvature(double desiredSteeringAngle) override;
     virtual void setDesiredSteering(double desiredSteering) override;
+    virtual void setDesiredSteeringCurvature(double desiredSteeringCurvature) override;
     virtual void setDesiredAttributes(quint32 desiredAttributes) override;
 
-    double getActualSteeringCurvature();
-    double getActualSpeed();
-    quint8 getStatus();
-    double getBatterySOC();
-    double getBatteryVoltage();
+    bool isMovementSimulated() const;
 
-public slots:
+signals:
+    void sendCommandSpeed(double speed);
+    void sendCommandSteeringCurvature(double steering);
+    void sendCommandAttributes(quint32 attributes);
+    void sendActualStatus(quint8 status);
+
+    void CANOpenAutopilotControlStateChanged(CANOpenAutopilotControlState controlState);
+
+private slots:
     void actualSpeedReceived(double speed);
-    void actualSteeringReceived(double steering);
+    void actualSteeringCurvatureReceived(double steering);
     void commandStatusReceived(quint8 status);
     void batterySOCReceived(double batterysoc);
     void batteryVoltageReceived(double batteryvoltage);
 
-signals:
-    void sendCommandSpeed(double speed);
-    void sendCommandSteering(double steering);
-    void sendCommandAttributes(quint32 attributes);
-    void sendActualStatus(quint8 status);
-
 private:
-    double mActualSpeed = 0;
-    double mActualSteeringAngle = 0;
-    quint8 mStatus = 0; // Start with emergency stop activated
+    bool mSimulateMovement = false;
+    CANOpenAutopilotControlState mCANOpenAutopilotControlState;
     double mBatterySOC = 0;
     double mBatteryVoltage = 0;
 
-    QSharedPointer<DiffDriveVehicleState> mDiffDriveVehicleState;
+    QSharedPointer<QThread> mCanopenThread;
+    QSharedPointer<CANopenControllerInterface> mCANopenControllerInterface;
 
 };
 #endif // CANOPENMOVEMENTCONTROLLER_H

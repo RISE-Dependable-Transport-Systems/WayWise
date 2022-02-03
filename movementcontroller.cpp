@@ -1,5 +1,4 @@
 #include "movementcontroller.h"
-#include <QDebug>
 
 MovementController::MovementController(QSharedPointer<VehicleState> vehicleState)
 {
@@ -16,14 +15,9 @@ void MovementController::setDesiredSteering(double desiredSteering)
     mDesiredSteering = desiredSteering;
 }
 
-void MovementController::setDesiredSteeringCurvature(double desiredSteeringAngle)
+void MovementController::setDesiredSteeringCurvature(double desiredSteeringCurvature)
 {
-    mDesiredSteeringAngle = desiredSteeringAngle;
-}
-
-double MovementController::getDesiredSteeringCurvature() const
-{
-    return mDesiredSteeringAngle;
+    setDesiredSteering(mVehicleState->steeringCurvatureToSteering(desiredSteeringCurvature));
 }
 
 double MovementController::getDesiredSpeed() const

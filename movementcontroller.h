@@ -14,8 +14,7 @@ public:
     MovementController(QSharedPointer<VehicleState> vehicleState);
     virtual double getDesiredSteering() const;
     virtual void setDesiredSteering(double desiredSteering);
-    virtual void setDesiredSteeringCurvature(double desiredSteeringAngle);
-    virtual double getDesiredSteeringCurvature() const;
+    virtual void setDesiredSteeringCurvature(double desiredSteeringCurvature);
 
     virtual double getDesiredSpeed() const;
     virtual void setDesiredSpeed(double desiredSpeed);
@@ -31,7 +30,6 @@ private:
     QSharedPointer<VehicleState> mVehicleState;
     double mDesiredSteering = 0.0; // [-1.0:1.0]
     double mDesiredSpeed = 0.0; // [m/s]
-    double mDesiredSteeringAngle = 0; // [1/m]
     quint32 mDesiredAttributes = 0;
 };
 

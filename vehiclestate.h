@@ -36,6 +36,7 @@ class VehicleState : public ObjectState
 public:
     VehicleState(ObjectID_t id = 0, Qt::GlobalColor color = Qt::red);
 
+
     // Static state
     double getLength() const { return mLength; }
     void setLength(double length) { mLength = length; }
@@ -55,12 +56,16 @@ public:
 
     void simulationStep(double dt_ms, PosType usePosType = PosType::simulated); // Take current state and simulate step forward for dt_ms milliseconds, update state accordingly
     virtual void updateOdomPositionAndYaw(double drivenDistance, PosType usePosType = PosType::odom) = 0;
+    virtual double steeringCurvatureToSteering(double steeringCurvature) = 0;
 
     // For debugging and logging
     std::array<float, 3> getGyroscopeXYZ() const;
     void setGyroscopeXYZ(const std::array<float, 3> &gyroscopeXYZ);
     std::array<float, 3> getAccelerometerXYZ() const;
     void setAccelerometerXYZ(const std::array<float, 3> &accelerometerXYZ);
+
+    double getSteering() const;
+    virtual void setSteering(double steering);
 
 private:
     // Static state
@@ -71,6 +76,7 @@ private:
     double mMaxAcceleration = 3.0; // [m/s²]
 
     // Dynamic state
+    double mSteering = 0.0; // [-1.0:1.0]
     PosPoint mPositionBySource[(int)PosType::_LAST_];
     PosPoint mApGoal;
     QTime mTime;

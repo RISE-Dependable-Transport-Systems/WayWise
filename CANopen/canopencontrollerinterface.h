@@ -23,7 +23,7 @@ signals:
     void finished();
     void error(QString err);
     void sendActualSpeed(double speed);
-    void sendActualSteering(double steering);
+    void sendActualSteeringCurvature(double steeringCurvature);
     void sendCommandSpeed(double speed);
     void sendCommandSteering(double steering);
     void sendCommandStatus(quint8 status);
@@ -31,6 +31,7 @@ signals:
     void sendBatterySOC(double batterysoc);
     void sendBatteryVoltage(double batteryvoltage);
     void sendCommandAttributes(quint32 attributes);
+    void activateSimulation();
 };
 
 #endif // CANOPENCONTROLLERINTERFACE_H

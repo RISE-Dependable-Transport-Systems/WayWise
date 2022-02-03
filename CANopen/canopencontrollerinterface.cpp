@@ -22,7 +22,7 @@ void CANopenControllerInterface::actualSpeedReceived(double speed) {
 }
 
 void CANopenControllerInterface::actualSteeringReceived(double steering) {
-    emit sendActualSteering(steering);
+    emit sendActualSteeringCurvature(steering);
 }
 
 void CANopenControllerInterface::commandSpeedReceived(double speed) {
@@ -70,44 +70,50 @@ void CANopenControllerInterface::startDevice() {
     // Create a timer using a monotonic clock, i.e., a clock that is not affected
     // by discontinuous jumps in the system time.
     io::Timer timer(poll, exec, CLOCK_MONOTONIC);
-    // Create a virtual SocketCAN CAN controller and channel, and do not modify
-    // the current CAN bus state or bitrate.
-    //io::CanController ctrl("vcan0");
-    io::CanController ctrl("can0");
-    io::CanChannel chan(poll, exec);
-    chan.open(ctrl);
-    // Create a CANopen slave with node-ID 2.
-    MySlave mSlave(timer, chan, "./sdvp_qtcommon/CANopen/cpp-slave.eds", "", 2);
-    QObject::connect(&mSlave, SIGNAL(sendActualSpeed(double)), this, SLOT(actualSpeedReceived(double)));
-    QObject::connect(this, SIGNAL(sendCommandSpeed(double)), &mSlave, SLOT(commandSpeedReceived(double)));
-    QObject::connect(&mSlave, SIGNAL(sendActualSteering(double)), this, SLOT(actualSteeringReceived(double)));
-    QObject::connect(this, SIGNAL(sendCommandSteering(double)), &mSlave, SLOT(commandSteeringReceived(double)));
-    QObject::connect(&mSlave, SIGNAL(sendStatus(quint8)), this, SLOT(commandStatusReceived(quint8)));
-    QObject::connect(this, SIGNAL(sendActualStatus(quint8)), &mSlave, SLOT(statusReceived(quint8)));
-    QObject::connect(&mSlave, SIGNAL(sendBatterySOC(double)), this, SLOT(batterySOCReceived(double)));
-    QObject::connect(&mSlave, SIGNAL(sendBatteryVoltage(double)), this, SLOT(batteryVoltageReceived(double)));
-    QObject::connect(this, SIGNAL(sendCommandAttributes(quint32)), &mSlave, SLOT(commandAttributesReceived(quint32)));
-    // Create a signal handler.
-    io::SignalSet sigset(poll, exec);
-    // Watch for Ctrl+C or process termination.
-    sigset.insert(SIGHUP);
-    sigset.insert(SIGINT);
-    sigset.insert(SIGTERM);
-    // Submit a task to be executed when a signal is raised. We don't care which.
-    sigset.submit_wait([&](int /*signo*/) {
-      // If the signal is raised again, terminate immediately.
-      sigset.clear();
-      // Perform a clean shutdown.
-      qDebug() << "Shutting down CAN";
-      ctx.shutdown();
-      emit finished();
-    });
-    // Start the NMT service of the slave by pretending to receive a 'reset node'
-    // command.
-    mSlave.Reset();
-    // Run the event loop once, then check for Qt events
-    while (true) {
-    loop.run_one();
-    thread()->eventDispatcher()->processEvents(0);
+
+    try {
+        // Create a virtual SocketCAN CAN controller and channel, and do not modify
+        // the current CAN bus state or bitrate.
+        //io::CanController ctrl("vcan0");
+        io::CanController ctrl("can0");
+        io::CanChannel chan(poll, exec);
+        chan.open(ctrl);
+        // Create a CANopen slave with node-ID 2.
+        MySlave mSlave(timer, chan, "./sdvp_qtcommon/CANopen/cpp-slave.eds", "", 2);
+        QObject::connect(&mSlave, SIGNAL(sendActualSpeed(double)), this, SLOT(actualSpeedReceived(double)));
+        QObject::connect(this, SIGNAL(sendCommandSpeed(double)), &mSlave, SLOT(commandSpeedReceived(double)));
+        QObject::connect(&mSlave, SIGNAL(sendActualSteeringCurvature(double)), this, SLOT(actualSteeringReceived(double)));
+        QObject::connect(this, SIGNAL(sendCommandSteering(double)), &mSlave, SLOT(commandSteeringReceived(double)));
+        QObject::connect(&mSlave, SIGNAL(sendStatus(quint8)), this, SLOT(commandStatusReceived(quint8)));
+        QObject::connect(this, SIGNAL(sendActualStatus(quint8)), &mSlave, SLOT(statusReceived(quint8)));
+        QObject::connect(&mSlave, SIGNAL(sendBatterySOC(double)), this, SLOT(batterySOCReceived(double)));
+        QObject::connect(&mSlave, SIGNAL(sendBatteryVoltage(double)), this, SLOT(batteryVoltageReceived(double)));
+        QObject::connect(this, SIGNAL(sendCommandAttributes(quint32)), &mSlave, SLOT(commandAttributesReceived(quint32)));
+        // Create a signal handler.
+        io::SignalSet sigset(poll, exec);
+        // Watch for Ctrl+C or process termination.
+        sigset.insert(SIGHUP);
+        sigset.insert(SIGINT);
+        sigset.insert(SIGTERM);
+        // Submit a task to be executed when a signal is raised. We don't care which.
+        sigset.submit_wait([&](int /*signo*/) {
+          // If the signal is raised again, terminate immediately.
+          sigset.clear();
+          // Perform a clean shutdown.
+          qDebug() << "Shutting down CAN";
+          ctx.shutdown();
+          emit finished();
+        });
+        // Start the NMT service of the slave by pretending to receive a 'reset node'
+        // command.
+        mSlave.Reset();
+        // Run the event loop once, then check for Qt events
+        while (true) {
+            loop.run_one();
+            thread()->eventDispatcher()->processEvents(QEventLoop::ProcessEventsFlag::AllEvents);
+        }
+    } catch (...) { // TODO: handle specific exception
+        qDebug() << "WARNING: CANopenControllerInterface could not open CAN device, trying to activate simulation.";
+        emit activateSimulation();
     }
 }
