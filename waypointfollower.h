@@ -19,7 +19,9 @@ struct WayPointFollowerState {
     int numWaypointsLookahead = 8;
     bool repeatRoute = false;
     // Follow Point
+    PosPoint currentFollowPointInVehicleFrame; // independent of positioning
     double followPointSpeed = 1.5;
+    bool followPointTimedOut = true;
 };
 
 class WaypointFollower : public QObject
@@ -34,17 +36,10 @@ public:
     double getFollowPointSpeed() const;
     void setFollowPointSpeed(double value);
 
-    int getCurrentWaypointindex();
-    void setCurrentWaypointindex(int value);
-
     bool getRepeatRoute() const;
     void setRepeatRoute(bool value);
 
-    PosPoint getCurrentGoal();
-    void setCurrentGoal(PosPoint &point);
-
-    WayPointFollowerSTMstates getSTMState();
-    void setSTMState(WayPointFollowerSTMstates state);
+    const PosPoint getCurrentGoal();
 
     void clearRoute();
     void addWaypoint(const PosPoint &point);
@@ -54,35 +49,25 @@ public:
     void stop();
     void resetState();
 
-    void startFollowMe();
+    void startFollowPoint();
 
-    static double getCurvatureToPoint(QSharedPointer<VehicleState> vehicleState, const QPointF& point, PosType vehiclePosType = PosType::simulated);
-    double getCurvatureToPoint(const QPointF& point);
+    static double getCurvatureToPointInENU(QSharedPointer<VehicleState> vehicleState, const QPointF& point, PosType vehiclePosType = PosType::simulated);
+    double getCurvatureToPointInENU(const QPointF& point);
+    static double getCurvatureToPointInVehicleFrame(const QPointF& point);
 
     double getInterpolatedSpeed(const PosPoint &currentGoal, const PosPoint &lastWaypoint, const PosPoint &nextWaypoint);
 
     PosType getPosTypeUsed() const;
     void setPosTypeUsed(const PosType &posTypeUsed);
 
-    void logData(bool active = false, QString folderPath = "/home/ubuntu");
-
 signals:
 
 public slots:
-    void updateFollowPoint(const PosPoint &point);
+    void updateFollowPointInVehicleFrame(const PosPoint &point);
 
 private:
-    PosPoint mFollowMePoint; // always in ENU
-    QTime mFollowMeTimeStamp;
-    const unsigned mCountdown_ms = 1000;
-    QTimer mSensorHeartbeatTimer;
-    bool mSensorHeartbeat;
-    bool mLogData;
-    QString mDatalog;
-    QString mDatalogFolderPath;
-    qint8 mSlowBrakeCounter = 0;
-    qint8 mSlowBrakeCounterMax = 20;
-    double mSlowBrakeParameter = 1.2;
+    const unsigned mFollowPointTimeout_ms = 1000;
+    QTimer mFollowPointHeartbeatTimer;
 
     void updateState();
     WayPointFollowerState mCurrentState;

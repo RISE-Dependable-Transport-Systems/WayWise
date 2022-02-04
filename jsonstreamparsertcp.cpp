@@ -34,5 +34,5 @@ void JsonStreamParserTcp::parseJson()
 
 void JsonStreamParserTcp::tcpError(QTcpSocket::SocketError error)
 {
-    qDebug() << "TCP error (" << error << ") on " << mTcpSocket.peerAddress() << ", " << mTcpSocket.peerPort() << ".";
+    emit connectionError(error);
 }

@@ -6,6 +6,9 @@ DepthAiCamera::DepthAiCamera()
     // Connect to camera stream
     mJsonParser.connectToHost(QHostAddress::LocalHost, 8070);
     QObject::connect(&mJsonParser, &JsonStreamParserTcp::gotJsonArray, this, &DepthAiCamera::cameraInput);
+    QObject::connect(&mJsonParser, &JsonStreamParserTcp::connectionError, [](QTcpSocket::SocketError error){
+        qDebug() << "Info: DepthAiCamera not connected, got" << error;
+    });
 }
 
 void DepthAiCamera::cameraInput(const QJsonArray& jsonArray)
@@ -13,7 +16,7 @@ void DepthAiCamera::cameraInput(const QJsonArray& jsonArray)
     // 3D position x,y,z in meters from the camera.
 
     // Objects detected, save only the closest one
-    double closeObject = 1000;
+    double closeObject = std::numeric_limits<double>::max();
     for (int i=0; i<jsonArray.size(); i++) {
         if (closeObject > jsonArray.at(i).toObject().value("depth_z").toDouble()) {
             mCameraData.setX(jsonArray.at(i).toObject().value("depth_x").toDouble());
@@ -30,6 +33,7 @@ void DepthAiCamera::cameraInput(const QJsonArray& jsonArray)
         mCameraData.setHeight(0);
     }
 
+    mCameraData.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()));
     emit closestObject(mCameraData);
 
 //    qDebug() << jsonArray

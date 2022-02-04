@@ -2,29 +2,21 @@
 #include <cmath>
 #include <QDebug>
 #include <QLineF>
-#include <QDateTime>
-#include <iostream>
-#include <fstream>
-#include <string>
 
 WaypointFollower::WaypointFollower(QSharedPointer<MovementController> movementController)
 {
     mMovementController = movementController;
     connect(&mUpdateStateTimer, &QTimer::timeout, this, &WaypointFollower::updateState);
 
-    // --- Handle heartbeat from sensor
-    mSensorHeartbeat = false;
-    WaypointFollower::mSensorHeartbeatTimer.setSingleShot(true);
-    connect(&mSensorHeartbeatTimer, &QTimer::timeout, this, [&](){
+    // Follow point requires continuous updates of the point to follow
+    mCurrentState.followPointTimedOut = true;
+    WaypointFollower::mFollowPointHeartbeatTimer.setSingleShot(true);
+    connect(&mFollowPointHeartbeatTimer, &QTimer::timeout, this, [&](){
         if ((mCurrentState.stmState == FOLLOW_POINT_FOLLOWING || mCurrentState.stmState == FOLLOW_POINT_WAITING) && this->isActive()) {
-            qDebug() << "WARNING: Follow point sensor heartbeat missing. Exiting follow me!";
-            mSensorHeartbeat =false;
+            qDebug() << "WARNING: Follow point timed out. Stopping WaypointFollower.";
             this->stop();
-        } else if ((mCurrentState.stmState != NONE) && this->isActive()){
-            qDebug() << "WARNING: Visual sensor heartbeat missing. Emergency brake deactivated!";
-            mSensorHeartbeat = false;
-        } else
-            mSensorHeartbeat = false;
+        }
+        mCurrentState.followPointTimedOut = true;
     });
 }
 
@@ -40,26 +32,16 @@ void WaypointFollower::addWaypoint(const PosPoint &point)
 
 void WaypointFollower::startFollowingRoute(bool fromBeginning)
 {
-    if (fromBeginning) {
+    if (fromBeginning)
         mCurrentState.stmState = FOLLOW_ROUTE_INIT;
 
-        if (mLogData) {
-            mDatalog = mDatalogFolderPath + "/logdata";
-            QString tid = QDateTime::currentDateTime().toString("_yyyy.MM.dd_hh:mm:ss");
-            mDatalog += tid;
-            mDatalog += ".txt";
-            mSlowBrakeCounter = 0;
-        }
-    }
-
-    if (mCurrentState.stmState == FOLLOW_POINT_FOLLOWING || mCurrentState.stmState == FOLLOW_POINT_WAITING)
-    {
+    if (mCurrentState.stmState == FOLLOW_POINT_FOLLOWING || mCurrentState.stmState == FOLLOW_POINT_WAITING) {
         mCurrentState.stmState = WayPointFollowerSTMstates::NONE;
-        qDebug() << "Command not allowed! Press reset button to start following route";
+        qDebug() << "WARNING: trying to follow route while follow point is active. Stopping WaypointFollower.";
+    } else {
+        mFollowPointHeartbeatTimer.start(mFollowPointTimeout_ms);
+        mUpdateStateTimer.start(mUpdateStatePeriod_ms);
     }
-
-    mSensorHeartbeatTimer.start(mCountdown_ms);
-    mUpdateStateTimer.start(mUpdateStatePeriod_ms);
 }
 
 bool WaypointFollower::isActive()
@@ -74,15 +56,15 @@ void WaypointFollower::stop()
     mMovementController->setDesiredSpeed(0.0);
 }
 
-void WaypointFollower::startFollowMe()
+void WaypointFollower::startFollowPoint()
 {
-    mCurrentState.currentGoal = mFollowMePoint;
-    if (mCurrentState.currentGoal.getTime() > mFollowMeTimeStamp) {
-        mSensorHeartbeatTimer.start(mCountdown_ms);
+    // Check that we got a recent point to follow
+    if (mCurrentState.currentFollowPointInVehicleFrame.getTime() > mCurrentState.currentGoal.getTime()) {
+        mFollowPointHeartbeatTimer.start(mFollowPointTimeout_ms);
         mCurrentState.stmState = FOLLOW_POINT_FOLLOWING;
         mUpdateStateTimer.start(mUpdateStatePeriod_ms);
     } else {
-        qDebug() << "WARNING: Follow point sensor heartbeat missing. Exiting follow point!";
+        qDebug() << "WARNING: Follow Point did not get a recent point to follow. Exiting.";
         mCurrentState.stmState = WayPointFollowerSTMstates::NONE;
     }
 }
@@ -95,7 +77,7 @@ void WaypointFollower::resetState()
     mCurrentState.currentWaypointIndex = mWaypointList.size();
 }
 
-double WaypointFollower::getCurvatureToPoint(QSharedPointer<VehicleState> vehicleState, const QPointF &point, PosType vehiclePosType)
+double WaypointFollower::getCurvatureToPointInENU(QSharedPointer<VehicleState> vehicleState, const QPointF &point, PosType vehiclePosType)
 {
     // vehicleState and point assumed in ENU frame
     const PosPoint vehiclePos = vehicleState->getPosition(vehiclePosType);
@@ -112,15 +94,21 @@ double WaypointFollower::getCurvatureToPoint(QSharedPointer<VehicleState> vehicl
     pointInVehicleFrame.setX(newX);
     pointInVehicleFrame.setY(newY);
 
-    // 2. calc steering angle (pure pursuit)
-    double distanceSquared = pow(pointInVehicleFrame.x(), 2) + pow(pointInVehicleFrame.y(), 2);
-    double steeringAngleProportional = (2*pointInVehicleFrame.y()) / distanceSquared;
-    return -steeringAngleProportional;
+    return getCurvatureToPointInVehicleFrame(pointInVehicleFrame);
 }
 
-double WaypointFollower::getCurvatureToPoint(const QPointF &point)
+double WaypointFollower::getCurvatureToPointInENU(const QPointF &point)
 {
-    return getCurvatureToPoint(mMovementController->getVehicleState(), point, mPosTypeUsed);
+    return getCurvatureToPointInENU(mMovementController->getVehicleState(), point, mPosTypeUsed);
+}
+
+double WaypointFollower::getCurvatureToPointInVehicleFrame(const QPointF &point)
+{
+    // calc steering angle (pure pursuit)
+    double distanceSquared = pow(point.x(), 2) + pow(point.y(), 2);
+    double steeringAngleProportional = (2*point.y()) / distanceSquared;
+
+    return -steeringAngleProportional;
 }
 
 // TODO: utility function, move to a more central place
@@ -181,78 +169,45 @@ QVector<QPointF> findIntersectionsBetweenCircleAndLine(QPair<QPointF,double> cir
 
 void WaypointFollower::updateState()
 {
-    std::ofstream myfile;
-
     QPointF currentVehiclePosition = mMovementController->getVehicleState()->getPosition(mPosTypeUsed).getPoint();
 
     switch (mCurrentState.stmState) {
     case NONE:
         qDebug() << "WARNING: WayPointFollower running uninitialized statemachine.";
-
-        if (mLogData) {
-            if (mSlowBrakeCounter < mSlowBrakeCounterMax) {
-                mMovementController->setDesiredSpeed(mMovementController->getDesiredSpeed()/mSlowBrakeParameter);
-                myfile.open(mDatalog.toStdString(), std::ios_base::app);
-                myfile << mMovementController->getVehicleState()->getPosition(PosType::fused).getX() << ","
-                       << mMovementController->getVehicleState()->getPosition(PosType::fused).getY() << ","
-                       << mMovementController->getVehicleState()->getPosition(PosType::GNSS).getX() << ","
-                       << mMovementController->getVehicleState()->getPosition(PosType::GNSS).getY() << ","
-                       << mMovementController->getVehicleState()->getPosition(PosType::IMU).getX() << ","
-                       << mMovementController->getVehicleState()->getPosition(PosType::IMU).getY() << ","
-                       << mMovementController->getVehicleState()->getPosition(PosType::odom).getX() << ","
-                       << mMovementController->getVehicleState()->getPosition(PosType::odom).getY() << ","
-                       << mMovementController->getVehicleState()->getPosition(PosType::GNSS).getTime().msecsSinceStartOfDay() << ","
-                       << mMovementController->getVehicleState()->getPosition(PosType::GNSS).getSpeed() << ","
-                       << 1 << "\n"; // Brake
-                myfile.close();
-            } else {
-                mMovementController->setDesiredSpeed(0.0);
-                mMovementController->setDesiredSteering(0.0);
-                mUpdateStateTimer.stop();
-            }
-            mSlowBrakeCounter++;
-        }
         break;
 
-    // FOLLOW_POINT: we follow a point that is moving "follow me"
+    // FOLLOW_POINT: we follow a point that is moving "follow me", works on vehicle frame to be independent of positioning
     case FOLLOW_POINT_FOLLOWING: {
-        currentVehiclePosition = mMovementController->getVehicleState()->getPosition(mPosTypeUsed).getPoint();
-        mCurrentState.currentGoal = mFollowMePoint;
-
-        if (mCurrentState.currentGoal.getTime() > mFollowMeTimeStamp) {
-            if (!mSensorHeartbeat) {
-                qDebug() << "Follow point sensor heartbeat reset";
-            }
-            mFollowMeTimeStamp = mCurrentState.currentGoal.getTime();
-            mSensorHeartbeatTimer.start(mCountdown_ms);
-            mSensorHeartbeat = true;
-        }
-
         // draw straight line to follow point and apply purePursuitRadius to find intersection
-        QLineF carToFollowPointLine(currentVehiclePosition, mFollowMePoint.getPoint());
+        QLineF carToFollowPointLine(QPointF(0,0), mCurrentState.currentFollowPointInVehicleFrame.getPoint());
         QVector<QPointF> intersections = findIntersectionsBetweenCircleAndLine(QPair<QPointF, double>(currentVehiclePosition, mCurrentState.purePursuitRadius), carToFollowPointLine);
 
         if (intersections.size()) {
-            mMovementController->setDesiredSteeringCurvature(getCurvatureToPoint(intersections[0]));
+            // Translate to ENU for correct representation of currentGoal (when positioning is working), TODO: general transform in vehicleState?
+            PosPoint carPosition = mMovementController->getVehicleState()->getPosition(mPosTypeUsed);
+
+            // clockwise rotation
+            double currYaw_rad = (carPosition.getYaw() + 90.0) * (M_PI / 180.0);
+            double newX = cos(currYaw_rad)*intersections[0].x() + sin(currYaw_rad)*intersections[0].y();
+            double newY = -sin(currYaw_rad)*intersections[0].x() + cos(currYaw_rad)*intersections[0].y();
+
+            // translation
+            newX += carPosition.getX();
+            newY += carPosition.getY();
+
+            mCurrentState.currentGoal.setXY(newX, newY);
+            // Timestamp currentGoal for timeout in case currentFollowPoint is not updated anymore
+            mCurrentState.currentGoal.setTime(mCurrentState.currentFollowPointInVehicleFrame.getTime());
+
+            mMovementController->setDesiredSteeringCurvature(getCurvatureToPointInVehicleFrame(QPointF(intersections[0].x(), intersections[0].y())));
             mMovementController->setDesiredSpeed(mCurrentState.followPointSpeed);
         } else // FollowPoint within circle -> wait
             mCurrentState.stmState = FOLLOW_POINT_WAITING;
     } break;
 
     case FOLLOW_POINT_WAITING:
-        currentVehiclePosition = mMovementController->getVehicleState()->getPosition(mPosTypeUsed).getPoint();
         mMovementController->setDesiredSteering(0.0);
         mMovementController->setDesiredSpeed(0.0);
-        mCurrentState.currentGoal = mFollowMePoint;
-
-        if (mCurrentState.currentGoal.getTime() > mFollowMeTimeStamp) {
-            if (!mSensorHeartbeat) {
-                qDebug() << "Follow point sensor heartbeat reset";
-            }
-            mFollowMeTimeStamp = mCurrentState.currentGoal.getTime();
-            mSensorHeartbeatTimer.start(mCountdown_ms);
-            mSensorHeartbeat = true;
-        }
 
         if (QLineF(currentVehiclePosition, mCurrentState.currentGoal.getPoint()).length() > mCurrentState.purePursuitRadius)
         {
@@ -263,23 +218,6 @@ void WaypointFollower::updateState()
     // FOLLOW_ROUTE: waypoints describe a route to be followed waypoint by waypoint
     case FOLLOW_ROUTE_INIT:
         currentVehiclePosition = mMovementController->getVehicleState()->getPosition(mPosTypeUsed).getPoint();
-        // Check heartbeat from visual sensor
-        if (mFollowMePoint.getTime() > mFollowMeTimeStamp) {
-            if (!mSensorHeartbeat) {
-                qDebug() << "Emergency brake activated!";
-            }
-            mFollowMeTimeStamp = mFollowMePoint.getTime();
-            mSensorHeartbeatTimer.start(mCountdown_ms);
-            mSensorHeartbeat = true;
-
-            // Emergency brake if object detected
-            if (QLineF(currentVehiclePosition, mFollowMePoint.getPoint()).length() > 1 && QLineF(currentVehiclePosition, mFollowMePoint.getPoint()).length() < 10) { // TODO: decide how close the objects need to be
-                mMovementController->setDesiredSteering(0.0);
-                mMovementController->setDesiredSpeed(0.0);
-                mUpdateStateTimer.stop();
-                break;
-            }
-        }
 
         if (mWaypointList.size()) {
             mCurrentState.currentWaypointIndex = 0;
@@ -292,30 +230,12 @@ void WaypointFollower::updateState()
     case FOLLOW_ROUTE_GOTO_BEGIN: {
         currentVehiclePosition = mMovementController->getVehicleState()->getPosition(mPosTypeUsed).getPoint();
 
-        // Check heartbeat from visual sensor
-        if (mFollowMePoint.getTime() > mFollowMeTimeStamp) {
-            if (!mSensorHeartbeat) {
-                qDebug() << "Emergency brake activated!";
-            }
-            mFollowMeTimeStamp = mFollowMePoint.getTime();
-            mSensorHeartbeatTimer.start(mCountdown_ms);
-            mSensorHeartbeat = true;
-
-            // Emergency brake if object detected
-            if (QLineF(currentVehiclePosition, mFollowMePoint.getPoint()).length() > 1 && QLineF(currentVehiclePosition, mFollowMePoint.getPoint()).length() < 10) { // TODO: decide how close the objects need to be
-                mMovementController->setDesiredSteering(0.0);
-                mMovementController->setDesiredSpeed(0.0);
-                mUpdateStateTimer.stop();
-                break;
-            }
-        }
-
         // draw straight line to first point and apply purePursuitRadius to find intersection
         QLineF carToStartLine(currentVehiclePosition, mWaypointList.at(0).getPoint());
         QVector<QPointF> intersections = findIntersectionsBetweenCircleAndLine(QPair<QPointF, double>(currentVehiclePosition, mCurrentState.purePursuitRadius), carToStartLine);
 
         if (intersections.size()) {
-            mMovementController->setDesiredSteeringCurvature(getCurvatureToPoint(intersections[0]));
+            mMovementController->setDesiredSteeringCurvature(getCurvatureToPointInENU(intersections[0]));
             mMovementController->setDesiredSpeed(mWaypointList.at(0).getSpeed());
         } else // first waypoint within circle -> start route
             mCurrentState.stmState = FOLLOW_ROUTE_FOLLOWING;
@@ -324,57 +244,6 @@ void WaypointFollower::updateState()
     case FOLLOW_ROUTE_FOLLOWING: {
         currentVehiclePosition = mMovementController->getVehicleState()->getPosition(mPosTypeUsed).getPoint();
         QPointF currentWaypoint = mWaypointList.at(mCurrentState.currentWaypointIndex).getPoint();
-
-        // Check heartbeat from visual sensor
-        if (mFollowMePoint.getTime() > mFollowMeTimeStamp) {
-            if (!mSensorHeartbeat) {
-                qDebug() << "Emergency brake activated!";
-            }
-            mFollowMeTimeStamp = mFollowMePoint.getTime();
-            mSensorHeartbeatTimer.start(mCountdown_ms);
-            mSensorHeartbeat = true;
-
-            if (mLogData) {
-                myfile.open(mDatalog.toStdString(), std::ios_base::app);
-                myfile << mMovementController->getVehicleState()->getPosition(PosType::fused).getX() << ","
-                       << mMovementController->getVehicleState()->getPosition(PosType::fused).getY() << ","
-                       << mMovementController->getVehicleState()->getPosition(PosType::GNSS).getX() << ","
-                       << mMovementController->getVehicleState()->getPosition(PosType::GNSS).getY() << ","
-                       << mMovementController->getVehicleState()->getPosition(PosType::IMU).getX() << ","
-                       << mMovementController->getVehicleState()->getPosition(PosType::IMU).getY() << ","
-                       << mMovementController->getVehicleState()->getPosition(PosType::odom).getX() << ","
-                       << mMovementController->getVehicleState()->getPosition(PosType::odom).getY() << ","
-                       << mMovementController->getVehicleState()->getPosition(PosType::GNSS).getTime().msecsSinceStartOfDay() << ","
-                       << mMovementController->getVehicleState()->getPosition(PosType::GNSS).getSpeed() << ","
-                       << 0 << "\n"; // No brake
-                myfile.close();
-            }
-
-            // Emergency brake if object detected
-            if (QLineF(currentVehiclePosition, mFollowMePoint.getPoint()).length() > 1 && QLineF(currentVehiclePosition, mFollowMePoint.getPoint()).length() < 10) { // TODO: decide how close the objects need to be
-                if (mLogData) {
-                    myfile.open(mDatalog.toStdString(), std::ios_base::app);
-                    myfile << mMovementController->getVehicleState()->getPosition(PosType::fused).getX() << ","
-                           << mMovementController->getVehicleState()->getPosition(PosType::fused).getY() << ","
-                           << mMovementController->getVehicleState()->getPosition(PosType::GNSS).getX() << ","
-                           << mMovementController->getVehicleState()->getPosition(PosType::GNSS).getY() << ","
-                           << mMovementController->getVehicleState()->getPosition(PosType::IMU).getX() << ","
-                           << mMovementController->getVehicleState()->getPosition(PosType::IMU).getY() << ","
-                           << mMovementController->getVehicleState()->getPosition(PosType::odom).getX() << ","
-                           << mMovementController->getVehicleState()->getPosition(PosType::odom).getY() << ","
-                           << mMovementController->getVehicleState()->getPosition(PosType::GNSS).getTime().msecsSinceStartOfDay() << ","
-                           << mMovementController->getVehicleState()->getPosition(PosType::GNSS).getSpeed() << ","
-                           << 1 << "\n"; // Brake
-                    myfile.close();
-                    mCurrentState.stmState = NONE;
-                } else {
-                    mMovementController->setDesiredSteering(0.0);
-                    mMovementController->setDesiredSpeed(0.0);
-                    mUpdateStateTimer.stop();
-                }
-                break;
-            }
-        }
 
         if (QLineF(currentVehiclePosition, currentWaypoint).length() < mCurrentState.purePursuitRadius) // consider previous waypoint as reached
             mCurrentState.currentWaypointIndex++;
@@ -444,7 +313,7 @@ void WaypointFollower::updateState()
             }
 
         // 3. Update control for current goal
-        mMovementController->setDesiredSteeringCurvature(getCurvatureToPoint(mCurrentState.currentGoal.getPoint()));
+        mMovementController->setDesiredSteeringCurvature(getCurvatureToPointInENU(mCurrentState.currentGoal.getPoint()));
         mMovementController->setDesiredSpeed(mCurrentState.currentGoal.getSpeed());
         }
     } break;
@@ -482,16 +351,6 @@ void WaypointFollower::setPurePursuitRadius(double value)
     mCurrentState.purePursuitRadius = value;
 }
 
-int WaypointFollower::getCurrentWaypointindex()
-{
-    return mCurrentState.currentWaypointIndex;
-}
-
-void WaypointFollower::setCurrentWaypointindex(int value)
-{
-    mCurrentState.currentWaypointIndex = value;
-}
-
 bool WaypointFollower::getRepeatRoute() const
 {
     return mCurrentState.repeatRoute;
@@ -502,24 +361,9 @@ void WaypointFollower::setRepeatRoute(bool value)
     mCurrentState.repeatRoute = value;
 }
 
-PosPoint WaypointFollower::getCurrentGoal()
+const PosPoint WaypointFollower::getCurrentGoal()
 {
     return mCurrentState.currentGoal;
-}
-
-void WaypointFollower::setCurrentGoal(PosPoint &point)
-{
-    mCurrentState.currentGoal = point;
-}
-
-WayPointFollowerSTMstates WaypointFollower::getSTMState()
-{
-    return mCurrentState.stmState;
-}
-
-void WaypointFollower::setSTMState(WayPointFollowerSTMstates state)
-{
-    mCurrentState.stmState = state;
 }
 
 double WaypointFollower::getInterpolatedSpeed(const PosPoint &currentGoal, const PosPoint &lastWaypoint, const PosPoint &nextWaypoint)
@@ -532,9 +376,19 @@ double WaypointFollower::getInterpolatedSpeed(const PosPoint &currentGoal, const
     return lastWaypoint.getSpeed() + (nextWaypoint.getSpeed()-lastWaypoint.getSpeed())*(x/distanceBetweenWaypoints);
 }
 
-void WaypointFollower::updateFollowPoint(const PosPoint &point)
+void WaypointFollower::updateFollowPointInVehicleFrame(const PosPoint &point)
 {
-    mFollowMePoint = point;
+    mCurrentState.currentFollowPointInVehicleFrame = point;
+
+    if ((mCurrentState.stmState == FOLLOW_POINT_FOLLOWING || mCurrentState.stmState == FOLLOW_POINT_WAITING) &&
+         (mCurrentState.currentFollowPointInVehicleFrame.getTime() > mCurrentState.currentGoal.getTime())) {
+        if (mCurrentState.followPointTimedOut) {
+            qDebug() << "Follow Point: timeout reset.";
+        }
+
+        mFollowPointHeartbeatTimer.start(mFollowPointTimeout_ms);
+        mCurrentState.followPointTimedOut = false;
+    }
 }
 
 double WaypointFollower::getFollowPointSpeed() const
@@ -545,10 +399,4 @@ double WaypointFollower::getFollowPointSpeed() const
 void WaypointFollower::setFollowPointSpeed(double value)
 {
     mCurrentState.followPointSpeed = value;
-}
-
-void WaypointFollower::logData(bool active, QString folderPath)
-{
-    mLogData = active;
-    mDatalogFolderPath = folderPath;
 }

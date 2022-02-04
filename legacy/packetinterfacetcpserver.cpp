@@ -209,7 +209,7 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
                             mWaypointFollower->startFollowingRoute(resetAutopilotState);
                             break;
                         case AP_MODE_FOLLOW_ME:
-                            mWaypointFollower->startFollowMe();
+                            mWaypointFollower->startFollowPoint();
                             break;
                         default:
                             break;
