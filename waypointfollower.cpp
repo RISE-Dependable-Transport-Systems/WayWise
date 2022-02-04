@@ -54,7 +54,6 @@ void WaypointFollower::stop()
     mUpdateStateTimer.stop();
     mMovementController->setDesiredSteering(0.0);
     mMovementController->setDesiredSpeed(0.0);
-    mMovementController->setDesiredSteeringCurvature(0.0);
 }
 
 void WaypointFollower::startFollowPoint()
@@ -244,9 +243,9 @@ void WaypointFollower::updateState()
 
     case FOLLOW_ROUTE_FOLLOWING: {
         currentVehiclePosition = mMovementController->getVehicleState()->getPosition(mPosTypeUsed).getPoint();
-        QPointF currentWaypoint = mWaypointList.at(mCurrentState.currentWaypointIndex).getPoint();
+        QPointF currentWaypointPoint = mWaypointList.at(mCurrentState.currentWaypointIndex).getPoint();
 
-        if (QLineF(currentVehiclePosition, currentWaypoint).length() < mCurrentState.purePursuitRadius) // consider previous waypoint as reached
+        if (QLineF(currentVehiclePosition, currentWaypointPoint).length() < mCurrentState.purePursuitRadius) // consider previous waypoint as reached
             mCurrentState.currentWaypointIndex++;
 
         if (mCurrentState.currentWaypointIndex == mWaypointList.size() && !mCurrentState.repeatRoute)
@@ -276,7 +275,7 @@ void WaypointFollower::updateState()
                 intersections = findIntersectionsBetweenCircleAndLine(QPair<QPointF, double>(currentVehiclePosition, mCurrentState.purePursuitRadius), iLineSegment);
                 if (intersections.size() > 0) {
                     mCurrentState.currentWaypointIndex = (i + mCurrentState.currentWaypointIndex - 1) % mWaypointList.size();
-                    currentWaypoint = iWaypoint;
+                    currentWaypointPoint = iWaypoint;
                     break;
                 }
             }
@@ -295,8 +294,8 @@ void WaypointFollower::updateState()
                 break;
             case 2:
                 // Take intersection closest to current waypoint (most progress)
-                if (QLineF(intersections[0], currentWaypoint).length()
-                        < QLineF(intersections[1], currentWaypoint).length()) {
+                if (QLineF(intersections[0], currentWaypointPoint).length()
+                        < QLineF(intersections[1], currentWaypointPoint).length()) {
                     mCurrentState.currentGoal.setX(intersections[0].x());
                     mCurrentState.currentGoal.setY(intersections[0].y());
                     mCurrentState.currentGoal.setSpeed(getInterpolatedSpeed(mCurrentState.currentGoal, mWaypointList.at(previousWaypointIndex), mWaypointList.at(mCurrentState.currentWaypointIndex)));
@@ -313,17 +312,24 @@ void WaypointFollower::updateState()
                 break;
             }
 
-        // 3. Update control for current goal
-        mMovementController->setDesiredSteeringCurvature(getCurvatureToPointInENU(mCurrentState.currentGoal.getPoint()));
-        mMovementController->setDesiredSpeed(mCurrentState.currentGoal.getSpeed());
+            // 3. Determine closest waypoint to vehicle, it determines attributes
+            PosPoint closestWaypoint;
+            if (QLineF(currentVehiclePosition, mWaypointList.at(previousWaypointIndex).getPoint()).length()
+                    < QLineF(currentVehiclePosition, mWaypointList.at(mCurrentState.currentWaypointIndex).getPoint()).length())
+                closestWaypoint = mWaypointList.at(previousWaypointIndex);
+            else
+                closestWaypoint = mWaypointList.at(mCurrentState.currentWaypointIndex);
+
+            // 4. Update control for current goal
+            mMovementController->setDesiredSteeringCurvature(getCurvatureToPointInENU(mCurrentState.currentGoal.getPoint()));
+            mMovementController->setDesiredSpeed(mCurrentState.currentGoal.getSpeed());
+            mMovementController->setDesiredAttributes(closestWaypoint.getAttributes());
         }
     } break;
 
     case FOLLOW_ROUTE_FINISHED:
         mMovementController->setDesiredSteering(0.0);
-        mMovementController->setDesiredSteeringCurvature(0.0);
         mMovementController->setDesiredSpeed(0.0);
-        mMovementController->setDesiredAttributes(8); // TODO: lift all tools
         mUpdateStateTimer.stop();
         mCurrentState.stmState = NONE;
         mCurrentState.currentWaypointIndex = mWaypointList.size();
