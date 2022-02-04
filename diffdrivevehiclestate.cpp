@@ -24,8 +24,8 @@ void DiffDriveVehicleState::updateOdomPositionAndYaw(double drivenDistance, PosT
     QTime thisTimeCalled = QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc());
     int dt_ms = lastTimeCalled.msecsTo(thisTimeCalled);
 
-    double drivenDistLeft = getSpeedLeft() * dt_ms / 1000;
-    double drivenDistRight = getSpeedRight() * dt_ms / 1000;
+    double drivenDistLeft = getSpeedLeft() * dt_ms / 1000.0;
+    double drivenDistRight = getSpeedRight() * dt_ms / 1000.0;
 
     // Differential drive kinematic model, getWidth() should be distance between center of left/right wheel
     if (fabs(getSpeedLeft() - getSpeedRight()) > 1e-6) { // Turning

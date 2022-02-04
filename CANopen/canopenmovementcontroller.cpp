@@ -70,6 +70,18 @@ void CANopenMovementController::setDesiredAttributes(quint32 desiredAttributes)
 
 void CANopenMovementController::actualSpeedReceived(double speed) {
     getVehicleState()->setSpeed(speed);
+
+    static double lastSpeed = speed;
+    static QTime lastTimeCalled = QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc());
+    QTime thisTimeCalled = QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc());
+    int dt_ms = lastTimeCalled.msecsTo(thisTimeCalled);
+    double drivenDistance = ((lastSpeed + speed) / 2.0) * dt_ms / 1000.0;
+
+    getVehicleState()->updateOdomPositionAndYaw(drivenDistance);
+    emit updatedOdomPositionAndYaw(getVehicleState(), drivenDistance);
+
+    lastSpeed = speed;
+    lastTimeCalled = thisTimeCalled;
 }
 
 void CANopenMovementController::actualSteeringCurvatureReceived(double steeringCurvature) {
