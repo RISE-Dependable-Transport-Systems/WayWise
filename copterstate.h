@@ -27,6 +27,8 @@ public:
     CopterState(int id = 0, Qt::GlobalColor color = Qt::red);
 
     virtual void draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected = true);
+    virtual void updateOdomPositionAndYaw(double drivenDistance, PosType usePosType) override;
+    virtual double steeringCurvatureToSteering(double steeringCurvature) override;
 
     LandedState getLandedState() const;
     void setLandedState(const LandedState &landedState);

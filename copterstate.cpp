@@ -139,6 +139,27 @@ void CopterState::draw(QPainter &painter, const QTransform &drawTrans, const QTr
 //    painter.drawEllipse(QPointF(x_gps, y_gps), 335.0 / 15.0, 335.0 / 15.0);
 }
 
+void CopterState::updateOdomPositionAndYaw(double drivenDistance, PosType usePosType)
+{
+    PosPoint currentPosition = getPosition(usePosType);
+
+    double currVelocityMagnitude = sqrt(getVelocity().x*getVelocity().x + getVelocity().y*getVelocity().y + getVelocity().z*getVelocity().z);
+    Velocity currVelocityNormalized = {currVelocityMagnitude*getVelocity().x, currVelocityMagnitude*getVelocity().y, currVelocityMagnitude*getVelocity().z};
+
+    currentPosition.setX(currentPosition.getX() + drivenDistance*currVelocityNormalized.x);
+    currentPosition.setY(currentPosition.getY() + drivenDistance*currVelocityNormalized.y);
+    currentPosition.setHeight(currentPosition.getHeight() + drivenDistance*currVelocityNormalized.z);
+
+    currentPosition.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()));
+    setPosition(currentPosition);
+}
+
+double CopterState::steeringCurvatureToSteering(double steeringCurvature)
+{
+    // behaves similar to a diffdrive vehicle in the xy-plane
+    return (getWidth() / 2.0) * steeringCurvature;
+}
+
 CopterState::LandedState CopterState::getLandedState() const
 {
     return mLandedState;
