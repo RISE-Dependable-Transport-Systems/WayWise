@@ -67,6 +67,9 @@ public:
     double getSteering() const;
     virtual void setSteering(double steering);
 
+    PosPoint getHomePosition() const;
+    void setHomePosition(const PosPoint &homePosition);
+
 private:
     // Static state
     double mLength; // [m]
@@ -80,6 +83,7 @@ private:
     PosPoint mPositionBySource[(int)PosType::_LAST_];
     PosPoint mApGoal;
     QTime mTime;
+    PosPoint mHomePosition;
 
     std::array<float,3> mGyroscopeXYZ = std::array<float,3>({0.0, 0.0, 0.0}); // [deg/s]
     std::array<float,3> mAccelerometerXYZ = std::array<float,3>({0.0, 0.0, 0.0}); // [g]
