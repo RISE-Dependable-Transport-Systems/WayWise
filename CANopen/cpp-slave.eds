@@ -31,7 +31,7 @@ Granularity=1
 DynamicChannelsSupported=0
 GroupMessaging=0
 NrOfRxPDO=2
-NrOfTxPDO=2
+NrOfTxPDO=3
 LSS_Supported=1
 
 [DummyUsage]
@@ -71,7 +71,7 @@ SupportedObjects=3
 3=0x1018
 
 [OptionalObjects]
-SupportedObjects=15
+SupportedObjects=17
 1=0x1003
 2=0x1005
 3=0x1014
@@ -85,8 +85,10 @@ SupportedObjects=15
 11=0x1601
 12=0x1800
 13=0x1801
-14=0x1A00
-15=0x1A01
+14=0x1802
+15=0x1A00
+16=0x1A01
+17=0x1A02
 
 [ManufacturerObjects]
 SupportedObjects=2
@@ -496,6 +498,72 @@ ParameterName=SYNC start value
 DataType=0x0005
 AccessType=rw
 
+[1802]
+ParameterName=Transmit PDO Communication Parameter 2
+ObjectType=0x9
+SubNumber=7
+
+[1802sub0]
+ParameterName=Number of entries
+ObjectType=0x7
+DataType=0x0005
+AccessType=ro
+DefaultValue=6
+PDOMapping=0
+LowLimit=0x02
+HighLimit=0x06
+
+[1802sub1]
+ParameterName=COB-ID used by TPDO
+ObjectType=0x7
+DataType=0x0007
+AccessType=rw
+DefaultValue=$NODEID+0x380
+PDOMapping=0
+LowLimit=0x00000001
+HighLimit=0xFFFFFFFF
+ParameterValue=$NODEID+0x380
+
+[1802sub2]
+ParameterName=Transmission Type
+ObjectType=0x7
+DataType=0x0005
+AccessType=rw
+DefaultValue=1
+LowLimit=0x0
+HighLimit=0xFF
+ParameterValue=0x4
+
+[1802sub3]
+ParameterName=Inhibit Time
+ObjectType=0x7
+DataType=0x0006
+AccessType=rw
+DefaultValue=0x0000
+PDOMapping=0
+LowLimit=0
+HighLimit=65535
+
+[1802sub4]
+ParameterName=Reserved
+DataType=0x0005
+AccessType=rw
+
+[1802sub5]
+ParameterName=Event Timer
+ObjectType=0x7
+DataType=0x0006
+AccessType=rw
+DefaultValue=0
+PDOMapping=0
+LowLimit=0
+HighLimit=65535
+
+[1802sub6]
+ParameterName=SYNC start value
+DataType=0x0005
+AccessType=rw
+
 [1A00]
 ParameterName=Transmit PDO Mapping Parameter 0
 ObjectType=0x9
@@ -561,6 +629,33 @@ LowLimit=0
 HighLimit=8
 ParameterValue=0
 
+[1A02]
+ParameterName=Transmit PDO Mapping Parameter 2
+ObjectType=0x9
+SubNumber=2
+
+[1A02sub0]
+ParameterName=Number of entries
+ObjectType=0x7
+DataType=0x0005
+AccessType=rw
+DefaultValue=1
+PDOMapping=0
+LowLimit=0
+HighLimit=8
+ParameterValue=1
+
+[1A02sub1]
+ParameterName=PDO Mapping Entry
+ObjectType=0x7
+DataType=0x0007
+AccessType=rw
+DefaultValue=0x20000620
+PDOMapping=0
+LowLimit=0
+HighLimit=0xFFFFFFFF
+ParameterValue=0x20000620
+
 [2000]
 ParameterName=ApplicationCommands
 ObjectType=0x9
@@ -598,7 +693,7 @@ LowLimit=-1000
 HighLimit=1000
 
 [2000sub3]
-ParameterName=CommandStatus
+ParameterName=ActualStatus
 ObjectType=0x7
 DataType=0x0005
 AccessType=rw
@@ -630,10 +725,12 @@ HighLimit=0x000186A0
 [2000sub6]
 ParameterName=CommandAttributes
 ObjectType=0x7
-DataType=0x0005
+DataType=0x0007
 AccessType=rw
 DefaultValue=0
 PDOMapping=1
+LowLimit=-0x00000000
+HighLimit=0xFFFFFFFF
 
 [2001]
 ParameterName=ApplicationStatus
@@ -652,7 +749,7 @@ HighLimit=255
 ParameterValue=7
 
 [2001sub1]
-ParameterName=ActualStatus
+ParameterName=CommandStatus
 ObjectType=0x7
 DataType=0x0005
 AccessType=rw

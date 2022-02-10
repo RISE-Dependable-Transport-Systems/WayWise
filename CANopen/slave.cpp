@@ -23,9 +23,7 @@ void MySlave::statusReceived(quint8 status) {
 
 // Attributes to be sent with TPDO
 void MySlave::commandAttributesReceived(quint32 attributes) {
-    // ATTR_HYDRAULIC_MASK 0b00000000000000000000000000111000
-    attributes &= 0b00000000000000000000000000111000;
-    (*this)[0x2000][6] = (uint8_t)attributes;
+    (*this)[0x2000][6] = (uint32_t)attributes;
 }
 
 // Read the value just written to object 200X:0X by RPDO

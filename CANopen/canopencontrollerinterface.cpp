@@ -82,7 +82,7 @@ void CANopenControllerInterface::startDevice() {
         MySlave mSlave(timer, chan, "./sdvp_qtcommon/CANopen/cpp-slave.eds", "", 2);
         QObject::connect(&mSlave, SIGNAL(sendActualSpeed(double)), this, SLOT(actualSpeedReceived(double)));
         QObject::connect(this, SIGNAL(sendCommandSpeed(double)), &mSlave, SLOT(commandSpeedReceived(double)));
-        QObject::connect(&mSlave, SIGNAL(sendActualSteeringCurvature(double)), this, SLOT(actualSteeringReceived(double)));
+        QObject::connect(&mSlave, SIGNAL(sendActualSteering(double)), this, SLOT(actualSteeringReceived(double)));
         QObject::connect(this, SIGNAL(sendCommandSteering(double)), &mSlave, SLOT(commandSteeringReceived(double)));
         QObject::connect(&mSlave, SIGNAL(sendStatus(quint8)), this, SLOT(commandStatusReceived(quint8)));
         QObject::connect(this, SIGNAL(sendActualStatus(quint8)), &mSlave, SLOT(statusReceived(quint8)));
