@@ -24,12 +24,15 @@ CANopenMovementController::CANopenMovementController(QSharedPointer<VehicleState
     QObject::connect(this, &CANopenMovementController::sendCommandSteeringCurvature, mCANopenControllerInterface.get(), &CANopenControllerInterface::commandSteeringReceived);
     QObject::connect(this, &CANopenMovementController::sendCommandAttributes, mCANopenControllerInterface.get(), &CANopenControllerInterface::commandAttributesReceived);
     QObject::connect(this, &CANopenMovementController::sendActualStatus, mCANopenControllerInterface.get(), &CANopenControllerInterface::actualStatusReceived);
+    QObject::connect(this, &CANopenMovementController::sendGNSSDataToCAN, mCANopenControllerInterface.get(), &CANopenControllerInterface::GNSSDataToCANReceived);
 
     QObject::connect(mCANopenControllerInterface.get(), &CANopenControllerInterface::sendActualSpeed, this, &CANopenMovementController::actualSpeedReceived);
     QObject::connect(mCANopenControllerInterface.get(), &CANopenControllerInterface::sendActualSteeringCurvature, this, &CANopenMovementController::actualSteeringCurvatureReceived);
     QObject::connect(mCANopenControllerInterface.get(), &CANopenControllerInterface::sendCommandStatus, this, &CANopenMovementController::commandStatusReceived);
     QObject::connect(mCANopenControllerInterface.get(), &CANopenControllerInterface::sendBatterySOC, this, &CANopenMovementController::batterySOCReceived);
     QObject::connect(mCANopenControllerInterface.get(), &CANopenControllerInterface::sendBatteryVoltage, this, &CANopenMovementController::batteryVoltageReceived);
+
+
 }
 
 void CANopenMovementController::setDesiredSteeringCurvature(double desiredSteeringCurvature)
@@ -116,4 +119,10 @@ void CANopenMovementController::batteryVoltageReceived(double batteryvoltage) {
 bool CANopenMovementController::isMovementSimulated() const
 {
     return mSimulateMovement;
+}
+
+void CANopenMovementController::rxNavPvt(const ubx_nav_pvt &pvt) {
+    QVariant gnssData;
+    gnssData.setValue(pvt);
+    emit sendGNSSDataToCAN(gnssData);
 }

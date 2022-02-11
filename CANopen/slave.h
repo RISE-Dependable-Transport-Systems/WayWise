@@ -17,6 +17,7 @@ public slots:
     void commandSteeringReceived(double steering);
     void statusReceived(quint8 status);
     void commandAttributesReceived(quint32 attributes);
+    void GNSSDataToCANReceived(const QVariant& gnssData);
 
 signals:
     void sendActualSpeed(double speed);

@@ -91,9 +91,10 @@ SupportedObjects=17
 17=0x1A02
 
 [ManufacturerObjects]
-SupportedObjects=2
+SupportedObjects=3
 1=0x2000
 2=0x2001
+3=0x2002
 
 [1000]
 ParameterName=Device Type
@@ -616,18 +617,62 @@ ParameterValue=0x20000308
 [1A01]
 ParameterName=Transmit PDO Mapping Parameter 1
 ObjectType=0x9
-SubNumber=1
+SubNumber=5
 
 [1A01sub0]
 ParameterName=Number of entries
 ObjectType=0x7
 DataType=0x0005
 AccessType=rw
-DefaultValue=0
+DefaultValue=4
 PDOMapping=0
 LowLimit=0
 HighLimit=8
-ParameterValue=0
+ParameterValue=4
+
+[1A01sub1]
+ParameterName=PDO Mapping Entry
+ObjectType=0x7
+DataType=0x0007
+AccessType=rw
+DefaultValue=0x20020110
+PDOMapping=0
+LowLimit=0
+HighLimit=0xFFFFFFFF
+ParameterValue=0x20020110
+
+[1A01sub2]
+ParameterName=PDO Mapping Entry
+ObjectType=0x7
+DataType=0x0007
+AccessType=rw
+DefaultValue=0x20020210
+PDOMapping=0
+LowLimit=0
+HighLimit=0xFFFFFFFF
+ParameterValue=0x20020210
+
+[1A01sub3]
+ParameterName=PDO Mapping Entry
+ObjectType=0x7
+DataType=0x0007
+AccessType=rw
+DefaultValue=0x20020310
+PDOMapping=0
+LowLimit=0
+HighLimit=0xFFFFFFFF
+ParameterValue=0x20020310
+
+[1A01sub4]
+ParameterName=PDO Mapping Entry
+ObjectType=0x7
+DataType=0x0007
+AccessType=rw
+DefaultValue=0x20020408
+PDOMapping=0
+LowLimit=0
+HighLimit=0xFFFFFFFF
+ParameterValue=0x20020408
 
 [1A02]
 ParameterName=Transmit PDO Mapping Parameter 2
@@ -817,3 +862,59 @@ DefaultValue=0
 PDOMapping=1
 LowLimit=-0x000186A0
 HighLimit=0x000186A0
+
+[2002]
+ParameterName=GNSS
+ObjectType=0x9
+SubNumber=5
+
+[2002sub0]
+ParameterName=LastSubIndex
+ObjectType=0x7
+DataType=0x0005
+AccessType=ro
+DefaultValue=4
+PDOMapping=1
+LowLimit=0
+HighLimit=255
+ParameterValue=4
+
+[2002sub1]
+ParameterName=Ground Speed [cm/s]
+ObjectType=0x7
+DataType=0x0003
+AccessType=rw
+DefaultValue=0
+PDOMapping=1
+LowLimit=-32768
+HighLimit=32767
+
+[2002sub2]
+ParameterName=Latitude [lat/0.01]
+ObjectType=0x7
+DataType=0x0003
+AccessType=rw
+DefaultValue=0
+PDOMapping=1
+LowLimit=-32768
+HighLimit=32767
+
+[2002sub3]
+ParameterName=Longitude [lon/0.01]
+ObjectType=0x7
+DataType=0x0003
+AccessType=rw
+DefaultValue=0
+PDOMapping=1
+LowLimit=-32768
+HighLimit=32767
+
+[2002sub4]
+ParameterName=Status
+ObjectType=0x7
+DataType=0x0002
+AccessType=rw
+DefaultValue=0
+PDOMapping=1
+LowLimit=-128
+HighLimit=127

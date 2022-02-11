@@ -53,6 +53,10 @@ void CANopenControllerInterface::commandAttributesReceived(quint32 attributes) {
     emit sendCommandAttributes(attributes);
 }
 
+void CANopenControllerInterface::GNSSDataToCANReceived(const QVariant& gnssData) {
+    emit sendGNSSDataToCAN(gnssData);
+}
+
 // --- PROCESS ---
 // Start processing data.
 void CANopenControllerInterface::startDevice() {
@@ -89,6 +93,7 @@ void CANopenControllerInterface::startDevice() {
         QObject::connect(&mSlave, SIGNAL(sendBatterySOC(double)), this, SLOT(batterySOCReceived(double)));
         QObject::connect(&mSlave, SIGNAL(sendBatteryVoltage(double)), this, SLOT(batteryVoltageReceived(double)));
         QObject::connect(this, SIGNAL(sendCommandAttributes(quint32)), &mSlave, SLOT(commandAttributesReceived(quint32)));
+        QObject::connect(this, SIGNAL(sendGNSSDataToCAN(QVariant)), &mSlave, SLOT(GNSSDataToCANReceived(QVariant)));
         // Create a signal handler.
         io::SignalSet sigset(poll, exec);
         // Watch for Ctrl+C or process termination.

@@ -5,6 +5,7 @@
 #include "sdvp_qtcommon/movementcontroller.h"
 #include "canopencontrollerinterface.h"
 #include <QSharedPointer>
+#include "sdvp_qtcommon/gnss/ublox.h"
 
 struct CANOpenAutopilotControlState {
     bool emergencyStop = true;
@@ -33,6 +34,7 @@ signals:
     void sendCommandSteeringCurvature(double steering);
     void sendCommandAttributes(quint32 attributes);
     void sendActualStatus(quint8 status);
+    void sendGNSSDataToCAN(const QVariant&);
 
     void CANOpenAutopilotControlStateChanged(CANOpenAutopilotControlState controlState);
 
@@ -42,6 +44,9 @@ private slots:
     void commandStatusReceived(quint8 status);
     void batterySOCReceived(double batterysoc);
     void batteryVoltageReceived(double batteryvoltage);
+
+public slots:
+    void rxNavPvt(const ubx_nav_pvt &pvt);
 
 private:
     bool mSimulateMovement = false;

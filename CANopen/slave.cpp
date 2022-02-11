@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "sdvp_qtcommon/CANopen/slave.h"
+#include "sdvp_qtcommon/gnss/ublox.h"
 
 // Speed that will be sent with TPDO
 void MySlave::commandSpeedReceived(double speed) {
@@ -24,6 +25,39 @@ void MySlave::statusReceived(quint8 status) {
 // Attributes to be sent with TPDO
 void MySlave::commandAttributesReceived(quint32 attributes) {
     (*this)[0x2000][6] = (uint32_t)attributes;
+}
+
+/**
+ * GNSS data to be sent with TPDO
+ *
+ * @brief MySlave::GNSSDataToCANReceived
+ * @param pvt.g_speed
+ * Unit [mm/s]
+ * @param pvt.lat
+ * Latitude
+ * Scale 1e-7
+ * Unit [deg]
+ * @param pvt.lon
+ * Longitude
+ * Scale 1e-7
+ * Unit [deg]
+ * @param pvt.fix_type
+ * GNSSfix Type
+ * • 0 = no fix
+ * • 1 = dead reckoning only
+ * • 2 = 2D-fix
+ * • 3 = 3D-fix
+ * • 4 = GNSS + dead reckoning combined
+ * • 5 = time only fix
+ */
+void MySlave::GNSSDataToCANReceived(const QVariant& gnssData) {
+    if (gnssData.canConvert<ubx_nav_pvt>()) {
+        ubx_nav_pvt pvt = gnssData.value<ubx_nav_pvt>();
+        (*this)[0x2002][1] = (int16_t)std::round(pvt.g_speed/10); // [cm/s]
+        (*this)[0x2002][2] = (int16_t)std::round(pvt.lat/0.01); // Two decimals
+        (*this)[0x2002][3] = (int16_t)std::round(pvt.lon/0.01); // Two decimals
+        (*this)[0x2002][4] = (int8_t)std::round(pvt.fix_type);
+    }
 }
 
 // Read the value just written to object 200X:0X by RPDO

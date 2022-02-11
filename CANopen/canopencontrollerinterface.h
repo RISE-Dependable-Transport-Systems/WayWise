@@ -18,6 +18,7 @@ public slots:
     void batterySOCReceived(double batterysoc);
     void batteryVoltageReceived(double batteryvoltage);
     void commandAttributesReceived(quint32 attributes);
+    void GNSSDataToCANReceived(const QVariant& gnssData);
 
 signals:
     void finished();
@@ -32,6 +33,7 @@ signals:
     void sendBatteryVoltage(double batteryvoltage);
     void sendCommandAttributes(quint32 attributes);
     void activateSimulation();
+    void sendGNSSDataToCAN(const QVariant&);
 };
 
 #endif // CANOPENCONTROLLERINTERFACE_H
