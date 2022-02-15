@@ -70,6 +70,9 @@ public:
     PosPoint getHomePosition() const;
     void setHomePosition(const PosPoint &homePosition);
 
+    bool getIsArmed() const;
+    void setIsArmed(bool isArmed);
+
 private:
     // Static state
     double mLength; // [m]
@@ -84,6 +87,7 @@ private:
     PosPoint mApGoal;
     QTime mTime;
     PosPoint mHomePosition;
+    bool mIsArmed = false;
 
     std::array<float,3> mGyroscopeXYZ = std::array<float,3>({0.0, 0.0, 0.0}); // [deg/s]
     std::array<float,3> mAccelerometerXYZ = std::array<float,3>({0.0, 0.0, 0.0}); // [g]

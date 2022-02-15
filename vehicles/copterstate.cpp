@@ -107,11 +107,13 @@ void CopterState::draw(QPainter &painter, const QTransform &drawTrans, const QTr
         case LandedState::Landing: landedStateStr = "landing"; break;
     }
 
+
     txt.sprintf("%s\n"
                 "(%.3f, %.3f, %.3f, %.0f)\n"
-                "State: %s\n",
+                "State: %s, %s\n",
                 getName().toLocal8Bit().data(),
                 pos.getX(), pos.getY(), pos.getHeight(), angle,
+                (getIsArmed() ? "armed" : "disarmed"),
                 landedStateStr.toLocal8Bit().data());
     pt_txt.setX(x + ((scale < 0.05) ? scaleIndependentSize : (getWidth() + getLength())/2));
     pt_txt.setY(y);
