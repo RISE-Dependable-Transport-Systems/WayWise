@@ -41,8 +41,9 @@
 
 Q_DECLARE_METATYPE(llh_t)
 
-class MapModule
+class MapModule : public QObject
 {
+    Q_OBJECT
 public:
     virtual void processPaint(QPainter &painter, int width, int height, bool highQuality,
                               QTransform drawTrans, QTransform txtTrans, double scale) = 0;
@@ -50,6 +51,8 @@ public:
                               QPoint widgetPos, PosPoint mapPos, double wheelAngleDelta,
                               Qt::KeyboardModifiers keyboardModifiers,
                               Qt::MouseButtons mouseButtons, double scale) = 0;
+signals:
+    void requestRepaint();
 };
 
 class MapWidget : public QWidget

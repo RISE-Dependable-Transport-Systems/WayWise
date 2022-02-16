@@ -386,6 +386,7 @@ QList<QSharedPointer<ObjectState> > MapWidget::getObjectStateList() const
 void MapWidget::addMapModule(QSharedPointer<MapModule> m)
 {
     mMapModules.append(m);
+    connect(m.get(), &MapModule::requestRepaint, this, &MapWidget::triggerUpdate);
 }
 
 
@@ -394,6 +395,7 @@ void MapWidget::removeMapModule(QSharedPointer<MapModule> m)
     for (int i = 0;i < mMapModules.size();i++) {
         if (mMapModules.at(i).get() == m.get()) {
             mMapModules.remove(i);
+            disconnect(m.get(), &MapModule::requestRepaint, this, &MapWidget::triggerUpdate);
             break;
         }
     }
