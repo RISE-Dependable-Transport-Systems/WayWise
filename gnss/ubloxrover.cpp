@@ -238,9 +238,10 @@ void UbloxRover::updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt)
         gnssPos.setSpeed(pvt.g_speed);
 
         mVehicleState->setPosition(gnssPos);
-        lastXyz = xyz;
-
         emit updatedGNSSPositionAndYaw(mVehicleState, QLineF(QPointF(lastXyz.x, lastXyz.y), gnssPos.getPoint()).length(), pvt.head_veh_valid);
+
+
+        lastXyz = xyz;
     }
 }
 
