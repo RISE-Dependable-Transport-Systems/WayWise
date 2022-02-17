@@ -74,6 +74,7 @@ public:
     void setRoll(double roll);
     void setPitch(double pitch);
     void setYaw(double alpha);
+    void setRollPitchYaw(double roll, double pitch, double yaw);
     void setSpeed(double speed);
     void setRadius(double radius);
     void setSigma(double sigma);

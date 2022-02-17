@@ -19,7 +19,7 @@ public:
     virtual void draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected = true) override;
     virtual QPainterPath getBoundingBox() const override;
 #endif
-    virtual void simulationStep(double dt_ms, PosType usePosType = PosType::simulated) override;
+    virtual void updateOdomPositionAndYaw(double drivenDistance, PosType usePosType = PosType::odom) override;
 
     // Static state
     double getAxisDistance() const { return fabs(mAxisDistance) < 0.001 ? 0.8*getLength() : mAxisDistance; }
@@ -53,6 +53,7 @@ private:
     double mSteering = 0.0; // [-1.0:1.0]
     double mMaxSteeringAngle = 0.0; // [rad]
     double mMinTurnRadiusRear = std::numeric_limits<double>::infinity(); // [m]
+
 
 };
 

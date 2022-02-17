@@ -73,10 +73,19 @@ void CarMovementController::setSpeedToRPMFactor(double speedToRPMFactor)
 
 void CarMovementController::updateVehicleState(double rpm, int tachometer, int tachometer_abs, double voltageInput, double temperature, int errorID)
 {
-    Q_UNUSED(tachometer) // TODO: use for odometry
-    Q_UNUSED(tachometer_abs) // TODO: use for odometry
+    Q_UNUSED(tachometer_abs)
     Q_UNUSED(voltageInput)
     Q_UNUSED(temperature)
     Q_UNUSED(errorID)
-    getVehicleState().dynamicCast<CarState>()->setSpeed(rpm/getSpeedToRPMFactor());
+
+    static int previousTachometer = tachometer;
+    QSharedPointer<CarState> carState = getVehicleState().dynamicCast<CarState>();
+    double currentSpeed = rpm/getSpeedToRPMFactor();
+    double drivenDistance = (tachometer - previousTachometer)/getSpeedToRPMFactor() * 60.0;
+
+    carState->setSpeed(currentSpeed);
+    carState->updateOdomPositionAndYaw(drivenDistance);
+
+    previousTachometer = tachometer;
+    emit updatedOdomPositionAndYaw(carState, drivenDistance);
 }

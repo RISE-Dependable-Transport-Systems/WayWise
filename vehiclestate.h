@@ -53,6 +53,9 @@ public:
     virtual QTime getTime() const override { return mTime; }
     virtual void setTime(const QTime &time) override { mTime = time; }
 
+    void simulationStep(double dt_ms, PosType usePosType = PosType::simulated); // Take current state and simulate step forward for dt_ms milliseconds, update state accordingly
+    virtual void updateOdomPositionAndYaw(double drivenDistance, PosType usePosType = PosType::odom) = 0;
+
     // For debugging and logging
     std::array<float, 3> getGyroscopeXYZ() const;
     void setGyroscopeXYZ(const std::array<float, 3> &gyroscopeXYZ);
