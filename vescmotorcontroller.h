@@ -84,7 +84,7 @@ private:
     const unsigned YAW_MASK = ((uint32_t)1 << 2);
     const unsigned SELECT_IMU_DATA_MASK = ROLL_MASK | PITCH_MASK | YAW_MASK;
 
-    int pollValuesPeriod_ms = 50;
+    int pollValuesPeriod_ms = 20;
     QTimer mPollValuesTimer;
 
     const int checkCurrentPeriod_ms = 100;

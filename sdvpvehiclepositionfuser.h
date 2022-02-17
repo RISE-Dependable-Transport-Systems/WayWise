@@ -14,8 +14,11 @@ public:
     void correctPositionAndYawOdom(QSharedPointer<VehicleState> vehicleState, double distanceDriven);
     void correctPositionAndYawIMU(QSharedPointer<VehicleState> vehicleState);
 
-    void setPosGNSSxyGain(double posGNSSxyGain);
+    void setPosGNSSxyStaticGain(double posGNSSxyStaticGain);
     void setPosGNSSyawGain(double posGNSSyawGain);
+
+    double getPosGNSSxyDynamicGain() const;
+    void setPosGNSSxyDynamicGain(double posGNSSxyDynamicGain);
 
 signals:
 
@@ -23,17 +26,20 @@ private:
     struct PosSample {
         QPointF posXY;
         double yaw;
-      QTime timestamp;
+        QTime timestamp;
     };
+
+    double getMaxSignedStepFromValueTowardsGoal(double value, double goal, double maxStepSize);
 
     void samplePosFused(const PosPoint &posFused);
     PosSample getClosestPosFusedSampleInTime(QTime timeUTC);
 
     double mPosIMUyawOffset = 0.0;
     bool mPosGNSSisFused = false; // use GNSS pos as "fused" pos when true, e.g., F9R
-    double mPosGNSSxyGain = 0.05;
+    double mPosGNSSxyStaticGain = 0.05;
+    double mPosGNSSxyDynamicGain = 0.1;
     double mPosGNSSyawGain = 1.0;
-    double mPosOdomLastDistanceDriven = std::numeric_limits<double>::min();
+    double mPosOdomDistanceDrivenSinceGNSSupdate = std::numeric_limits<double>::min();
     static constexpr double BIG_DISTANCE_ERROR_m = 50.0;
 
     static constexpr int POSFUSED_HISTORY_SIZE = 128;

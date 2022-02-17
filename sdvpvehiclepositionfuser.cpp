@@ -1,4 +1,5 @@
 #include "sdvpvehiclepositionfuser.h"
+#include <QDebug>
 
 SDVPVehiclePositionFuser::SDVPVehiclePositionFuser(QObject *parent) : QObject(parent)
 {
@@ -23,7 +24,7 @@ SDVPVehiclePositionFuser::PosSample SDVPVehiclePositionFuser::getClosestPosFused
             i = POSFUSED_HISTORY_SIZE-1;
 
         int currentDiff = abs(timeUTC.msecsSinceStartOfDay() - mPosFusedHistory[i].timestamp.msecsSinceStartOfDay());
-        if (currentDiff < smallestDiffFound) {
+        if (currentDiff <= smallestDiffFound) {
             smallestDiffFound = currentDiff;
             posFusedHistoryClosestIdx = i;
         } else
@@ -31,6 +32,28 @@ SDVPVehiclePositionFuser::PosSample SDVPVehiclePositionFuser::getClosestPosFused
     }
 
     return mPosFusedHistory[posFusedHistoryClosestIdx];
+}
+
+double SDVPVehiclePositionFuser::getPosGNSSxyDynamicGain() const
+{
+    return mPosGNSSxyDynamicGain;
+}
+
+void SDVPVehiclePositionFuser::setPosGNSSxyDynamicGain(double posGNSSxyDynamicGain)
+{
+    mPosGNSSxyDynamicGain = posGNSSxyDynamicGain;
+}
+
+double SDVPVehiclePositionFuser::getMaxSignedStepFromValueTowardsGoal(double value, double goal, double maxStepSize) {
+    maxStepSize = abs(maxStepSize);
+
+    if ((value < goal) && (value + maxStepSize) < goal)
+        return maxStepSize;
+
+    if ((value > goal) && (value - maxStepSize) > goal)
+        return -maxStepSize;
+
+    return goal - value;
 }
 
 void SDVPVehiclePositionFuser::correctPositionAndYawGNSS(QSharedPointer<VehicleState> vehicleState, double distanceMoved, bool fused)
@@ -49,28 +72,34 @@ void SDVPVehiclePositionFuser::correctPositionAndYawGNSS(QSharedPointer<VehicleS
 
         // 2. Update yaw offset, limit max change depending on last driven distance reported by odometry (if available)
         double yawErrorCmpToGNSS = posGNSS.getYaw() - closestPosFusedSample.yaw;
-        double yawMaxChangeDistanceInput = mPosOdomLastDistanceDriven == 0.0 ? distanceMoved : abs(mPosOdomLastDistanceDriven);
-        double yawMaxChange = (yawMaxChangeDistanceInput * mPosGNSSyawGain) * (yawErrorCmpToGNSS / abs(yawErrorCmpToGNSS));
+        while (yawErrorCmpToGNSS < -180.0) yawErrorCmpToGNSS += 360.0;
+        while (yawErrorCmpToGNSS > 180.0) yawErrorCmpToGNSS -= 360.0;
+        double yawMaxChangeDistanceInput = mPosOdomDistanceDrivenSinceGNSSupdate == 0.0 ? distanceMoved : abs(mPosOdomDistanceDrivenSinceGNSSupdate);
+        double yawStepSize = yawMaxChangeDistanceInput * mPosGNSSyawGain;
+        double stepYaw = getMaxSignedStepFromValueTowardsGoal(mPosIMUyawOffset, mPosIMUyawOffset + yawErrorCmpToGNSS, yawStepSize);
 
-        mPosIMUyawOffset += abs(yawErrorCmpToGNSS) > abs(yawMaxChange) ? yawMaxChange : yawErrorCmpToGNSS;
+        mPosIMUyawOffset += stepYaw;
 
         // 3. Update position, limit max change depending on last driven distance reported by odometry (if available) but jump to GNSS position if error is big
-        QPointF posErrorCmpToGNSS = QPointF(posGNSS.getX() - closestPosFusedSample.posXY.x(), posGNSS.getY() - closestPosFusedSample.posXY.y());
         double posMaxChangeDistanceInput = yawMaxChangeDistanceInput;
-        QPointF posMaxChange = QPointF((mPosGNSSxyGain + posMaxChangeDistanceInput * mPosGNSSxyGain) * (posErrorCmpToGNSS.x() / abs(posErrorCmpToGNSS.x())),
-                                       (mPosGNSSxyGain + posMaxChangeDistanceInput * mPosGNSSxyGain) * (posErrorCmpToGNSS.y() / abs(posErrorCmpToGNSS.y())));
+        double xyStepSize = mPosGNSSxyStaticGain + posMaxChangeDistanceInput * mPosGNSSxyDynamicGain;
+        double stepX = getMaxSignedStepFromValueTowardsGoal(closestPosFusedSample.posXY.x(), posGNSS.getX(), xyStepSize);
+        double stepY = getMaxSignedStepFromValueTowardsGoal(closestPosFusedSample.posXY.y(), posGNSS.getY(), xyStepSize);
+        QPointF posErrorCmpToGNSS = QPointF(posGNSS.getX() - closestPosFusedSample.posXY.x(), posGNSS.getY() - closestPosFusedSample.posXY.y());
 
-        if (abs(posErrorCmpToGNSS.x()) > BIG_DISTANCE_ERROR_m || abs(posErrorCmpToGNSS.y()) > BIG_DISTANCE_ERROR_m)
+        if (abs(posErrorCmpToGNSS.x()) > BIG_DISTANCE_ERROR_m || abs(posErrorCmpToGNSS.y()) > BIG_DISTANCE_ERROR_m) {
             posFused.setXY(posGNSS.getX(), posGNSS.getY());
-        else {
-            posFused.setX(posFused.getX() + abs(posErrorCmpToGNSS.x()) > abs(posMaxChange.x()) ? posMaxChange.x() : posErrorCmpToGNSS.x());
-            posFused.setY(posFused.getY() + abs(posErrorCmpToGNSS.y()) > abs(posMaxChange.y()) ? posMaxChange.y() : posErrorCmpToGNSS.y());
+//            qDebug() << "BIG_DISTANCE_ERROR_m";
+        } else {
+            posFused.setX(posFused.getX() + stepX);
+            posFused.setY(posFused.getY() + stepY);
         }
     }
 
     posFused.setHeight(posGNSS.getHeight());
     posFused.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()));
     vehicleState->setPosition(posFused);
+    mPosOdomDistanceDrivenSinceGNSSupdate = 0.0;
 }
 
 void SDVPVehiclePositionFuser::correctPositionAndYawOdom(QSharedPointer<VehicleState> vehicleState, double distanceDriven)
@@ -89,7 +118,7 @@ void SDVPVehiclePositionFuser::correctPositionAndYawOdom(QSharedPointer<VehicleS
         samplePosFused(posFused);
     }
 
-    mPosOdomLastDistanceDriven = distanceDriven;
+    mPosOdomDistanceDrivenSinceGNSSupdate += distanceDriven;
 }
 
 void SDVPVehiclePositionFuser::correctPositionAndYawIMU(QSharedPointer<VehicleState> vehicleState)
@@ -131,9 +160,9 @@ void SDVPVehiclePositionFuser::correctPositionAndYawIMU(QSharedPointer<VehicleSt
     }
 }
 
-void SDVPVehiclePositionFuser::setPosGNSSxyGain(double posGNSSxyGain)
+void SDVPVehiclePositionFuser::setPosGNSSxyStaticGain(double posGNSSxyStaticGain)
 {
-    mPosGNSSxyGain = posGNSSxyGain;
+    mPosGNSSxyStaticGain = posGNSSxyStaticGain;
 }
 
 

@@ -18,7 +18,7 @@ public:
 
 private:
     const QString mBNO055I2CAddress = "0x28";
-    int mPollIntervall_ms = 40;
+    int mPollIntervall_ms = 20;
     QTimer mPollTimer;
 };
 
