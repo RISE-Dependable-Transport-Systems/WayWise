@@ -1,4 +1,5 @@
 #include "bno055orientationupdater.h"
+#include <QThreadPool>
 #include <QDebug>
 
 BNO055OrientationUpdater::BNO055OrientationUpdater(QSharedPointer<VehicleState> vehicleState, QString i2cBus) : IMUOrientationUpdater(vehicleState)
@@ -14,25 +15,29 @@ BNO055OrientationUpdater::BNO055OrientationUpdater(QSharedPointer<VehicleState> 
         // IMU fusion mode: euler angles without magnetometer
         opmode_t newmode = imu;
         res = set_mode(newmode);
+        mReadBNO055Task.setAutoDelete(false);
 
         connect(&mPollTimer, &QTimer::timeout, [this]() {
-            static struct bnoeul bnod;
-            int res = get_eul(&bnod);
-            if (res != 0) {
+            QThreadPool::globalInstance()->start(&mReadBNO055Task);
+        });
+        mPollTimer.start(mPollIntervall_ms);
+
+        qRegisterMetaType<QSharedPointer<VehicleState>>("QSharedPointer<VehicleState>");
+        connect(&mReadBNO055Task, &ReadBNO055Task::gotBNOresult, [this](const QPair<const int, const bnoeul> &result) {
+            if (result.first != 0) {
                 qDebug() << "WARNING: BNO055OrientationUpdater cannot read orientation data from i2c bus.";
             } else {
-                // qDebug() << "Roll:" << bnod.eul_roll << "Pitch:" << bnod.eul_pitc << "Yaw:" << bnod.eul_head;
+//                qDebug() << "Roll:" << result.second.eul_roll << "Pitch:" << result.second.eul_pitc << "Yaw:" << result.second.eul_head;
                 QSharedPointer<VehicleState> vehicleState = getVehicleState();
                 PosPoint currIMUPos = vehicleState->getPosition(PosType::IMU);
 
-                currIMUPos.setRollPitchYaw(bnod.eul_roll, bnod.eul_pitc, bnod.eul_head);
+                currIMUPos.setRollPitchYaw(result.second.eul_roll, result.second.eul_pitc, result.second.eul_head);
                 currIMUPos.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()));
                 vehicleState->setPosition(currIMUPos);
 
                 emit updatedIMUOrientation(vehicleState);
             }
         });
-        mPollTimer.start(mPollIntervall_ms);
     } else
         qDebug() << "WARNING: BNO055OrientationUpdater is unable to open i2c bus" << i2cBus << ". Disabled.";
 }
