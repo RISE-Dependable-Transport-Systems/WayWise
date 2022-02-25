@@ -30,7 +30,8 @@ enum class PosType {
     IMU,
     GNSS,
     UWB,
-    _LAST_
+    _LAST_,
+    defaultPosType = simulated
 };
 
 class PosPoint : public QObject
