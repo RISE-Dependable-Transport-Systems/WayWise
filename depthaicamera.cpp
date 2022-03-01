@@ -19,8 +19,8 @@ void DepthAiCamera::cameraInput(const QJsonArray& jsonArray)
     double closeObject = std::numeric_limits<double>::max();
     for (int i=0; i<jsonArray.size(); i++) {
         if (closeObject > jsonArray.at(i).toObject().value("depth_z").toDouble()) {
-            mCameraData.setX(jsonArray.at(i).toObject().value("depth_x").toDouble());
-            mCameraData.setY(jsonArray.at(i).toObject().value("depth_z").toDouble());
+            mCameraData.setX(jsonArray.at(i).toObject().value("depth_z").toDouble());
+            mCameraData.setY(-jsonArray.at(i).toObject().value("depth_x").toDouble());
             mCameraData.setHeight(jsonArray.at(i).toObject().value("depth_y").toDouble());
             closeObject = mCameraData.getY();
         }

@@ -16,7 +16,6 @@ public:
     // MovementController interface
     virtual void setDesiredSteering(double desiredSteering) override;
     virtual void setDesiredSpeed(double desiredSpeed) override;
-    virtual void setDesiredSteeringCurvature(double desiredSteeringAngle) override;
 
     void setMotorController(const QSharedPointer<MotorController> motorController);
     void setServoController(const QSharedPointer<ServoController> servoController);

@@ -41,15 +41,6 @@ void CarMovementController::setDesiredSpeed(double desiredSpeed)
     }
 }
 
-void CarMovementController::setDesiredSteeringCurvature(double desiredSteeringCurvature)
-{
-    double steeringAngle_rad = atan(mCarState->getAxisDistance() * desiredSteeringCurvature);
-    if (abs(steeringAngle_rad) > mCarState->getMaxSteeringAngle())
-        steeringAngle_rad = mCarState->getMaxSteeringAngle() * ((steeringAngle_rad > 0) ? 1.0 : -1.0);
-
-    setDesiredSteering(steeringAngle_rad / mCarState->getMaxSteeringAngle());
-}
-
 void CarMovementController::setMotorController(const QSharedPointer<MotorController> motorController)
 {
     mMotorController = motorController;

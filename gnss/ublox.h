@@ -154,6 +154,8 @@ typedef struct {
     double mag_acc;
 } ubx_nav_pvt;
 
+Q_DECLARE_METATYPE(ubx_nav_pvt)
+
 typedef struct {
     uint8_t gnss_id; // 0: GPS, 1: SBAS, 2: GAL, 3: BDS, 5: QZSS, 6: GLO
     uint8_t sv_id;

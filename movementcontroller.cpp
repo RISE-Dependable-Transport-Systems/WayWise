@@ -15,6 +15,11 @@ void MovementController::setDesiredSteering(double desiredSteering)
     mDesiredSteering = desiredSteering;
 }
 
+void MovementController::setDesiredSteeringCurvature(double desiredSteeringCurvature)
+{
+    setDesiredSteering(mVehicleState->steeringCurvatureToSteering(desiredSteeringCurvature));
+}
+
 double MovementController::getDesiredSpeed() const
 {
     return mDesiredSpeed;
@@ -23,6 +28,11 @@ double MovementController::getDesiredSpeed() const
 void MovementController::setDesiredSpeed(double desiredSpeed)
 {
     mDesiredSpeed = desiredSpeed;
+}
+
+void MovementController::setDesiredAttributes(quint32 desiredAttributes)
+{
+    mDesiredAttributes = desiredAttributes;
 }
 
 QSharedPointer<VehicleState> MovementController::getVehicleState() const

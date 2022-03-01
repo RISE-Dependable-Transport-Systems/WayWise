@@ -23,6 +23,7 @@ public:
 
 signals:
     void updatedGNSSPositionAndYaw(QSharedPointer<VehicleState> vehicleState, double distanceMoved, bool fused);
+    void txNavPvt(const ubx_nav_pvt &pvt);
 
 private:
     bool configureUblox();

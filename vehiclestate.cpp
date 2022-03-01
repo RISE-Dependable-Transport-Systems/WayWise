@@ -73,6 +73,19 @@ void VehicleState::setAccelerometerXYZ(const std::array<float, 3> &accelerometer
     mAccelerometerXYZ = accelerometerXYZ;
 }
 
+double VehicleState::getSteering() const
+{
+    return mSteering;
+}
+
+void VehicleState::setSteering(double steering)
+{
+    if (abs(steering) > 1.0)
+        steering = steering / abs(steering);
+
+    mSteering = steering;
+}
+
 PosPoint VehicleState::getPosition(PosType type) const
 {
     return mPositionBySource[(int)type];
