@@ -180,15 +180,15 @@ void WaypointFollower::updateState()
     case FOLLOW_POINT_FOLLOWING: {
         // draw straight line to follow point and apply purePursuitRadius to find intersection
         QLineF carToFollowPointLine(QPointF(0,0), mCurrentState.currentFollowPointInVehicleFrame.getPoint());
-        QVector<QPointF> intersections = findIntersectionsBetweenCircleAndLine(QPair<QPointF, double>(currentVehiclePosition, mCurrentState.purePursuitRadius), carToFollowPointLine);
+        QVector<QPointF> intersections = findIntersectionsBetweenCircleAndLine(QPair<QPointF, double>(QPointF(0,0), mCurrentState.purePursuitRadius), carToFollowPointLine);
 
         if (intersections.size()) {
             // Translate to ENU for correct representation of currentGoal (when positioning is working), TODO: general transform in vehicleState?
             PosPoint carPosition = mMovementController->getVehicleState()->getPosition(mPosTypeUsed);
 
             // clockwise rotation
-            double currYaw_rad = (carPosition.getYaw() + 90.0) * (M_PI / 180.0);
-            double newX = cos(currYaw_rad)*intersections[0].x() + sin(currYaw_rad)*intersections[0].y();
+            double currYaw_rad = carPosition.getYaw() * (M_PI / 180.0);
+            double newX =  cos(currYaw_rad)*intersections[0].x() + sin(currYaw_rad)*intersections[0].y();
             double newY = -sin(currYaw_rad)*intersections[0].x() + cos(currYaw_rad)*intersections[0].y();
 
             // translation
@@ -209,7 +209,7 @@ void WaypointFollower::updateState()
         mMovementController->setDesiredSteering(0.0);
         mMovementController->setDesiredSpeed(0.0);
 
-        if (QLineF(currentVehiclePosition, mCurrentState.currentGoal.getPoint()).length() > mCurrentState.purePursuitRadius)
+        if (QLineF(QPointF(0,0), mCurrentState.currentFollowPointInVehicleFrame.getPoint()).length() > mCurrentState.purePursuitRadius)
         {
             mCurrentState.stmState = FOLLOW_POINT_FOLLOWING;
         }
