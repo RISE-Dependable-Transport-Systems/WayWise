@@ -58,7 +58,7 @@ void CANopenMovementController::setDesiredSteering(double desiredSteering)
     MovementController::setDesiredSteering(desiredSteering);
 
     if (!mSimulateMovement)
-        ; // CANopenMovementController::setDesiredSteering(double desiredSteering) not supported by current protocol
+        emit sendCommandSteeringCurvature(desiredSteering / (getVehicleState()->getWidth() / 2.0)); // Note: setDesiredSteering(..) not supported by current protocol
     else
         getVehicleState()->setSteering(desiredSteering);
 }
