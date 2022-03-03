@@ -1,0 +1,7 @@
+master:
+  node_id: 1
+  sync_period: 1000000 # us
+
+slave_2:
+  dcf: "./../../cpp-slave.eds"
+  node_id: 2

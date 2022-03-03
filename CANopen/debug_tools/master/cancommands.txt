@@ -1,0 +1,2 @@
+# Set status with last digit
+cansend can0 202#00FFFF0000000002
