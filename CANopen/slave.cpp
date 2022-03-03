@@ -6,24 +6,24 @@
 #include "sdvp_qtcommon/gnss/ublox.h"
 
 // Speed that will be sent with TPDO
-void MySlave::commandSpeedReceived(double speed) {
+void MySlave::commandSpeedReceived(const double &speed) {
     (*this)[0x2000][1] = (int8_t)std::round(speed*3.6); // [km/h]
     (*this)[0x2000][4] = (int16_t)std::round(speed/0.01); // [m/s] with two decimals
 }
 
 // Steering that will be sent with TPDO
-void MySlave::commandSteeringReceived(double steering) {
+void MySlave::commandSteeringReceived(const double &steering) {
     (*this)[0x2000][2] = (int16_t)std::round(1/steering); // Radius [m]
     (*this)[0x2000][5] = (int32_t)std::round(steering/0.0001); // Curvature [1/m] with four decimals
 }
 
 // Status to be sent with TPDO
-void MySlave::statusReceived(quint8 status) {
+void MySlave::statusReceived(const quint8& status) {
     (*this)[0x2000][3] = (uint8_t)status;
 }
 
 // Attributes to be sent with TPDO
-void MySlave::commandAttributesReceived(quint32 attributes) {
+void MySlave::commandAttributesReceived(const quint32& attributes) {
     (*this)[0x2000][6] = (uint32_t)attributes;
 }
 

@@ -30,10 +30,10 @@ public:
     bool isMovementSimulated() const;
 
 signals:
-    void sendCommandSpeed(double speed);
-    void sendCommandSteeringCurvature(double steering);
-    void sendCommandAttributes(quint32 attributes);
-    void sendActualStatus(quint8 status);
+    void sendCommandSpeed(const double& speed);
+    void sendCommandSteeringCurvature(const double& steering);
+    void sendCommandAttributes(const quint32& attributes);
+    void sendActualStatus(const quint8& status);
     void sendGNSSDataToCAN(const QVariant&);
 
     void CANOpenAutopilotControlStateChanged(CANOpenAutopilotControlState controlState);

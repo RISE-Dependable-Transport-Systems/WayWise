@@ -20,11 +20,11 @@ CANopenMovementController::CANopenMovementController(QSharedPointer<VehicleState
     mCanopenThread->start();
 
     // --- Set up communication between the threads ---
-    QObject::connect(this, &CANopenMovementController::sendCommandSpeed, mCANopenControllerInterface.get(), &CANopenControllerInterface::commandSpeedReceived);
-    QObject::connect(this, &CANopenMovementController::sendCommandSteeringCurvature, mCANopenControllerInterface.get(), &CANopenControllerInterface::commandSteeringReceived);
-    QObject::connect(this, &CANopenMovementController::sendCommandAttributes, mCANopenControllerInterface.get(), &CANopenControllerInterface::commandAttributesReceived);
-    QObject::connect(this, &CANopenMovementController::sendActualStatus, mCANopenControllerInterface.get(), &CANopenControllerInterface::actualStatusReceived);
-    QObject::connect(this, &CANopenMovementController::sendGNSSDataToCAN, mCANopenControllerInterface.get(), &CANopenControllerInterface::GNSSDataToCANReceived);
+    QObject::connect(this, &CANopenMovementController::sendCommandSpeed, mCANopenControllerInterface.get(), &CANopenControllerInterface::commandSpeedReceived, Qt::QueuedConnection);
+    QObject::connect(this, &CANopenMovementController::sendCommandSteeringCurvature, mCANopenControllerInterface.get(), &CANopenControllerInterface::commandSteeringReceived, Qt::QueuedConnection);
+    QObject::connect(this, &CANopenMovementController::sendCommandAttributes, mCANopenControllerInterface.get(), &CANopenControllerInterface::commandAttributesReceived, Qt::QueuedConnection);
+    QObject::connect(this, &CANopenMovementController::sendActualStatus, mCANopenControllerInterface.get(), &CANopenControllerInterface::actualStatusReceived, Qt::QueuedConnection);
+    QObject::connect(this, &CANopenMovementController::sendGNSSDataToCAN, mCANopenControllerInterface.get(), &CANopenControllerInterface::GNSSDataToCANReceived, Qt::QueuedConnection);
 
     QObject::connect(mCANopenControllerInterface.get(), &CANopenControllerInterface::sendActualSpeed, this, &CANopenMovementController::actualSpeedReceived);
     QObject::connect(mCANopenControllerInterface.get(), &CANopenControllerInterface::sendActualSteeringCurvature, this, &CANopenMovementController::actualSteeringCurvatureReceived);

@@ -13,10 +13,10 @@ public:
     using BasicSlave::BasicSlave;
 
 public slots:
-    void commandSpeedReceived(double speed);
-    void commandSteeringReceived(double steering);
-    void statusReceived(quint8 status);
-    void commandAttributesReceived(quint32 attributes);
+    void commandSpeedReceived(const double& speed);
+    void commandSteeringReceived(const double& steering);
+    void statusReceived(const quint8& status);
+    void commandAttributesReceived(const quint32& attributes);
     void GNSSDataToCANReceived(const QVariant& gnssData);
 
 signals:

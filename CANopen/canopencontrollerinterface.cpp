@@ -25,11 +25,11 @@ void CANopenControllerInterface::actualSteeringReceived(double steering) {
     emit sendActualSteeringCurvature(steering);
 }
 
-void CANopenControllerInterface::commandSpeedReceived(double speed) {
+void CANopenControllerInterface::commandSpeedReceived(const double &speed) {
     emit sendCommandSpeed(speed);
 }
 
-void CANopenControllerInterface::commandSteeringReceived(double steering) {
+void CANopenControllerInterface::commandSteeringReceived(const double &steering) {
     emit sendCommandSteering(steering);
 }
 
@@ -37,7 +37,7 @@ void CANopenControllerInterface::commandStatusReceived(quint8 status) {
     emit sendCommandStatus(status);
 }
 
-void CANopenControllerInterface::actualStatusReceived(quint8 status) {
+void CANopenControllerInterface::actualStatusReceived(const quint8 &status) {
     emit sendActualStatus(status);
 }
 
@@ -49,7 +49,7 @@ void CANopenControllerInterface::batteryVoltageReceived(double batteryvoltage) {
     emit sendBatteryVoltage(batteryvoltage);
 }
 
-void CANopenControllerInterface::commandAttributesReceived(quint32 attributes) {
+void CANopenControllerInterface::commandAttributesReceived(const quint32 &attributes) {
     emit sendCommandAttributes(attributes);
 }
 
