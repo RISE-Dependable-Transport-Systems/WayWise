@@ -28,9 +28,9 @@ private:
     const int POZYX_EUL_HEADING_size = 2;   // reply size in bytes
     const int POZYX_DO_POSITIONING = 0xB6;   // Initiate positioning process
 
-    int mLastPolled;
     QSerialPort mSerialPort;
     QTimer mPollPositionTimer;
+    const int POLL_HEADINGS_PER_POSITION = 2;
     QSharedPointer<VehicleState> mVehicleState;
 
 };
