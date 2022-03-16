@@ -169,7 +169,10 @@ bool UbloxRover::configureUblox()
     int ind = 0;
     mUblox.ubloxCfgAppendMntalg(buffer, &ind, true); // enable auto mount alignment
     mUblox.ubloxCfgAppendRate(buffer, &ind, 100, 1, 0, 30); // nav prio mode
-    mUblox.ubloxCfgValset(buffer, ind, true, true, true);
+    if (!mUblox.ubloxCfgValset(buffer, ind, true, true, true)) // try valset
+            mUblox.ubxCfgRate(100, 1, 0); // fallback to ubxCfgRate if valset fails
+
+
 
     //mUblox.ubloxCfgValset(unsigned char *values, int len, bool ram, bool bbr, bool flash);
 //        unsigned char buffer[512];
