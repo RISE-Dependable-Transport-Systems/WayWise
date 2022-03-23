@@ -38,17 +38,17 @@ public:
 signals:
     void rtcmData(const QByteArray& data, const int& type);
     void currentPosition(const llh_t &llh);
+    void rxNavSat(const ubx_nav_sat &sat);
+    void rxSvin(const ubx_nav_svin &svin);
+    void rxCfgGnss(const ubx_cfg_gnss &gnss);
+    void rxMonVer(const QString &sw, const QString &hw, const QStringList &extensions);
 
 private:
     Ublox mUblox;
-    QMap<int, int> mRtcmUbx;
     const int sendRtcmRefDelayMultiplier = 5;
     bool configureUblox(const BasestationConfig& basestationConfig);
 
 private slots:
-    void rxNavPvt(ubx_nav_pvt pvt);
-    void rxNavSat(ubx_nav_sat sat);
-    void rxSvin(ubx_nav_svin svin);
     void rtcmRx(const QByteArray &data, const int& type);
 
 };
