@@ -34,6 +34,8 @@ public:
     bool isSerialConnected() {return mUblox.isSerialConnected();}
     BasestationConfig& getBasestationConfigCurrent();
     BasestationConfig& getBasestationConfigDefault();
+    void pollMonVer();
+    void pollCfgGNSS();
 
 signals:
     void rtcmData(const QByteArray& data, const int& type);

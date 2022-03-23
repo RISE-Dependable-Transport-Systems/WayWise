@@ -205,3 +205,13 @@ void UbloxBasestation::rtcmRx(const QByteArray& data, const int &type)
 
     emit rtcmData(data, type);
 }
+
+void UbloxBasestation::pollMonVer()
+{
+    mUblox.ubxPoll(UBX_CLASS_MON, UBX_MON_VER);
+}
+
+void UbloxBasestation::pollCfgGNSS()
+{
+    mUblox.ubxPoll(UBX_CLASS_CFG, UBX_CFG_GNSS);
+}
