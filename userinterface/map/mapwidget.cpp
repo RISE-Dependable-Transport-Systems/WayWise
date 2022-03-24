@@ -270,7 +270,7 @@ void MapWidget::mousePressEvent(QMouseEvent *e)
             llh_t iLlh = mRefLlh;
             xyz_t xyz = {p.x() / 1000.0, p.y() / 1000.0, 0.0};
             llh_t llh = coordinateTransforms::enuToLlh(iLlh, xyz);
-            mRefLlh = {llh.latitude, llh.longitude, 0.0};
+            setEnuRef({llh.latitude, llh.longitude, 0.0});
         }
 
         update();
@@ -506,7 +506,7 @@ void MapWidget::setDrawOpenStreetmap(bool drawOpenStreetmap)
 
 void MapWidget::setEnuRef(const llh_t &llh)
 {
-    llh_t lastEnuRef = mRefLlh;
+    static llh_t lastEnuRef = mRefLlh;
 
     mRefLlh = llh;
     update();
@@ -734,14 +734,12 @@ void MapWidget::paint(QPainter &painter, int width, int height, bool highQuality
 
     // Optionally follow a vehicle
     if (mFollowObjectId >= 0) {
-        for (int i = 0;i < mObjectStateMap.size();i++) {
-            QSharedPointer<VehicleState> vehicleState = mObjectStateMap[i].dynamicCast<VehicleState>();
-            if (vehicleState->getId() == mFollowObjectId) {
-                PosPoint followLoc = vehicleState->getPosition();
+        for (const auto& objectState : mObjectStateMap)
+            if (objectState->getId() == mFollowObjectId) {
+                PosPoint followLoc = objectState->getPosition();
                 mXOffset = -followLoc.getX() * 1000.0 * mScaleFactor;
                 mYOffset = -followLoc.getY() * 1000.0 * mScaleFactor;
             }
-        }
     }
 
     // Limit the offset to avoid overflow at 2^31 mm

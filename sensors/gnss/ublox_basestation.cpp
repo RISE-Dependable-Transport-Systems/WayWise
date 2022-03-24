@@ -25,7 +25,19 @@ UbloxBasestation::UbloxBasestation(QObject *parent) : QObject(parent)
         emit rxMonVer(sw, hw, extensions);
     });
 
-    connect(&mUblox, &Ublox::rtcmRx, this, &UbloxBasestation::rtcmRx);
+    connect(&mUblox, &Ublox::rtcmRx, [this](const QByteArray& data, const int &type)
+    {
+        // Send base station position every sendRtcmRefDelayMultiplier cycles to save some bandwidth.
+        static int basePosCnt = 0;
+        if (type == 1006 || type == 1005) {
+            basePosCnt++;
+            if (basePosCnt < sendRtcmRefDelayMultiplier)
+                return;
+            basePosCnt = 0;
+        }
+
+        emit rtcmData(data, type);
+    });
 }
 
 bool UbloxBasestation::connectSerial(const QSerialPortInfo& serialPortInfo, const BasestationConfig basestationConfig)
@@ -190,20 +202,6 @@ bool UbloxBasestation::configureUblox(const BasestationConfig& basestationConfig
     mUblox.ubloxCfgCfg(&cfg);
 
     return true;
-}
-
-void UbloxBasestation::rtcmRx(const QByteArray& data, const int &type)
-{
-    // Send base station position every sendRtcmRefDelayMultiplier cycles to save bandwidth.
-    static int basePosCnt = 0;
-    if (type == 1006 || type == 1005) {
-        basePosCnt++;
-        if (basePosCnt < sendRtcmRefDelayMultiplier)
-            return;
-        basePosCnt = 0;
-    }
-
-    emit rtcmData(data, type);
 }
 
 void UbloxBasestation::pollMonVer()

@@ -50,9 +50,6 @@ private:
     const int sendRtcmRefDelayMultiplier = 5;
     bool configureUblox(const BasestationConfig& basestationConfig);
 
-private slots:
-    void rtcmRx(const QByteArray &data, const int& type);
-
 };
 
 #endif // UBLOX_BASESTATION_H
