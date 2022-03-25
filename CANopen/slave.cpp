@@ -32,7 +32,7 @@ void MySlave::commandAttributesReceived(const quint32& attributes) {
  *
  * @brief MySlave::GNSSDataToCANReceived
  * @param pvt.g_speed
- * Unit [mm/s]
+ * Unit [m/s]
  * @param pvt.lat
  * Latitude
  * Scale 1e-7
@@ -53,7 +53,7 @@ void MySlave::commandAttributesReceived(const quint32& attributes) {
 void MySlave::GNSSDataToCANReceived(const QVariant& gnssData) {
     if (gnssData.canConvert<ubx_nav_pvt>()) {
         ubx_nav_pvt pvt = gnssData.value<ubx_nav_pvt>();
-        (*this)[0x2002][1] = (int16_t)std::round(pvt.g_speed/10); // [cm/s]
+        (*this)[0x2002][1] = (int16_t)std::round(pvt.g_speed*100); // [cm/s]
         (*this)[0x2002][2] = (int16_t)std::round(pvt.lat/0.01); // Two decimals
         (*this)[0x2002][3] = (int16_t)std::round(pvt.lon/0.01); // Two decimals
         (*this)[0x2002][4] = (int8_t)std::round(pvt.fix_type);

@@ -37,7 +37,7 @@ UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
 //        static int count = 0;
 //        if (count++%5)
 //            return;
-//        qDebug() << "NAV-PVT data:"
+//        qDebug() << "\nNAV-PVT data:"
 //                 << "\nDate: " << pvt.year << pvt.month << pvt.day
 //                 << "\nTime: " << pvt.hour << pvt.min << pvt.second
 //                 << "\nFix Type: " << pvt.fix_type
@@ -45,10 +45,11 @@ UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
 //                 << "\nHeading valid: " << pvt.head_veh_valid
 //                 << "\nNumber of satelites used: " << pvt.num_sv
 //                 << "\nLongitude:" << pvt.lon << "Latitude:" << pvt.lat << "Height:" << pvt.height
-//                 << "\nGround speed " << pvt.g_speed << "m/s"
+//                 << "\nGround speed: " << pvt.g_speed << "m/s"
 //                 << "\nHeading of motion: " << pvt.head_mot
 //                 << "\nHeading of vehicle: " << pvt.head_veh
-//                << "\nDifferential corrections applied:" << pvt.diffsoln;
+//                 << "\nDifferential corrections applied:" << pvt.diffsoln
+//                 << "\nCarrier phase range solution status:" << pvt.carr_soln;
 //    });
 
     // Print esf-meas
