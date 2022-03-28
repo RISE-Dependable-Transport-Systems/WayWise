@@ -48,12 +48,10 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
         if(mHeartbeat) {
             // --- Use differential corrections data from control station
             case CMD_SEND_RTCM_USB: {
-                if (mUbloxRover && !mDisableRtcmMessage)
+                if (mUbloxRover)
                     mUbloxRover->writeRtcmToUblox(packetData);
-                else if (mDisableRtcmMessage)
-                    qDebug() << "WARNING: received CMD_SEND_RTCM_USB, but processing in PacketInterface is disabled";
-                else
-                    qDebug() << "WARNING: unhandled CMD_SEND_RTCM_USB";
+
+                emit rtcmData(packetData);
             } break;
 
             // --- Get state from vehicle
@@ -323,9 +321,4 @@ void PacketInterfaceTCPServer::heartbeatTimeout()
 void PacketInterfaceTCPServer::updateMotorControllerStatus(double rpm, int tachometer, int tachometer_abs, double voltageInput, double temperature, int errorID)
 {
     mMotorControllerStatus = {rpm, tachometer, tachometer_abs, voltageInput, temperature, errorID};
-}
-
-void PacketInterfaceTCPServer::setDisableRtcmMessage(bool disableRtcmMessage)
-{
-    mDisableRtcmMessage = disableRtcmMessage;
 }

@@ -35,9 +35,8 @@ public:
 
     void updateMotorControllerStatus(double rpm, int tachometer, int tachometer_abs, double voltageInput, double temperature, int errorID);
 
-    void setDisableRtcmMessage(bool disableRtcmMessage);
-
 signals:
+    void rtcmData(const QByteArray &data);
 
 private:
     const int firmware_version_major = 20;
@@ -53,8 +52,6 @@ private:
     QTimer mHeartbeatTimer;
     bool mHeartbeat;
     AP_MODE mode;
-
-    bool mDisableRtcmMessage = false;
 
     // NOTE: quite VESC specific, but OK in legacy parts
     struct {

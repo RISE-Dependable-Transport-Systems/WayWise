@@ -1,4 +1,5 @@
 #include "rtcmclient.h"
+#include <QFile>
 
 RtcmClient::RtcmClient(QObject *parent) : QObject(parent)
 {
@@ -32,17 +33,57 @@ RtcmClient::RtcmClient(QObject *parent) : QObject(parent)
 
 void RtcmClient::connectTcp(QString host, qint16 port)
 {
+    mCurrentHost = host;
+    mCurrentPort = port;
     mCurrentNtripConnectionInfo = {"", "", ""};
-    mTcpSocket.connectToHost(host, port);
+    mTcpSocket.connectToHost(mCurrentHost, mCurrentPort);
 }
 
 void RtcmClient::connectNtrip(QString host, qint16 port, NtripConnectionInfo ntripConnectionInfo)
 {
+    mCurrentHost = host;
+    mCurrentPort = port;
     mCurrentNtripConnectionInfo = ntripConnectionInfo;
-    mTcpSocket.connectToHost(host, port);
+    mTcpSocket.connectToHost(mCurrentHost, mCurrentPort);
+}
+
+bool RtcmClient::connectWithInfoFromFile(QString filePath)
+{
+    QFile rtcmServerInfoFile(filePath);
+    if (!rtcmServerInfoFile.open(QIODevice::ReadOnly)) {
+        qDebug() << "Warning: RtcmClient was unable to open" << filePath;
+        return false;
+    } else {
+        QString serverName = QString(rtcmServerInfoFile.readLine()).trimmed();
+        qint16 port = rtcmServerInfoFile.readLine().toShort();
+        NtripConnectionInfo ntripConnectionInfo = {QString(rtcmServerInfoFile.readLine()).trimmed(),  // username
+                                                   QString(rtcmServerInfoFile.readLine()).trimmed(),  // password
+                                                   QString(rtcmServerInfoFile.readLine()).trimmed()}; // stream
+//        qDebug() << serverName << port << ntripConnectionInfo.user << ntripConnectionInfo.password << ntripConnectionInfo.stream;
+
+        connectNtrip(serverName, port, ntripConnectionInfo);
+    }
+
+    return isConnected();
 }
 
 bool RtcmClient::isConnected()
 {
     return mTcpSocket.isOpen() && mTcpSocket.isReadable();
+}
+
+void RtcmClient::disconnect()
+{
+    if (isConnected())
+        mTcpSocket.disconnectFromHost();
+}
+
+QString RtcmClient::getCurrentHost() const
+{
+    return mCurrentHost;
+}
+
+qint16 RtcmClient::getCurrentPort() const
+{
+    return mCurrentPort;
 }
