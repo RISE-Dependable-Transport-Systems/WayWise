@@ -165,13 +165,89 @@ bool UbloxRover::configureUblox()
     mUblox.ubxCfgMsg(UBX_CLASS_NAV, UBX_NAV_PVT, 1);
     mUblox.ubxCfgMsg(UBX_CLASS_ESF, UBX_ESF_STATUS, 1);
     mUblox.ubxCfgMsg(UBX_CLASS_ESF, UBX_ESF_ALG, 1);
+    // make sure some messages are disabled
+    mUblox.ubxCfgMsg(UBX_CLASS_NAV, UBX_NAV_SAT, 0);
+    mUblox.ubxCfgMsg(UBX_CLASS_RXM, UBX_RXM_RAWX, 0);
+    mUblox.ubxCfgMsg(UBX_CLASS_RXM, UBX_RXM_SFRBX, 0);
+    mUblox.ubxCfgMsg(UBX_CLASS_NAV, UBX_NAV_SOL, 0);
 
     unsigned char buffer[512];
     int ind = 0;
     mUblox.ubloxCfgAppendMntalg(buffer, &ind, true); // enable auto mount alignment
     mUblox.ubloxCfgAppendRate(buffer, &ind, 100, 1, 0, 30); // nav prio mode
-    if (!mUblox.ubloxCfgValset(buffer, ind, true, true, true)) // try valset
-            mUblox.ubxCfgRate(100, 1, 0); // fallback to ubxCfgRate if valset fails
+    if (!mUblox.ubloxCfgValset(buffer, ind, true, true, true)) { // try valset
+            mUblox.ubxCfgRate(100, 1, 0); // fallback to ubxCfgRate if valset fails (-> F9P)
+
+            // Chip might have been used as base station, make sure to reconfigure.
+            // TODO: this code is taken from "old sdvp" s.th. F9P behaves as we are used to,
+            //       but needs to be revised, e.g., use VALSET msgs that work for F9R and F9P
+
+            // Disable RTCM output
+            mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1005, 0);
+            mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1074, 0);
+            mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1077, 0);
+            mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1084, 0);
+            mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1087, 0);
+            mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1094, 0);
+            mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1097, 0);
+            mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1124, 0);
+            mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1127, 0);
+            mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1230, 0);
+            mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_4072_0, 0);
+            mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_4072_1, 0);
+            mUblox.ubxCfgMsg(UBX_CLASS_NAV, UBX_NAV_SVIN, 0);
+
+            // Disable possible survey-in / fixed position
+            ubx_cfg_tmode3 cfg_mode;
+            memset(&cfg_mode, 0, sizeof(cfg_mode));
+            cfg_mode.mode = 0;
+            mUblox.ubxCfgTmode3(&cfg_mode);
+
+            // Stationary dynamic model
+            ubx_cfg_nav5 nav5;
+            memset(&nav5, 0, sizeof(ubx_cfg_nav5));
+            nav5.apply_dyn = true;
+            nav5.dyn_model = 4;
+            mUblox.ubxCfgNav5(&nav5);
+
+            // Time pulse configuration (TODO: still correct with F9P & new antenna?)
+            ubx_cfg_tp5 tp5;
+            memset(&tp5, 0, sizeof(ubx_cfg_tp5));
+            tp5.active = true;
+            tp5.polarity = true;
+            tp5.alignToTow = true;
+            tp5.lockGnssFreq = true;
+            tp5.lockedOtherSet = true;
+            tp5.syncMode = false;
+            tp5.isFreq = false;
+            tp5.isLength = true;
+            tp5.freq_period = 1000000;
+            tp5.pulse_len_ratio = 0;
+            tp5.freq_period_lock = 1000000;
+            tp5.pulse_len_ratio_lock = 100000;
+            tp5.gridUtcGnss = 0;
+            tp5.user_config_delay = 0;
+            tp5.rf_group_delay = 0;
+            tp5.ant_cable_delay = 50;
+            mUblox.ubloxCfgTp5(&tp5);
+
+            // Save everything
+            ubx_cfg_cfg cfg;
+            memset(&cfg, 0, sizeof(ubx_cfg_cfg));
+            cfg.save_io_port = true;
+            cfg.save_msg_conf = true;
+            cfg.save_inf_msg = true;
+            cfg.save_nav_conf = true;
+            cfg.save_rxm_conf = true;
+            cfg.save_sen_conf = true;
+            cfg.save_rinv_conf = true;
+            cfg.save_ant_conf = true;
+            cfg.save_log_conf = true;
+            cfg.save_fts_conf = true;
+            cfg.dev_bbr = true;
+            cfg.dev_flash = true;
+            mUblox.ubloxCfgCfg(&cfg);
+    }
 
 
 
