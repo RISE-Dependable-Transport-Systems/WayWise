@@ -622,7 +622,8 @@ public:
     void ubloxCfgAppendUart1OutProt(unsigned char *buffer, int *ind, bool ubx, bool nmea, bool rtcm3x);
     void ubloxCfgAppendMntalg(unsigned char *buffer, int *ind, bool automatic, uint32_t yaw = 0, int16_t pitch = 0, int16_t roll = 0);
     void ubloxCfgAppendEnableSf(unsigned char *buffer, int *ind, bool ena);
-    void ubloxCfgAppendRate(unsigned char *buffer, int *ind, uint16_t meas = 100, uint16_t nav = 1, uint8_t timeref = 0, uint8_t prio = 0);
+    void ubloxCfgAppendRate(unsigned char *buffer, int *ind, uint16_t meas, uint16_t nav, uint8_t timeref, uint8_t prio);
+    void ubloxCfgAppendRate(unsigned char *buffer, int *ind, uint16_t meas, uint16_t nav, uint8_t timeref);
 
     void ubloxUpdSos(uint8_t cmd);
     void ubloxOdometerInput(ubx_esf_datatype_enum dataType, uint32_t dataField);
@@ -856,5 +857,15 @@ private:
 
 // NMEA messages
 #define UBX_NMEA_GGA                    0x00
+#define UBX_NMEA_GLL                    0x01
+#define UBX_NMEA_GSA                    0x02
+#define UBX_NMEA_GSV                    0x03
+#define UBX_NMEA_RMC                    0x04
+#define UBX_NMEA_VTG                    0x05
+#define UBX_NMEA_GRS                    0x06
+#define UBX_NMEA_GST                    0x07
+#define UBX_NMEA_ZDA                    0x08
+#define UBX_NMEA_GBS                    0x09
+#define UBX_NMEA_DTM                    0x0A
 
 #endif // UBLOX_H

@@ -742,7 +742,7 @@ bool Ublox::ubloxCfgValset(unsigned char *values, int len,
     memcpy(buffer + ind, values, len);
     ind += len;
 
-    return ubx_encode_send(UBX_CLASS_CFG, UBX_CFG_VALSET, buffer, ind, 100);
+    return ubx_encode_send(UBX_CLASS_CFG, UBX_CFG_VALSET, buffer, ind, 500);
 }
 
 /**
@@ -916,7 +916,46 @@ void Ublox::ubloxCfgAppendMntalg(unsigned char *buffer, int *ind, bool automatic
 }
 
 /**
- * Set the measurement rate, navigation rate, navigation rate prio and time reference.
+ * Set the measurement rate, navigation rate, and time reference.
+ *
+ * @param meas
+ * The elapsed time between GNSS measurements, which defines the rate,
+ * e.g. 100ms => 10Hz, 1000ms => 1Hz, 10000ms => 0.1Hz. The minimum value is 25.
+ *
+ * @param nav
+ * The ratio between the number of measurements and the number of navigation
+ * solutions, e.g. 5 means five measurements for every navigation solution.
+ * Max. value is 127. (This parameter is ignored and the navRate is fixed to 1
+ * in protocol versions less than 18)
+ *
+ * @param timeref
+ * The time system to which measurements are aligned:
+ * 0: UTC time
+ * 1: GPS time
+ * 2: GLONASS time (not supported in protocol versions less than 18)
+ * 3: BeiDou time (not supported in protocol versions less than 18)
+ * 4: Galileo time (not supported in protocol versions less than 18)
+ *
+ * @param prio
+ * When not zero, the receiver outputs navigation data as a set of messages with two priority levels: 1)
+ * Priority messages:
+ * Navigation solution data are computed and output with high rate and low latency; 2)
+ * Non-priority messages auxiliary navigation data are computed and output with low rate and higher latency.
+ * When zero, the receiver outputs the navigation data as a set of messages with the same priority.
+ * The allowed range for the priority navigation mode is 0-30 Hz.
+ */
+void Ublox::ubloxCfgAppendRate(unsigned char *buffer, int *ind, uint16_t meas, uint16_t nav, uint8_t timeref)
+{
+    ubx_put_X4(buffer,ind, CFG_RATE_MEAS);
+    ubx_put_U2(buffer, ind, meas);
+    ubx_put_X4(buffer, ind, CFG_RATE_NAV);
+    ubx_put_U2(buffer, ind, nav);
+    ubx_put_X4(buffer, ind, CFG_RATE_TIMEREF);
+    ubx_put_U1(buffer, ind, timeref);
+}
+
+/**
+ * Set the measurement rate, navigation rate, time reference and navigation rate.
  *
  * @param meas
  * The elapsed time between GNSS measurements, which defines the rate,
