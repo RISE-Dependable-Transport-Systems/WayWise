@@ -151,7 +151,7 @@ llh_t RtcmClient::decodeLllhFromReferenceStationInfo(const QByteArray data)
     int itrf;
     llh_t llhResult = {0.0, 0.0, 0.0};
 
-    if (bitIdx + 140 <= data.size() * 8) {
+//    if (bitIdx + 140 <= data.size() * 8) {
         staid = getbitu(data.constData(), bitIdx, 12); bitIdx+=12;
         itrf  = getbitu(data.constData(), bitIdx, 6);  bitIdx+= 6+4;
         p0    = getbits_38(data.constData(), bitIdx);  bitIdx+=38+2;
@@ -182,7 +182,7 @@ llh_t RtcmClient::decodeLllhFromReferenceStationInfo(const QByteArray data)
         llhResult.latitude = (r2 > D(1E-12) ? atan(z / sqrt(r2)) : (p2 > D(0.0) ? D_PI / D(2.0) : -D_PI / D(2.0))) * D(180.0) / D_PI;
         llhResult.longitude = (r2 > D(1E-12) ? atan2(p1, p0) : D(0.0)) * D(180.0) / D_PI;
         llhResult.height = sqrt(r2 + z * z) - v;
-    }
+//    }
 
     return llhResult;
 }
