@@ -32,6 +32,7 @@
 #include <QPinchGesture>
 #include <QImage>
 #include <QTransform>
+#include <QMenu>
 
 #include "core/pospoint.h"
 #include "vehicles/vehiclestate.h"
@@ -53,6 +54,7 @@ public:
                               Qt::MouseButtons mouseButtons, double scale) = 0;
 signals:
     void requestRepaint();
+    void requestContextMenu(QMenu& contextMenu);
 };
 
 class MapWidget : public QWidget
@@ -109,6 +111,7 @@ private slots:
     void tileReady(OsmTile tile);
     void errorGetTile(QString reason);
     void triggerUpdate();
+    void executeContextMenu(QMenu &contextMenu);
 
 protected:
     void paintEvent(QPaintEvent *event) override;

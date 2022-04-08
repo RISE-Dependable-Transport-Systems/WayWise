@@ -174,6 +174,11 @@ void MapWidget::triggerUpdate()
     update();
 }
 
+void MapWidget::executeContextMenu(QMenu &contextMenu)
+{
+    contextMenu.exec(QCursor::pos());
+}
+
 void MapWidget::setSelectedObjectState(int objectID)
 {
     int oldObject = mSelectedObject;
@@ -387,6 +392,7 @@ void MapWidget::addMapModule(QSharedPointer<MapModule> m)
 {
     mMapModules.append(m);
     connect(m.get(), &MapModule::requestRepaint, this, &MapWidget::triggerUpdate);
+    connect(m.get(), &MapModule::requestContextMenu, this, &MapWidget::executeContextMenu);
 }
 
 
