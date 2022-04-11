@@ -2,6 +2,7 @@
 #include <QTime>
 #include <QDateTime>
 #include <QCoreApplication>
+#include <QProcess>
 
 PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(parent)
 {
@@ -230,23 +231,23 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
             } break;
 
             case CMD_REBOOT_SYSTEM: {
-                if (mUbloxRover) {
-                    if (packetData.vbPopFrontUint8()) {
-                        qDebug() << "\nSystem shutdown...";
-                        mUbloxRover->saveOnShutdown();
-                        QTimer::singleShot(3000, &QCoreApplication::quit);
-                        // TODO: implement hardware shutdown
-                    } else {
-                        qDebug() << "\nSystem reboot...";
-                        mUbloxRover->saveOnShutdown();
-                        // TODO: implement hardware reboot
-                    }
-
+                if (mUbloxRover) {                    
                     // Send ack
                     VByteArray ack;
                     ack.vbAppendUint8(mVehicleState->getId());
                     ack.vbAppendUint8(CMD_REBOOT_SYSTEM_ACK);
                     mTcpServer.packet()->sendPacket(ack);
+
+                    QProcess process;
+                    if (packetData.vbPopFrontUint8()) {
+                        qDebug() << "\nSystem shutdown...";
+                        mUbloxRover->saveOnShutdown();
+                        process.startDetached("sudo", QStringList() << "shutdown" << "-P" << "now");
+                    } else {
+                        qDebug() << "\nSystem reboot...";
+                        mUbloxRover->saveOnShutdown();
+                        process.startDetached("sudo", QStringList() << "shutdown" << "-r" << "now");
+                    }
                 } else
                     qDebug() << "WARNING: unhandled CMD_REBOOT_SYSTEM";
                 break;
