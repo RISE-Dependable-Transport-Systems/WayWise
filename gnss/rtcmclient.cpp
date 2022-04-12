@@ -83,7 +83,7 @@ bool RtcmClient::connectWithInfoFromFile(QString filePath)
         return false;
     } else {
         QString serverName = QString(rtcmServerInfoFile.readLine()).trimmed();
-        qint16 port = rtcmServerInfoFile.readLine().toShort();
+        qint16 port = QString(rtcmServerInfoFile.readLine()).trimmed().toShort();
         NtripConnectionInfo ntripConnectionInfo = {QString(rtcmServerInfoFile.readLine()).trimmed(),  // username
                                                    QString(rtcmServerInfoFile.readLine()).trimmed(),  // password
                                                    QString(rtcmServerInfoFile.readLine()).trimmed()}; // stream
@@ -147,8 +147,8 @@ llh_t RtcmClient::decodeLllhFromReferenceStationInfo(const QByteArray data)
     double p1 = 0.0;
     double p2 = 0.0;
     int bitIdx = 24 + 12;
-    int staid;
-    int itrf;
+    int staid; Q_UNUSED(staid)
+    int itrf; Q_UNUSED(itrf)
     llh_t llhResult = {0.0, 0.0, 0.0};
 
 //    if (bitIdx + 140 <= data.size() * 8) {
