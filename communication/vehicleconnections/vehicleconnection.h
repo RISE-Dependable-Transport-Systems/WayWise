@@ -9,11 +9,9 @@ class VehicleConnection : public QObject
 {
     Q_OBJECT
 public:
-    explicit VehicleConnection(QObject *parent = nullptr);
-
     virtual void requestGotoENU(const xyz_t &xyz) = 0;
 
-    QSharedPointer<VehicleState> getVehicleState() const;
+    QSharedPointer<VehicleState> getVehicleState() const {return mVehicleState;};
 
 signals:
 

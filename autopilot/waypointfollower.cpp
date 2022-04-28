@@ -46,11 +46,11 @@ void WaypointFollower::addRoute(const QList<PosPoint> &route)
 
 void WaypointFollower::startFollowingRoute(bool fromBeginning)
 {
-    if (fromBeginning)
+    if (fromBeginning || mCurrentState.stmState == NONE)
         mCurrentState.stmState = FOLLOW_ROUTE_INIT;
 
     if (mCurrentState.stmState == FOLLOW_POINT_FOLLOWING || mCurrentState.stmState == FOLLOW_POINT_WAITING) {
-        mCurrentState.stmState = WayPointFollowerSTMstates::NONE;
+        mCurrentState.stmState = NONE;
         qDebug() << "WARNING: trying to follow route while follow point is active. Stopping WaypointFollower.";
     } else {
         mFollowPointHeartbeatTimer.start(mFollowPointTimeout_ms);
