@@ -22,15 +22,40 @@ void CopterState::draw(QPainter &painter, const QTransform &drawTrans, const QTr
 //    double y_gps = pos_gps.getY() * 1000.0;
     double angle = pos.getYaw() * 180.0 / M_PI;
 
-    painter.setTransform(drawTrans);
-    painter.translate(x, y);
-    painter.rotate(-angle);
-
     bool tooSmallForDetails = false;
     QLineF testScaleLine(0,0,0,1);
     double scale = drawTrans.map(testScaleLine).length();
     if (scale < 0.05)
         tooSmallForDetails = true;
+
+    painter.setTransform(drawTrans);
+
+    // Draw home
+    QPen homePen;
+    double scaleIndependentSize = 40/scale;
+    homePen.setColor(Qt::red);
+    homePen.setWidthF(scaleIndependentSize/10.0);
+    painter.setPen(homePen);
+    painter.setBrush(QBrush(Qt::lightGray));
+    painter.drawEllipse(getHomePosition().getPoint()*1000.0, scaleIndependentSize-scaleIndependentSize/5.0, scaleIndependentSize-scaleIndependentSize/5.0);
+    // "H"
+    homePen.setWidthF(0.0);
+    painter.setPen(homePen);
+    painter.setBrush(QBrush(Qt::red));
+    painter.drawRect(getHomePosition().getX()*1000.0-scaleIndependentSize/2.0,
+                     getHomePosition().getY()*1000.0-scaleIndependentSize/2.0, scaleIndependentSize/5.0, scaleIndependentSize);
+    painter.drawRect(getHomePosition().getX()*1000.0+scaleIndependentSize/2.0 - scaleIndependentSize/5.0,
+                     getHomePosition().getY()*1000.0-scaleIndependentSize/2.0, scaleIndependentSize/5.0, scaleIndependentSize);
+    painter.drawRect(getHomePosition().getX()*1000.0-scaleIndependentSize/2.0 + scaleIndependentSize/5.0,
+                     getHomePosition().getY()*1000.0-scaleIndependentSize/10.0, scaleIndependentSize/5.0*3.0, scaleIndependentSize/5.0);
+
+    // Draw copter
+    QPen pen;
+    pen.setColor(Qt::black);
+    pen.setWidthF(10.0);
+    painter.setPen(pen);
+    painter.translate(x, y);
+    painter.rotate(-angle);
 
     QColor col_frame = getColor();
     QColor col_prop_main;
@@ -50,9 +75,8 @@ void CopterState::draw(QPainter &painter, const QTransform &drawTrans, const QTr
     col_prop_main.setAlphaF(0.3);
     col_prop_other.setAlphaF(0.3);
 
-    double scaleIndependentSize = 30/scale;
+    scaleIndependentSize = 30/scale;
     if (tooSmallForDetails) {
-        QPen pen;
         pen.setColor(QPalette::Foreground);
         pen.setWidthF(2/scale);
         painter.setPen(pen);
@@ -107,11 +131,13 @@ void CopterState::draw(QPainter &painter, const QTransform &drawTrans, const QTr
         case LandedState::Landing: landedStateStr = "landing"; break;
     }
 
+
     txt.sprintf("%s\n"
                 "(%.3f, %.3f, %.3f, %.0f)\n"
-                "State: %s\n",
+                "State: %s, %s\n",
                 getName().toLocal8Bit().data(),
                 pos.getX(), pos.getY(), pos.getHeight(), angle,
+                (getIsArmed() ? "armed" : "disarmed"),
                 landedStateStr.toLocal8Bit().data());
     pt_txt.setX(x + ((scale < 0.05) ? scaleIndependentSize : (getWidth() + getLength())/2));
     pt_txt.setY(y);
@@ -168,14 +194,4 @@ CopterState::LandedState CopterState::getLandedState() const
 void CopterState::setLandedState(const CopterState::LandedState &landedState)
 {
     mLandedState = landedState;
-}
-
-PosPoint CopterState::getHomePosition() const
-{
-    return mHomePosition;
-}
-
-void CopterState::setHomePosition(const PosPoint &homePosition)
-{
-    mHomePosition = homePosition;
 }

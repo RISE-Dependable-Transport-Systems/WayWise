@@ -32,6 +32,7 @@
 #include <QPinchGesture>
 #include <QImage>
 #include <QTransform>
+#include <QMenu>
 
 #include "core/pospoint.h"
 #include "vehicles/vehiclestate.h"
@@ -39,8 +40,11 @@
 #include "osmclient.h"
 #include "core/coordinatetransforms.h"
 
-class MapModule
+Q_DECLARE_METATYPE(llh_t)
+
+class MapModule : public QObject
 {
+    Q_OBJECT
 public:
     virtual void processPaint(QPainter &painter, int width, int height, bool highQuality,
                               QTransform drawTrans, QTransform txtTrans, double scale) = 0;
@@ -48,6 +52,9 @@ public:
                               QPoint widgetPos, PosPoint mapPos, double wheelAngleDelta,
                               Qt::KeyboardModifiers keyboardModifiers,
                               Qt::MouseButtons mouseButtons, double scale) = 0;
+signals:
+    void requestRepaint();
+    void requestContextMenu(QMenu& contextMenu);
 };
 
 class MapWidget : public QWidget
@@ -55,148 +62,56 @@ class MapWidget : public QWidget
     Q_OBJECT
 
 public:
-    typedef enum {
-        Default,
-        Inactive,
-        LAST
-    } RoutePointType;
-
     explicit MapWidget(QWidget *parent = 0);
-    QSharedPointer<ObjectState> getObjectState(int objectID);
-    QSharedPointer<VehicleState> getVehicleState(int vehicleID);
-    void setFollowObject(int objectID);
-    void setTraceObject(int objectID);
-    void setSelectedObject(int objectID);
-    void addObject(QSharedPointer<ObjectState> objectState);
-    void addVehicle(QSharedPointer<VehicleState> vehicleState);
-    bool removeObject(int objectID);
-    bool removeVehicle(int vehicleID);
-    void clearVehicles();
-    void clearObjects();
-    PosPoint* getAnchor(int anchorId);
-    void addAnchor(const PosPoint &anchor);
-    bool removeAnchor(int anchorId);
-    void clearAnchors();
-    QList<PosPoint> getAnchors();
     void setScaleFactor(double scale);
     double getScaleFactor();
     void setRotation(double rotation);
     void setXOffset(double offset);
     void setYOffset(double offset);
     void moveView(double px, double py);
-    void clearTrace();
-    void addRoutePoint(double px, double py, double speed = 0.0, QTime time = QTime());
-    QList<PosPoint> getRoute(int ind = -1);
-    QList<QList<PosPoint> > getRoutes();
-    void setRoute(const QList<PosPoint> &route);
-    void addRoute(const QList<PosPoint> &route);
-    int getRouteNum();
-    void clearRoute();
-    void clearAllRoutes();
-    void setRoutePointSpeed(double speed);
-    void addInfoPoint(PosPoint &info);
-    void clearInfoTrace();
-    void clearAllInfoTraces();
     QPoint getMousePosRelative();
     void setAntialiasDrawings(bool antialias);
-    void setAntialiasOsm(bool antialias);
-    bool getDrawOpenStreetmap() const;
-    void setDrawOpenStreetmap(bool drawOpenStreetmap);
+
     void setEnuRef(const llh_t &llh);
     llh_t getEnuRef();
-    llh_t const *getEnuRef_Ptr();
+
+    void setAntialiasOsm(bool antialias);
+    void setDrawOpenStreetmap(bool drawOpenStreetmap);
     double getOsmRes() const;
     void setOsmRes(double osmRes);
-    double getInfoTraceTextZoom() const;
-    void setInfoTraceTextZoom(double infoTraceTextZoom);
-    OsmClient *osmClient();
-    int getInfoTraceNum();
-    int getInfoPointsInTrace(int trace);
-    int setNextEmptyOrCreateNewInfoTrace();
-    void setAnchorMode(bool anchorMode);
-    bool getAnchorMode();
-    void setAnchorId(int id);
-    void setAnchorHeight(double height);
-    void removeLastRoutePoint();
-    void zoomInOnRoute(int id, double margins, double wWidth = -1, double wHeight = -1);
-
     int getOsmMaxZoomLevel() const;
     void setOsmMaxZoomLevel(int osmMaxZoomLevel);
-
     int getOsmZoomLevel() const;
-
-    bool getDrawGrid() const;
     void setDrawGrid(bool drawGrid);
-
-    bool getDrawOsmStats() const;
     void setDrawOsmStats(bool drawOsmStats);
-
-    int getRouteNow() const;
-    void setRouteNow(int routeNow);
-
-    QTime getRoutePointTime() const;
-    void setRoutePointTime(const QTime& routePointTime);
-
-    double getTraceMinSpaceObject() const;
-    void setTraceMinSpaceObject(double traceMinSpaceObject);
-
-    double getTraceMinSpaceGps() const;
-    void setTraceMinSpaceGps(double traceMinSpaceGps);
-
-    int getInfoTraceNow() const;
-    void setInfoTraceNow(int infoTraceNow);
 
     void printPdf(QString path, int width = 0, int height = 0);
     void printPng(QString path, int width = 0, int height = 0);
 
-    bool getDrawRouteText() const;
-    void setDrawRouteText(bool drawRouteText);
-
-    bool getDrawUwbTrace() const;
-    void setDrawUwbTrace(bool drawUwbTrace);
-
-    void setLastCameraImage(const QImage &lastCameraImage);
-
-    double getCameraImageWidth() const;
-    void setCameraImageWidth(double cameraImageWidth);
-
-    double getCameraImageOpacity() const;
-    void setCameraImageOpacity(double cameraImageOpacity);
+    void addObjectState(QSharedPointer<ObjectState> objectState);
+    QSharedPointer<ObjectState> getObjectState(int objectID);
+    void setFollowObjectState(int objectID);
+    void setSelectedObjectState(int objectID);
+    bool removeObjectState(int objectID);
+    void clearObjectStates();
 
     void addMapModule(QSharedPointer<MapModule> m);
     void removeMapModule(QSharedPointer<MapModule> m);
     void removeMapModuleLast();
 
-    quint32 getRoutePointAttributes() const;
-    void setRoutePointAttributes(const quint32 &routePointAttributes);
-
-    QList<QSharedPointer<ObjectState> > getObjectStateList() const;
-    QList<QSharedPointer<VehicleState> > getVehicleStateList() const;
-
-    double drawGrid(QPainter &painter, QTransform drawTrans, QTransform txtTrans, double gridWidth, double gridHeight);
-    QPair<int, int> drawInfoTraces(QPainter& painter, QTransform drawTrans, QTransform txtTrans, const QRectF &viewRect_mm);
-
-    void drawOSMTiles(QPainter &painter, QTransform drawTrans, double viewWidth, double viewHeight, QPointF viewCenter, bool highQuality);
-
-    void drawRoute(QPainter &painter, QTransform drawTrans, QTransform txtTrans, bool highQuality, double scaleFactor, const QList<PosPoint> &route, int routeID, bool isSelected, bool drawAnnotations);
-
-    void drawAnchor(QPainter &painter, QTransform drawTrans, QTransform txtTrans, const PosPoint &anchor);
-
-    void drawInfoOverlay(QPainter &painter, QTransform txtTrans, double width, double gridResolution, QPair<int, int> infoTraceStats);
+    QList<QSharedPointer<ObjectState>> getObjectStateList() const;
 
 signals:
     void scaleChanged(double newScale);
     void offsetChanged(double newXOffset, double newYOffset);
     void posSet(quint8 id, PosPoint pos);
-    void routePointAdded(PosPoint pos);
-    void lastRoutePointRemoved(PosPoint pos);
-    void infoTraceChanged(int traceNow);
+    void enuRefChanged(const llh_t &llh);
 
 private slots:
     void tileReady(OsmTile tile);
     void errorGetTile(QString reason);
-    void timerSlot();
-    void objectPositionUpdated();
+    void triggerUpdate();
+    void executeContextMenu(QMenu &contextMenu);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -206,69 +121,35 @@ protected:
     void wheelEvent(QWheelEvent *e) override;
     bool event(QEvent *event) override;
 
+    double drawGrid(QPainter &painter, QTransform drawTrans, QTransform txtTrans, double gridWidth, double gridHeight);
+    void drawOSMTiles(QPainter &painter, QTransform drawTrans, double viewWidth, double viewHeight, QPointF viewCenter, bool highQuality);
+    void drawInfoOverlay(QPainter &painter, QTransform txtTrans, double width, double gridResolution, QPair<int, int> infoTraceStats);
+
 private:
-    QList<QSharedPointer<ObjectState>> mObjectStateList;
-    QVector<PosPoint> mObjectTrace;
-    QVector<PosPoint> mObjectTraceGNSS;
-    QVector<PosPoint> mObjectTraceUwb;
-    QList<PosPoint> mAnchors;
-    QList<QList<PosPoint> > mRoutes;
-    QList<QList<PosPoint> > mInfoTraces;
-    QList<PosPoint> mVisibleInfoTracePoints;
-    double mRoutePointSpeed;
-    QTime mRoutePointTime;
-    quint32 mRoutePointAttributes;
-    qint32 mAnchorId;
-    double mAnchorHeight;
+    QMap<int, QSharedPointer<ObjectState>> mObjectStateMap;
+    llh_t mRefLlh;
     double mScaleFactor;
     double mRotation;
     double mXOffset;
     double mYOffset;
     int mMouseLastX;
     int mMouseLastY;
-    int mFollowObjectId;
-    int mTraceObject;
     int mSelectedObject;
-    double xRealPos;
-    double yRealPos;
+    int mFollowObjectId;
     bool mAntialiasDrawings;
     bool mAntialiasOsm;
     double mOsmRes;
-    double mInfoTraceTextZoom;
-    OsmClient *mOsm;
+    QSharedPointer<OsmClient> mOsm;
     int mOsmZoomLevel;
     int mOsmMaxZoomLevel;
     bool mDrawOpenStreetmap;
     bool mDrawOsmStats;
-    llh_t mRefLlh;
-    PosPoint mClosestInfo;
     bool mDrawGrid;
-    int mRoutePointSelected;
-    int mAnchorSelected;
-    int mRouteNow;
-    int mInfoTraceNow;
-    double mTraceMinSpaceObject;
-    double mTraceMinSpaceGps;
     QList<QPixmap> mPixmaps;
-    bool mAnchorMode;
-    bool mDrawRouteText;
-    bool mDrawUwbTrace;
-    QImage mLastCameraImage;
-    double mCameraImageWidth;
-    double mCameraImageOpacity;
-    QTimer *mTimer;
+
     QVector<QSharedPointer<MapModule>> mMapModules;
 
-    void updateClosestInfoPoint();
-    int drawInfoPoints(QPainter &painter, const QList<PosPoint> &pts,
-                       QTransform drawTrans, QTransform txtTrans,
-                       const QRectF& viewRect_mm,
-                       double min_dist);
-    int getClosestPoint(PosPoint p, QList<PosPoint> points, double &dist);
-    void drawCircleFast(QPainter &painter, QPointF center, double radius, int type = 0);
-
     void paint(QPainter &painter, int width, int height, bool highQuality = false);
-    void updateTraces();
 };
 
 #endif // MAPWIDGET_H

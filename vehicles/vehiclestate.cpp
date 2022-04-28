@@ -86,6 +86,26 @@ void VehicleState::setSteering(double steering)
     mSteering = steering;
 }
 
+PosPoint VehicleState::getHomePosition() const
+{
+    return mHomePosition;
+}
+
+void VehicleState::setHomePosition(const PosPoint &homePosition)
+{
+    mHomePosition = homePosition;
+}
+
+bool VehicleState::getIsArmed() const
+{
+    return mIsArmed;
+}
+
+void VehicleState::setIsArmed(bool isArmed)
+{
+    mIsArmed = isArmed;
+}
+
 PosPoint VehicleState::getPosition(PosType type) const
 {
     return mPositionBySource[(int)type];

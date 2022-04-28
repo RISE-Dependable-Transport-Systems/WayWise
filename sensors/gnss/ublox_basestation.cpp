@@ -1,53 +1,43 @@
 #include "ublox_basestation.h"
-#include "core/coordinatetransforms.h"
 #include <QDebug>
 
 const UbloxBasestation::BasestationConfig UbloxBasestation::defaultConfig;
 
 UbloxBasestation::UbloxBasestation(QObject *parent) : QObject(parent)
 {
-    connect(&mUblox, &Ublox::rxNavPvt, this, &UbloxBasestation::rxNavPvt);
-    connect(&mUblox, &Ublox::rxNavSat, this, &UbloxBasestation::rxNavSat);
-    connect(&mUblox, &Ublox::rxSvin, this, &UbloxBasestation::rxSvin);
-    connect(&mUblox, &Ublox::rtcmRx, this, &UbloxBasestation::rtcmRx);
+    connect(&mUblox, &Ublox::rxNavPvt, [this](const ubx_nav_pvt& pvt) {
+        emit currentPosition({pvt.lat, pvt.lon, pvt.height});
+    });
 
-//    connect(&mUblox, &Ublox::rxMonVer, [this]
-//            (QString sw, QString hw, QStringList extensions) {
-//        QString txt = "SW: " + sw + "\nHW: " +
-//                hw + "\nExtensions:\n";
+    connect(&mUblox, &Ublox::rxNavSat, [this](const ubx_nav_sat& sat) {
+        emit rxNavSat(sat);
+    });
 
-//        for (QString s: extensions) {
-//            txt += s + "\n";
-//        }
+    connect(&mUblox, &Ublox::rxSvin, [this](ubx_nav_svin svin){
+        emit rxSvin(svin);
+    });
 
-//        QMessageBox::information(this, "Ublox Version",
-//                                 txt.mid(0, txt.size() - 1));
-//    });
+    connect(&mUblox, &Ublox::rxCfgGnss, [this](const ubx_cfg_gnss &gnss){
+        emit rxCfgGnss(gnss);
+    });
 
-//    connect(&mUblox, &Ublox::rxCfgGnss, [this](ubx_cfg_gnss cfg) {
-//        QString str = QString("TrkChHw   : %1\n"
-//                              "TrkChUse  : %2\n"
-//                              "Blocks    : %3\n\n").
-//                arg(cfg.num_ch_hw).arg(cfg.num_ch_use).arg(cfg.num_blocks);
+    connect(&mUblox, &Ublox::rxMonVer, [this](const QString &sw, const QString &hw, const QStringList &extensions){
+        emit rxMonVer(sw, hw, extensions);
+    });
 
-//        for (int i = 0;i < cfg.num_blocks;i++) {
-//            str += QString("GNSS ID: %1, Enabled: %2\n"
-//                           "MinTrkCh  : %3\n"
-//                           "MaxTrkCh  : %4\n"
-//                           "Flags     : %5").
-//                    arg(cfg.blocks[i].gnss_id).
-//                    arg(cfg.blocks[i].en).
-//                    arg(cfg.blocks[i].minTrkCh).
-//                    arg(cfg.blocks[i].maxTrkCh).
-//                    arg(cfg.blocks[i].flags);
+    connect(&mUblox, &Ublox::rtcmRx, [this](const QByteArray& data, const int &type)
+    {
+        // Send base station position every sendRtcmRefDelayMultiplier cycles to save some bandwidth.
+        static int basePosCnt = 0;
+        if (type == 1006 || type == 1005) {
+            basePosCnt++;
+            if (basePosCnt < sendRtcmRefDelayMultiplier)
+                return;
+            basePosCnt = 0;
+        }
 
-//            if (i != cfg.num_blocks - 1) {
-//                str += "\n\n";
-//            }
-//        }
-
-//        QMessageBox::information(this, "Cfg GNSS", str);
-    //    });
+        emit rtcmData(data, type);
+    });
 }
 
 bool UbloxBasestation::connectSerial(const QSerialPortInfo& serialPortInfo, const BasestationConfig basestationConfig)
@@ -63,6 +53,12 @@ bool UbloxBasestation::connectSerial(const QSerialPortInfo& serialPortInfo, cons
         return false;
 }
 
+bool UbloxBasestation::disconnectSerial()
+{
+    mUblox.disconnectSerial();
+    return true;
+}
+
 
 bool UbloxBasestation::configureUblox(const BasestationConfig& basestationConfig)
 {
@@ -71,8 +67,6 @@ bool UbloxBasestation::configureUblox(const BasestationConfig& basestationConfig
         return false;
     }
 
-    // Serial port baudrate (buffering will create problems if too low)
-    // TODO: still necessary?
     ubx_cfg_prt_uart uart;
     uart.baudrate = basestationConfig.baudrate;
     uart.in_ubx = true;
@@ -210,114 +204,12 @@ bool UbloxBasestation::configureUblox(const BasestationConfig& basestationConfig
     return true;
 }
 
-void UbloxBasestation::rxNavPvt(ubx_nav_pvt pvt)
+void UbloxBasestation::pollMonVer()
 {
-    // TODO: use pvt information (GNSS signal type, etc.)
-    emit currentPosition({pvt.lat, pvt.lon, pvt.height});
+    mUblox.ubxPoll(UBX_CLASS_MON, UBX_MON_VER);
 }
 
-void UbloxBasestation::rxNavSat(ubx_nav_sat sat)
+void UbloxBasestation::pollCfgGNSS()
 {
-    int satsGps = 0;
-    int satsGlo = 0;
-    int satsGal = 0;
-    int satsBds = 0;
-
-    int visibleGps = 0;
-    int visibleGlo = 0;
-    int visibleGal = 0;
-    int visibleBds = 0;
-
-    for (int i = 0;i < sat.num_sv;i++) {
-        ubx_nav_sat_info s = sat.sats[i];
-
-        if (s.gnss_id == 0) {
-            visibleGps++;
-        } else if (s.gnss_id == 2) {
-            visibleGal++;
-        } else if (s.gnss_id == 3) {
-            visibleBds++;
-        } else if (s.gnss_id == 6) {
-            visibleGlo++;
-        }
-
-        if (s.used && s.quality >= 4) {
-            if (s.gnss_id == 0) {
-                satsGps++;
-            } else if (s.gnss_id == 2) {
-                satsGal++;
-            } else if (s.gnss_id == 3) {
-                satsBds++;
-            } else if (s.gnss_id == 6) {
-                satsGlo++;
-            }
-        }
-    }
-
-    QString rtcmMsgs;
-    QMapIterator<int, int> i(mRtcmUbx);
-    while (i.hasNext()) {
-        i.next();
-        if (!rtcmMsgs.isEmpty()) {
-            rtcmMsgs += ", ";
-        }
-
-        rtcmMsgs += QString("%1:%2").
-                arg(i.key()).arg(i.value());
-    }
-
-    QString txt = QString("         Visible   Used\n"
-                          "GPS:     %1        %5\n"
-                          "GLONASS: %2        %6\n"
-                          "Galileo: %3        %7\n"
-                          "BeiDou:  %4        %8\n"
-                          "Total:   %9        %10\n\n"
-                          "RTCM Sent:\n"
-                          + rtcmMsgs).
-            arg(visibleGps, -2).arg(visibleGlo, -2).
-            arg(visibleGal, -2).arg(visibleBds, -2).
-            arg(satsGps, -2).arg(satsGlo, -2).
-            arg(satsGal, -2).arg(satsBds, -2).
-            arg(visibleGps + visibleGlo + visibleGal + visibleBds, -2).
-            arg(satsGps + satsGlo + satsGal + satsBds, -2);
-    //qDebug() << txt;
-}
-
-void UbloxBasestation::rxSvin(ubx_nav_svin svin)
-{
-    llh_t llh = coordinateTransforms::xyzToLlh({svin.meanX, svin.meanY, svin.meanZ});
-    QString txt = QString(
-                "Lat:          %1\n"
-                "Lon:          %2\n"
-                "Height:       %3\n"
-                "Observarions: %4\n"
-                "P ACC:        %5 m\n"
-                "Duration:     %6 s\n"
-                "Valid:        %7\n"
-                "Active:       %8").
-            arg(llh.latitude, 0, 'f', 8).
-            arg(llh.longitude, 0, 'f', 8).
-            arg(llh.height).
-            arg(svin.obs).
-            arg(svin.meanAcc).
-            arg(svin.dur).
-            arg(svin.valid).
-            arg(svin.active);
-
-    //qDebug() << txt;
-}
-
-void UbloxBasestation::rtcmRx(const QByteArray& data, const int &type)
-{
-    // Send base station position every sendRtcmRefDelayMultiplier cycles to save bandwidth.
-    static int basePosCnt = 0;
-    if (type == 1006 || type == 1005) {
-        basePosCnt++;
-        if (basePosCnt < sendRtcmRefDelayMultiplier)
-            return;
-        basePosCnt = 0;
-    }
-
-    mRtcmUbx[type]++;
-    emit rtcmData(data, type);
+    mUblox.ubxPoll(UBX_CLASS_CFG, UBX_CFG_GNSS);
 }

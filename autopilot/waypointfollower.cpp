@@ -20,6 +20,15 @@ WaypointFollower::WaypointFollower(QSharedPointer<MovementController> movementCo
     });
 }
 
+WaypointFollower::WaypointFollower(QSharedPointer<VehicleConnection> vehicleConnection, PosType posTypeUsed)
+{
+    mVehicleConnection = vehicleConnection;
+    connect(&mUpdateStateTimer, &QTimer::timeout, this, &WaypointFollower::updateState);
+    setPosTypeUsed(posTypeUsed);
+
+    // TODO: follow point not supported for now
+}
+
 void WaypointFollower::clearRoute()
 {
     mWaypointList.clear();
@@ -30,13 +39,18 @@ void WaypointFollower::addWaypoint(const PosPoint &point)
     mWaypointList.append(point);
 }
 
+void WaypointFollower::addRoute(const QList<PosPoint> &route)
+{
+    mWaypointList.append(route);
+}
+
 void WaypointFollower::startFollowingRoute(bool fromBeginning)
 {
-    if (fromBeginning)
+    if (fromBeginning || mCurrentState.stmState == NONE)
         mCurrentState.stmState = FOLLOW_ROUTE_INIT;
 
     if (mCurrentState.stmState == FOLLOW_POINT_FOLLOWING || mCurrentState.stmState == FOLLOW_POINT_WAITING) {
-        mCurrentState.stmState = WayPointFollowerSTMstates::NONE;
+        mCurrentState.stmState = NONE;
         qDebug() << "WARNING: trying to follow route while follow point is active. Stopping WaypointFollower.";
     } else {
         mFollowPointHeartbeatTimer.start(mFollowPointTimeout_ms);
@@ -52,19 +66,28 @@ bool WaypointFollower::isActive()
 void WaypointFollower::stop()
 {
     mUpdateStateTimer.stop();
-    mMovementController->setDesiredSteering(0.0);
-    mMovementController->setDesiredSpeed(0.0);
+
+    if (isOnVehicle()) {
+        mMovementController->setDesiredSteering(0.0);
+        mMovementController->setDesiredSpeed(0.0);
+    } else {
+        // TODO: support for updating target position continuously
+
+    }
 }
 
 void WaypointFollower::startFollowPoint()
 {
     // Check that we got a recent point to follow
-    if (mCurrentState.currentFollowPointInVehicleFrame.getTime() > mCurrentState.currentGoal.getTime()) {
+    if (isOnVehicle() && mCurrentState.currentFollowPointInVehicleFrame.getTime() > mCurrentState.currentGoal.getTime()) {
         mFollowPointHeartbeatTimer.start(mFollowPointTimeout_ms);
         mCurrentState.stmState = FOLLOW_POINT_FOLLOWING;
         mUpdateStateTimer.start(mUpdateStatePeriod_ms);
     } else {
-        qDebug() << "WARNING: Follow Point did not get a recent point to follow. Exiting.";
+        if (isOnVehicle())
+            qDebug() << "WARNING: Follow Point did not get a recent point to follow. Exiting.";
+        else
+            qDebug() << "WARNING: Follow Point not implemented for remote connections. Exiting.";
         mCurrentState.stmState = WayPointFollowerSTMstates::NONE;
     }
 }
@@ -99,7 +122,7 @@ double WaypointFollower::getCurvatureToPointInENU(QSharedPointer<VehicleState> v
 
 double WaypointFollower::getCurvatureToPointInENU(const QPointF &point)
 {
-    return getCurvatureToPointInENU(mMovementController->getVehicleState(), point, mPosTypeUsed);
+    return getCurvatureToPointInENU(isOnVehicle() ? mMovementController->getVehicleState() : mVehicleConnection->getVehicleState(), point, mPosTypeUsed);
 }
 
 double WaypointFollower::getCurvatureToPointInVehicleFrame(const QPointF &point)
@@ -169,7 +192,7 @@ QVector<QPointF> findIntersectionsBetweenCircleAndLine(QPair<QPointF,double> cir
 
 void WaypointFollower::updateState()
 {
-    QPointF currentVehiclePosition = mMovementController->getVehicleState()->getPosition(mPosTypeUsed).getPoint();
+    QPointF currentVehiclePositionXY = getCurrentVehiclePosition().getPoint();
 
     switch (mCurrentState.stmState) {
     case NONE:
@@ -184,7 +207,7 @@ void WaypointFollower::updateState()
 
         if (intersections.size()) {
             // Translate to ENU for correct representation of currentGoal (when positioning is working), TODO: general transform in vehicleState?
-            PosPoint carPosition = mMovementController->getVehicleState()->getPosition(mPosTypeUsed);
+            PosPoint carPosition = getCurrentVehiclePosition();
 
             // clockwise rotation
             double currYaw_rad = carPosition.getYaw() * (M_PI / 180.0);
@@ -217,7 +240,7 @@ void WaypointFollower::updateState()
 
     // FOLLOW_ROUTE: waypoints describe a route to be followed waypoint by waypoint
     case FOLLOW_ROUTE_INIT:
-        currentVehiclePosition = mMovementController->getVehicleState()->getPosition(mPosTypeUsed).getPoint();
+        currentVehiclePositionXY = getCurrentVehiclePosition().getPoint();
 
         if (mWaypointList.size()) {
             mCurrentState.currentWaypointIndex = 0;
@@ -228,24 +251,24 @@ void WaypointFollower::updateState()
         break;
 
     case FOLLOW_ROUTE_GOTO_BEGIN: {
-        currentVehiclePosition = mMovementController->getVehicleState()->getPosition(mPosTypeUsed).getPoint();
+        currentVehiclePositionXY = getCurrentVehiclePosition().getPoint();
 
         // draw straight line to first point and apply purePursuitRadius to find intersection
-        QLineF carToStartLine(currentVehiclePosition, mWaypointList.at(0).getPoint());
-        QVector<QPointF> intersections = findIntersectionsBetweenCircleAndLine(QPair<QPointF, double>(currentVehiclePosition, mCurrentState.purePursuitRadius), carToStartLine);
+        QLineF carToStartLine(currentVehiclePositionXY, mWaypointList.at(0).getPoint());
+        QVector<QPointF> intersections = findIntersectionsBetweenCircleAndLine(QPair<QPointF, double>(currentVehiclePositionXY, mCurrentState.purePursuitRadius), carToStartLine);
 
         if (intersections.size()) {
-            mMovementController->setDesiredSteeringCurvature(getCurvatureToPointInENU(intersections[0]));
-            mMovementController->setDesiredSpeed(mWaypointList.at(0).getSpeed());
+            mCurrentState.currentGoal.setXY(intersections[0].x(), intersections[0].y());
+            updateControl(mCurrentState.currentGoal);
         } else // first waypoint within circle -> start route
             mCurrentState.stmState = FOLLOW_ROUTE_FOLLOWING;
     } break;
 
     case FOLLOW_ROUTE_FOLLOWING: {
-        currentVehiclePosition = mMovementController->getVehicleState()->getPosition(mPosTypeUsed).getPoint();
+        currentVehiclePositionXY = getCurrentVehiclePosition().getPoint();
         QPointF currentWaypointPoint = mWaypointList.at(mCurrentState.currentWaypointIndex).getPoint();
 
-        if (QLineF(currentVehiclePosition, currentWaypointPoint).length() < mCurrentState.purePursuitRadius) // consider previous waypoint as reached
+        if (QLineF(currentVehiclePositionXY, currentWaypointPoint).length() < mCurrentState.purePursuitRadius) // consider previous waypoint as reached
             mCurrentState.currentWaypointIndex++;
 
         if (mCurrentState.currentWaypointIndex == mWaypointList.size() && !mCurrentState.repeatRoute)
@@ -272,7 +295,7 @@ void WaypointFollower::updateState()
                 QPointF iWaypoint = lookAheadWaypoints.at(i).getPoint();
                 QLineF iLineSegment(lookAheadWaypoints.at(i-1).getPoint(), iWaypoint);
 
-                intersections = findIntersectionsBetweenCircleAndLine(QPair<QPointF, double>(currentVehiclePosition, mCurrentState.purePursuitRadius), iLineSegment);
+                intersections = findIntersectionsBetweenCircleAndLine(QPair<QPointF, double>(currentVehiclePositionXY, mCurrentState.purePursuitRadius), iLineSegment);
                 if (intersections.size() > 0) {
                     mCurrentState.currentWaypointIndex = (i + mCurrentState.currentWaypointIndex - 1) % mWaypointList.size();
                     currentWaypointPoint = iWaypoint;
@@ -314,29 +337,37 @@ void WaypointFollower::updateState()
 
             // 3. Determine closest waypoint to vehicle, it determines attributes
             PosPoint closestWaypoint;
-            if (QLineF(currentVehiclePosition, mWaypointList.at(previousWaypointIndex).getPoint()).length()
-                    < QLineF(currentVehiclePosition, mWaypointList.at(mCurrentState.currentWaypointIndex).getPoint()).length())
+            if (QLineF(currentVehiclePositionXY, mWaypointList.at(previousWaypointIndex).getPoint()).length()
+                    < QLineF(currentVehiclePositionXY, mWaypointList.at(mCurrentState.currentWaypointIndex).getPoint()).length())
                 closestWaypoint = mWaypointList.at(previousWaypointIndex);
             else
                 closestWaypoint = mWaypointList.at(mCurrentState.currentWaypointIndex);
+            mCurrentState.currentGoal.setAttributes(closestWaypoint.getAttributes());
 
             // 4. Update control for current goal
-            mMovementController->setDesiredSteeringCurvature(getCurvatureToPointInENU(mCurrentState.currentGoal.getPoint()));
-            mMovementController->setDesiredSpeed(mCurrentState.currentGoal.getSpeed());
-            mMovementController->setDesiredAttributes(closestWaypoint.getAttributes());
+            updateControl(mCurrentState.currentGoal);
         }
     } break;
 
     case FOLLOW_ROUTE_FINISHED:
-        mMovementController->setDesiredSteering(0.0);
-        mMovementController->setDesiredSpeed(0.0);
-        mUpdateStateTimer.stop();
         mCurrentState.stmState = NONE;
         mCurrentState.currentWaypointIndex = mWaypointList.size();
+        stop();
         break;
 
     default:
         break;
+    }
+}
+
+void WaypointFollower::updateControl(const PosPoint &goal)
+{
+    if (isOnVehicle()) {
+        mMovementController->setDesiredSteeringCurvature(getCurvatureToPointInENU(goal.getPoint()));
+        mMovementController->setDesiredSpeed(goal.getSpeed());
+        mMovementController->setDesiredAttributes(goal.getAttributes());
+    } else {
+        mVehicleConnection->requestGotoENU(xyz_t {goal.getX(), goal.getY(), mCurrentState.overrideAltitude});
     }
 }
 
@@ -398,6 +429,14 @@ void WaypointFollower::updateFollowPointInVehicleFrame(const PosPoint &point)
         mFollowPointHeartbeatTimer.start(mFollowPointTimeout_ms);
         mCurrentState.followPointTimedOut = false;
     }
+}
+
+PosPoint WaypointFollower::getCurrentVehiclePosition()
+{
+    if (isOnVehicle())
+        return mMovementController->getVehicleState()->getPosition(mPosTypeUsed);
+    else
+        return mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed);
 }
 
 double WaypointFollower::getFollowPointSpeed() const
