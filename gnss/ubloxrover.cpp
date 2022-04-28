@@ -1,5 +1,4 @@
 #include "ubloxrover.h"
-#include "sdvp_qtcommon/coordinatetransforms.h"
 #include <QDebug>
 #include <QDateTime>
 #include <QLineF>

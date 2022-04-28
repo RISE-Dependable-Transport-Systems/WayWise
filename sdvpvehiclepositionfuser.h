@@ -3,7 +3,7 @@
 
 #include <QObject>
 #include <QSharedPointer>
-#include <sdvp_qtcommon/vehiclestate.h>
+#include "vehiclestate.h"
 
 class SDVPVehiclePositionFuser : public QObject
 {

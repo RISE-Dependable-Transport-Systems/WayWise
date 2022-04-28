@@ -2,8 +2,8 @@
 #include <cmath>
 #include <iostream>
 
-#include "sdvp_qtcommon/CANopen/slave.h"
-#include "sdvp_qtcommon/gnss/ublox.h"
+#include "slave.h"
+#include "../gnss/ublox.h"
 
 // Speed that will be sent with TPDO
 void MySlave::commandSpeedReceived(const double &speed) {

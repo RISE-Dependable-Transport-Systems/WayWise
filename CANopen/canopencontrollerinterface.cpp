@@ -13,7 +13,7 @@
 #include <lely/io2/sys/timer.hpp>
 
 #include "canopencontrollerinterface.h"
-#include "sdvp_qtcommon/CANopen/slave.h"
+#include "slave.h"
 
 using namespace lely;
 

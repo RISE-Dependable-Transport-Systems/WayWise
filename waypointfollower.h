@@ -7,7 +7,7 @@
 #include <QTimer>
 #include "vehiclestate.h"
 #include "movementcontroller.h"
-#include "sdvp_qtcommon/legacy/datatypes.h"
+#include "legacy/datatypes.h"
 
 enum WayPointFollowerSTMstates {NONE, FOLLOW_POINT_FOLLOWING, FOLLOW_POINT_WAITING, FOLLOW_ROUTE_INIT, FOLLOW_ROUTE_GOTO_BEGIN, FOLLOW_ROUTE_FOLLOWING, FOLLOW_ROUTE_FINISHED};
 struct WayPointFollowerState {
