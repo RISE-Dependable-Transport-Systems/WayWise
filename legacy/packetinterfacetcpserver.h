@@ -2,14 +2,13 @@
 #define PACKETINTERFACETCPSERVER_H
 
 #include <QObject>
-#include <sdvp_qtcommon/legacy/tcpserversimple.h>
-//#include <sdvp_qtcommon/legacy/utility.h>
-#include <sdvp_qtcommon/vbytearray.h>
-#include <sdvp_qtcommon/vehiclestate.h>
-#include <sdvp_qtcommon/movementcontroller.h>
-#include <sdvp_qtcommon/waypointfollower.h>
-#include <sdvp_qtcommon/gnss/ubloxrover.h>
-#include <sdvp_qtcommon/legacy/datatypes.h>
+#include "legacy/tcpserversimple.h"
+#include "core/vbytearray.h"
+#include "vehicles/vehiclestate.h"
+#include "vehicles/controller/movementcontroller.h"
+#include "autopilot/waypointfollower.h"
+#include "sensors/gnss/ubloxrover.h"
+#include "legacy/datatypes.h"
 #include <QTimer>
 
 class PacketInterfaceTCPServer : public QObject
