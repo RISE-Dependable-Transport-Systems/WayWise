@@ -2,8 +2,8 @@
 #define VEHICLECONNECTION_H
 
 #include <QObject>
-#include "sdvp_qtcommon/coordinatetransforms.h"
-#include "sdvp_qtcommon/vehiclestate.h"
+#include "core/coordinatetransforms.h"
+#include "vehicles/vehiclestate.h"
 
 class VehicleConnection : public QObject
 {
