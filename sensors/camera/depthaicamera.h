@@ -2,8 +2,8 @@
 #define DEPTHAICAMERA_H
 
 #include <QObject>
-#include "pospoint.h"
-#include "jsonstreamparsertcp.h"
+#include "core/pospoint.h"
+#include "communication/jsonstreamparsertcp.h"
 
 class DepthAiCamera : public QObject
 {

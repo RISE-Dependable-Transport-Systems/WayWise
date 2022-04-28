@@ -1,7 +1,7 @@
 #ifndef CARSTATE_H
 #define CARSTATE_H
 
-#include "vehiclestate.h"
+#include "vehicles/vehiclestate.h"
 
 #include <QObject>
 #include <QString>

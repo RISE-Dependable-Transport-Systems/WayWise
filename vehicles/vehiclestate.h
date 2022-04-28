@@ -26,8 +26,8 @@
 #include <QPainter>
 #endif
 
-#include "pospoint.h"
-#include "objectstate.h"
+#include "core/pospoint.h"
+#include "vehicles/objectstate.h"
 #include <math.h>
 
 class VehicleState : public ObjectState

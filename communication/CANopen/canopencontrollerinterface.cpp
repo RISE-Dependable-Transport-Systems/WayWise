@@ -83,7 +83,7 @@ void CANopenControllerInterface::startDevice() {
         io::CanChannel chan(poll, exec);
         chan.open(ctrl);
         // Create a CANopen slave with node-ID 2.
-        MySlave mSlave(timer, chan, "../sdvp_qtcommon/CANopen/cpp-slave.eds", "", 2);
+        MySlave mSlave(timer, chan, "../sdvp_qtcommon/communication/CANopen/cpp-slave.eds", "", 2);
         QObject::connect(&mSlave, SIGNAL(sendActualSpeed(double)), this, SLOT(actualSpeedReceived(double)));
         QObject::connect(this, SIGNAL(sendCommandSpeed(double)), &mSlave, SLOT(commandSpeedReceived(double)));
         QObject::connect(&mSlave, SIGNAL(sendActualSteering(double)), this, SLOT(actualSteeringReceived(double)));

@@ -3,7 +3,7 @@
 
 #include <QObject>
 #include <QSharedPointer>
-#include "vehiclestate.h"
+#include "vehicles/vehiclestate.h"
 
 // Gets desired steering, throttle/speed as input and translates it for specific vehicle respecting kinematic model and, e.g., motor controller as well as servo setup
 // Reports actual steering, throttle/speed reported from sensors/lower-level controllers back to VehicleState

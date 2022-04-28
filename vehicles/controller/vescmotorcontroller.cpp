@@ -1,6 +1,6 @@
 #include "vescmotorcontroller.h"
-#include "ext/vesc/datatypes.h"
-#include "vbytearray.h"
+#include "external/vesc/datatypes.h"
+#include "core/vbytearray.h"
 #include <QDebug>
 #include <cmath>
 

@@ -3,7 +3,7 @@
 
 #include <QObject>
 #include <QSharedPointer>
-#include "vehiclestate.h"
+#include "vehicles/vehiclestate.h"
 
 class IMUOrientationUpdater : public QObject
 {

@@ -6,7 +6,7 @@
 #include <QSerialPort>
 #include <QSerialPortInfo>
 #include "ublox.h"
-#include "../coordinatetransforms.h"
+#include "core/coordinatetransforms.h"
 
 // Sets up Ublox GNSS connected over serial as a basestation. Supports/tested with F9P only for now.
 // Does not use/provide any widget classes to enable use in cmd applications.

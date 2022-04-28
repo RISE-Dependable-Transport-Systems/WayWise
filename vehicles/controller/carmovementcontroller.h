@@ -1,10 +1,10 @@
 #ifndef CARMOVEMENTCONTROLLER_H
 #define CARMOVEMENTCONTROLLER_H
 
-#include "movementcontroller.h"
+#include "vehicles/controller/movementcontroller.h"
 #include "motorcontroller.h"
 #include "servocontroller.h"
-#include "carstate.h"
+#include "vehicles/carstate.h"
 #include <QObject>
 #include <QSharedPointer>
 

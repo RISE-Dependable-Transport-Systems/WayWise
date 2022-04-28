@@ -1,5 +1,5 @@
 #include "ublox_basestation.h"
-#include "../coordinatetransforms.h"
+#include "core/coordinatetransforms.h"
 #include <QDebug>
 
 const UbloxBasestation::BasestationConfig UbloxBasestation::defaultConfig;

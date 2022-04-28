@@ -1,7 +1,7 @@
 #ifndef COPTERSTATE_H
 #define COPTERSTATE_H
 
-#include "vehiclestate.h"
+#include "vehicles/vehiclestate.h"
 #include <QObject>
 #include <QPainter>
 #include <cmath>

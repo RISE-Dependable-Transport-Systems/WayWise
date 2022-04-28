@@ -1,7 +1,7 @@
 #ifndef DIFFDRIVEVEHICLESTATE_H
 #define DIFFDRIVEVEHICLESTATE_H
 
-#include "vehiclestate.h"
+#include "vehicles/vehiclestate.h"
 
 class DiffDriveVehicleState : public VehicleState
 {

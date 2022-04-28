@@ -1,9 +1,9 @@
 #ifndef BNO055ORIENTATIONUPDATER_H
 #define BNO055ORIENTATIONUPDATER_H
 
-#include "imuorientationupdater.h"
+#include "sensors/imu/imuorientationupdater.h"
 extern "C" {
-#include "ext/pi-bno055/getbno055.h"
+#include "external/pi-bno055/getbno055.h"
 }
 #include <QTimer>
 

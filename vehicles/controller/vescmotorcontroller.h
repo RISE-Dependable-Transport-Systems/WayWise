@@ -5,12 +5,12 @@
 #include <QSharedPointer>
 #include "motorcontroller.h"
 #include "servocontroller.h"
-#include "imuorientationupdater.h"
+#include "sensors/imu/imuorientationupdater.h"
 #include <QSerialPort>
 #include <QSerialPortInfo>
 #include <QByteArray>
-#include "ext/vesc/vescpacket.h"
-#include "ext/vesc/datatypes.h"
+#include "external/vesc/vescpacket.h"
+#include "external/vesc/datatypes.h"
 
 class VESCMotorController : public MotorController
 {

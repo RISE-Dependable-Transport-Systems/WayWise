@@ -6,7 +6,7 @@
 #include <QSerialPortInfo>
 #include <QTimer>
 #include <QSharedPointer>
-#include "vehiclestate.h"
+#include "vehicles/vehiclestate.h"
 
 class PozyxPositionUpdater : public QObject
 {

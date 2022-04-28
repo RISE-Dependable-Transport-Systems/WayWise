@@ -33,11 +33,11 @@
 #include <QImage>
 #include <QTransform>
 
-#include "pospoint.h"
-#include "vehiclestate.h"
-#include "objectstate.h"
+#include "core/pospoint.h"
+#include "vehicles/vehiclestate.h"
+#include "vehicles/objectstate.h"
 #include "osmclient.h"
-#include "coordinatetransforms.h"
+#include "core/coordinatetransforms.h"
 
 class MapModule
 {

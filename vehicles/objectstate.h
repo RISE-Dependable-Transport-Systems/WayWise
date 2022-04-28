@@ -29,7 +29,7 @@
 #include <QPainterPath>
 #endif
 
-#include "pospoint.h"
+#include "core/pospoint.h"
 #include <math.h>
 
 class ObjectState : public QObject

@@ -2,13 +2,13 @@
 #define PACKETINTERFACETCPSERVER_H
 
 #include <QObject>
-#include "../legacy/tcpserversimple.h"
-#include "../vbytearray.h"
-#include "../vehiclestate.h"
-#include "../movementcontroller.h"
-#include "../waypointfollower.h"
-#include "../gnss/ubloxrover.h"
-#include "../legacy/datatypes.h"
+#include "legacy/tcpserversimple.h"
+#include "core/vbytearray.h"
+#include "vehicles/vehiclestate.h"
+#include "vehicles/controller/movementcontroller.h"
+#include "autopilot/waypointfollower.h"
+#include "sensors/gnss/ubloxrover.h"
+#include "legacy/datatypes.h"
 #include <QTimer>
 
 class PacketInterfaceTCPServer : public QObject

@@ -4,8 +4,8 @@
 #include <QObject>
 #include <QSharedPointer>
 #include "ublox.h"
-#include "../coordinatetransforms.h"
-#include "../vehiclestate.h"
+#include "core/coordinatetransforms.h"
+#include "vehicles/vehiclestate.h"
 
 class UbloxRover : public QObject
 {

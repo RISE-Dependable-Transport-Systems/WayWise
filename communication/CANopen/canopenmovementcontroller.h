@@ -2,10 +2,10 @@
 #define CANOPENMOVEMENTCONTROLLER_H
 
 #include <QObject>
-#include "../movementcontroller.h"
+#include "vehicles/controller/movementcontroller.h"
 #include "canopencontrollerinterface.h"
 #include <QSharedPointer>
-#include "../gnss/ublox.h"
+#include "sensors/gnss/ublox.h"
 
 struct CANOpenAutopilotControlState {
     bool emergencyStop = true;

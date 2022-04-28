@@ -3,7 +3,7 @@
 #include <iostream>
 
 #include "slave.h"
-#include "../gnss/ublox.h"
+#include "sensors/gnss/ublox.h"
 
 // Speed that will be sent with TPDO
 void MySlave::commandSpeedReceived(const double &speed) {
