@@ -1,4 +1,7 @@
 /*
+ *     Copyright 2021 Marvin Damschen   marvin.damschen@ri.se
+ *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
+ *
  * Implementation of MovementController for car-type (ackermann) vehicles.
  * Translates desired driving, e.g., from an autopilot to servo- and motorcontroller calls and updates CarState with feedback.
  */

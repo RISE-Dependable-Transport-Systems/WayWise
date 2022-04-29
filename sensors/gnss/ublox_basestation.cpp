@@ -1,3 +1,7 @@
+/*
+ *     Copyright 2020  Marvin Damschen   marvin.damschen@ri.se
+ *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
+ */
 #include "ublox_basestation.h"
 #include <QDebug>
 

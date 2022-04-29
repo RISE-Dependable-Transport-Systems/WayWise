@@ -1,4 +1,8 @@
-/* Abstract class to provide interface towards, e.g., autopilot, and to be implemented for specific vehicle types.
+/*
+ *     Copyright 2021 Marvin Damschen   marvin.damschen@ri.se
+ *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
+ *
+ * Abstract class to provide interface towards, e.g., autopilot, and to be implemented for specific vehicle types.
  * Gets desired steering, throttle/speed as input and translates it for specific vehicle respecting kinematic model and, e.g., motor controller as well as servo setup.
  * Reports actual steering, throttle/speed reported from sensors/lower-level controllers back to VehicleState.
  */

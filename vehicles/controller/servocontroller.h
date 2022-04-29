@@ -1,4 +1,7 @@
 /*
+ *     Copyright 2021 Marvin Damschen   marvin.damschen@ri.se
+ *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
+ *
  * Abstract class that provides an interface to talk to servos, e.g., to be used within a MovementController
  */
 

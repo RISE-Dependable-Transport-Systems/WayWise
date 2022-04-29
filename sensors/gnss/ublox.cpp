@@ -1,5 +1,7 @@
 /*
-    Copyright 2017 - 2018 Benjamin Vedder	benjamin@vedder.se
+    Copyright 2017 - 2018 Benjamin Vedder   benjamin@vedder.se
+              2020 - 2022 Marvin Damschen   marvin.damschen@ri.se
+              2021 - 2022 Rickard Häll      rickard.hall@ri.se
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

@@ -1,4 +1,8 @@
 /*
+ *     Copyright 2016 - 2017 Benjamin Vedder	benjamin@vedder.se
+ *               2021        Marvin Damschen   marvin.damschen@ri.se
+ *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
+ *
  * Header-only coordinate transformations, mainly ENU <-> latitude, longitude, height
  */
 

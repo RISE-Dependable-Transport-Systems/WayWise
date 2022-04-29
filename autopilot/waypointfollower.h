@@ -1,4 +1,8 @@
 /*
+ *     Copyright 2021 Marvin Damschen   marvin.damschen@ri.se
+ *               2021 Rickard Häll      rickard.hall@ri.se
+ *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
+ *
  * Implementation of pure pursuit for following a list of waypoints ("Follow Route").
  * It can also follow a person or other vehicle when the point to follow is continously updated ("Follow Point").
  */

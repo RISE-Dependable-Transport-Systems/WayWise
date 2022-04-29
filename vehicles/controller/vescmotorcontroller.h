@@ -1,4 +1,7 @@
-/* 
+/*
+ *     Copyright 2021 Marvin Damschen   marvin.damschen@ri.se
+ *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
+ *
  * Implementation of the abstract MotorController for "VESC" motor controllers.
  * VESC contains an IMU and can control servos. Respective IMUOrientationUpdater and ServoController can be obtained using getters.
  */

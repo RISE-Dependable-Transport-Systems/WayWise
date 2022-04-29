@@ -1,4 +1,7 @@
 /*
+ *     Copyright 2022 Marvin Damschen   marvin.damschen@ri.se
+ *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
+ *
  * Quite simple implementation of UWB-based positioning using Pozyx
  * Requires that anchors and coordinate system are setup using their tools:
  * https://docs.pozyx.io/creator/

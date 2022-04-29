@@ -1,4 +1,7 @@
 /*
+ *     Copyright 2022 Marvin Damschen   marvin.damschen@ri.se
+ *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
+ *
  * Connects to NTRIP / RTCM server (TCP/IP) and streams received messages using singal/slot
  * Some rudimentary parsing of messages.
  */
