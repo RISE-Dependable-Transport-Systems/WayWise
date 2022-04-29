@@ -1,3 +1,7 @@
+/*
+ * Specific implementation of VehicleState for car-type (ackermann) vehicles, storing all (dynamic and static) state
+ */
+
 #ifndef CARSTATE_H
 #define CARSTATE_H
 

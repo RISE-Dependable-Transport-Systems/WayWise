@@ -1,3 +1,7 @@
+/*
+ * UI building block for tracing the vehicles' different position types
+ */
+
 #ifndef TRACEUI_H
 #define TRACEUI_H
 

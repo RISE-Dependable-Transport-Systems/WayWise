@@ -1,3 +1,7 @@
+/*
+ * Abstract interface for receiving orientation data from IMUs
+ */
+
 #ifndef IMUORIENTATIONUPDATER_H
 #define IMUORIENTATIONUPDATER_H
 

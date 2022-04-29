@@ -1,3 +1,7 @@
+/*
+ * Abstract class to communicate with a vehicle using a remote VehicleConnection
+ */
+
 #ifndef VEHICLECONNECTION_H
 #define VEHICLECONNECTION_H
 

@@ -1,3 +1,7 @@
+/*
+ * UI building block for flying a multicopter-type vehicle
+ */
+
 #ifndef FLYUI_H
 #define FLYUI_H
 

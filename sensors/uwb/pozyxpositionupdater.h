@@ -1,3 +1,10 @@
+/*
+ * Quite simple implementation of UWB-based positioning using Pozyx
+ * Requires that anchors and coordinate system are setup using their tools:
+ * https://docs.pozyx.io/creator/
+ * Then, the tag's position can be read from the tag itself using this class.
+ */
+
 #ifndef POZYXPOSITIONUPDATER_H
 #define POZYXPOSITIONUPDATER_H
 
@@ -26,7 +33,7 @@ private:
     const int POZYX_POS_XYZ_size = 12;      //  reply size in bytes
     const int POZYX_EUL_HEADING = 0x66;     // Euler angles of yaw
     const int POZYX_EUL_HEADING_size = 2;   // reply size in bytes
-    const int POZYX_DO_POSITIONING = 0xB6;   // Initiate positioning process
+    const int POZYX_DO_POSITIONING = 0xB6;  // Initiate positioning process
 
     QSerialPort mSerialPort;
     QTimer mPollPositionTimer;

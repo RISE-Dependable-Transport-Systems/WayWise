@@ -1,3 +1,8 @@
+/*
+ * Implementation of MovementController for car-type (ackermann) vehicles.
+ * Translates desired driving, e.g., from an autopilot to servo- and motorcontroller calls and updates CarState with feedback.
+ */
+
 #ifndef CARMOVEMENTCONTROLLER_H
 #define CARMOVEMENTCONTROLLER_H
 

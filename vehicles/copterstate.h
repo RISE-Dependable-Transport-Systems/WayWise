@@ -1,3 +1,7 @@
+/*
+ * Specific implementation of VehicleState for multicopter drones/UAVs, storing all (dynamic and static) state
+ */
+
 #ifndef COPTERSTATE_H
 #define COPTERSTATE_H
 

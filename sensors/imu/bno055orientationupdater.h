@@ -1,3 +1,7 @@
+/*
+ * Implementation of IMUOrientationUpdater for Bosch BNO055 IMUs
+ */
+
 #ifndef BNO055ORIENTATIONUPDATER_H
 #define BNO055ORIENTATIONUPDATER_H
 

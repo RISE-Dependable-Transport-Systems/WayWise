@@ -1,3 +1,7 @@
+/*
+ * Sets up u-blox GNSS reciver connected over serial as a basestation. Supports/tested with F9P/F9R only for now.
+ */
+
 #ifndef UBLOX_BASESTATION_H
 #define UBLOX_BASESTATION_H
 
@@ -8,8 +12,6 @@
 #include "ublox.h"
 #include "core/coordinatetransforms.h"
 
-// Sets up Ublox GNSS connected over serial as a basestation. Supports/tested with F9P only for now.
-// Does not use/provide any widget classes to enable use in cmd applications.
 class UbloxBasestation : public QObject
 {
     Q_OBJECT

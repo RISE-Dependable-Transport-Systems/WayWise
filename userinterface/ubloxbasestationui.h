@@ -1,3 +1,7 @@
+/*
+ * UI building block for running a (u-blox receiver-based) GNSS basestation sending RTK correction data via RTCM
+ */
+
 #ifndef UBLOXBASESTATIONUI_H
 #define UBLOXBASESTATIONUI_H
 

@@ -1,3 +1,7 @@
+/*
+ * A simple class to detect when Qt's event loop takes longer than expected
+ */
+
 #ifndef SIMPLEWATCHDOG_H
 #define SIMPLEWATCHDOG_H
 

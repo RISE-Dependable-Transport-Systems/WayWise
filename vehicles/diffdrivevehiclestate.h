@@ -1,3 +1,7 @@
+/*
+ * Specific implementation of VehicleState for differential vehicles, storing all (dynamic and static) state
+ */
+
 #ifndef DIFFDRIVEVEHICLESTATE_H
 #define DIFFDRIVEVEHICLESTATE_H
 

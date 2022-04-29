@@ -1,3 +1,8 @@
+/* 
+ * Implementation of the abstract MotorController for "VESC" motor controllers.
+ * VESC contains an IMU and can control servos. Respective IMUOrientationUpdater and ServoController can be obtained using getters.
+ */
+
 #ifndef VESCMOTORCONTROLLER_H
 #define VESCMOTORCONTROLLER_H
 

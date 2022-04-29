@@ -1,3 +1,8 @@
+/* Abstract class to provide interface towards, e.g., autopilot, and to be implemented for specific vehicle types.
+ * Gets desired steering, throttle/speed as input and translates it for specific vehicle respecting kinematic model and, e.g., motor controller as well as servo setup.
+ * Reports actual steering, throttle/speed reported from sensors/lower-level controllers back to VehicleState.
+ */
+
 #ifndef MOVEMENTCONTROLLER_H
 #define MOVEMENTCONTROLLER_H
 
@@ -5,8 +10,6 @@
 #include <QSharedPointer>
 #include "vehicles/vehiclestate.h"
 
-// Gets desired steering, throttle/speed as input and translates it for specific vehicle respecting kinematic model and, e.g., motor controller as well as servo setup
-// Reports actual steering, throttle/speed reported from sensors/lower-level controllers back to VehicleState
 class MovementController : public QObject
 {
     Q_OBJECT

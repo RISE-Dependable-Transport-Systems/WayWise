@@ -1,3 +1,7 @@
+/*
+ * Class that connects to a TCP port which is assumed to stream newline-delimited JSON objects and/or arrays, parses stream and makes data available using signals
+ */
+
 #ifndef JSONSTREAMPARSERTCP_H
 #define JSONSTREAMPARSERTCP_H
 
@@ -9,7 +13,6 @@
 #include <QJsonArray>
 #include <QJsonObject>
 
-// connects to tcp port which is assumed to stream newline-delimited json objects and/or arrays, parses stream and makes data available using singals
 class JsonStreamParserTcp : public QObject
 {
     Q_OBJECT

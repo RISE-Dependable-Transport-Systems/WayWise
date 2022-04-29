@@ -1,3 +1,7 @@
+/*
+ * Abstract class that provides an interface to talk to servos, e.g., to be used within a MovementController
+ */
+
 #ifndef SERVOCONTROLLER_H
 #define SERVOCONTROLLER_H
 

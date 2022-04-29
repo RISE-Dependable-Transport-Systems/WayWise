@@ -1,3 +1,18 @@
+/*
+ * Rewritten and restructured version of SDVP's sensor "fusion" algorithm for obtaining position and orientation 
+ * (see: https://github.com/RISE-Dependable-Transport-Systems/rise_sdvp/blob/master/Embedded/RC_Controller/pos.c).
+ * Inputs are GNSS position, Odometry feedback (e.g., from motor controller) and IMU orientation.
+ * The algorithm tries to tackle two main problems: 1. GNSS position is exact but old and arrives at low frequency 2. IMU orientation is not absolute and drifts
+ * The general approach is as follows:
+ *  - GNSS is the ground truth for the position few hundred ms ago, two consecutive GNSS positions are used to obtain yaw
+ *  - IMU measurements arrive more frequently and are applied to the "fused" position's yaw directly with the yaw offset obtained from GNSS.
+ *      The yaw offset from GNSS allows to calculate the absolute yaw. The offset is fixed at standstill to counter IMU drift.
+ *  - Odom feedback also arrives more frequently than GNSS. The driven distance received and the "fused" yaw are used to update the "fused" position inbetween input from GNSS.
+ *      The resulting "fused" position and yaw are sampled in a history buffer.
+ *  - When a new GNSS position arrives, the time-wise closest "fused" position in the history buffer is taken to calculate the position error towards the new GNSS position at the GNSS position's time.
+ *      The resulting error is applied to the current "fused" position with weights (static and dynamic, based on distance moved). Yaw is updated similarly.
+ */
+
 #ifndef SDVPVEHICLEPOSITIONFUSER_H
 #define SDVPVEHICLEPOSITIONFUSER_H
 

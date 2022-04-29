@@ -1,3 +1,8 @@
+/*
+ * Connects to NTRIP / RTCM server (TCP/IP) and streams received messages using singal/slot
+ * Some rudimentary parsing of messages.
+ */
+
 #ifndef RTCMCLIENT_H
 #define RTCMCLIENT_H
 

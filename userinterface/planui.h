@@ -1,3 +1,7 @@
+/*
+ * UI building block for planning routes
+ */
+
 #ifndef PLANUI_H
 #define PLANUI_H
 

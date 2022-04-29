@@ -1,3 +1,7 @@
+/*
+ * Legacy class for implementing "PacketInterface" in TCP/IP, i.e., the communication protocol between RControlStation and vehicle.
+ */
+
 #ifndef PACKETINTERFACETCPSERVER_H
 #define PACKETINTERFACETCPSERVER_H
 

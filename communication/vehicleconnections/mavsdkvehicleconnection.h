@@ -1,3 +1,8 @@
+/*
+ * Implementation of VehicleConnection to communicate with MAVLINK-based vehicles using MAVSDK
+ * NOTE: Only multicopters supported for now.
+ */
+
 #ifndef MAVSDKVEHICLECONNECTION_H
 #define MAVSDKVEHICLECONNECTION_H
 

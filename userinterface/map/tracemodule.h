@@ -1,3 +1,7 @@
+/*
+ * MapModule that traces the different vehicles' position types, manages them and draws them on the map
+ */
+
 #ifndef TRACEMODULE_H
 #define TRACEMODULE_H
 

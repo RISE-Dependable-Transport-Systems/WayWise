@@ -1,3 +1,7 @@
+/*
+ * Class to parse a JSON stream with object detections (incl. depth information) from DepthAI
+ */
+
 #ifndef DEPTHAICAMERA_H
 #define DEPTHAICAMERA_H
 

@@ -1,3 +1,7 @@
+/*
+ * MapModule that allows creating and interacting with routes on the map
+ */
+
 #ifndef ROUTEPLANNERMODULE_H
 #define ROUTEPLANNERMODULE_H
 

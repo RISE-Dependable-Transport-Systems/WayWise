@@ -1,3 +1,7 @@
+/*
+ * Implements communication with a moving u-blox-based GNSS receiver
+ */
+
 #ifndef UBLOXROVER_H
 #define UBLOXROVER_H
 

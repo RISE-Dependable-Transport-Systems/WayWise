@@ -1,3 +1,8 @@
+/*
+ * Implementation of pure pursuit for following a list of waypoints ("Follow Route").
+ * It can also follow a person or other vehicle when the point to follow is continously updated ("Follow Point").
+ */
+
 #ifndef WAYPOINTFOLLOWER_H
 #define WAYPOINTFOLLOWER_H
 

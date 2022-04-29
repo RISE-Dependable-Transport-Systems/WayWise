@@ -1,3 +1,7 @@
+/*
+ * "Control station" that accepts vehicle connections via MAVLINK using MAVSDK
+ */
+
 #ifndef MAVSDKSTATION_H
 #define MAVSDKSTATION_H
 

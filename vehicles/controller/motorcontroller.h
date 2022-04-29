@@ -1,3 +1,7 @@
+/*
+ * Abstract class that provides an interface to talk to motor controllers, e.g., to be used within a MovementController
+ */
+
 #ifndef MOTORCONTROLLER_H
 #define MOTORCONTROLLER_H
 

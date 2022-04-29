@@ -1,3 +1,7 @@
+/*
+ * Header-only coordinate transformations, mainly ENU <-> latitude, longitude, height
+ */
+
 #ifndef COORDINATETRANSFORMS_H
 #define COORDINATETRANSFORMS_H
 
