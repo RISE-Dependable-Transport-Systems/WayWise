@@ -1,3 +1,11 @@
+/*
+ *     Copyright 2021 Marvin Damschen   marvin.damschen@ri.se
+ *               2021 Rickard Häll      rickard.hall@ri.se
+ *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
+ *
+ * Creating a CANopen node and connecting relevant data to be sent and received on the CAN bus.
+ */
+
 #ifndef CANOPENCONTROLLERINTERFACE_H
 #define CANOPENCONTROLLERINTERFACE_H
 

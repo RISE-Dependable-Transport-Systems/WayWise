@@ -1,3 +1,9 @@
+/*
+ *     Copyright 2021 Rickard Häll   rickard.hall@ri.se
+ *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
+ * 
+ */
+
 #include <QDebug>
 #include <cmath>
 #include <iostream>
