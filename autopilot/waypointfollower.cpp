@@ -28,6 +28,7 @@ WaypointFollower::WaypointFollower(QSharedPointer<MovementController> movementCo
 WaypointFollower::WaypointFollower(QSharedPointer<VehicleConnection> vehicleConnection, PosType posTypeUsed)
 {
     mVehicleConnection = vehicleConnection;
+    mUpdateStatePeriod_ms = 200;
     connect(&mUpdateStateTimer, &QTimer::timeout, this, &WaypointFollower::updateState);
     setPosTypeUsed(posTypeUsed);
 

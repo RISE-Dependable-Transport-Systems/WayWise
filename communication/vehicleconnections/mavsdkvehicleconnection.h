@@ -33,8 +33,8 @@ public:
     void requestLanding();
     void requestPrecisionLanding();
     void requestReturnToHome();
-    void requestGotoLlh(const llh_t &llh);
-    virtual void requestGotoENU(const xyz_t &xyz) override;
+    void requestGotoLlh(const llh_t &llh, bool changeFlightmodeToHold = false);
+    virtual void requestGotoENU(const xyz_t &xyz, bool changeFlightmodeToHold = false) override;
     void inputRtcmData(const QByteArray &rtcmData);
     void sendLandingTargetLlh(const llh_t &landingTargetLlh);
     void sendLandingTargetENU(const xyz_t &landingTargetENU);

@@ -16,7 +16,7 @@ class VehicleConnection : public QObject
 {
     Q_OBJECT
 public:
-    virtual void requestGotoENU(const xyz_t &xyz) = 0;
+    virtual void requestGotoENU(const xyz_t &xyz, bool changeAutopilotMode = false) = 0;
 
     QSharedPointer<VehicleState> getVehicleState() const {return mVehicleState;};
 

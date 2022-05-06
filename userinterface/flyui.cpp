@@ -115,7 +115,7 @@ void FlyUI::gotRouteForAutopilot(const QList<PosPoint> &route)
     if (!mCurrentVehicleConnection->hasWaypointFollower())
         mCurrentVehicleConnection->setWaypointFollower(QSharedPointer<WaypointFollower>::create(mCurrentVehicleConnection, PosType::defaultPosType));
 
-    mCurrentVehicleConnection->getWaypointFollower()->setPurePursuitRadius(1.5);
+    mCurrentVehicleConnection->getWaypointFollower()->setPurePursuitRadius(3.0);
     mCurrentVehicleConnection->getWaypointFollower()->clearRoute();
     mCurrentVehicleConnection->getWaypointFollower()->addRoute(route);
 }
@@ -129,7 +129,7 @@ FlyUI::GotoClickOnMapModule::GotoClickOnMapModule(FlyUI *parent) : mFlyUI(parent
     connect(&mGotoAction, &QAction::triggered, [&](){
         if (mFlyUI->mCurrentVehicleConnection) {
             mFlyUI->mCurrentVehicleConnection->requestGotoENU({mLastClickedMapPos.getX(), mLastClickedMapPos.getY(),
-                                                               mFlyUI->mCurrentVehicleConnection->getVehicleState()->getPosition().getHeight()});
+                                                               mFlyUI->mCurrentVehicleConnection->getVehicleState()->getPosition().getHeight()}, true);
         }
     });
 }

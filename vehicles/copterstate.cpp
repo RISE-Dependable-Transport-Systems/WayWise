@@ -137,21 +137,41 @@ void CopterState::draw(QPainter &painter, const QTransform &drawTrans, const QTr
         case LandedState::TakingOff: landedStateStr = "taking off"; break;
         case LandedState::Landing: landedStateStr = "landing"; break;
     }
-
+    
+    QString flightModeStr;
+    switch (mFlightMode) {
+        case FlightMode::Unknown: flightModeStr = "unknown"; break;
+        case FlightMode::Ready: flightModeStr = "ready"; break;
+        case FlightMode::Takeoff: flightModeStr = "takeoff"; break;
+        case FlightMode::Hold: flightModeStr = "hold"; break;
+        case FlightMode::Mission: flightModeStr = "mission"; break;
+        case FlightMode::ReturnToLaunch: flightModeStr = "return to launch"; break;
+        case FlightMode::Land: flightModeStr = "land"; break;
+        case FlightMode::Offboard: flightModeStr = "offboard"; break;
+        case FlightMode::FollowMe: flightModeStr = "follow me"; break;
+        case FlightMode::Manual: flightModeStr = "manual"; break;
+        case FlightMode::Altctl: flightModeStr = "altitude"; break;
+        case FlightMode::Posctl: flightModeStr = "position"; break;
+        case FlightMode::Acro: flightModeStr = "acro"; break;
+        case FlightMode::Stabilized: flightModeStr = "stabilized"; break;
+        case FlightMode::Rattitude: flightModeStr = "rattitude"; break;
+    }
 
     txt.sprintf("%s\n"
                 "(%.3f, %.3f, %.3f, %.0f)\n"
-                "State: %s, %s\n",
+                "State: %s, %s\n"
+                "Mode: %s\n",
                 getName().toLocal8Bit().data(),
                 pos.getX(), pos.getY(), pos.getHeight(), angle,
                 (getIsArmed() ? "armed" : "disarmed"),
-                landedStateStr.toLocal8Bit().data());
+                landedStateStr.toLocal8Bit().data(),
+                flightModeStr.toLocal8Bit().data());
     pt_txt.setX(x + ((scale < 0.05) ? scaleIndependentSize : (getWidth() + getLength())/2));
     pt_txt.setY(y);
     painter.setTransform(txtTrans);
     pt_txt = drawTrans.map(pt_txt);
     rect_txt.setCoords(pt_txt.x(), pt_txt.y() - 40,
-                       pt_txt.x() + 400, pt_txt.y() + 45);
+                       pt_txt.x() + 400, pt_txt.y() + 65);
     painter.setPen(QPen(QPalette::Foreground));
     painter.drawText(rect_txt, txt);
 
@@ -201,4 +221,14 @@ CopterState::LandedState CopterState::getLandedState() const
 void CopterState::setLandedState(const CopterState::LandedState &landedState)
 {
     mLandedState = landedState;
+}
+
+CopterState::FlightMode CopterState::getFlightMode() const
+{
+    return mFlightMode;
+}
+
+void CopterState::setFlightMode(const FlightMode &flightMode)
+{
+    mFlightMode = flightMode;
 }

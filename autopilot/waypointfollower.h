@@ -93,7 +93,7 @@ private:
     QSharedPointer<MovementController> mMovementController;
     QSharedPointer<VehicleConnection> mVehicleConnection;
     QList <PosPoint> mWaypointList;
-    const unsigned mUpdateStatePeriod_ms = 50;
+    unsigned mUpdateStatePeriod_ms = 50;
     QTimer mUpdateStateTimer;
 
 };

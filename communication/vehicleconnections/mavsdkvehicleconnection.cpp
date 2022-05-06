@@ -75,10 +75,15 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
         mVehicleState->setVelocity(velocityCopter);
     });
 
-    if (mVehicleType == MAV_TYPE::MAV_TYPE_QUADROTOR)
+    if (mVehicleType == MAV_TYPE::MAV_TYPE_QUADROTOR) {
         mTelemetry->subscribe_landed_state([this](mavsdk::Telemetry::LandedState landedState) {
            mVehicleState.dynamicCast<CopterState>()->setLandedState(static_cast<CopterState::LandedState>(landedState));
         });
+
+        mTelemetry->subscribe_flight_mode([this](mavsdk::Telemetry::FlightMode flightMode) {
+            mVehicleState.dynamicCast<CopterState>()->setFlightMode(static_cast<CopterState::FlightMode>(flightMode));
+        });
+    }
 
     // Set up action plugin
     mAction.reset(new mavsdk::Action(mSystem));
@@ -189,19 +194,34 @@ void MavsdkVehicleConnection::requestReturnToHome()
         qDebug() << "Warning: MavsdkVehicleConnection is trying to land with an unknown/incompatible vehicle type, ignored.";
 }
 
-void MavsdkVehicleConnection::requestGotoLlh(const llh_t &llh)
+void MavsdkVehicleConnection::requestGotoLlh(const llh_t &llh, bool changeFlightmodeToHold)
 {
-    mAction->goto_location_async(llh.latitude, llh.longitude, llh.height, 0, [](mavsdk::Action::Result res){
-        if (res != mavsdk::Action::Result::Success)
-            qDebug() << "Warning: MavsdkVehicleConnection's goto request failed.";
-    });
+    if (changeFlightmodeToHold) { // MAVSDK will change flightmode if necessary, not always desired
+        mAction->goto_location_async(llh.latitude, llh.longitude, llh.height, NAN, [](mavsdk::Action::Result res){
+            if (res != mavsdk::Action::Result::Success)
+                qDebug() << "Warning: MavsdkVehicleConnection's goto request failed.";
+        });
+    } else {
+        mavsdk::MavlinkPassthrough::CommandInt ComInt;
+        memset(&ComInt, 0, sizeof (ComInt));
+        ComInt.target_compid = mMavlinkPassthrough->get_target_compid();
+        ComInt.target_sysid = mMavlinkPassthrough->get_target_sysid();
+        ComInt.command = MAV_CMD_DO_REPOSITION;
+        ComInt.param4 = NAN; // yaw in rad
+        ComInt.x = int32_t(std::round(llh.latitude * 1e7));
+        ComInt.y = int32_t(std::round(llh.longitude * 1e7));
+        ComInt.z = llh.height;
+
+        if (mMavlinkPassthrough->send_command_int(ComInt) != mavsdk::MavlinkPassthrough::Result::Success)
+            qDebug() << "Warning: MavsdkVehicleConnection's reposition request failed.";
+    }
 }
 
-void MavsdkVehicleConnection::requestGotoENU(const xyz_t &xyz)
+void MavsdkVehicleConnection::requestGotoENU(const xyz_t &xyz, bool changeFlightmodeToHold)
 {
     if (mConvertLocalPositionsToGlobalBeforeSending) {
         llh_t llh = coordinateTransforms::enuToLlh(mEnuReference, xyz);
-        requestGotoLlh(llh);
+        requestGotoLlh(llh, changeFlightmodeToHold);
     } else {
         qDebug() << "MavsdkVehicleConnection::requestGotoENU: sending local coordinates to vehicle without converting not implemented.";
     }

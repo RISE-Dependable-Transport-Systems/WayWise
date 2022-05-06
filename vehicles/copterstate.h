@@ -32,6 +32,25 @@ public:
         Landing
     };
 
+    // like MAVSDK FlightMode
+    enum class FlightMode {
+        Unknown,
+        Ready,
+        Takeoff,
+        Hold,
+        Mission,
+        ReturnToLaunch,
+        Land,
+        Offboard,
+        FollowMe,
+        Manual,
+        Altctl,
+        Posctl,
+        Acro,
+        Stabilized,
+        Rattitude
+    };
+
     CopterState(int id = 0, Qt::GlobalColor color = Qt::red);
 
     virtual void draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected = true);
@@ -41,10 +60,14 @@ public:
     LandedState getLandedState() const;
     void setLandedState(const LandedState &landedState);
 
+    FlightMode getFlightMode() const;
+    void setFlightMode(const FlightMode &flightMode);
+
 private:
     CopterFrameType mFrameType;
     int mPropellerSize; // [mm]
     LandedState mLandedState = LandedState::Unknown;
+    FlightMode mFlightMode = FlightMode::Unknown;
 };
 
 #endif // COPTERSTATE_H
