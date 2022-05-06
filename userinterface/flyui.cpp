@@ -128,6 +128,9 @@ FlyUI::GotoClickOnMapModule::GotoClickOnMapModule(FlyUI *parent) : mFlyUI(parent
     mGotoContextMenu.addAction(&mGotoAction);
     connect(&mGotoAction, &QAction::triggered, [&](){
         if (mFlyUI->mCurrentVehicleConnection) {
+            if (mFlyUI->mCurrentVehicleConnection->hasWaypointFollower() && mFlyUI->mCurrentVehicleConnection->getWaypointFollower()->isActive())
+                mFlyUI->mCurrentVehicleConnection->getWaypointFollower()->stop();
+
             mFlyUI->mCurrentVehicleConnection->requestGotoENU({mLastClickedMapPos.getX(), mLastClickedMapPos.getY(),
                                                                mFlyUI->mCurrentVehicleConnection->getVehicleState()->getPosition().getHeight()}, true);
         }

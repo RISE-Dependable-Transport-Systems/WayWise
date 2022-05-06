@@ -82,6 +82,10 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
 
         mTelemetry->subscribe_flight_mode([this](mavsdk::Telemetry::FlightMode flightMode) {
             mVehicleState.dynamicCast<CopterState>()->setFlightMode(static_cast<CopterState::FlightMode>(flightMode));
+
+            if (flightMode != mavsdk::Telemetry::FlightMode::Hold)
+                if (hasWaypointFollower() && getWaypointFollower()->isActive())
+                    getWaypointFollower()->stop();
         });
     }
 
