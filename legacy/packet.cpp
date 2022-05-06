@@ -63,7 +63,7 @@ Packet::Packet(QObject *parent) : QObject(parent)
     mTimer->setInterval(10);
     mTimer->start();
 
-    connect(mTimer, SIGNAL(timeout()), this, SLOT(timerSlot()));
+    connect(mTimer, &QTimer::timeout, this, &Packet::timerSlot);
 }
 
 void Packet::sendPacket(const QByteArray &data)

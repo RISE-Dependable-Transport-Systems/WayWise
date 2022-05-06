@@ -16,7 +16,6 @@ CANopenMovementController::CANopenMovementController(QSharedPointer<VehicleState
     mCanopenThread.reset(new QThread);
     mCANopenControllerInterface.reset(new CANopenControllerInterface());
     mCANopenControllerInterface->moveToThread(mCanopenThread.get());
-    //QObject::connect(worker, SIGNAL(error(QString)), this, SLOT(errorString(QString)));
     QObject::connect(mCanopenThread.get(), &QThread::started, mCANopenControllerInterface.get(), &CANopenControllerInterface::startDevice);
     QObject::connect(mCANopenControllerInterface.get(), &CANopenControllerInterface::finished, mCanopenThread.get(), &QThread::quit);
     QObject::connect(mCANopenControllerInterface.get(), &CANopenControllerInterface::activateSimulation, [&](){

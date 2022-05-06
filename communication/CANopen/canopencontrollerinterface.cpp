@@ -91,16 +91,18 @@ void CANopenControllerInterface::startDevice() {
         chan.open(ctrl);
         // Create a CANopen slave with node-ID 2.
         MySlave mSlave(timer, chan, "../sdvp_qtcommon/communication/CANopen/cpp-slave.eds", "", 2);
-        QObject::connect(&mSlave, SIGNAL(sendActualSpeed(double)), this, SLOT(actualSpeedReceived(double)));
-        QObject::connect(this, SIGNAL(sendCommandSpeed(double)), &mSlave, SLOT(commandSpeedReceived(double)));
-        QObject::connect(&mSlave, SIGNAL(sendActualSteering(double)), this, SLOT(actualSteeringReceived(double)));
-        QObject::connect(this, SIGNAL(sendCommandSteering(double)), &mSlave, SLOT(commandSteeringReceived(double)));
-        QObject::connect(&mSlave, SIGNAL(sendStatus(quint8)), this, SLOT(commandStatusReceived(quint8)));
-        QObject::connect(this, SIGNAL(sendActualStatus(quint8)), &mSlave, SLOT(statusReceived(quint8)));
-        QObject::connect(&mSlave, SIGNAL(sendBatterySOC(double)), this, SLOT(batterySOCReceived(double)));
-        QObject::connect(&mSlave, SIGNAL(sendBatteryVoltage(double)), this, SLOT(batteryVoltageReceived(double)));
-        QObject::connect(this, SIGNAL(sendCommandAttributes(quint32)), &mSlave, SLOT(commandAttributesReceived(quint32)));
-        QObject::connect(this, SIGNAL(sendGNSSDataToCAN(QVariant)), &mSlave, SLOT(GNSSDataToCANReceived(QVariant)));
+
+        QObject::connect(&mSlave, &MySlave::sendActualSpeed, this, &CANopenControllerInterface::actualSpeedReceived);
+        QObject::connect(&mSlave, &MySlave::sendActualSteering, this, &CANopenControllerInterface::actualSteeringReceived);
+        QObject::connect(&mSlave, &MySlave::sendStatus, this, &CANopenControllerInterface::commandStatusReceived);
+        QObject::connect(&mSlave, &MySlave::sendBatterySOC, this, &CANopenControllerInterface::batterySOCReceived);
+        QObject::connect(&mSlave, &MySlave::sendBatteryVoltage, this, &CANopenControllerInterface::batteryVoltageReceived);
+        QObject::connect(this, &CANopenControllerInterface::sendCommandSpeed, &mSlave, &MySlave::commandSpeedReceived);
+        QObject::connect(this, &CANopenControllerInterface::sendCommandSteering, &mSlave, &MySlave::commandSteeringReceived);
+        QObject::connect(this, &CANopenControllerInterface::sendActualStatus, &mSlave, &MySlave::statusReceived);
+        QObject::connect(this, &CANopenControllerInterface::sendCommandAttributes, &mSlave, &MySlave::commandAttributesReceived);
+        QObject::connect(this, &CANopenControllerInterface::sendGNSSDataToCAN, &mSlave, &MySlave::GNSSDataToCANReceived);
+
         // Create a signal handler.
         io::SignalSet sigset(poll, exec);
         // Watch for Ctrl+C or process termination.

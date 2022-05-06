@@ -210,9 +210,8 @@ Ublox::Ublox(QObject *parent) : QObject(parent)
 
     mSerialPort = new QSerialPort(this);
 
-    connect(mSerialPort, SIGNAL(readyRead()), this, SLOT(serialDataAvailable()));
-    connect(mSerialPort, SIGNAL(error(QSerialPort::SerialPortError)),
-            this, SLOT(serialPortError(QSerialPort::SerialPortError)));
+    connect(mSerialPort, &QSerialPort::readyRead, this, &Ublox::serialDataAvailable);
+    connect(mSerialPort, QOverload<QSerialPort::SerialPortError>::of(&QSerialPort::error), this, &Ublox::serialPortError);
 
     // Prevent unused warnings
     (void)ubx_get_U1;
@@ -1185,8 +1184,8 @@ bool Ublox::ubx_encode_send(uint8_t msg_class, uint8_t id, uint8_t *msg, int len
             timeoutTimer.start(timeoutMs);
             auto conn = connect(this, &Ublox::rxAck,
                                 [&loop, &retVal](uint8_t, uint8_t){retVal = true; loop.quit();});
-            connect(this, SIGNAL(rxNak(uint8_t,uint8_t)), &loop, SLOT(quit()));
-            connect(&timeoutTimer, SIGNAL(timeout()), &loop, SLOT(quit()));
+            connect(this, &Ublox::rxNak, &loop, &QEventLoop::quit);
+            connect(&timeoutTimer, &QTimer::timeout, &loop, &QEventLoop::quit);
 
             ubx_send(ubx);
             loop.exec();

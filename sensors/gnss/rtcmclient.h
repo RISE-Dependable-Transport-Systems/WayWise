@@ -55,7 +55,7 @@ private:
     NtripConnectionInfo mCurrentNtripConnectionInfo;
 
     // For parsing RTCMv3 (from RTKLIB)
-    static const char RTCM3_PREAMBLE = 0xD3;
+    const char RTCM3_PREAMBLE = 0xD3;
     static unsigned int getbitu(const char *buff, int pos, int len);
     static int getbits(const char *buff, int pos, int len);
     static double getbits_38(const char *buff, int pos);

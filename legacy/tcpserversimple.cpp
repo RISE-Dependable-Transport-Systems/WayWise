@@ -25,9 +25,8 @@ TcpServerSimple::TcpServerSimple(QObject *parent) : QObject(parent)
     mTcpSocket = 0;
     mUsePacket = false;
 
-    connect(mTcpServer, SIGNAL(newConnection()), this, SLOT(newTcpConnection()));
-    connect(mPacket, SIGNAL(dataToSend(QByteArray&)),
-            this, SLOT(dataToSend(QByteArray&)));
+    connect(mTcpServer, &QTcpServer::newConnection, this, &TcpServerSimple::newTcpConnection);
+    connect(mPacket, &Packet::dataToSend, this, &TcpServerSimple::dataToSend);
 }
 
 bool TcpServerSimple::startServer(int port)
@@ -85,11 +84,10 @@ void TcpServerSimple::newTcpConnection()
         mTcpSocket = socket;
 
         if (mTcpSocket) {
-            connect(mTcpSocket, SIGNAL(readyRead()), this, SLOT(tcpInputDataAvailable()));
-            connect(mTcpSocket, SIGNAL(disconnected()),
-                    this, SLOT(tcpInputDisconnected()));
-            connect(mTcpSocket, SIGNAL(error(QAbstractSocket::SocketError)),
-                    this, SLOT(tcpInputError(QAbstractSocket::SocketError)));
+            connect(mTcpSocket, &QTcpSocket::readyRead, this, &TcpServerSimple::tcpInputDataAvailable);
+            connect(mTcpSocket, &QTcpSocket::disconnected, this, &TcpServerSimple::tcpInputDisconnected);
+            connect(mTcpSocket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error), this, &TcpServerSimple::tcpInputError);
+
             emit connectionChanged(true);
         }
     }
