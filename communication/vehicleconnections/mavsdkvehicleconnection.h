@@ -48,8 +48,11 @@ public:
 
 signals:
     void gotVehicleHomeLlh(const llh_t &homePositionLlh);
+    void stopWaypointFollowerSignal(); // Used internally from MAVSDK callbacks (that live in other threads)
 
 private:
+    void stopWaypointFollower();
+
     MAV_TYPE mVehicleType;
     llh_t mEnuReference;
     llh_t mGpsGlobalOrigin; // reference for on-vehicle EKF (origin in NED, ENU frames on vehicle)

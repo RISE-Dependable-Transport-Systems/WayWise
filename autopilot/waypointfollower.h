@@ -27,7 +27,8 @@ struct WayPointFollowerState {
     // Follow Route
     int numWaypointsLookahead = 8;
     bool repeatRoute = false;
-    double overrideAltitude = 2.5; // for flying vehicles
+    // -- for flying vehicles
+    double overrideAltitude = 0.0;
     // Follow Point
     PosPoint currentFollowPointInVehicleFrame; // independent of positioning
     double followPointSpeed = 1.5;

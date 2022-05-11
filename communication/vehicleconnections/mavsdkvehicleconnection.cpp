@@ -84,8 +84,10 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
             mVehicleState.dynamicCast<CopterState>()->setFlightMode(static_cast<CopterState::FlightMode>(flightMode));
 
             if (flightMode != mavsdk::Telemetry::FlightMode::Hold)
-                if (hasWaypointFollower() && getWaypointFollower()->isActive())
-                    getWaypointFollower()->stop();
+                if (hasWaypointFollower() && getWaypointFollower()->isActive()) {
+                    emit stopWaypointFollowerSignal();
+                    qDebug() << "Note: WaypointFollower stopped by flightmode change.";
+                }
         });
     }
 
@@ -101,6 +103,8 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
     // Set up MAVLINK passthrough to send rtcm data to drone (no plugin exists for this in MAVSDK v1.2.0)
     mMavlinkPassthrough.reset(new mavsdk::MavlinkPassthrough(mSystem));
 
+    // Necessary such that MAVSDK callbacks (from other threads) can stop WaypointFollower (QTimer)
+    connect(this, &MavsdkVehicleConnection::stopWaypointFollowerSignal, this, &MavsdkVehicleConnection::stopWaypointFollower);
 }
 
 void MavsdkVehicleConnection::setEnuReference(const llh_t &enuReference)
@@ -350,6 +354,12 @@ void MavsdkVehicleConnection::setWaypointFollower(const QSharedPointer<WaypointF
 bool MavsdkVehicleConnection::hasWaypointFollower()
 {
     return !mWaypointFollower.isNull();
+}
+
+void MavsdkVehicleConnection::stopWaypointFollower()
+{
+    if (hasWaypointFollower())
+        getWaypointFollower()->stop();
 }
 
 QSharedPointer<WaypointFollower> MavsdkVehicleConnection::getWaypointFollower() const

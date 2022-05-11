@@ -52,6 +52,10 @@ void WaypointFollower::addRoute(const QList<PosPoint> &route)
 
 void WaypointFollower::startFollowingRoute(bool fromBeginning)
 {
+    const auto &vehicleState = (isOnVehicle() ? mMovementController->getVehicleState() : mVehicleConnection->getVehicleState());
+    mCurrentState.overrideAltitude = vehicleState->getPosition(mPosTypeUsed).getHeight();
+    qDebug() << "Note: WaypointFollower starts following route. Height info from route is ignored (staying at" << QString::number(mCurrentState.overrideAltitude, 'g', 2) << "m).";
+
     if (fromBeginning || mCurrentState.stmState == NONE)
         mCurrentState.stmState = FOLLOW_ROUTE_INIT;
 
