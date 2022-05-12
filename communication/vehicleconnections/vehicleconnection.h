@@ -11,6 +11,7 @@
 #include <QObject>
 #include "core/coordinatetransforms.h"
 #include "vehicles/vehiclestate.h"
+#include "sensors/camera/gimbal.h"
 
 class VehicleConnection : public QObject
 {
@@ -19,13 +20,14 @@ public:
     virtual void requestGotoENU(const xyz_t &xyz, bool changeAutopilotMode = false) = 0;
 
     QSharedPointer<VehicleState> getVehicleState() const {return mVehicleState;};
+    QSharedPointer<Gimbal> getGimbal() const {return mGimbal;};
+    bool hasGimbal() const {return !mGimbal.isNull();};
 
 signals:
 
 protected:
     QSharedPointer<VehicleState> mVehicleState;
-
-private:
+    QSharedPointer<Gimbal> mGimbal = nullptr;
 
 };
 

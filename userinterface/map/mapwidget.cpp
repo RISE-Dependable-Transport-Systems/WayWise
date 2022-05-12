@@ -258,13 +258,25 @@ void MapWidget::mousePressEvent(QMouseEvent *e)
     QPoint p = getMousePosRelative();
     mousePosMap.setXY(p.x() / 1000.0, p.y() / 1000.0);
 
-    for (const auto& m: mMapModules) {
-        if (m->processMouse(true, false, false, false,
-                            mousePosWidget, mousePosMap, 0.0,
-                            e->modifiers(),
-                            e->buttons(),
-                            mScaleFactor)) {
-            return;
+    if (e->buttons() == Qt::RightButton) { // right click -> create context menu
+        QMenu rightClickContextMenu;
+        for (const auto& m: mMapModules) {
+            QSharedPointer<QMenu> mapModuleContextMenu = m->populateContextMenu({mousePosMap.getX(), mousePosMap.getY(), 0.0}, mRefLlh);
+            if (!mapModuleContextMenu.isNull())
+                rightClickContextMenu.addActions(mapModuleContextMenu->actions());
+        }
+
+        if (!rightClickContextMenu.isEmpty())
+            executeContextMenu(rightClickContextMenu);
+    } else {
+        for (const auto& m: mMapModules) {
+            if (m->processMouse(true, false, false, false,
+                                mousePosWidget, mousePosMap, 0.0,
+                                e->modifiers(),
+                                e->buttons(),
+                                mScaleFactor)) {
+                return;
+            }
         }
     }
 

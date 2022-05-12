@@ -4,12 +4,17 @@
  */
 #include "mavsdkvehicleconnection.h"
 #include "vehicles/copterstate.h"
+#include "sensors/camera/mavsdkgimbal.h"
 #include <QDebug>
 #include <QDateTime>
 
 MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System> system)
 {
     mSystem = system;
+
+    // Setup gimbal (TODO: and camera?)
+    if (mSystem->has_gimbal())
+        mGimbal = QSharedPointer<MavsdkGimbal>::create(mSystem);
 
     // TODO: create respective class depending on MAV_TYPE (but not accessible in MAVSDK?!)
     mVehicleType = MAV_TYPE::MAV_TYPE_QUADROTOR;

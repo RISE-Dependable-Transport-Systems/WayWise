@@ -65,12 +65,12 @@ private:
     public:
         explicit GotoClickOnMapModule(FlyUI *parent);
         virtual void processPaint(QPainter &painter, int width, int height, bool highQuality, QTransform drawTrans, QTransform txtTrans, double scale) override;
-        virtual bool processMouse(bool isPress, bool isRelease, bool isMove, bool isWheel, QPoint widgetPos, PosPoint mapPos, double wheelAngleDelta, Qt::KeyboardModifiers keyboardModifiers, Qt::MouseButtons mouseButtons, double scale) override;
+        virtual QSharedPointer<QMenu> populateContextMenu(const xyz_t &mapPos, const llh_t &enuReference) override;
     private:
         FlyUI *mFlyUI;
-        QMenu mGotoContextMenu;
-        QAction mGotoAction;
-        PosPoint mLastClickedMapPos;
+        QSharedPointer<QMenu> mGotoContextMenu;
+        QSharedPointer<QAction> mGotoAction;
+        xyz_t mLastClickedMapPos;
     };
 
     Ui::FlyUI *ui;
