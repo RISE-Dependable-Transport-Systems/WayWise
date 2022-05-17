@@ -34,6 +34,7 @@ private:
     mavsdk::Mavsdk mMavsdk;
     QMap<int, QSharedPointer<MavsdkVehicleConnection>> mVehicleConnectionMap;
 
+    bool gotASystem = false;
 };
 
 #endif // MAVSDKSTATION_H

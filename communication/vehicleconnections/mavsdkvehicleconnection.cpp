@@ -7,11 +7,13 @@
 #include "sensors/camera/mavsdkgimbal.h"
 #include <QDebug>
 #include <QDateTime>
+#include <QThread>
 
 MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System> system)
 {
     mSystem = system;
 
+    QThread::usleep(200);
     // Setup gimbal (TODO: and camera?)
     if (mSystem->has_gimbal())
         mGimbal = QSharedPointer<MavsdkGimbal>::create(mSystem);
@@ -344,6 +346,14 @@ void MavsdkVehicleConnection::sendSetGpsOriginLlh(const llh_t &gpsOriginLlh)
         qDebug() << "Warning: could not send GPS_GLOBAL_ORIGIN via MAVLINK.";
     else
         qDebug() << "Sent GPS_GLOBAL_ORIGIN via MAVLINK:" << gpsOriginLlh.latitude << gpsOriginLlh.longitude;
+}
+
+void MavsdkVehicleConnection::setActuator(int index, float value)
+{
+    mAction->set_actuator_async(index, value, [](mavsdk::Action::Result res){
+        if (res != mavsdk::Action::Result::Success)
+            qDebug() << "Warning: MavsdkVehicleConnection's set_actuator request failed.";
+    });
 }
 
 void MavsdkVehicleConnection::setConvertLocalPositionsToGlobalBeforeSending(bool convertLocalPositionsToGlobalBeforeSending)

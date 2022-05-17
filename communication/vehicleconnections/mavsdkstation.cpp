@@ -4,11 +4,19 @@
  */
 #include "mavsdkstation.h"
 #include <QtDebug>
+#include <QThread>
 
 MavsdkStation::MavsdkStation(QObject *parent) : QObject(parent)
 {
     mMavsdk.subscribe_on_new_system([this](){
+        if (gotASystem)
+            return;
+        gotASystem = true;
         int vehicleID = mMavsdk.systems().back()->get_system_id();
+
+        qDebug() << "Got sysid: " << vehicleID;
+        if (vehicleID != 1)
+            vehicleID = mMavsdk.systems().front()->get_system_id();
         QSharedPointer<MavsdkVehicleConnection> vehicleConnection = QSharedPointer<MavsdkVehicleConnection>::create(mMavsdk.systems().back());
 
         mVehicleConnectionMap.insert(vehicleID, vehicleConnection);

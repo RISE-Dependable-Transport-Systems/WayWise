@@ -6,6 +6,9 @@
 #include "sensors/camera/gimbal.h"
 #include "userinterface/map/mapwidget.h"
 
+// TODO: quick test, refactor!
+#include "communication/vehicleconnections/mavsdkstation.h"
+
 namespace Ui {
 class CameraGimbalUI;
 }
@@ -20,7 +23,39 @@ public:
     void setGimbal(const QSharedPointer<Gimbal> gimbal);
     QSharedPointer<MapModule> getSetRoiByClickOnMapModule() const;
 
+    void setMavVehicleConnection(const QSharedPointer<MavsdkVehicleConnection> &mavVehicleConnection);
+
 private slots:
+    void on_pushButton_11_clicked();
+
+private slots:
+    void on_pushButton_10_clicked();
+
+private slots:
+    void on_pushButton_9_clicked();
+
+private slots:
+    void on_pushButton_8_clicked();
+
+private slots:
+    void on_pushButton_clicked();
+
+private slots:
+    void on_actuatorTwoHighButton_clicked();
+
+private slots:
+    void on_actuatorTwoMidButton_clicked();
+
+private slots:
+    void on_actuatorTwoLowButton_clicked();
+
+private slots:
+
+    void on_actuatorOneLowButton_clicked();
+
+    void on_actuatorOneMidButton_clicked();
+
+    void on_actuatorOneHighButton_clicked();
 
 private:
     class SetRoiByClickOnMapModule : public MapModule {
@@ -41,6 +76,8 @@ private:
     Ui::CameraGimbalUI *ui;
     QSharedPointer<Gimbal> mGimbal;
     QSharedPointer<SetRoiByClickOnMapModule> mSetRoiByClickOnMapModule;
+    QSharedPointer<MavsdkVehicleConnection> mMavVehicleConnection;
+    QPair<double, double> mPitchYawState = {0.0, 0.0};
 };
 
 #endif // CAMERAGIMBALUI_H

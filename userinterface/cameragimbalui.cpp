@@ -26,6 +26,11 @@ QSharedPointer<MapModule> CameraGimbalUI::getSetRoiByClickOnMapModule() const
     return mSetRoiByClickOnMapModule;
 }
 
+void CameraGimbalUI::setMavVehicleConnection(const QSharedPointer<MavsdkVehicleConnection> &mavVehicleConnection)
+{
+    mMavVehicleConnection = mavVehicleConnection;
+}
+
 CameraGimbalUI::SetRoiByClickOnMapModule::SetRoiByClickOnMapModule(CameraGimbalUI *parent) : mCameraGimbalUI(parent)
 {
     mSetRoiAction = QSharedPointer<QAction>::create(this);
@@ -80,4 +85,64 @@ QSharedPointer<QMenu> CameraGimbalUI::SetRoiByClickOnMapModule::populateContextM
     mLastEnuRefFromMap = enuReference;
 
     return mRoiContextMenu;
+}
+
+void CameraGimbalUI::on_actuatorOneLowButton_clicked()
+{
+    mMavVehicleConnection->setActuator(1, -1.0f);
+}
+
+void CameraGimbalUI::on_actuatorOneMidButton_clicked()
+{
+    mMavVehicleConnection->setActuator(1, 0.0f);
+}
+
+void CameraGimbalUI::on_actuatorOneHighButton_clicked()
+{
+    mMavVehicleConnection->setActuator(1, 1.0f);
+}
+
+void CameraGimbalUI::on_actuatorTwoLowButton_clicked()
+{
+    mMavVehicleConnection->setActuator(2, -1.0f);
+}
+
+void CameraGimbalUI::on_actuatorTwoMidButton_clicked()
+{
+    mMavVehicleConnection->setActuator(2, 0.0f);
+}
+
+void CameraGimbalUI::on_actuatorTwoHighButton_clicked()
+{
+    mMavVehicleConnection->setActuator(2, 1.0f);
+}
+
+void CameraGimbalUI::on_pushButton_clicked()
+{
+    mPitchYawState = {0.0, 0.0};
+    mGimbal->setPitchAndYaw(mPitchYawState.first, mPitchYawState.second);
+}
+
+void CameraGimbalUI::on_pushButton_8_clicked()
+{
+    mPitchYawState.second += 1.0;
+    mGimbal->setPitchAndYaw(mPitchYawState.first, mPitchYawState.second);
+}
+
+void CameraGimbalUI::on_pushButton_9_clicked()
+{
+    mPitchYawState.second += 5.0;
+    mGimbal->setPitchAndYaw(mPitchYawState.first, mPitchYawState.second);
+}
+
+void CameraGimbalUI::on_pushButton_10_clicked()
+{
+    mPitchYawState.second += 15.0;
+    mGimbal->setPitchAndYaw(mPitchYawState.first, mPitchYawState.second);
+}
+
+void CameraGimbalUI::on_pushButton_11_clicked()
+{
+    mPitchYawState.first += 1.0;
+    mGimbal->setPitchAndYaw(mPitchYawState.first, mPitchYawState.second);
 }
