@@ -2,6 +2,7 @@
 #define CAMERAGIMBALUI_H
 
 #include <QWidget>
+#include <QMediaPlayer>
 #include <QSharedPointer>
 #include "sensors/camera/gimbal.h"
 #include "userinterface/map/mapwidget.h"
@@ -51,6 +52,10 @@ private slots:
 
     void on_yawLockButton_clicked();
 
+    void on_streamConnectButton_clicked();
+
+    void on_streamDisconnectButton_clicked();
+
 private:
     class SetRoiByClickOnMapModule : public MapModule {
         // MapModule interface
@@ -79,6 +84,8 @@ private:
     // Values for Gremsy Pixy U (https://gremsy.com/pixy-u-manual)
     const QPair<double, double> YAW_RANGE = {-320.0, +320.0};
     const QPair<double, double> PITCH_RANGE = {-45.0, 135.0};
+
+    QSharedPointer<QMediaPlayer> mMediaPlayer = nullptr;
 };
 
 #endif // CAMERAGIMBALUI_H

@@ -79,7 +79,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset>
+             <iconset resource="../../resources.qrc">
               <normaloff>:/icons/icons/icons8-double-right-96.png</normaloff>:/icons/icons/icons8-double-right-96.png</iconset>
             </property>
            </widget>
@@ -90,7 +90,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset>
+             <iconset resource="../../resources.qrc">
               <normaloff>:/icons/icons/icons8-triple-up-96.png</normaloff>:/icons/icons/icons8-triple-up-96.png</iconset>
             </property>
            </widget>
@@ -101,7 +101,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset>
+             <iconset resource="../../resources.qrc">
               <normaloff>:/icons/icons/icons8-double-down-96.png</normaloff>:/icons/icons/icons8-double-down-96.png</iconset>
             </property>
            </widget>
@@ -112,7 +112,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset>
+             <iconset resource="../../resources.qrc">
               <normaloff>:/icons/icons/icons8-double-up-96.png</normaloff>:/icons/icons/icons8-double-up-96.png</iconset>
             </property>
            </widget>
@@ -123,7 +123,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset>
+             <iconset resource="../../resources.qrc">
               <normaloff>:/icons/icons/icons8-circle-96.png</normaloff>:/icons/icons/icons8-circle-96.png</iconset>
             </property>
            </widget>
@@ -134,7 +134,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset>
+             <iconset resource="../../resources.qrc">
               <normaloff>:/icons/icons/icons8-triple-down-96.png</normaloff>:/icons/icons/icons8-triple-down-96.png</iconset>
             </property>
            </widget>
@@ -145,7 +145,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset>
+             <iconset resource="../../resources.qrc">
               <normaloff>:/icons/icons/icons8-double-left-96.png</normaloff>:/icons/icons/icons8-double-left-96.png</iconset>
             </property>
            </widget>
@@ -156,7 +156,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset>
+             <iconset resource="../../resources.qrc">
               <normaloff>:/icons/icons/icons8-single-down-96.png</normaloff>:/icons/icons/icons8-single-down-96.png</iconset>
             </property>
            </widget>
@@ -167,7 +167,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset>
+             <iconset resource="../../resources.qrc">
               <normaloff>:/icons/icons/icons8-triple-right-96.png</normaloff>:/icons/icons/icons8-triple-right-96.png</iconset>
             </property>
            </widget>
@@ -178,7 +178,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset>
+             <iconset resource="../../resources.qrc">
               <normaloff>:/icons/icons/icons8-single-right-96.png</normaloff>:/icons/icons/icons8-single-right-96.png</iconset>
             </property>
            </widget>
@@ -189,7 +189,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset>
+             <iconset resource="../../resources.qrc">
               <normaloff>:/icons/icons/icons8-single-up-96.png</normaloff>:/icons/icons/icons8-single-up-96.png</iconset>
             </property>
            </widget>
@@ -200,7 +200,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset>
+             <iconset resource="../../resources.qrc">
               <normaloff>:/icons/icons/icons8-single-left-96.png</normaloff>:/icons/icons/icons8-single-left-96.png</iconset>
             </property>
            </widget>
@@ -211,7 +211,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset>
+             <iconset resource="../../resources.qrc">
               <normaloff>:/icons/icons/icons8-triple-left-96.png</normaloff>:/icons/icons/icons8-triple-left-96.png</iconset>
             </property>
            </widget>
@@ -359,14 +359,61 @@
     </widget>
    </item>
    <item>
+    <widget class="QGroupBox" name="streamGroup">
+     <property name="title">
+      <string>Video stream</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_4">
+      <item>
+       <widget class="QLineEdit" name="streamUrlEdit">
+        <property name="text">
+         <string>rtsp://192.168.43.1:8554/fpv_stream</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_4">
+        <item>
+         <widget class="QPushButton" name="streamConnectButton">
+          <property name="text">
+           <string>Connect</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="streamDisconnectButton">
+          <property name="text">
+           <string>Disconnect</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QVideoWidget" name="videoWidget" native="true">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>200</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
     <spacer name="verticalSpacer">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
      </property>
+     <property name="sizeType">
+      <enum>QSizePolicy::Expanding</enum>
+     </property>
      <property name="sizeHint" stdset="0">
       <size>
        <width>20</width>
-       <height>40</height>
+       <height>20</height>
       </size>
      </property>
     </spacer>
@@ -403,6 +450,16 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <customwidgets>
+  <customwidget>
+   <class>QVideoWidget</class>
+   <extends>QWidget</extends>
+   <header>QVideoWidget</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="../../resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

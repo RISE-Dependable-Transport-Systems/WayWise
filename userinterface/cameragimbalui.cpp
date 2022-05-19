@@ -6,6 +6,7 @@ CameraGimbalUI::CameraGimbalUI(QWidget *parent) :
     ui(new Ui::CameraGimbalUI)
 {
     ui->setupUi(this);
+    ui->videoWidget->hide();
     mSetRoiByClickOnMapModule = QSharedPointer<SetRoiByClickOnMapModule>::create(this);
 }
 
@@ -214,4 +215,22 @@ void CameraGimbalUI::on_yawFollowButton_clicked()
 void CameraGimbalUI::on_yawLockButton_clicked()
 {
     mGimbal->setYawLocked(true);
+}
+
+void CameraGimbalUI::on_streamConnectButton_clicked()
+{
+    if (mMediaPlayer.isNull()) {
+        mMediaPlayer = QSharedPointer<QMediaPlayer>::create(this, QMediaPlayer::VideoSurface);
+        mMediaPlayer->setVideoOutput(ui->videoWidget);
+    }
+
+    ui->videoWidget->show();
+    mMediaPlayer->setMedia(QUrl(ui->streamUrlEdit->text()));
+    mMediaPlayer->play();
+}
+
+void CameraGimbalUI::on_streamDisconnectButton_clicked()
+{
+    mMediaPlayer->stop();
+    ui->videoWidget->hide();
 }
