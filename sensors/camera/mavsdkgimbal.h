@@ -19,6 +19,7 @@ private:
 public:
     virtual void setRegionOfInterest(const llh_t &roiLlh) override;
     virtual void setPitchAndYaw(double pitch_deg, double yaw_deg) override;
+    virtual void setYawLocked(bool setLocked) override;
 };
 
 #endif // MAVSDKGIMBAL_H

@@ -29,6 +29,14 @@ void MavsdkGimbal::setPitchAndYaw(double pitch_deg, double yaw_deg)
 {
     mMavsdkGimbal->set_pitch_and_yaw_async(pitch_deg, yaw_deg, [](mavsdk::Gimbal::Result result) {
         if (result != mavsdk::Gimbal::Result::Success)
-            qDebug() << "Warning: MavsdkGimbal failed to set ROI.";
+            qDebug() << "Warning: MavsdkGimbal failed to set pitch & yaw.";
+    });
+}
+
+void MavsdkGimbal::setYawLocked(bool setLocked)
+{
+    mMavsdkGimbal->set_mode_async((setLocked ? mavsdk::Gimbal::GimbalMode::YawLock : mavsdk::Gimbal::GimbalMode::YawFollow), [](mavsdk::Gimbal::Result result) {
+        if (result != mavsdk::Gimbal::Result::Success)
+            qDebug() << "Warning: MavsdkGimbal failed to lock/unlock yaw.";
     });
 }

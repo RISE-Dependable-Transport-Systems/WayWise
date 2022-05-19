@@ -17,8 +17,11 @@ CameraGimbalUI::~CameraGimbalUI()
 void CameraGimbalUI::setGimbal(const QSharedPointer<Gimbal> gimbal)
 {
     mGimbal = gimbal;
-    if (!gimbal.isNull())
+    if (!gimbal.isNull()) {
         ui->gimbalStatusLabel->setText("Gimbal found.");
+        ui->gimbalControlGroup->setEnabled(true);
+        ui->cameraControlGroup->setEnabled(true);
+    }
 }
 
 QSharedPointer<MapModule> CameraGimbalUI::getSetRoiByClickOnMapModule() const
@@ -117,32 +120,98 @@ void CameraGimbalUI::on_actuatorTwoHighButton_clicked()
     mMavVehicleConnection->setActuator(2, 1.0f);
 }
 
-void CameraGimbalUI::on_pushButton_clicked()
+void CameraGimbalUI::on_zeroButton_clicked()
 {
     mPitchYawState = {0.0, 0.0};
     mGimbal->setPitchAndYaw(mPitchYawState.first, mPitchYawState.second);
 }
 
-void CameraGimbalUI::on_pushButton_8_clicked()
+void CameraGimbalUI::on_upButton_clicked()
 {
-    mPitchYawState.second += 1.0;
+    moveGimbal(SMALL_STEP, 0.0);
+}
+
+void CameraGimbalUI::on_rightButton_clicked()
+{
+    moveGimbal(0.0, SMALL_STEP);
+}
+
+void CameraGimbalUI::on_downButton_clicked()
+{
+    moveGimbal(-SMALL_STEP, 0.0);
+}
+
+void CameraGimbalUI::on_leftButton_clicked()
+{
+    moveGimbal(0.0, -SMALL_STEP);
+}
+
+void CameraGimbalUI::on_doubleUpButton_clicked()
+{
+    moveGimbal(MEDIUM_STEP, 0.0);
+}
+
+void CameraGimbalUI::on_doubleRightButton_clicked()
+{
+    moveGimbal(0.0, MEDIUM_STEP);
+}
+
+void CameraGimbalUI::on_doubleDownButton_clicked()
+{
+    moveGimbal(-MEDIUM_STEP, 0.0);
+}
+
+void CameraGimbalUI::on_doubleLeftButton_clicked()
+{
+    moveGimbal(0.0, -MEDIUM_STEP);
+}
+
+void CameraGimbalUI::on_tripleUpButton_clicked()
+{
+    moveGimbal(BIG_STEP, 0.0);
+}
+
+void CameraGimbalUI::on_tripleRightButton_clicked()
+{
+    moveGimbal(0.0, BIG_STEP);
+}
+
+void CameraGimbalUI::on_tripleDownButton_clicked()
+{
+    moveGimbal(-BIG_STEP, 0.0);
+}
+
+void CameraGimbalUI::on_trippleLeftButton_clicked()
+{
+    moveGimbal(0.0, -BIG_STEP);
+}
+
+void CameraGimbalUI::moveGimbal(double pitch_deg, double yaw_deg)
+{
+    mPitchYawState.first += pitch_deg;
+    mPitchYawState.second += yaw_deg;
+
+    // ignore pitch requests outside of range
+    if (mPitchYawState.first > PITCH_RANGE.second)
+        mPitchYawState.first = PITCH_RANGE.second;
+    if (mPitchYawState.first < PITCH_RANGE.first)
+        mPitchYawState.first = PITCH_RANGE.first;
+
+    // normalize yaw requests
+    while (mPitchYawState.second > YAW_RANGE.second)
+        mPitchYawState.second -= 360.0;
+    while (mPitchYawState.second < YAW_RANGE.first)
+        mPitchYawState.second += 360.0;
+
     mGimbal->setPitchAndYaw(mPitchYawState.first, mPitchYawState.second);
 }
 
-void CameraGimbalUI::on_pushButton_9_clicked()
+void CameraGimbalUI::on_yawFollowButton_clicked()
 {
-    mPitchYawState.second += 5.0;
-    mGimbal->setPitchAndYaw(mPitchYawState.first, mPitchYawState.second);
+    mGimbal->setYawLocked(false);
 }
 
-void CameraGimbalUI::on_pushButton_10_clicked()
+void CameraGimbalUI::on_yawLockButton_clicked()
 {
-    mPitchYawState.second += 15.0;
-    mGimbal->setPitchAndYaw(mPitchYawState.first, mPitchYawState.second);
-}
-
-void CameraGimbalUI::on_pushButton_11_clicked()
-{
-    mPitchYawState.first += 1.0;
-    mGimbal->setPitchAndYaw(mPitchYawState.first, mPitchYawState.second);
+    mGimbal->setYawLocked(true);
 }
