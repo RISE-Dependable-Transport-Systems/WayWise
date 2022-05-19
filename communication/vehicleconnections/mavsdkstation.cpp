@@ -9,21 +9,19 @@
 MavsdkStation::MavsdkStation(QObject *parent) : QObject(parent)
 {
     mMavsdk.subscribe_on_new_system([this](){
-        if (gotASystem)
-            return;
-        gotASystem = true;
-        int vehicleID = mMavsdk.systems().back()->get_system_id();
+        for (const auto &system : mMavsdk.systems()) {
+            if (system->has_autopilot() && !mVehicleConnectionMap.contains(system->get_system_id())) {
+                QSharedPointer<MavsdkVehicleConnection> vehicleConnection = QSharedPointer<MavsdkVehicleConnection>::create(system);
+                mVehicleConnectionMap.insert(system->get_system_id(), vehicleConnection);
 
-        qDebug() << "Got sysid: " << vehicleID;
-        if (vehicleID != 1)
-            vehicleID = mMavsdk.systems().front()->get_system_id();
-        QSharedPointer<MavsdkVehicleConnection> vehicleConnection = QSharedPointer<MavsdkVehicleConnection>::create(mMavsdk.systems().back());
+                // move to same QThread MavsdkStation lives in
+                vehicleConnection->moveToThread(thread());
 
-        mVehicleConnectionMap.insert(vehicleID, vehicleConnection);
-        // move to same QThread MavsdkStation lives in
-        vehicleConnection->moveToThread(thread());
-
-        emit gotNewVehicleConnection(vehicleConnection);
+                qDebug() << "Note: MavsdkStation added system" << system->get_system_id();
+                emit gotNewVehicleConnection(vehicleConnection);
+            } else
+                qDebug() << "Note: MavsdkStation ignored system" << system->get_system_id();
+        }
     });
 }
 

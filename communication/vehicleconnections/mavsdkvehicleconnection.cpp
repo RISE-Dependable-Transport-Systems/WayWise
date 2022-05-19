@@ -7,16 +7,20 @@
 #include "sensors/camera/mavsdkgimbal.h"
 #include <QDebug>
 #include <QDateTime>
-#include <QThread>
 
 MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System> system)
 {
     mSystem = system;
 
-    QThread::usleep(200);
-    // Setup gimbal (TODO: and camera?)
-    if (mSystem->has_gimbal())
+    // Setup gimbal
+    mSystem->register_component_discovered_callback([this](mavsdk::System::ComponentType){
+        if (mSystem->has_gimbal() && mGimbal.isNull())
+            mGimbal = QSharedPointer<MavsdkGimbal>::create(mSystem);
+    });
+    if (mSystem->has_gimbal() && mGimbal.isNull()) // Gimbal might have been discovered before callback was registered
         mGimbal = QSharedPointer<MavsdkGimbal>::create(mSystem);
+
+
 
     // TODO: create respective class depending on MAV_TYPE (but not accessible in MAVSDK?!)
     mVehicleType = MAV_TYPE::MAV_TYPE_QUADROTOR;
@@ -348,7 +352,7 @@ void MavsdkVehicleConnection::sendSetGpsOriginLlh(const llh_t &gpsOriginLlh)
         qDebug() << "Sent GPS_GLOBAL_ORIGIN via MAVLINK:" << gpsOriginLlh.latitude << gpsOriginLlh.longitude;
 }
 
-void MavsdkVehicleConnection::setActuator(int index, float value)
+void MavsdkVehicleConnection::setActuatorOutput(int index, float value)
 {
     mAction->set_actuator_async(index, value, [](mavsdk::Action::Result res){
         if (res != mavsdk::Action::Result::Success)

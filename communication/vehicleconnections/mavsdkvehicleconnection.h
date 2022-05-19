@@ -39,7 +39,7 @@ public:
     void sendLandingTargetLlh(const llh_t &landingTargetLlh);
     void sendLandingTargetENU(const xyz_t &landingTargetENU);
     void sendSetGpsOriginLlh(const llh_t &gpsOriginLlh);
-    void setActuator(int index, float value);
+    virtual void setActuatorOutput(int index, float value) override;
 
     void setConvertLocalPositionsToGlobalBeforeSending(bool convertLocalPositionsToGlobalBeforeSending);
 

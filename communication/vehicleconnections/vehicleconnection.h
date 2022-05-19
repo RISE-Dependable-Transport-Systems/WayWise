@@ -9,6 +9,7 @@
 #define VEHICLECONNECTION_H
 
 #include <QObject>
+#include <QDebug>
 #include "core/coordinatetransforms.h"
 #include "vehicles/vehiclestate.h"
 #include "sensors/camera/gimbal.h"
@@ -18,6 +19,7 @@ class VehicleConnection : public QObject
     Q_OBJECT
 public:
     virtual void requestGotoENU(const xyz_t &xyz, bool changeAutopilotMode = false) = 0;
+    virtual void setActuatorOutput(int index, float value) {qDebug() << "Warning: VehicleConnection::setActuatorOutput() not implemented";}; // TODO: pretty PX4-specific
 
     QSharedPointer<VehicleState> getVehicleState() const {return mVehicleState;};
     QSharedPointer<Gimbal> getGimbal() const {return mGimbal;};

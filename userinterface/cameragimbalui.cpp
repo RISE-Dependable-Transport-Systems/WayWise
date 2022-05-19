@@ -29,9 +29,9 @@ QSharedPointer<MapModule> CameraGimbalUI::getSetRoiByClickOnMapModule() const
     return mSetRoiByClickOnMapModule;
 }
 
-void CameraGimbalUI::setMavVehicleConnection(const QSharedPointer<MavsdkVehicleConnection> &mavVehicleConnection)
+void CameraGimbalUI::setVehicleConnection(const QSharedPointer<VehicleConnection> &vehicleConnection)
 {
-    mMavVehicleConnection = mavVehicleConnection;
+    mVehicleConnection = vehicleConnection;
 }
 
 CameraGimbalUI::SetRoiByClickOnMapModule::SetRoiByClickOnMapModule(CameraGimbalUI *parent) : mCameraGimbalUI(parent)
@@ -92,32 +92,32 @@ QSharedPointer<QMenu> CameraGimbalUI::SetRoiByClickOnMapModule::populateContextM
 
 void CameraGimbalUI::on_actuatorOneLowButton_clicked()
 {
-    mMavVehicleConnection->setActuator(1, -1.0f);
+    mVehicleConnection->setActuatorOutput(1, -1.0f);
 }
 
 void CameraGimbalUI::on_actuatorOneMidButton_clicked()
 {
-    mMavVehicleConnection->setActuator(1, 0.0f);
+    mVehicleConnection->setActuatorOutput(1, 0.0f);
 }
 
 void CameraGimbalUI::on_actuatorOneHighButton_clicked()
 {
-    mMavVehicleConnection->setActuator(1, 1.0f);
+    mVehicleConnection->setActuatorOutput(1, 1.0f);
 }
 
 void CameraGimbalUI::on_actuatorTwoLowButton_clicked()
 {
-    mMavVehicleConnection->setActuator(2, -1.0f);
+    mVehicleConnection->setActuatorOutput(2, -1.0f);
 }
 
 void CameraGimbalUI::on_actuatorTwoMidButton_clicked()
 {
-    mMavVehicleConnection->setActuator(2, 0.0f);
+    mVehicleConnection->setActuatorOutput(2, 0.0f);
 }
 
 void CameraGimbalUI::on_actuatorTwoHighButton_clicked()
 {
-    mMavVehicleConnection->setActuator(2, 1.0f);
+    mVehicleConnection->setActuatorOutput(2, 1.0f);
 }
 
 void CameraGimbalUI::on_zeroButton_clicked()

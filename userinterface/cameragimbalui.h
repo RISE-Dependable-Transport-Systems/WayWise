@@ -6,8 +6,9 @@
 #include "sensors/camera/gimbal.h"
 #include "userinterface/map/mapwidget.h"
 
-// TODO: quick test, refactor!
-#include "communication/vehicleconnections/mavsdkstation.h"
+// TODO: VehicleConnection is used in case camera modes can be changed via AUX PWM outputs
+//       This is quite specific to FLIR Pro Duo R and should be generalized (as soon as we have more cameras...)
+#include "communication/vehicleconnections/vehicleconnection.h"
 
 namespace Ui {
 class CameraGimbalUI;
@@ -23,7 +24,7 @@ public:
     void setGimbal(const QSharedPointer<Gimbal> gimbal);
     QSharedPointer<MapModule> getSetRoiByClickOnMapModule() const;
 
-    void setMavVehicleConnection(const QSharedPointer<MavsdkVehicleConnection> &mavVehicleConnection);
+    void setVehicleConnection(const QSharedPointer<VehicleConnection> &vehicleConnection);
 
 private slots:
     void on_actuatorTwoHighButton_clicked();
@@ -70,7 +71,7 @@ private:
     Ui::CameraGimbalUI *ui;
     QSharedPointer<Gimbal> mGimbal;
     QSharedPointer<SetRoiByClickOnMapModule> mSetRoiByClickOnMapModule;
-    QSharedPointer<MavsdkVehicleConnection> mMavVehicleConnection;
+    QSharedPointer<VehicleConnection> mVehicleConnection;
     QPair<double, double> mPitchYawState = {0.0, 0.0};
     const double SMALL_STEP = 1.0;
     const double MEDIUM_STEP = 5.0;
