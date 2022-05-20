@@ -38,6 +38,18 @@ bool MavsdkStation::startListeningUDP(uint16_t port)
     }
 }
 
+bool MavsdkStation::startListeningSerial(const QSerialPortInfo &portInfo, int baudrate)
+{
+    mavsdk::ConnectionResult connection_result = mMavsdk.add_serial_connection(portInfo.systemLocation().toStdString(), baudrate);
+    if (connection_result == mavsdk::ConnectionResult::Success) {
+        qDebug() << "MavsdkStation: Waiting to discover vehicles on " + portInfo.systemLocation() + "...";
+        return true;
+    } else {
+        qDebug() << "MavsdkStation: Failed to open connection on " + portInfo.systemLocation();
+        return false;
+    }
+}
+
 void MavsdkStation::forwardRtcmData(const QByteArray &data, const int &type)
 {
     Q_UNUSED(type)
