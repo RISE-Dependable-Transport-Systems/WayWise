@@ -7,6 +7,10 @@ CameraGimbalUI::CameraGimbalUI(QWidget *parent) :
 {
     ui->setupUi(this);
     ui->videoWidget->hide();
+    ui->videoWidget->setAspectRatioMode(Qt::AspectRatioMode::KeepAspectRatio);
+    mVideoWidgetEventFilter = QSharedPointer<VideoWidgetEventFilter>::create(ui->videoWidget);
+    ui->videoWidget->installEventFilter(mVideoWidgetEventFilter.get());
+
     mSetRoiByClickOnMapModule = QSharedPointer<SetRoiByClickOnMapModule>::create(this);
 }
 
@@ -232,5 +236,6 @@ void CameraGimbalUI::on_streamConnectButton_clicked()
 void CameraGimbalUI::on_streamDisconnectButton_clicked()
 {
     mMediaPlayer->stop();
+    ui->videoWidget->setFullScreen(false);
     ui->videoWidget->hide();
 }

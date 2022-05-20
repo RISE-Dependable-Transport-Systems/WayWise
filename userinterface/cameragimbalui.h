@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QMediaPlayer>
+#include <QVideoWidget>
 #include <QSharedPointer>
 #include "sensors/camera/gimbal.h"
 #include "userinterface/map/mapwidget.h"
@@ -72,6 +73,20 @@ private:
         xyz_t mLastRoiSet = {std::numeric_limits<double>::max(), std::numeric_limits<double>::max(), std::numeric_limits<double>::max()};
     };
 
+    class VideoWidgetEventFilter : public QWidget {
+        // QObject interface
+    public:
+        explicit VideoWidgetEventFilter(QWidget *parent) : QWidget(parent) {};
+        virtual bool eventFilter(QObject *watched, QEvent *event) override {
+            if (watched == parentWidget() && event->type() == QEvent::MouseButtonDblClick) {
+                QVideoWidget *videoWidget = qobject_cast<QVideoWidget*>(parentWidget());
+                videoWidget->setFullScreen(!videoWidget->isFullScreen());
+                return true;
+            } else
+                return false;
+        };
+    };
+
     void moveGimbal(double pitch_deg, double yaw_deg);
     Ui::CameraGimbalUI *ui;
     QSharedPointer<Gimbal> mGimbal;
@@ -86,6 +101,7 @@ private:
     const QPair<double, double> PITCH_RANGE = {-45.0, 135.0};
 
     QSharedPointer<QMediaPlayer> mMediaPlayer = nullptr;
+    QSharedPointer<VideoWidgetEventFilter> mVideoWidgetEventFilter;
 };
 
 #endif // CAMERAGIMBALUI_H
