@@ -162,10 +162,14 @@ void FlyUI::on_precisionLandButton_clicked()
 QSharedPointer<QMenu> FlyUI::GotoClickOnMapModule::populateContextMenu(const xyz_t &mapPos, const llh_t &enuReference)
 {
     Q_UNUSED(enuReference)
-    mGotoAction->setText(QString("Goto x=%1, y=%2, z=%3")
-                        .arg(mapPos.x)
-                        .arg(mapPos.y)
-                        .arg(mFlyUI->mCurrentVehicleConnection->getVehicleState()->getPosition().getHeight()));
-    mLastClickedMapPos = mapPos;
-    return mGotoContextMenu;
+    if (mFlyUI->mCurrentVehicleConnection.isNull())
+        return nullptr;
+    else {
+        mGotoAction->setText(QString("Goto x=%1, y=%2, z=%3")
+                            .arg(mapPos.x)
+                            .arg(mapPos.y)
+                            .arg(mFlyUI->mCurrentVehicleConnection->getVehicleState()->getPosition().getHeight()));
+        mLastClickedMapPos = mapPos;
+        return mGotoContextMenu;
+    }
 }
