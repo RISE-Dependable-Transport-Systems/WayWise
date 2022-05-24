@@ -20,8 +20,6 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
     if (mSystem->has_gimbal() && mGimbal.isNull()) // Gimbal might have been discovered before callback was registered
         mGimbal = QSharedPointer<MavsdkGimbal>::create(mSystem);
 
-
-
     // TODO: create respective class depending on MAV_TYPE (but not accessible in MAVSDK?!)
     mVehicleType = MAV_TYPE::MAV_TYPE_QUADROTOR;
     switch (mVehicleType) {
@@ -94,11 +92,14 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
         mTelemetry->subscribe_flight_mode([this](mavsdk::Telemetry::FlightMode flightMode) {
             mVehicleState.dynamicCast<CopterState>()->setFlightMode(static_cast<CopterState::FlightMode>(flightMode));
 
-            if (flightMode != mavsdk::Telemetry::FlightMode::Hold)
+            if (flightMode != mavsdk::Telemetry::FlightMode::Offboard &&
+                    flightMode != mavsdk::Telemetry::FlightMode::Hold)
                 if (hasWaypointFollower() && getWaypointFollower()->isActive()) {
                     emit stopWaypointFollowerSignal();
-                    qDebug() << "Note: WaypointFollower stopped by flightmode change.";
+                    qDebug() << "Note: WaypointFollower stopped by flightmode change (can only be started in hold mode).";
                 }
+
+//            qDebug() << (int)flightMode << (mOffboard ? mOffboard->is_active() : false);
         });
     }
 
@@ -244,6 +245,23 @@ void MavsdkVehicleConnection::requestGotoENU(const xyz_t &xyz, bool changeFlight
     } else {
         qDebug() << "MavsdkVehicleConnection::requestGotoENU: sending local coordinates to vehicle without converting not implemented.";
     }
+}
+
+void MavsdkVehicleConnection::requestVelocityAndYaw(const xyz_t &velocityENU, const double &yawDeg)
+{
+    if (mOffboard == nullptr)
+        mOffboard.reset(new mavsdk::Offboard(mSystem));
+
+    if (!mOffboard->is_active()) {
+        mOffboard->set_velocity_ned({});
+        if (mOffboard->start() != mavsdk::Offboard::Result::Success) {
+            qDebug() << "Warning: MavsdkVehicleConnection failed to start offboard mode";
+            return;
+        } else
+            qDebug() << "MavsdkVehicleConnection: offboard mode started";
+    }
+
+    mOffboard->set_velocity_ned({(float)(velocityENU.x), (float)(velocityENU.y), (float)(-velocityENU.z), (float)(yawDeg)});
 }
 
 void MavsdkVehicleConnection::inputRtcmData(const QByteArray &rtcmData)

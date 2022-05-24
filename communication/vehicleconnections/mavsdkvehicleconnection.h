@@ -19,6 +19,7 @@
 #include <mavsdk/plugins/action/action.h>
 #include <mavsdk/plugins/param/param.h>
 #include <mavsdk/plugins/mavlink_passthrough/mavlink_passthrough.h>
+#include <mavsdk/plugins/offboard/offboard.h>
 
 class MavsdkVehicleConnection : public VehicleConnection
 {
@@ -35,6 +36,7 @@ public:
     void requestReturnToHome();
     void requestGotoLlh(const llh_t &llh, bool changeFlightmodeToHold = false);
     virtual void requestGotoENU(const xyz_t &xyz, bool changeFlightmodeToHold = false) override;
+    virtual void requestVelocityAndYaw(const xyz_t &velocityENU, const double &yawDeg) override;
     void inputRtcmData(const QByteArray &rtcmData);
     void sendLandingTargetLlh(const llh_t &landingTargetLlh);
     void sendLandingTargetENU(const xyz_t &landingTargetENU);
@@ -64,6 +66,7 @@ private:
     std::shared_ptr<mavsdk::Action> mAction;
     std::shared_ptr<mavsdk::Param> mParam;
     std::shared_ptr<mavsdk::MavlinkPassthrough> mMavlinkPassthrough;
+    std::shared_ptr<mavsdk::Offboard> mOffboard;
     QSharedPointer<QTimer> mPosTimer;
     QSharedPointer<WaypointFollower> mWaypointFollower;
 };

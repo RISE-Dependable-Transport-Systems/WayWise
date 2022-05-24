@@ -82,7 +82,7 @@ void WaypointFollower::stop()
         mMovementController->setDesiredSpeed(0.0);
     } else {
         // TODO: support for updating target position continuously
-
+        mVehicleConnection->requestVelocityAndYaw({}, {});
     }
 }
 
@@ -377,7 +377,16 @@ void WaypointFollower::updateControl(const PosPoint &goal)
         mMovementController->setDesiredSpeed(goal.getSpeed());
         mMovementController->setDesiredAttributes(goal.getAttributes());
     } else {
-        mVehicleConnection->requestGotoENU(xyz_t {goal.getX(), goal.getY(), mCurrentState.overrideAltitude});
+        xyz_t positionDifference = {goal.getY() - mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getY(),
+                                    goal.getX() - mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getX(),
+                                    mCurrentState.overrideAltitude - mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getHeight()};
+        double positionDiffDistance = sqrtf(positionDifference.x*positionDifference.x + positionDifference.y*positionDifference.y + positionDifference.z*positionDifference.z);
+        double velocityFactor = goal.getSpeed() / positionDiffDistance;
+
+        double yawDeg = atan2(goal.getX() - mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getX(),
+                              goal.getY() - mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getY()) * 180.0 / M_PI;
+
+        mVehicleConnection->requestVelocityAndYaw({positionDifference.x*velocityFactor, positionDifference.y*velocityFactor, positionDifference.z*velocityFactor}, yawDeg);
     }
 }
 

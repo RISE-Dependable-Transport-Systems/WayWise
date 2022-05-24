@@ -19,6 +19,7 @@ class VehicleConnection : public QObject
     Q_OBJECT
 public:
     virtual void requestGotoENU(const xyz_t &xyz, bool changeAutopilotMode = false) = 0;
+    virtual void requestVelocityAndYaw(const xyz_t &velocityENU, const double &yawDeg) = 0;
     virtual void setActuatorOutput(int index, float value) {qDebug() << "Warning: VehicleConnection::setActuatorOutput() not implemented";}; // TODO: pretty PX4-specific
 
     QSharedPointer<VehicleState> getVehicleState() const {return mVehicleState;};
