@@ -75,7 +75,7 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
 
     mTelemetry->subscribe_attitude_quaternion([this](mavsdk::Telemetry::Quaternion q) {
         auto pos = mVehicleState->getPosition();
-        pos.setYaw(atan2f(q.w * q.z + q.x * q.y, 0.5 - (q.y * q.y + q.z * q.z))); // extract yaw from quaternion
+        pos.setYaw(atan2f(q.w * q.z + q.x * q.y, 0.5 - (q.y * q.y + q.z * q.z)) * 180.0 / M_PI); // extract yaw from quaternion
         mVehicleState->setPosition(pos);
     });
 
@@ -261,7 +261,11 @@ void MavsdkVehicleConnection::requestVelocityAndYaw(const xyz_t &velocityENU, co
             qDebug() << "MavsdkVehicleConnection: offboard mode started";
     }
 
-    mOffboard->set_velocity_ned({(float)(velocityENU.x), (float)(velocityENU.y), (float)(-velocityENU.z), (float)(yawDeg)});
+    // NOTE: conversion from ENU to NED
+    double yawDegNED = 90.0-yawDeg;
+    if (yawDegNED < 0.0)
+        yawDegNED += 360.0;
+    mOffboard->set_velocity_ned({(float)(velocityENU.y), (float)(velocityENU.x), (float)(-velocityENU.z), (float)(yawDegNED)});
 }
 
 void MavsdkVehicleConnection::inputRtcmData(const QByteArray &rtcmData)

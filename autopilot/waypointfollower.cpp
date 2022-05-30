@@ -81,8 +81,7 @@ void WaypointFollower::stop()
         mMovementController->setDesiredSteering(0.0);
         mMovementController->setDesiredSpeed(0.0);
     } else {
-        // TODO: support for updating target position continuously
-        mVehicleConnection->requestVelocityAndYaw({}, {});
+        mVehicleConnection->requestVelocityAndYaw({}, mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getYaw());
     }
 }
 
@@ -377,14 +376,15 @@ void WaypointFollower::updateControl(const PosPoint &goal)
         mMovementController->setDesiredSpeed(goal.getSpeed());
         mMovementController->setDesiredAttributes(goal.getAttributes());
     } else {
-        xyz_t positionDifference = {goal.getY() - mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getY(),
-                                    goal.getX() - mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getX(),
+        // NOTE: we calculate in ENU coordinates
+        xyz_t positionDifference = {goal.getX() - mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getX(),
+                                    goal.getY() - mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getY(),
                                     mCurrentState.overrideAltitude - mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getHeight()};
         double positionDiffDistance = sqrtf(positionDifference.x*positionDifference.x + positionDifference.y*positionDifference.y + positionDifference.z*positionDifference.z);
         double velocityFactor = goal.getSpeed() / positionDiffDistance;
 
-        double yawDeg = atan2(goal.getX() - mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getX(),
-                              goal.getY() - mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getY()) * 180.0 / M_PI;
+        double yawDeg = atan2(goal.getY() - mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getY(),
+                              goal.getX() - mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getX()) * 180.0 / M_PI;
 
         mVehicleConnection->requestVelocityAndYaw({positionDifference.x*velocityFactor, positionDifference.y*velocityFactor, positionDifference.z*velocityFactor}, yawDeg);
     }

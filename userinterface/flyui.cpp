@@ -112,8 +112,10 @@ QSharedPointer<MavsdkVehicleConnection> FlyUI::getCurrentVehicleConnection() con
 
 void FlyUI::gotRouteForAutopilot(const QList<PosPoint> &route)
 {
-    if (!mCurrentVehicleConnection->hasWaypointFollower())
+    if (!mCurrentVehicleConnection->hasWaypointFollower()) {
         mCurrentVehicleConnection->setWaypointFollower(QSharedPointer<WaypointFollower>::create(mCurrentVehicleConnection, PosType::defaultPosType));
+        mCurrentVehicleConnection->getWaypointFollower()->setPurePursuitRadius(3.0);
+    }
 
     mCurrentVehicleConnection->getWaypointFollower()->clearRoute();
     mCurrentVehicleConnection->getWaypointFollower()->addRoute(route);

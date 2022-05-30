@@ -27,7 +27,6 @@ void CopterState::draw(QPainter &painter, const QTransform &drawTrans, const QTr
 
 //    double x_gps = pos_gps.getX() * 1000.0;
 //    double y_gps = pos_gps.getY() * 1000.0;
-    double angle = pos.getYaw() * 180.0 / M_PI;
 
     bool tooSmallForDetails = false;
     QLineF testScaleLine(0,0,0,1);
@@ -62,7 +61,7 @@ void CopterState::draw(QPainter &painter, const QTransform &drawTrans, const QTr
     pen.setWidthF(10.0);
     painter.setPen(pen);
     painter.translate(x, y);
-    painter.rotate(-angle);
+    painter.rotate(-pos.getYaw());
 
     QColor col_frame = getColor();
     QColor col_prop_main;
@@ -117,7 +116,7 @@ void CopterState::draw(QPainter &painter, const QTransform &drawTrans, const QTr
 
         // Draw velocity
         if (fabs(getVelocity().x) > 1e-5 || fabs(getVelocity().y) > 1e-5) {
-            painter.rotate((mFrameType == CopterFrameType::X) ? -45+angle : angle);
+            painter.rotate((mFrameType == CopterFrameType::X) ? -45+pos.getYaw() : pos.getYaw());
             painter.setBrush(QBrush(Qt::green));
             painter.setPen(QPen(Qt::green, 30));
             painter.drawLine(QPointF(0.0, 0.0), QPointF(getVelocity().x*1000.0, getVelocity().y*1000.0));
@@ -162,7 +161,7 @@ void CopterState::draw(QPainter &painter, const QTransform &drawTrans, const QTr
                 "State: %s, %s\n"
                 "Mode: %s\n",
                 getName().toLocal8Bit().data(),
-                pos.getX(), pos.getY(), pos.getHeight(), angle,
+                pos.getX(), pos.getY(), pos.getHeight(), pos.getYaw(),
                 (getIsArmed() ? "armed" : "disarmed"),
                 landedStateStr.toLocal8Bit().data(),
                 flightModeStr.toLocal8Bit().data());
