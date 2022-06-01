@@ -31,7 +31,8 @@ struct WayPointFollowerState {
     double overrideAltitude = 0.0;
     // Follow Point
     PosPoint currentFollowPointInVehicleFrame; // independent of positioning
-    double followPointSpeed = 1.5;
+    double followPointSpeed = 1.0;
+    double followPointDistance = 3.0;
     bool followPointTimedOut = true;
 };
 
@@ -97,6 +98,7 @@ private:
     unsigned mUpdateStatePeriod_ms = 50;
     QTimer mUpdateStateTimer;
 
+    void holdPosition();
 };
 
 #endif // WAYPOINTFOLLOWER_H

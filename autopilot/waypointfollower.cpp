@@ -72,16 +72,21 @@ bool WaypointFollower::isActive()
     return mUpdateStateTimer.isActive();
 }
 
-void WaypointFollower::stop()
+void WaypointFollower::holdPosition()
 {
-    mUpdateStateTimer.stop();
-
     if (isOnVehicle()) {
         mMovementController->setDesiredSteering(0.0);
         mMovementController->setDesiredSpeed(0.0);
     } else {
         mVehicleConnection->requestVelocityAndYaw({}, mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getYaw());
     }
+}
+
+void WaypointFollower::stop()
+{
+    mUpdateStateTimer.stop();
+
+    holdPosition();
 }
 
 void WaypointFollower::startFollowPoint()
@@ -237,10 +242,9 @@ void WaypointFollower::updateState()
     } break;
 
     case FOLLOW_POINT_WAITING:
-        mMovementController->setDesiredSteering(0.0);
-        mMovementController->setDesiredSpeed(0.0);
+        holdPosition();
 
-        if (QLineF(QPointF(0,0), mCurrentState.currentFollowPointInVehicleFrame.getPoint()).length() > mCurrentState.purePursuitRadius)
+        if (QLineF(QPointF(0,0), mCurrentState.currentFollowPointInVehicleFrame.getPoint()).length() > mCurrentState.followPointDistance)
         {
             mCurrentState.stmState = FOLLOW_POINT_FOLLOWING;
         }
