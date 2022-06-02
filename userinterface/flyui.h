@@ -11,7 +11,7 @@
 #include <QWidget>
 #include <QSharedPointer>
 #include "communication/vehicleconnections/mavsdkvehicleconnection.h"
-#include "autopilot/waypointfollower.h"
+#include "autopilot/gotowaypointfollower.h"
 #include "userinterface/map/mapwidget.h"
 
 namespace Ui {
