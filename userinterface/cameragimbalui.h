@@ -98,7 +98,7 @@ private:
     const double BIG_STEP = 20.0;
     // Values for Gremsy Pixy U (https://gremsy.com/pixy-u-manual)
     const QPair<double, double> YAW_RANGE = {-320.0, +320.0};
-    const QPair<double, double> PITCH_RANGE = {-45.0, 135.0};
+    const QPair<double, double> PITCH_RANGE = {-135.0, 45.0};
 
     QSharedPointer<QMediaPlayer> mMediaPlayer = nullptr;
     QSharedPointer<VideoWidgetEventFilter> mVideoWidgetEventFilter;
