@@ -104,8 +104,8 @@ QSharedPointer<QMenu> CameraGimbalUI::SetRoiByClickOnMapModule::populateContextM
     mSetRoiAction->setText(QString("Set ROI to x=%1, y=%2, z=%3")
                         .arg(mapPos.x)
                         .arg(mapPos.y)
-                        .arg(0.0));
-    mLastClickedMapPos = mapPos;
+                        .arg(mCameraGimbalUI->ui->roiHeightSpinBox->value()));
+    mLastClickedMapPos = {mapPos.x, mapPos.y, mCameraGimbalUI->ui->roiHeightSpinBox->value()};
     mLastEnuRefFromMap = enuReference;
 
     return mRoiContextMenu;
