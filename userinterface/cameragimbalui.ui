@@ -308,14 +308,14 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="actuatorOneHighButton">
+         <widget class="QPushButton" name="actuatorOneMidButton">
           <property name="text">
            <string>2x</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="actuatorOneMidButton">
+         <widget class="QPushButton" name="actuatorOneHighButton">
           <property name="text">
            <string>4x</string>
           </property>
