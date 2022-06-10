@@ -7,6 +7,7 @@
 #include <QSharedPointer>
 #include "sensors/camera/gimbal.h"
 #include "userinterface/map/mapwidget.h"
+#include <QGamepad>
 
 // TODO: VehicleConnection is used in case camera modes can be changed via AUX PWM outputs
 //       This is quite specific to FLIR Pro Duo R and should be generalized (as soon as we have more cameras...)
@@ -102,6 +103,9 @@ private:
 
     QSharedPointer<QMediaPlayer> mMediaPlayer = nullptr;
     QSharedPointer<VideoWidgetEventFilter> mVideoWidgetEventFilter;
+
+    QSharedPointer<QGamepad> mGamepad;
+    QTimer mGamepadTimer;
 };
 
 #endif // CAMERAGIMBALUI_H

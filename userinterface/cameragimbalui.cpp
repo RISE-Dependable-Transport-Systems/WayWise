@@ -12,6 +12,22 @@ CameraGimbalUI::CameraGimbalUI(QWidget *parent) :
     ui->videoWidget->installEventFilter(mVideoWidgetEventFilter.get());
 
     mSetRoiByClickOnMapModule = QSharedPointer<SetRoiByClickOnMapModule>::create(this);
+
+    if (!QGamepadManager::instance()->connectedGamepads().isEmpty()) {
+        qDebug() << "CameraGimbalUI: found gamepad.";
+        mGamepad = QSharedPointer<QGamepad>::create(QGamepadManager::instance()->connectedGamepads().first(), this);
+
+        connect(&mGamepadTimer, &QTimer::timeout, [this]{
+            double movePitchDeg = -4 * mGamepad->axisLeftY();
+            double moveYawDeg = 4 * mGamepad->axisRightX();
+
+            if (fabs(movePitchDeg) > 0.1 || fabs(moveYawDeg) > 0.1)
+                moveGimbal(movePitchDeg, moveYawDeg);
+        });
+        mGamepadTimer.start(200);
+
+    } else
+        qDebug() << "CameraGimbalUI: did not find any gamepads.";
 }
 
 CameraGimbalUI::~CameraGimbalUI()
@@ -82,7 +98,7 @@ void CameraGimbalUI::SetRoiByClickOnMapModule::processPaint(QPainter &painter, i
 
 QSharedPointer<QMenu> CameraGimbalUI::SetRoiByClickOnMapModule::populateContextMenu(const xyz_t &mapPos, const llh_t &enuReference)
 {
-    if (mCameraGimbalUI->mGimbal.isNull())
+    if (mCameraGimbalUI->mVehicleConnection.isNull() || mCameraGimbalUI->mGimbal.isNull())
         return nullptr;
 
     mSetRoiAction->setText(QString("Set ROI to x=%1, y=%2, z=%3")
@@ -209,6 +225,7 @@ void CameraGimbalUI::moveGimbal(double pitch_deg, double yaw_deg)
         mPitchYawState.second += 360.0;
 
     mGimbal->setPitchAndYaw(mPitchYawState.first, mPitchYawState.second);
+//    qDebug() << "Set pitch" << mPitchYawState.first << "and yaw" << mPitchYawState.second;
 }
 
 void CameraGimbalUI::on_yawFollowButton_clicked()
