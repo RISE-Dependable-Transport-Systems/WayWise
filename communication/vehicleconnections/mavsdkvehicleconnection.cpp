@@ -14,8 +14,10 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
 
     // Setup gimbal
     mSystem->register_component_discovered_callback([this](mavsdk::System::ComponentType){
-        if (mSystem->has_gimbal() && mGimbal.isNull())
+        if (mSystem->has_gimbal() && mGimbal.isNull()) {
             mGimbal = QSharedPointer<MavsdkGimbal>::create(mSystem);
+            emit detectedGimbal(mGimbal);
+        }
     });
     if (mSystem->has_gimbal() && mGimbal.isNull()) // Gimbal might have been discovered before callback was registered
         mGimbal = QSharedPointer<MavsdkGimbal>::create(mSystem);
@@ -106,11 +108,13 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
     // Set up action plugin
     mAction.reset(new mavsdk::Action(mSystem));
 
-    // Set up praram plugin
-    mParam.reset(new mavsdk::Param(mSystem));
-    // Precision Landing: set required target tracking accuracy for starting approach
-    if (mParam->set_param_float("PLD_HACC_RAD", 5.0) != mavsdk::Param::Result::Success)
-        qDebug() << "Warning: failed to set PLD_HACC_RAD";
+//    // Set up praram plugin
+//    mParam.reset(new mavsdk::Param(mSystem));
+
+// TODO: this should not happen here (blocking)
+//    // Precision Landing: set required target tracking accuracy for starting approach
+//    if (mParam->set_param_float("PLD_HACC_RAD", 5.0) != mavsdk::Param::Result::Success)
+//        qDebug() << "Warning: failed to set PLD_HACC_RAD";
 
     // Set up MAVLINK passthrough to send rtcm data to drone (no plugin exists for this in MAVSDK v1.2.0)
     mMavlinkPassthrough.reset(new mavsdk::MavlinkPassthrough(mSystem));

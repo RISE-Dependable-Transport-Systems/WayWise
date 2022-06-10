@@ -27,6 +27,7 @@ public:
     bool hasGimbal() const {return !mGimbal.isNull();};
 
 signals:
+    void detectedGimbal(QSharedPointer<Gimbal> gimbal);
 
 protected:
     QSharedPointer<VehicleState> mVehicleState;
