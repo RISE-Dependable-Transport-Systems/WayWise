@@ -28,6 +28,7 @@ public:
 
 signals:
     void detectedGimbal(QSharedPointer<Gimbal> gimbal);
+    void updatedBatteryState(float voltage, float percentRemaining);
 
 protected:
     QSharedPointer<VehicleState> mVehicleState;

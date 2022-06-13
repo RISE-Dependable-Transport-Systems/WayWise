@@ -40,6 +40,10 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
     // Set up telemetry plugin
     mTelemetry.reset(new mavsdk::Telemetry(mSystem));
 
+    mTelemetry->subscribe_battery([this](mavsdk::Telemetry::Battery battery) {
+       emit updatedBatteryState(battery.voltage_v, battery.remaining_percent);
+    });
+
     mTelemetry->subscribe_armed([this](bool isArmed) {
        mVehicleState->setIsArmed(isArmed);
     });
