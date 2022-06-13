@@ -58,8 +58,9 @@ private:
 
     MAV_TYPE mVehicleType;
     llh_t mEnuReference;
-    llh_t mGpsGlobalOrigin; // reference for on-vehicle EKF (origin in NED, ENU frames on vehicle)
-                            // do not use unless you really know what you are doing! Otherwise, use mEnuReference instead.
+    llh_t mGpsGlobalOrigin; // reference for on-vehicle EKF (origin in NED, ENU frames on vehicle), polled once at startup
+                            // do not use unless you really know what you are doing!
+                            // Use mEnuReference instead.
     bool mConvertLocalPositionsToGlobalBeforeSending = false;
     std::shared_ptr<mavsdk::System> mSystem;
     std::shared_ptr<mavsdk::Telemetry> mTelemetry;

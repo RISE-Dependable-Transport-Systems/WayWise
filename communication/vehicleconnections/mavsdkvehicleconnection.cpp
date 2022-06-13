@@ -55,12 +55,6 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
         mVehicleState->setHomePosition(homePos);
 
         emit gotVehicleHomeLlh({position.latitude_deg, position.longitude_deg, position.absolute_altitude_m});
-
-        // hook onto this callback to poll gps origin
-        mTelemetry->get_gps_global_origin_async([this](mavsdk::Telemetry::Result result, mavsdk::Telemetry::GpsGlobalOrigin gpsGlobalOrigin){
-            if (result == mavsdk::Telemetry::Result::Success)
-                mGpsGlobalOrigin = {gpsGlobalOrigin.latitude_deg, gpsGlobalOrigin.longitude_deg, gpsGlobalOrigin.altitude_m};
-        });
     });
 
     mTelemetry->subscribe_position([this](mavsdk::Telemetry::Position position) {
@@ -104,6 +98,12 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
 //            qDebug() << (int)flightMode << (mOffboard ? mOffboard->is_active() : false);
         });
     }
+
+    // poll update of GpsGlobalOrigin once
+    mTelemetry->get_gps_global_origin_async([this](mavsdk::Telemetry::Result result, mavsdk::Telemetry::GpsGlobalOrigin gpsGlobalOrigin){
+        if (result == mavsdk::Telemetry::Result::Success)
+            mGpsGlobalOrigin = {gpsGlobalOrigin.latitude_deg, gpsGlobalOrigin.longitude_deg, gpsGlobalOrigin.altitude_m};
+    });
 
     // Set up action plugin
     mAction.reset(new mavsdk::Action(mSystem));
