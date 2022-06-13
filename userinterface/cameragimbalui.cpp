@@ -21,10 +21,48 @@ CameraGimbalUI::CameraGimbalUI(QWidget *parent) :
             double movePitchDeg = -4 * mGamepad->axisLeftY();
             double moveYawDeg = 4 * mGamepad->axisRightX();
 
-            if (fabs(movePitchDeg) > 0.1 || fabs(moveYawDeg) > 0.1)
+            if (fabs(movePitchDeg) > 0.05 || fabs(moveYawDeg) > 0.05)
                 moveGimbal(movePitchDeg, moveYawDeg);
         });
-        mGamepadTimer.start(200);
+        mGamepadTimer.start(100);
+
+        connect(mGamepad.get(), &QGamepad::buttonL1Changed, [this](bool value) {
+            static bool valueWas = false;
+            if (value && !valueWas)
+                mVehicleConnection->setActuatorOutput(1, 0.0f);
+            valueWas = value;
+        });
+        connect(mGamepad.get(), &QGamepad::buttonL2Changed, [this](bool value) {
+            static bool valueWas = false;
+            if (value && !valueWas)
+                mVehicleConnection->setActuatorOutput(1, 1.0f);
+            valueWas = value;
+        });
+        connect(mGamepad.get(), &QGamepad::buttonL3Changed, [this](bool value) {
+            static bool valueWas = false;
+            if (value && !valueWas)
+                mVehicleConnection->setActuatorOutput(1, -1.0f);
+            valueWas = value;
+        });
+
+        connect(mGamepad.get(), &QGamepad::buttonR1Changed, [this](bool value) {
+            static bool valueWas = false;
+            if (value && !valueWas)
+                mVehicleConnection->setActuatorOutput(2, 0.0f);
+            valueWas = value;
+        });
+        connect(mGamepad.get(), &QGamepad::buttonR2Changed, [this](bool value) {
+            static bool valueWas = false;
+            if (value && !valueWas)
+                mVehicleConnection->setActuatorOutput(2, 1.0f);
+            valueWas = value;
+        });
+        connect(mGamepad.get(), &QGamepad::buttonR3Changed, [this](bool value) {
+            static bool valueWas = false;
+            if (value && !valueWas)
+                mVehicleConnection->setActuatorOutput(2, -1.0f);
+            valueWas = value;
+        });
 
     } else
         qDebug() << "CameraGimbalUI: did not find any gamepads.";
