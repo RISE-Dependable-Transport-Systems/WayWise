@@ -24,7 +24,7 @@ CameraGimbalUI::CameraGimbalUI(QWidget *parent) :
             if (fabs(movePitchDeg) > 0.05 || fabs(moveYawDeg) > 0.05)
                 moveGimbal(movePitchDeg, moveYawDeg);
         });
-        mGamepadTimer.start(100);
+        mGamepadTimer.start(150);
 
         connect(mGamepad.get(), &QGamepad::buttonL1Changed, [this](bool value) {
             static bool valueWas = false;
@@ -257,10 +257,10 @@ void CameraGimbalUI::moveGimbal(double pitch_deg, double yaw_deg)
         mPitchYawState.first = PITCH_RANGE.first;
 
     // normalize yaw requests
-    while (mPitchYawState.second > YAW_RANGE.second)
-        mPitchYawState.second -= 360.0;
-    while (mPitchYawState.second < YAW_RANGE.first)
-        mPitchYawState.second += 360.0;
+    if (mPitchYawState.second > YAW_RANGE.second)
+        mPitchYawState.second = YAW_RANGE.second;
+    if (mPitchYawState.second < YAW_RANGE.first)
+        mPitchYawState.second = YAW_RANGE.first;
 
     mGimbal->setPitchAndYaw(mPitchYawState.first, mPitchYawState.second);
 //    qDebug() << "Set pitch" << mPitchYawState.first << "and yaw" << mPitchYawState.second;

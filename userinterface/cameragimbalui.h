@@ -98,7 +98,7 @@ private:
     const double MEDIUM_STEP = 5.0;
     const double BIG_STEP = 20.0;
     // Values for Gremsy Pixy U (https://gremsy.com/pixy-u-manual, but firmware 7.5.6 has limited pitch to -90)
-    const QPair<double, double> YAW_RANGE = {-320.0, +320.0};
+    const QPair<double, double> YAW_RANGE = {-179.9, +179.9};
     const QPair<double, double> PITCH_RANGE = {-90.0, 45.0};
 
     QSharedPointer<QMediaPlayer> mMediaPlayer = nullptr;
