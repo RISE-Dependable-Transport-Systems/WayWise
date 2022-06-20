@@ -142,6 +142,7 @@ private:
     bool mAntialiasOsm;
     double mOsmRes;
     QSharedPointer<OsmClient> mOsm;
+    QSharedPointer<OsmClient> mOsmOverlay;
     int mOsmZoomLevel;
     int mOsmMaxZoomLevel;
     bool mDrawOpenStreetmap;

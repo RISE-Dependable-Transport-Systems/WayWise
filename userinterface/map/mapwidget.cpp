@@ -41,6 +41,7 @@ MapWidget::MapWidget(QWidget *parent) : QWidget(parent)
     mDrawGrid = true;
 
     mOsm = QSharedPointer<OsmClient>::create(this);
+    mOsmOverlay = QSharedPointer<OsmClient>::create(this);
     mDrawOpenStreetmap = true;
     mOsmZoomLevel = 15;
     mOsmRes = 1.0;
@@ -52,15 +53,19 @@ MapWidget::MapWidget(QWidget *parent) : QWidget(parent)
     //mRefLlh = {57.78100308, 12.76925422, 253.76};
 
     // RISE RTK base station
-    mRefLlh = {57.71495867, 12.89134921, 219.0};
+    mRefLlh = {57.69176177328906, 11.82301504920545, 0};
 
     // Hardcoded for now
     mOsm->setCacheDir("osm_tiles");
     //    mOsm->setTileServerUrl("http://tile.openstreetmap.org");
     mOsm->setTileServerUrl("http://c.osm.rrze.fau.de/osmhd"); // Also https
-
     connect(mOsm.get(), &OsmClient::tileReady, this, &MapWidget::tileReady);
     connect(mOsm.get(), &OsmClient::errorGetTile, this, &MapWidget::errorGetTile);
+
+    mOsmOverlay->setCacheDir("osmOverlay_tiles");
+    mOsmOverlay->setTileServerUrl("http://tiles.openseamap.org/seamark");
+    connect(mOsmOverlay.get(), &OsmClient::tileReady, this, &MapWidget::tileReady);
+    connect(mOsmOverlay.get(), &OsmClient::errorGetTile, this, &MapWidget::errorGetTile);
 
     setMouseTracking(true);
     grabGesture(Qt::PinchGesture);
@@ -704,6 +709,36 @@ void MapWidget::drawOSMTiles(QPainter& painter, QTransform drawTrans, double vie
 
                 if (res == 0 && !mOsm->downloadQueueFull()) {
                     mOsm->downloadTile(mOsmZoomLevel, xt_i, yt_i);
+                }
+            }
+        }
+
+        for (int j = 0;j < 40;j++) {
+            for (int i = 0;i < 40;i++) {
+                int xt_i = xt + i - t_ofs_x;
+                int yt_i = yt + j - t_ofs_y;
+                double ts_x = xyz.x + w * i - (double)t_ofs_x * w;
+                double ts_y = -xyz.y + w * j - (double)t_ofs_y * w;
+
+                // We are outside the view
+                if (ts_x > (viewCenter.x() + viewWidth / 2.0)) {
+                    break;
+                } else if ((ts_y - w) > (-viewCenter.y() + viewHeight / 2.0)) {
+                    break;
+                }
+
+                int res;
+                OsmTile t = mOsmOverlay->getTile(mOsmZoomLevel, xt_i, yt_i, res);
+
+                if (w < 0.0) {
+                    w = t.getWidthTop();
+                }
+
+                painter.drawPixmap(ts_x * 1000.0, ts_y * 1000.0,
+                                   w * 1000.0, w * 1000.0, t.pixmap());
+
+                if (res == 0 && !mOsmOverlay->downloadQueueFull()) {
+                    mOsmOverlay->downloadTile(mOsmZoomLevel, xt_i, yt_i);
                 }
             }
         }
