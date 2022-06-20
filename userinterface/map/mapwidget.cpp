@@ -850,6 +850,31 @@ void MapWidget::paint(QPainter &painter, int width, int height, bool highQuality
     }
     painter.restore();
 
+    // Draw DFDS Petunia
+    painter.save();
+    painter.setTransform(drawTrans);
+    painter.setBrush(QBrush(Qt::lightGray));
+
+    QPen petuniaPen;
+    pen.setColor(Qt::red);
+    pen.setWidthF(500.0);
+    painter.setPen(pen);
+
+    painter.rotate(79.3);
+    painter.translate(-13000, -16000);
+    double petuniaLength_mm = 200 * 1000;
+    double petuniaWidth_mm = 30 * 1000;
+    QPainterPath path;
+    path.lineTo(petuniaLength_mm-30000, 0);
+    path.lineTo(petuniaLength_mm-30000, petuniaWidth_mm);
+    path.lineTo(0, petuniaWidth_mm);
+    path.lineTo(-20000, petuniaWidth_mm/2);
+    path.lineTo(0, 0);
+    path.closeSubpath();
+    painter.drawPath(path);
+    painter.restore();
+
+
     // Draw vehicles
     painter.setPen(QPen(QPalette::Foreground));
     for(const auto& obj : mObjectStateMap)
