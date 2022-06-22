@@ -11,6 +11,7 @@
 #include <QObject>
 #include <QMap>
 #include <QSharedPointer>
+#include <QSerialPortInfo>
 #include <mavsdk/mavsdk.h>
 #include "mavsdkvehicleconnection.h"
 
@@ -20,6 +21,7 @@ class MavsdkStation : public QObject
 public:
     explicit MavsdkStation(QObject *parent = nullptr);
     bool startListeningUDP(uint16_t port = mavsdk::Mavsdk::DEFAULT_UDP_PORT);
+    bool startListeningSerial(const QSerialPortInfo& portInfo, int baudrate);
 
     // broadcasts to all vehicles
     void forwardRtcmData(const QByteArray& data, const int &type);
@@ -33,7 +35,6 @@ signals:
 private:
     mavsdk::Mavsdk mMavsdk;
     QMap<int, QSharedPointer<MavsdkVehicleConnection>> mVehicleConnectionMap;
-
 };
 
 #endif // MAVSDKSTATION_H

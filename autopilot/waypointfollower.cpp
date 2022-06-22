@@ -52,6 +52,10 @@ void WaypointFollower::addRoute(const QList<PosPoint> &route)
 
 void WaypointFollower::startFollowingRoute(bool fromBeginning)
 {
+    const auto &vehicleState = (isOnVehicle() ? mMovementController->getVehicleState() : mVehicleConnection->getVehicleState());
+    mCurrentState.overrideAltitude = vehicleState->getPosition(mPosTypeUsed).getHeight();
+    qDebug() << "Note: WaypointFollower starts following route. Height info from route is ignored (staying at" << QString::number(mCurrentState.overrideAltitude, 'g', 2) << "m).";
+
     if (fromBeginning || mCurrentState.stmState == NONE)
         mCurrentState.stmState = FOLLOW_ROUTE_INIT;
 
@@ -77,8 +81,7 @@ void WaypointFollower::stop()
         mMovementController->setDesiredSteering(0.0);
         mMovementController->setDesiredSpeed(0.0);
     } else {
-        // TODO: support for updating target position continuously
-
+        mVehicleConnection->requestVelocityAndYaw({}, mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getYaw());
     }
 }
 
@@ -373,7 +376,17 @@ void WaypointFollower::updateControl(const PosPoint &goal)
         mMovementController->setDesiredSpeed(goal.getSpeed());
         mMovementController->setDesiredAttributes(goal.getAttributes());
     } else {
-        mVehicleConnection->requestGotoENU(xyz_t {goal.getX(), goal.getY(), mCurrentState.overrideAltitude});
+        // NOTE: we calculate in ENU coordinates
+        xyz_t positionDifference = {goal.getX() - mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getX(),
+                                    goal.getY() - mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getY(),
+                                    mCurrentState.overrideAltitude - mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getHeight()};
+        double positionDiffDistance = sqrtf(positionDifference.x*positionDifference.x + positionDifference.y*positionDifference.y + positionDifference.z*positionDifference.z);
+        double velocityFactor = goal.getSpeed() / positionDiffDistance;
+
+        double yawDeg = atan2(goal.getY() - mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getY(),
+                              goal.getX() - mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getX()) * 180.0 / M_PI;
+
+        mVehicleConnection->requestVelocityAndYaw({positionDifference.x*velocityFactor, positionDifference.y*velocityFactor, positionDifference.z*velocityFactor}, yawDeg);
     }
 }
 

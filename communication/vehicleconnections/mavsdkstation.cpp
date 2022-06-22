@@ -4,18 +4,26 @@
  */
 #include "mavsdkstation.h"
 #include <QtDebug>
+#include <QThread>
 
 MavsdkStation::MavsdkStation(QObject *parent) : QObject(parent)
 {
     mMavsdk.subscribe_on_new_system([this](){
-        int vehicleID = mMavsdk.systems().back()->get_system_id();
-        QSharedPointer<MavsdkVehicleConnection> vehicleConnection = QSharedPointer<MavsdkVehicleConnection>::create(mMavsdk.systems().back());
+        for (const auto &system : mMavsdk.systems()) {
+            if (!mVehicleConnectionMap.contains(system->get_system_id())) {
+                if (system->has_autopilot()) {
+                    QSharedPointer<MavsdkVehicleConnection> vehicleConnection = QSharedPointer<MavsdkVehicleConnection>::create(system);
+                    mVehicleConnectionMap.insert(system->get_system_id(), vehicleConnection);
 
-        mVehicleConnectionMap.insert(vehicleID, vehicleConnection);
-        // move to same QThread MavsdkStation lives in
-        vehicleConnection->moveToThread(thread());
+                    // move to same QThread MavsdkStation lives in
+                    vehicleConnection->moveToThread(thread());
 
-        emit gotNewVehicleConnection(vehicleConnection);
+                    qDebug() << "Note: MavsdkStation added system" << system->get_system_id();
+                    emit gotNewVehicleConnection(vehicleConnection);
+                } else
+                    qDebug() << "Note: MavsdkStation ignored system" << system->get_system_id();
+            }
+        }
     });
 }
 
@@ -28,6 +36,18 @@ bool MavsdkStation::startListeningUDP(uint16_t port)
         return true;
     } else {
         qDebug() << "MavsdkStation: Failed to open connection on " + connection_url;
+        return false;
+    }
+}
+
+bool MavsdkStation::startListeningSerial(const QSerialPortInfo &portInfo, int baudrate)
+{
+    mavsdk::ConnectionResult connection_result = mMavsdk.add_serial_connection(portInfo.systemLocation().toStdString(), baudrate);
+    if (connection_result == mavsdk::ConnectionResult::Success) {
+        qDebug() << "MavsdkStation: Waiting to discover vehicles on " + portInfo.systemLocation() + "...";
+        return true;
+    } else {
+        qDebug() << "MavsdkStation: Failed to open connection on " + portInfo.systemLocation();
         return false;
     }
 }

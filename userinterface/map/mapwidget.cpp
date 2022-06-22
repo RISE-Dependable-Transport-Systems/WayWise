@@ -16,14 +16,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
     */
 
-/*
- * TODO
- * - gnss, uwb, etc pos refactoring
- * - gather map preferences in class/struct, same with status
- * - make utility functions public/move
- * - interface to register mouse, keyboard actions
- */
-
 #include <QDebug>
 #include <math.h>
 #include <qmath.h>
@@ -258,13 +250,25 @@ void MapWidget::mousePressEvent(QMouseEvent *e)
     QPoint p = getMousePosRelative();
     mousePosMap.setXY(p.x() / 1000.0, p.y() / 1000.0);
 
-    for (const auto& m: mMapModules) {
-        if (m->processMouse(true, false, false, false,
-                            mousePosWidget, mousePosMap, 0.0,
-                            e->modifiers(),
-                            e->buttons(),
-                            mScaleFactor)) {
-            return;
+    if (e->buttons() == Qt::RightButton) { // right click -> create context menu
+        QMenu rightClickContextMenu;
+        for (const auto& m: mMapModules) {
+            QSharedPointer<QMenu> mapModuleContextMenu = m->populateContextMenu({mousePosMap.getX(), mousePosMap.getY(), 0.0}, mRefLlh);
+            if (!mapModuleContextMenu.isNull())
+                rightClickContextMenu.addActions(mapModuleContextMenu->actions());
+        }
+
+        if (!rightClickContextMenu.isEmpty())
+            executeContextMenu(rightClickContextMenu);
+    } else {
+        for (const auto& m: mMapModules) {
+            if (m->processMouse(true, false, false, false,
+                                mousePosWidget, mousePosMap, 0.0,
+                                e->modifiers(),
+                                e->buttons(),
+                                mScaleFactor)) {
+                return;
+            }
         }
     }
 

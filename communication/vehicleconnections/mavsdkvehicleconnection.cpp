@@ -4,12 +4,23 @@
  */
 #include "mavsdkvehicleconnection.h"
 #include "vehicles/copterstate.h"
+#include "sensors/camera/mavsdkgimbal.h"
 #include <QDebug>
 #include <QDateTime>
 
 MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System> system)
 {
     mSystem = system;
+
+    // Setup gimbal
+    mSystem->register_component_discovered_callback([this](mavsdk::System::ComponentType){
+        if (mSystem->has_gimbal() && mGimbal.isNull()) {
+            mGimbal = QSharedPointer<MavsdkGimbal>::create(mSystem);
+            emit detectedGimbal(mGimbal);
+        }
+    });
+    if (mSystem->has_gimbal() && mGimbal.isNull()) // Gimbal might have been discovered before callback was registered
+        mGimbal = QSharedPointer<MavsdkGimbal>::create(mSystem);
 
     // TODO: create respective class depending on MAV_TYPE (but not accessible in MAVSDK?!)
     mVehicleType = MAV_TYPE::MAV_TYPE_QUADROTOR;
@@ -29,6 +40,10 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
     // Set up telemetry plugin
     mTelemetry.reset(new mavsdk::Telemetry(mSystem));
 
+    mTelemetry->subscribe_battery([this](mavsdk::Telemetry::Battery battery) {
+       emit updatedBatteryState(battery.voltage_v, battery.remaining_percent);
+    });
+
     mTelemetry->subscribe_armed([this](bool isArmed) {
        mVehicleState->setIsArmed(isArmed);
     });
@@ -44,12 +59,6 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
         mVehicleState->setHomePosition(homePos);
 
         emit gotVehicleHomeLlh({position.latitude_deg, position.longitude_deg, position.absolute_altitude_m});
-
-        // hook onto this callback to poll gps origin
-        mTelemetry->get_gps_global_origin_async([this](mavsdk::Telemetry::Result result, mavsdk::Telemetry::GpsGlobalOrigin gpsGlobalOrigin){
-            if (result == mavsdk::Telemetry::Result::Success)
-                mGpsGlobalOrigin = {gpsGlobalOrigin.latitude_deg, gpsGlobalOrigin.longitude_deg, gpsGlobalOrigin.altitude_m};
-        });
     });
 
     mTelemetry->subscribe_position([this](mavsdk::Telemetry::Position position) {
@@ -66,7 +75,7 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
 
     mTelemetry->subscribe_attitude_quaternion([this](mavsdk::Telemetry::Quaternion q) {
         auto pos = mVehicleState->getPosition();
-        pos.setYaw(atan2f(q.w * q.z + q.x * q.y, 0.5 - (q.y * q.y + q.z * q.z))); // extract yaw from quaternion
+        pos.setYaw(atan2f(q.w * q.z + q.x * q.y, 0.5 - (q.y * q.y + q.z * q.z)) * 180.0 / M_PI); // extract yaw from quaternion
         mVehicleState->setPosition(pos);
     });
 
@@ -83,24 +92,39 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
         mTelemetry->subscribe_flight_mode([this](mavsdk::Telemetry::FlightMode flightMode) {
             mVehicleState.dynamicCast<CopterState>()->setFlightMode(static_cast<CopterState::FlightMode>(flightMode));
 
-            if (flightMode != mavsdk::Telemetry::FlightMode::Hold)
-                if (hasWaypointFollower() && getWaypointFollower()->isActive())
-                    getWaypointFollower()->stop();
+            if (flightMode != mavsdk::Telemetry::FlightMode::Offboard &&
+                    flightMode != mavsdk::Telemetry::FlightMode::Hold)
+                if (hasWaypointFollower() && getWaypointFollower()->isActive()) {
+                    emit stopWaypointFollowerSignal();
+                    qDebug() << "Note: WaypointFollower stopped by flightmode change (can only be started in hold mode).";
+                }
+
+//            qDebug() << (int)flightMode << (mOffboard ? mOffboard->is_active() : false);
         });
     }
+
+    // poll update of GpsGlobalOrigin once
+    mTelemetry->get_gps_global_origin_async([this](mavsdk::Telemetry::Result result, mavsdk::Telemetry::GpsGlobalOrigin gpsGlobalOrigin){
+        if (result == mavsdk::Telemetry::Result::Success)
+            mGpsGlobalOrigin = {gpsGlobalOrigin.latitude_deg, gpsGlobalOrigin.longitude_deg, gpsGlobalOrigin.altitude_m};
+    });
 
     // Set up action plugin
     mAction.reset(new mavsdk::Action(mSystem));
 
-    // Set up praram plugin
-    mParam.reset(new mavsdk::Param(mSystem));
-    // Precision Landing: set required target tracking accuracy for starting approach
-    if (mParam->set_param_float("PLD_HACC_RAD", 5.0) != mavsdk::Param::Result::Success)
-        qDebug() << "Warning: failed to set PLD_HACC_RAD";
+//    // Set up praram plugin
+//    mParam.reset(new mavsdk::Param(mSystem));
+
+// TODO: this should not happen here (blocking)
+//    // Precision Landing: set required target tracking accuracy for starting approach
+//    if (mParam->set_param_float("PLD_HACC_RAD", 5.0) != mavsdk::Param::Result::Success)
+//        qDebug() << "Warning: failed to set PLD_HACC_RAD";
 
     // Set up MAVLINK passthrough to send rtcm data to drone (no plugin exists for this in MAVSDK v1.2.0)
     mMavlinkPassthrough.reset(new mavsdk::MavlinkPassthrough(mSystem));
 
+    // Necessary such that MAVSDK callbacks (from other threads) can stop WaypointFollower (QTimer)
+    connect(this, &MavsdkVehicleConnection::stopWaypointFollowerSignal, this, &MavsdkVehicleConnection::stopWaypointFollower);
 }
 
 void MavsdkVehicleConnection::setEnuReference(const llh_t &enuReference)
@@ -231,6 +255,27 @@ void MavsdkVehicleConnection::requestGotoENU(const xyz_t &xyz, bool changeFlight
     }
 }
 
+void MavsdkVehicleConnection::requestVelocityAndYaw(const xyz_t &velocityENU, const double &yawDeg)
+{
+    if (mOffboard == nullptr)
+        mOffboard.reset(new mavsdk::Offboard(mSystem));
+
+    if (!mOffboard->is_active()) {
+        mOffboard->set_velocity_ned({});
+        if (mOffboard->start() != mavsdk::Offboard::Result::Success) {
+            qDebug() << "Warning: MavsdkVehicleConnection failed to start offboard mode";
+            return;
+        } else
+            qDebug() << "MavsdkVehicleConnection: offboard mode started";
+    }
+
+    // NOTE: conversion from ENU to NED
+    double yawDegNED = 90.0-yawDeg;
+    if (yawDegNED < 0.0)
+        yawDegNED += 360.0;
+    mOffboard->set_velocity_ned({(float)(velocityENU.y), (float)(velocityENU.x), (float)(-velocityENU.z), (float)(yawDegNED)});
+}
+
 void MavsdkVehicleConnection::inputRtcmData(const QByteArray &rtcmData)
 {
     // See: https://github.com/mavlink/qgroundcontrol/blob/aba881bf8e3f2fdbf63ef0689a3bf0432f597759/src/GPS/RTCM/RTCMMavlink.cc#L24
@@ -337,6 +382,14 @@ void MavsdkVehicleConnection::sendSetGpsOriginLlh(const llh_t &gpsOriginLlh)
         qDebug() << "Sent GPS_GLOBAL_ORIGIN via MAVLINK:" << gpsOriginLlh.latitude << gpsOriginLlh.longitude;
 }
 
+void MavsdkVehicleConnection::setActuatorOutput(int index, float value)
+{
+    mAction->set_actuator_async(index, value, [](mavsdk::Action::Result res){
+        if (res != mavsdk::Action::Result::Success)
+            qDebug() << "Warning: MavsdkVehicleConnection's set_actuator request failed.";
+    });
+}
+
 void MavsdkVehicleConnection::setConvertLocalPositionsToGlobalBeforeSending(bool convertLocalPositionsToGlobalBeforeSending)
 {
     mConvertLocalPositionsToGlobalBeforeSending = convertLocalPositionsToGlobalBeforeSending;
@@ -350,6 +403,12 @@ void MavsdkVehicleConnection::setWaypointFollower(const QSharedPointer<WaypointF
 bool MavsdkVehicleConnection::hasWaypointFollower()
 {
     return !mWaypointFollower.isNull();
+}
+
+void MavsdkVehicleConnection::stopWaypointFollower()
+{
+    if (hasWaypointFollower())
+        getWaypointFollower()->stop();
 }
 
 QSharedPointer<WaypointFollower> MavsdkVehicleConnection::getWaypointFollower() const

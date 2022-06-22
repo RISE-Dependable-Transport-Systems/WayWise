@@ -112,10 +112,14 @@ QSharedPointer<MavsdkVehicleConnection> FlyUI::getCurrentVehicleConnection() con
 
 void FlyUI::gotRouteForAutopilot(const QList<PosPoint> &route)
 {
-    if (!mCurrentVehicleConnection->hasWaypointFollower())
-        mCurrentVehicleConnection->setWaypointFollower(QSharedPointer<WaypointFollower>::create(mCurrentVehicleConnection, PosType::defaultPosType));
+    if (mCurrentVehicleConnection.isNull())
+        return;
 
-    mCurrentVehicleConnection->getWaypointFollower()->setPurePursuitRadius(3.0);
+    if (!mCurrentVehicleConnection->hasWaypointFollower()) {
+        mCurrentVehicleConnection->setWaypointFollower(QSharedPointer<WaypointFollower>::create(mCurrentVehicleConnection, PosType::defaultPosType));
+        mCurrentVehicleConnection->getWaypointFollower()->setPurePursuitRadius(3.0);
+    }
+
     mCurrentVehicleConnection->getWaypointFollower()->clearRoute();
     mCurrentVehicleConnection->getWaypointFollower()->addRoute(route);
 }
@@ -124,14 +128,17 @@ void FlyUI::gotRouteForAutopilot(const QList<PosPoint> &route)
 
 FlyUI::GotoClickOnMapModule::GotoClickOnMapModule(FlyUI *parent) : mFlyUI(parent)
 {
-    mGotoAction.setParent(this);
-    mGotoContextMenu.addAction(&mGotoAction);
-    connect(&mGotoAction, &QAction::triggered, [&](){
+    mGotoAction = QSharedPointer<QAction>::create(this);
+    mGotoContextMenu = QSharedPointer<QMenu>::create();
+    mGotoContextMenu->addAction(mGotoAction.get());
+    connect(mGotoAction.get(), &QAction::triggered, [&](){
         if (mFlyUI->mCurrentVehicleConnection) {
-            if (mFlyUI->mCurrentVehicleConnection->hasWaypointFollower() && mFlyUI->mCurrentVehicleConnection->getWaypointFollower()->isActive())
+            if (mFlyUI->mCurrentVehicleConnection->hasWaypointFollower() && mFlyUI->mCurrentVehicleConnection->getWaypointFollower()->isActive()) {
                 mFlyUI->mCurrentVehicleConnection->getWaypointFollower()->stop();
+                qDebug() << "Note: Waypointfollower stopped by goto request from map.";
+            }
 
-            mFlyUI->mCurrentVehicleConnection->requestGotoENU({mLastClickedMapPos.getX(), mLastClickedMapPos.getY(),
+            mFlyUI->mCurrentVehicleConnection->requestGotoENU({mLastClickedMapPos.x, mLastClickedMapPos.y,
                                                                mFlyUI->mCurrentVehicleConnection->getVehicleState()->getPosition().getHeight()}, true);
         }
     });
@@ -148,32 +155,25 @@ void FlyUI::GotoClickOnMapModule::processPaint(QPainter &painter, int width, int
     Q_UNUSED(scale)
 }
 
-bool FlyUI::GotoClickOnMapModule::processMouse(bool isPress, bool isRelease, bool isMove, bool isWheel, QPoint widgetPos, PosPoint mapPos, double wheelAngleDelta, Qt::KeyboardModifiers keyboardModifiers, Qt::MouseButtons mouseButtons, double scale)
-{
-    Q_UNUSED(isRelease)
-    Q_UNUSED(isMove)
-    Q_UNUSED(isWheel)
-    Q_UNUSED(widgetPos)
-    Q_UNUSED(wheelAngleDelta)
-    Q_UNUSED(keyboardModifiers)
-    Q_UNUSED(scale)
-
-    if (isPress && mouseButtons == Qt::RightButton) {
-        mGotoAction.setText(QString("Goto x=%1, y=%2, z=%3")
-                            .arg(mapPos.getX())
-                            .arg(mapPos.getY())
-                            .arg(mFlyUI->mCurrentVehicleConnection->getVehicleState()->getPosition().getHeight()));
-        mLastClickedMapPos = mapPos;
-
-        requestContextMenu(mGotoContextMenu);
-        return true;
-    } else
-        return false;
-}
-
 void FlyUI::on_precisionLandButton_clicked()
 {
     if (mCurrentVehicleConnection) {
         mCurrentVehicleConnection->requestPrecisionLanding();
+    }
+}
+
+
+QSharedPointer<QMenu> FlyUI::GotoClickOnMapModule::populateContextMenu(const xyz_t &mapPos, const llh_t &enuReference)
+{
+    Q_UNUSED(enuReference)
+    if (mFlyUI->mCurrentVehicleConnection.isNull())
+        return nullptr;
+    else {
+        mGotoAction->setText(QString("Goto x=%1, y=%2, z=%3")
+                            .arg(mapPos.x)
+                            .arg(mapPos.y)
+                            .arg(mFlyUI->mCurrentVehicleConnection->getVehicleState()->getPosition().getHeight()));
+        mLastClickedMapPos = mapPos;
+        return mGotoContextMenu;
     }
 }
