@@ -16,14 +16,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
     */
 
-/*
- * TODO
- * - gnss, uwb, etc pos refactoring
- * - gather map preferences in class/struct, same with status
- * - make utility functions public/move
- * - interface to register mouse, keyboard actions
- */
-
 #include <QDebug>
 #include <math.h>
 #include <qmath.h>
