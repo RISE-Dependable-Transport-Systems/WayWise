@@ -76,6 +76,8 @@ private:
     Ui::FlyUI *ui;
     QSharedPointer<GotoClickOnMapModule> mGotoClickOnMapModule;
     QSharedPointer<MavsdkVehicleConnection> mCurrentVehicleConnection;
+    unsigned mLineOfSightDistance = 200; // [m]
+
 };
 
 #endif // FLYUI_H

@@ -122,13 +122,8 @@ void GotoWaypointFollower::updateState()
         break;
 
     case FOLLOW_ROUTE_GOTO:
-        if (getCurrentVehiclePosition().getDistanceTo3d(mCurrentState.currentGoal) < mCurrentState.lineOfSightDistance){ // Safety check
             mVehicleConnection->requestGotoENU({mCurrentState.currentGoal.getX(), mCurrentState.currentGoal.getY(), mCurrentState.currentGoal.getHeight()});
             mCurrentState.stmState = FOLLOWING_ROUTE;
-        } else {
-            qDebug() << "Current goal is beyond line of sight. Waypointfollower stopped!";
-            mCurrentState.stmState = FOLLOW_ROUTE_FINISHED;
-        }
         break;
 
     case FOLLOWING_ROUTE:

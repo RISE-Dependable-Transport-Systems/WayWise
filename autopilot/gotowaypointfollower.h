@@ -23,7 +23,6 @@ struct GotoWayPointFollowerState {
     bool repeatRoute = false;
     // -- for flying vehicles
     double overrideAltitude = 0.0; // [m]
-    double lineOfSightDistance = 200; // [m]
 };
 
 class GotoWaypointFollower : public WaypointFollower

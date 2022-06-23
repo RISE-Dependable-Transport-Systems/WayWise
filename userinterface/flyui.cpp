@@ -119,6 +119,13 @@ void FlyUI::gotRouteForAutopilot(const QList<PosPoint> &route)
         mCurrentVehicleConnection->setWaypointFollower(QSharedPointer<GotoWaypointFollower>::create(mCurrentVehicleConnection, PosType::defaultPosType));
     }
 
+    for (int i=0; i<route.length(); i++) {
+        if (mCurrentVehicleConnection->getVehicleState()->getHomePosition().getDistanceTo3d(route.at(i)) > mLineOfSightDistance){
+            qDebug() << "Waypoint:" << i << "is beyond line of sight. Route discarded!";
+            return;
+        }
+    }
+
     mCurrentVehicleConnection->getWaypointFollower()->clearRoute();
     mCurrentVehicleConnection->getWaypointFollower()->addRoute(route);
 }
