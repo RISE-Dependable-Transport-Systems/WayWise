@@ -47,6 +47,11 @@ double PosPoint::getHeight() const
     return mHeight;
 }
 
+xyz_t PosPoint::getXYZ() const
+{
+    return {mX, mY, mHeight};
+}
+
 double PosPoint::getRoll() const
 {
     return mRoll;
