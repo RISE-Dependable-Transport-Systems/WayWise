@@ -45,6 +45,7 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
     mTelemetryServer.reset(new mavsdk::TelemetryServer(system));
     mActionServer.reset(new mavsdk::ActionServer(system));
     mParamServer.reset(new mavsdk::ParamServer(system));
+    mMissionRawServer.reset(new mavsdk::MissionRawServer(system));
 
     // These are needed for MAVSDK at the moment
     mParamServer->provide_param_int("CAL_ACC0_ID", 1);
@@ -71,7 +72,7 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
                                                       static_cast<float>(mVehicleState->getVelocity().x),
                                                       static_cast<float>(-mVehicleState->getVelocity().z)};
 
-        mavsdk::TelemetryServer::Heading heading{mVehicleState->getPosition(PosType::fused).getYaw()};
+        mavsdk::TelemetryServer::Heading heading{mVehicleState->getPosition(PosType::fused).getYaw() + 90.0}; // heading NED
 
         mavsdk::TelemetryServer::Position homePositionLlh{};
         mavsdk::TelemetryServer::Position positionLlh{};
@@ -94,9 +95,68 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
     });
     // TODO: publish rates
     mPublishMavlinkTimer.start(100);
+
+    mActionServer->subscribe_flight_mode_change([this](mavsdk::ActionServer::Result res, mavsdk::ActionServer::FlightMode mode){
+       if  (res == mavsdk::ActionServer::Result::Success && mode == mavsdk::ActionServer::FlightMode::Mission)
+           emit startWaypointFollower(false);
+    });
+
+    mMissionRawServer->subscribe_incoming_mission([this](mavsdk::MissionRawServer::Result res, mavsdk::MissionRawServer::MissionPlan plan) {
+        if (res != mavsdk::MissionRawServer::Result::Success)
+            qDebug() << "MavsdkVehicleServer: failed to receive mission," << (int)res;
+        else {
+            qDebug() << "MavsdkVehicleServer: got new mission with" << plan.mission_items.size() << "items.";
+
+            if (!mWaypointFollower.isNull()) {
+                QList<PosPoint> route;
+                for (const auto &item : plan.mission_items)
+                    route.append(convertMissionItemToPosPoint(item));
+
+                mWaypointFollower->addRoute(route);
+            } else
+                qDebug() << "MavsdkVehicleServer: got new mission but no WaypointFollower is set to receive it.";
+
+        }
+
+    });
+
+    mMissionRawServer->subscribe_clear_all([this](uint32_t val) {
+        Q_UNUSED(val)
+        if (!mWaypointFollower.isNull())
+            mWaypointFollower->clearRoute();
+        else
+            qDebug() << "MavsdkVehicleServer: got clear mission request but no WaypointFollower is set to receive it.";
+    });
+
+    mMissionRawServer->subscribe_current_item_changed([this](mavsdk::MissionRawServer::MissionItem item){
+        if (!mWaypointFollower.isNull() && item.seq == 0)
+            mWaypointFollower->resetState();
+        else if (item.seq != 0)
+            qDebug() << "Warning: jumping to seq ID in mission not implemented in MavsdkVehicleServer / WaypointFollower.";
+
+    });
 }
 
 void MavsdkVehicleServer::setUbloxRover(QSharedPointer<UbloxRover> ubloxRover)
 {
     mUbloxRover = ubloxRover;
+}
+
+void MavsdkVehicleServer::setWaypointFollower(QSharedPointer<WaypointFollower> waypointFollower)
+{
+    mWaypointFollower = waypointFollower;
+    connect(this, &MavsdkVehicleServer::startWaypointFollower, mWaypointFollower.get(), &WaypointFollower::startFollowingRoute);
+}
+
+PosPoint MavsdkVehicleServer::convertMissionItemToPosPoint(const mavsdk::MissionRawServer::MissionItem &item)
+{
+    PosPoint routePoint;
+
+    routePoint.setX(item.x / 10e4);
+    routePoint.setY(item.y / 10e4);
+    routePoint.setHeight(item.z);
+
+//    qDebug() << routePoint.getX() << routePoint.getY() << routePoint.getHeight();
+
+    return routePoint;
 }
