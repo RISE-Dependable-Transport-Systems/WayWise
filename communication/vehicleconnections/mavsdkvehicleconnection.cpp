@@ -61,17 +61,27 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
         emit gotVehicleHomeLlh({position.latitude_deg, position.longitude_deg, position.absolute_altitude_m});
     });
 
-    mTelemetry->subscribe_position([this](mavsdk::Telemetry::Position position) {
-        llh_t llh = {position.latitude_deg, position.longitude_deg, position.absolute_altitude_m};
-        xyz_t xyz = coordinateTransforms::llhToEnu(mEnuReference, llh);
+    if (mVehicleType == MAV_TYPE::MAV_TYPE_QUADROTOR) // TODO: in this case, this differentiates between PX4 and WayWise-base autopilots. Refactor!
+        mTelemetry->subscribe_position([this](mavsdk::Telemetry::Position position) {
+            llh_t llh = {position.latitude_deg, position.longitude_deg, position.absolute_altitude_m};
+            xyz_t xyz = coordinateTransforms::llhToEnu(mEnuReference, llh);
 
-        auto pos = mVehicleState->getPosition();
-        pos.setX(xyz.x);
-        pos.setY(xyz.y);
-        pos.setHeight(xyz.z);
+            auto pos = mVehicleState->getPosition();
+            pos.setX(xyz.x);
+            pos.setY(xyz.y);
+            pos.setHeight(xyz.z);
 
-        mVehicleState->setPosition(pos);
-    });
+            mVehicleState->setPosition(pos);
+        });
+    else
+        mTelemetry->subscribe_position_velocity_ned([this](mavsdk::Telemetry::PositionVelocityNed positionVelocity_ned) {
+            auto pos = mVehicleState->getPosition();
+            pos.setX(positionVelocity_ned.position.east_m);
+            pos.setY(positionVelocity_ned.position.north_m);
+            pos.setHeight(-positionVelocity_ned.position.down_m);
+
+            mVehicleState->setPosition(pos);
+        });
 
     mTelemetry->subscribe_heading([this](mavsdk::Telemetry::Heading heading) {
         auto pos = mVehicleState->getPosition();
