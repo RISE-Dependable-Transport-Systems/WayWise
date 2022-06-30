@@ -50,8 +50,8 @@ public:
     double getPurePursuitRadius() const;
     void setPurePursuitRadius(double value);
 
-    virtual double getFollowPointSpeed() const override;
-    virtual void setFollowPointSpeed(double value) override;
+    virtual double getFollowPointSpeed() const;
+    virtual void setFollowPointSpeed(double value);
 
     virtual bool getRepeatRoute() const override;
     virtual void setRepeatRoute(bool value) override;
@@ -67,7 +67,7 @@ public:
     virtual void stop() override;
     virtual void resetState() override;
 
-    virtual void startFollowPoint() override;
+    virtual void startFollowPoint();
 
     static double getCurvatureToPointInENU(QSharedPointer<VehicleState> vehicleState, const QPointF& point, PosType vehiclePosType = PosType::simulated);
     double getCurvatureToPointInENU(const QPointF& point);
