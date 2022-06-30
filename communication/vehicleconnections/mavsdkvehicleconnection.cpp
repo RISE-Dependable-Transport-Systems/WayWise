@@ -404,3 +404,95 @@ void MavsdkVehicleConnection::setConvertLocalPositionsToGlobalBeforeSending(bool
 {
     mConvertLocalPositionsToGlobalBeforeSending = convertLocalPositionsToGlobalBeforeSending;
 }
+
+mavsdk::MissionRaw::MissionItem MavsdkVehicleConnection::convertPosPointToMissionItem(const PosPoint& posPoint, int sequenceId, bool current) {
+    // TODO: PX4 only supports mission items in global frame / llh!
+
+    mavsdk::MissionRaw::MissionItem missionItem = {};
+    missionItem.mission_type = MAV_MISSION_TYPE_MISSION;
+    missionItem.frame = MAV_FRAME_LOCAL_ENU;
+    missionItem.command = MAV_CMD_NAV_WAYPOINT;
+    missionItem.seq = sequenceId;
+    missionItem.current = current;
+    missionItem.autocontinue = true;
+    missionItem.param4 = NAN; // yaw
+    missionItem.x = (int)(posPoint.getX() * 10e4);
+    missionItem.y = (int)(posPoint.getY() * 10e4);
+    missionItem.z = (float)posPoint.getHeight();
+
+    return missionItem;
+}
+
+bool MavsdkVehicleConnection::isAutopilotActiveOnVehicle()
+{
+    // TODO: mode == mission -> ap active?
+    return true;
+}
+
+void MavsdkVehicleConnection::restartAutopilotOnVehicle()
+{
+    mMissionRaw->set_current_mission_item_async(0, [this](mavsdk::MissionRaw::Result res) {
+        if (res != mavsdk::MissionRaw::Result::Success)
+            qDebug() << "Warning: MavsdkVehicleConnection's set current mission item request failed.";
+        else
+            mMissionRaw->start_mission_async([](mavsdk::MissionRaw::Result res) {
+                if (res != mavsdk::MissionRaw::Result::Success)
+                    qDebug() << "Warning: MavsdkVehicleConnection's start mission request failed.";
+            });
+    });
+}
+
+void MavsdkVehicleConnection::startAutopilotOnVehicle()
+{
+    mMissionRaw->start_mission_async([](mavsdk::MissionRaw::Result res) {
+        if (res != mavsdk::MissionRaw::Result::Success)
+            qDebug() << "Warning: MavsdkVehicleConnection's start mission request failed.";
+    });
+}
+
+void MavsdkVehicleConnection::pauseAutopilotOnVehicle()
+{
+    mMissionRaw->pause_mission_async([](mavsdk::MissionRaw::Result res) {
+        if (res != mavsdk::MissionRaw::Result::Success)
+            qDebug() << "Warning: MavsdkVehicleConnection's pause mission request failed.";
+    });
+}
+
+void MavsdkVehicleConnection::stopAutopilotOnVehicle()
+{
+    mMissionRaw->pause_mission_async([](mavsdk::MissionRaw::Result res) {
+        if (res != mavsdk::MissionRaw::Result::Success)
+            qDebug() << "Warning: MavsdkVehicleConnection's pause mission request failed.";
+    });
+    mMissionRaw->set_current_mission_item_async(0, [](mavsdk::MissionRaw::Result res) {
+        if (res != mavsdk::MissionRaw::Result::Success)
+            qDebug() << "Warning: MavsdkVehicleConnection's set current mission item request failed.";
+    });
+}
+
+void MavsdkVehicleConnection::clearRouteOnVehicle(int id)
+{
+    Q_UNUSED(id)
+    if (!mMissionRaw)
+        mMissionRaw.reset(new mavsdk::MissionRaw(mSystem));
+
+    if (mMissionRaw->clear_mission() != mavsdk::MissionRaw::Result::Success)
+        qDebug() << "Warning: MavsdkVehicleConnection's clear mission request failed.";
+}
+
+void MavsdkVehicleConnection::appendToRouteOnVehicle(const QList<PosPoint> &route, int id)
+{
+    Q_UNUSED(id)
+    if (!mMissionRaw)
+        mMissionRaw.reset(new mavsdk::MissionRaw(mSystem));
+
+    // TODO: this does not actually append but replace
+    std::vector<mavsdk::MissionRaw::MissionItem> missionItems;
+    for (int i = 0; i < route.size(); i++)
+        missionItems.push_back(convertPosPointToMissionItem(route.at(i), i, i == 0));
+
+    mMissionRaw->upload_mission_async(missionItems, [](mavsdk::MissionRaw::Result res){
+        if (res != mavsdk::MissionRaw::Result::Success)
+            qDebug() << "Warning: MavsdkVehicleConnection's mission upload failed:" << (int)res;
+    });
+}

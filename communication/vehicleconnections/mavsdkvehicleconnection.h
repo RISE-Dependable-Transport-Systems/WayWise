@@ -20,6 +20,7 @@
 #include <mavsdk/plugins/param/param.h>
 #include <mavsdk/plugins/mavlink_passthrough/mavlink_passthrough.h>
 #include <mavsdk/plugins/offboard/offboard.h>
+#include <mavsdk/plugins/mission_raw/mission_raw.h>
 
 class MavsdkVehicleConnection : public VehicleConnection
 {
@@ -62,7 +63,20 @@ private:
     std::shared_ptr<mavsdk::Param> mParam;
     std::shared_ptr<mavsdk::MavlinkPassthrough> mMavlinkPassthrough;
     std::shared_ptr<mavsdk::Offboard> mOffboard;
+    std::shared_ptr<mavsdk::MissionRaw> mMissionRaw;
     QSharedPointer<QTimer> mPosTimer;
+
+    mavsdk::MissionRaw::MissionItem convertPosPointToMissionItem(const PosPoint& posPoint, int sequenceId, bool current = false);
+
+    // VehicleConnection interface
+protected:
+    virtual bool isAutopilotActiveOnVehicle() override;
+    virtual void restartAutopilotOnVehicle() override;
+    virtual void startAutopilotOnVehicle() override;
+    virtual void pauseAutopilotOnVehicle() override;
+    virtual void stopAutopilotOnVehicle() override;
+    virtual void clearRouteOnVehicle(int id) override;
+    virtual void appendToRouteOnVehicle(const QList<PosPoint> &route, int id) override;
 };
 
 #endif // MAVSDKVEHICLECONNECTION_H
