@@ -50,6 +50,7 @@ signals:
     void updatedBatteryState(float voltage, float percentRemaining);
 
 protected:
+    // Implement these as protected/private, they are used within the respective functions without "OnVehicle" in their names
     virtual bool isAutopilotActiveOnVehicle() {throw  std::logic_error("Function not implemented");};
     virtual void restartAutopilotOnVehicle() {throw  std::logic_error("Function not implemented");};
     virtual void startAutopilotOnVehicle() {throw  std::logic_error("Function not implemented");};
