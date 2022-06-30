@@ -104,7 +104,7 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
 
             if (flightMode != mavsdk::Telemetry::FlightMode::Offboard &&
                     flightMode != mavsdk::Telemetry::FlightMode::Hold)
-                if (hasWaypointFollower() && getWaypointFollower()->isActive()) {
+                if (hasWaypointFollowerConnectionLocal() && isAutopilotActive()) {
                     emit stopWaypointFollowerSignal();
                     qDebug() << "Note: WaypointFollower stopped by flightmode change (can only be started in hold mode).";
                 }
@@ -134,7 +134,7 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
     mMavlinkPassthrough.reset(new mavsdk::MavlinkPassthrough(mSystem));
 
     // Necessary such that MAVSDK callbacks (from other threads) can stop WaypointFollower (QTimer)
-    connect(this, &MavsdkVehicleConnection::stopWaypointFollowerSignal, this, &MavsdkVehicleConnection::stopWaypointFollower);
+    connect(this, &MavsdkVehicleConnection::stopWaypointFollowerSignal, this, &MavsdkVehicleConnection::stopAutopilot);
 }
 
 void MavsdkVehicleConnection::setEnuReference(const llh_t &enuReference)
@@ -403,25 +403,4 @@ void MavsdkVehicleConnection::setActuatorOutput(int index, float value)
 void MavsdkVehicleConnection::setConvertLocalPositionsToGlobalBeforeSending(bool convertLocalPositionsToGlobalBeforeSending)
 {
     mConvertLocalPositionsToGlobalBeforeSending = convertLocalPositionsToGlobalBeforeSending;
-}
-
-void MavsdkVehicleConnection::setWaypointFollower(const QSharedPointer<WaypointFollower> &waypointFollower)
-{
-    mWaypointFollower = waypointFollower;
-}
-
-bool MavsdkVehicleConnection::hasWaypointFollower()
-{
-    return !mWaypointFollower.isNull();
-}
-
-void MavsdkVehicleConnection::stopWaypointFollower()
-{
-    if (hasWaypointFollower())
-        getWaypointFollower()->stop();
-}
-
-QSharedPointer<WaypointFollower> MavsdkVehicleConnection::getWaypointFollower() const
-{
-    return mWaypointFollower;
 }
