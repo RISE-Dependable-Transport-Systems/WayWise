@@ -28,12 +28,12 @@ public:
     explicit MavsdkVehicleConnection(std::shared_ptr<mavsdk::System> system);
     void setEnuReference(const llh_t &enuReference);
     void setHomeLlh(const llh_t &homeLlh);
-    void requestArm();
-    void requestDisarm();
-    void requestTakeoff();
-    void requestLanding();
-    void requestPrecisionLanding();
-    void requestReturnToHome();
+    virtual void requestArm() override;
+    virtual void requestDisarm() override;
+    virtual void requestTakeoff() override;
+    virtual void requestLanding() override;
+    virtual void requestPrecisionLanding() override;
+    virtual void requestReturnToHome() override;
     void requestGotoLlh(const llh_t &llh, bool changeFlightmodeToHold = false);
     virtual void requestGotoENU(const xyz_t &xyz, bool changeFlightmodeToHold = false) override;
     virtual void requestVelocityAndYaw(const xyz_t &velocityENU, const double &yawDeg) override;
@@ -45,17 +45,11 @@ public:
 
     void setConvertLocalPositionsToGlobalBeforeSending(bool convertLocalPositionsToGlobalBeforeSending);
 
-    void setWaypointFollower(const QSharedPointer<WaypointFollower> &waypointFollower);
-    QSharedPointer<WaypointFollower> getWaypointFollower() const;
-    bool hasWaypointFollower();
-
 signals:
     void gotVehicleHomeLlh(const llh_t &homePositionLlh);
     void stopWaypointFollowerSignal(); // Used internally from MAVSDK callbacks (that live in other threads)
 
 private:
-    void stopWaypointFollower();
-
     MAV_TYPE mVehicleType;
     llh_t mEnuReference;
     llh_t mGpsGlobalOrigin; // reference for on-vehicle EKF (origin in NED, ENU frames on vehicle), polled once at startup
@@ -69,7 +63,6 @@ private:
     std::shared_ptr<mavsdk::MavlinkPassthrough> mMavlinkPassthrough;
     std::shared_ptr<mavsdk::Offboard> mOffboard;
     QSharedPointer<QTimer> mPosTimer;
-    QSharedPointer<WaypointFollower> mWaypointFollower;
 };
 
 #endif // MAVSDKVEHICLECONNECTION_H
