@@ -39,7 +39,10 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
         }
     }
     auto system = mMavsdk.systems().back();
+
+    system->set_vendor_id(12321); // TODO: this happens too late (GCS has already read info)
    // NOTE #1 --
+
 
     // Create server plugins
     mTelemetryServer.reset(new mavsdk::TelemetryServer(system));
@@ -97,8 +100,16 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
     mPublishMavlinkTimer.start(100);
 
     mActionServer->subscribe_flight_mode_change([this](mavsdk::ActionServer::Result res, mavsdk::ActionServer::FlightMode mode){
-       if  (res == mavsdk::ActionServer::Result::Success && mode == mavsdk::ActionServer::FlightMode::Mission)
-           emit startWaypointFollower(false);
+       if  (res == mavsdk::ActionServer::Result::Success)
+           switch (mode) {
+           case mavsdk::ActionServer::FlightMode::Mission:
+               emit startWaypointFollower(false);
+               break;
+           default:
+               if (mWaypointFollower->isActive())
+                   emit pauseWaypointFollower();
+           }
+
     });
 
     mMissionRawServer->subscribe_incoming_mission([this](mavsdk::MissionRawServer::Result res, mavsdk::MissionRawServer::MissionPlan plan) {
@@ -123,14 +134,14 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
     mMissionRawServer->subscribe_clear_all([this](uint32_t val) {
         Q_UNUSED(val)
         if (!mWaypointFollower.isNull())
-            mWaypointFollower->clearRoute();
+            emit clearRouteOnWaypointFollower();
         else
             qDebug() << "MavsdkVehicleServer: got clear mission request but no WaypointFollower is set to receive it.";
     });
 
     mMissionRawServer->subscribe_current_item_changed([this](mavsdk::MissionRawServer::MissionItem item){
         if (!mWaypointFollower.isNull() && item.seq == 0)
-            mWaypointFollower->resetState();
+            emit resetWaypointFollower();
         else if (item.seq != 0)
             qDebug() << "Warning: jumping to seq ID in mission not implemented in MavsdkVehicleServer / WaypointFollower.";
 
@@ -146,6 +157,9 @@ void MavsdkVehicleServer::setWaypointFollower(QSharedPointer<WaypointFollower> w
 {
     mWaypointFollower = waypointFollower;
     connect(this, &MavsdkVehicleServer::startWaypointFollower, mWaypointFollower.get(), &WaypointFollower::startFollowingRoute);
+    connect(this, &MavsdkVehicleServer::pauseWaypointFollower, mWaypointFollower.get(), &WaypointFollower::stop);
+    connect(this, &MavsdkVehicleServer::resetWaypointFollower, mWaypointFollower.get(), &WaypointFollower::resetState);
+    connect(this, &MavsdkVehicleServer::clearRouteOnWaypointFollower, mWaypointFollower.get(), &WaypointFollower::clearRoute);
 }
 
 PosPoint MavsdkVehicleServer::convertMissionItemToPosPoint(const mavsdk::MissionRawServer::MissionItem &item)

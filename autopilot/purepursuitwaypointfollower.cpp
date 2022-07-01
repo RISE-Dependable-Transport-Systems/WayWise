@@ -36,6 +36,7 @@ PurepursuitWaypointFollower::PurepursuitWaypointFollower(QSharedPointer<VehicleC
 
 void PurepursuitWaypointFollower::clearRoute()
 {
+    stop();
     mWaypointList.clear();
 }
 
