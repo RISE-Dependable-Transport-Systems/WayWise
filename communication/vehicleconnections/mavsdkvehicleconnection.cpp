@@ -3,8 +3,6 @@
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
  */
 #include "mavsdkvehicleconnection.h"
-#include "vehicles/copterstate.h"
-#include "sensors/camera/mavsdkgimbal.h"
 #include <QDebug>
 #include <QDateTime>
 
@@ -22,16 +20,26 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
     if (mSystem->has_gimbal() && mGimbal.isNull()) // Gimbal might have been discovered before callback was registered
         mGimbal = QSharedPointer<MavsdkGimbal>::create(mSystem);
 
-    // TODO: create respective class depending on MAV_TYPE (but not accessible in MAVSDK?!)
-    mVehicleType = MAV_TYPE::MAV_TYPE_QUADROTOR;
+    // TODO: create respective class depending on MAV_TYPE (currently, not accessible in MAVSDK)
+    // TODO: even looking for vendor_id == WAYWISE_MAVLINK_VENDOR_ID is difficult, currently, as it is set on vehicle side after GCS connects...
+    mavsdk::System::AutopilotVersion apVersionData = mSystem->get_autopilot_version_data();
+    if (apVersionData.vendor_id == WAYWISE_MAVLINK_VENDOR_ID) // -> we are talking to WayWise -> this is a rover
+        mVehicleType = MAV_TYPE::MAV_TYPE_GROUND_ROVER;
+    else
+        mVehicleType = MAV_TYPE::MAV_TYPE_QUADROTOR;
+
+//    mVehicleType = MAV_TYPE::MAV_TYPE_GROUND_ROVER; // DEBUG DEBUG DEBUG
     switch (mVehicleType) {
     case MAV_TYPE_QUADROTOR:
+        qDebug() << "MavsdkVehicleConnection: we are talking to a MAV_TYPE_QUADROTOR / PX4.";
         mVehicleState = QSharedPointer<CopterState>::create(mSystem->get_system_id());
         mVehicleState->setName("Copter " + QString::number(mSystem->get_system_id()));
         break;
     case MAV_TYPE_GROUND_ROVER:
-        // TODO: car or diffdrive?
-        qDebug() << "MAV_TYPE_GROUND_ROVER not implemented.";
+        qDebug() << "MavsdkVehicleConnection: we are talking to a MAV_TYPE_GROUND_ROVER / WayWise.";
+        // TODO: detect different rover types...
+        mVehicleState = QSharedPointer<CarState>::create(mSystem->get_system_id());
+        mVehicleState->setName("Car " + QString::number(mSystem->get_system_id()));
         break;
     default:
         break;
@@ -61,7 +69,16 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
         emit gotVehicleHomeLlh({position.latitude_deg, position.longitude_deg, position.absolute_altitude_m});
     });
 
-    if (mVehicleType == MAV_TYPE::MAV_TYPE_QUADROTOR) // TODO: in this case, this differentiates between PX4 and WayWise-base autopilots. Refactor!
+    if (mVehicleType == MAV_TYPE::MAV_TYPE_GROUND_ROVER) // assumption: rover = WayWise on vehicle side -> get NED (shared ENU ref), global pos otherwise
+        mTelemetry->subscribe_position_velocity_ned([this](mavsdk::Telemetry::PositionVelocityNed positionVelocity_ned) {
+            auto pos = mVehicleState->getPosition();
+            pos.setX(positionVelocity_ned.position.east_m);
+            pos.setY(positionVelocity_ned.position.north_m);
+            pos.setHeight(-positionVelocity_ned.position.down_m);
+
+            mVehicleState->setPosition(pos);
+        });
+    else
         mTelemetry->subscribe_position([this](mavsdk::Telemetry::Position position) {
             llh_t llh = {position.latitude_deg, position.longitude_deg, position.absolute_altitude_m};
             xyz_t xyz = coordinateTransforms::llhToEnu(mEnuReference, llh);
@@ -73,19 +90,15 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
 
             mVehicleState->setPosition(pos);
         });
-    else
-        mTelemetry->subscribe_position_velocity_ned([this](mavsdk::Telemetry::PositionVelocityNed positionVelocity_ned) {
-            auto pos = mVehicleState->getPosition();
-            pos.setX(positionVelocity_ned.position.east_m);
-            pos.setY(positionVelocity_ned.position.north_m);
-            pos.setHeight(-positionVelocity_ned.position.down_m);
-
-            mVehicleState->setPosition(pos);
-        });
 
     mTelemetry->subscribe_heading([this](mavsdk::Telemetry::Heading heading) {
         auto pos = mVehicleState->getPosition();
+
+//        double heading_ENU = 90.0 - heading.heading_deg; // heading in NED [0.0:360.0] to ENU [-180.0:180.0]
+//        if (heading_ENU < -180.0)
+//            heading_ENU += 180.0;
         pos.setYaw(heading.heading_deg);
+
         mVehicleState->setPosition(pos);
     });
 
@@ -406,19 +419,21 @@ void MavsdkVehicleConnection::setConvertLocalPositionsToGlobalBeforeSending(bool
 }
 
 mavsdk::MissionRaw::MissionItem MavsdkVehicleConnection::convertPosPointToMissionItem(const PosPoint& posPoint, int sequenceId, bool current) {
-    // TODO: PX4 only supports mission items in global frame / llh!
-
     mavsdk::MissionRaw::MissionItem missionItem = {};
-    missionItem.mission_type = MAV_MISSION_TYPE_MISSION;
-    missionItem.frame = MAV_FRAME_LOCAL_ENU;
-    missionItem.command = MAV_CMD_NAV_WAYPOINT;
-    missionItem.seq = sequenceId;
-    missionItem.current = current;
-    missionItem.autocontinue = true;
-    missionItem.param4 = NAN; // yaw
-    missionItem.x = (int)(posPoint.getX() * 10e4);
-    missionItem.y = (int)(posPoint.getY() * 10e4);
-    missionItem.z = (float)posPoint.getHeight();
+
+    if (mVehicleType == MAV_TYPE_GROUND_ROVER || true) { // assumption: rover = WayWise on vehicle side
+        missionItem.mission_type = MAV_MISSION_TYPE_MISSION;
+        missionItem.frame = MAV_FRAME_LOCAL_ENU;
+        missionItem.command = MAV_CMD_NAV_WAYPOINT;
+        missionItem.seq = sequenceId;
+        missionItem.current = current;
+        missionItem.autocontinue = true;
+        missionItem.param4 = NAN; // yaw
+        missionItem.x = (int)(posPoint.getX() * 10e4);
+        missionItem.y = (int)(posPoint.getY() * 10e4);
+        missionItem.z = (float)posPoint.getHeight();
+    } else     // TODO: PX4 only supports mission items in global frame / llh!
+        throw std::logic_error("converting mission items to global frame not implemented");
 
     return missionItem;
 }
@@ -452,18 +467,27 @@ void MavsdkVehicleConnection::startAutopilotOnVehicle()
 
 void MavsdkVehicleConnection::pauseAutopilotOnVehicle()
 {
-    mMissionRaw->pause_mission_async([](mavsdk::MissionRaw::Result res) {
-        if (res != mavsdk::MissionRaw::Result::Success)
+    // Note: mavsdk::MissionRaw::pause_mission tries to transition to hold mode, but this is not supported by MAVSDK ActionServer (WayWise vehicle side)
+    if (mVehicleType == MAV_TYPE_GROUND_ROVER) { // assumption: rover = WayWise on vehicle side
+        mavsdk::MavlinkPassthrough::CommandLong ComLong;
+        memset(&ComLong, 0, sizeof (ComLong));
+        ComLong.target_compid = mMavlinkPassthrough->get_target_compid();
+        ComLong.target_sysid = mMavlinkPassthrough->get_target_sysid();
+        ComLong.command = MAV_CMD_DO_SET_MODE;
+        ComLong.param1 = MAV_MODE_FLAG_SAFETY_ARMED | MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
+        ComLong.param2 = 1; // PX4_CUSTOM_MAIN_MODE_MANUAL
+
+        if (mMavlinkPassthrough->send_command_long(ComLong) != mavsdk::MavlinkPassthrough::Result::Success)
+            qDebug() << "Warning: MavsdkVehicleConnection's mode change request failed.";
+    } else
+        if (mMissionRaw->pause_mission() != mavsdk::MissionRaw::Result::Success)
             qDebug() << "Warning: MavsdkVehicleConnection's pause mission request failed.";
-    });
 }
 
 void MavsdkVehicleConnection::stopAutopilotOnVehicle()
 {
-    mMissionRaw->pause_mission_async([](mavsdk::MissionRaw::Result res) {
-        if (res != mavsdk::MissionRaw::Result::Success)
-            qDebug() << "Warning: MavsdkVehicleConnection's pause mission request failed.";
-    });
+    pauseAutopilotOnVehicle();
+
     mMissionRaw->set_current_mission_item_async(0, [](mavsdk::MissionRaw::Result res) {
         if (res != mavsdk::MissionRaw::Result::Success)
             qDebug() << "Warning: MavsdkVehicleConnection's set current mission item request failed.";
