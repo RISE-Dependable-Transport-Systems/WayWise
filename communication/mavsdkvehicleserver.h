@@ -24,6 +24,9 @@ public:
 
 signals:
     void startWaypointFollower(bool fromBeginning); // to enable starting from MAVSDK thread
+    void pauseWaypointFollower();
+    void resetWaypointFollower();
+    void clearRouteOnWaypointFollower();
 
 private:
     mavsdk::Mavsdk mMavsdk;
