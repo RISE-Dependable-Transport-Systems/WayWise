@@ -5,14 +5,15 @@
 #include <QSharedPointer>
 #include <QTimer>
 #include <mavsdk/mavsdk.h>
-#include <mavsdk/plugins/mavlink_passthrough/mavlink_passthrough.h>
+#include <mavsdk/server_component.h>
 #include <mavsdk/plugins/param_server/param_server.h>
 #include <mavsdk/plugins/telemetry_server/telemetry_server.h>
 #include <mavsdk/plugins/action_server/action_server.h>
 #include <mavsdk/plugins/mission_raw_server/mission_raw_server.h>
-#include <WayWise/vehicles/vehiclestate.h>
-#include <WayWise/sensors/gnss/ubloxrover.h>
-#include <WayWise/autopilot/waypointfollower.h>
+#include "vehicles/vehiclestate.h"
+#include "sensors/gnss/ubloxrover.h"
+#include "autopilot/waypointfollower.h"
+#include "waywise.h"
 
 class MavsdkVehicleServer : public QObject
 {
@@ -34,7 +35,6 @@ private:
     std::shared_ptr<mavsdk::ActionServer> mActionServer;
     std::shared_ptr<mavsdk::ParamServer> mParamServer;
     std::shared_ptr<mavsdk::MissionRawServer> mMissionRawServer;
-    std::shared_ptr<mavsdk::MavlinkPassthrough> mMavlinkPassthrough;
     QTimer mPublishMavlinkTimer;
 
     QSharedPointer<VehicleState> mVehicleState;

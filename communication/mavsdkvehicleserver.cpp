@@ -13,42 +13,13 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
     if (result == mavsdk::ConnectionResult::Success)
         qDebug() << "MavsdkVehicleServer is listening...";
 
-    // -- NOTE #1: next MAVSDK release (1.5?) should simplify the following code to this:
-    // auto server_component = mMavsdk.server_component_by_type(Mavsdk::ServerComponentType::Autopilot);
-    auto prom = std::promise<std::shared_ptr<mavsdk::System>>{};
-    auto fut = prom.get_future();
-    mMavsdk.subscribe_on_new_system([this, &prom]() {
-        qDebug() << "Discovered MAVSDK GCS";
-        auto system = mMavsdk.systems().back();
-        mMavsdk.subscribe_on_new_system(nullptr);
-        prom.set_value(system);
-    });
-
-    qDebug() << "Sleeping AP thread... ";
-    for (auto i = 0; i < 3; i++) {
-        std::this_thread::sleep_for(std::chrono::seconds(5));
-        if (mMavsdk.systems().size() == 0) {
-            qDebug() << "No System Found from Autopilot, trying again in 5 secs...";
-            if (i == 2) {
-                qDebug() << "No System found after three retries. Aborting...";
-                return;
-            }
-        } else {
-            qDebug() << "Setting System";
-            break;
-        }
-    }
-    auto system = mMavsdk.systems().back();
-
-    system->set_vendor_id(12321); // TODO: this happens too late (GCS has already read info)
-   // NOTE #1 --
-
+    std::shared_ptr<mavsdk::ServerComponent> serverComponent = mMavsdk.server_component_by_type(mavsdk::Mavsdk::ServerComponentType::Autopilot);
 
     // Create server plugins
-    mTelemetryServer.reset(new mavsdk::TelemetryServer(system));
-    mActionServer.reset(new mavsdk::ActionServer(system));
-    mParamServer.reset(new mavsdk::ParamServer(system));
-    mMissionRawServer.reset(new mavsdk::MissionRawServer(system));
+    mTelemetryServer.reset(new mavsdk::TelemetryServer(serverComponent));
+    mActionServer.reset(new mavsdk::ActionServer(serverComponent));
+    mParamServer.reset(new mavsdk::ParamServer(serverComponent));
+    mMissionRawServer.reset(new mavsdk::MissionRawServer(serverComponent));
 
     // These are needed for MAVSDK at the moment
     mParamServer->provide_param_int("CAL_ACC0_ID", 1);
@@ -99,8 +70,10 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
     // TODO: publish rates
     mPublishMavlinkTimer.start(100);
 
-    mActionServer->subscribe_flight_mode_change([this](mavsdk::ActionServer::Result res, mavsdk::ActionServer::FlightMode mode){
+    mActionServer->subscribe_flight_mode_change([this](mavsdk::ActionServer::Result res, mavsdk::ActionServer::FlightMode mode) {
        if  (res == mavsdk::ActionServer::Result::Success)
+           mVehicleState->setFlightMode((VehicleState::FlightMode) mode);
+
            switch (mode) {
            case mavsdk::ActionServer::FlightMode::Mission:
                emit startWaypointFollower(false);
@@ -109,7 +82,6 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
                if (mWaypointFollower->isActive())
                    emit pauseWaypointFollower();
            }
-
     });
 
     mMissionRawServer->subscribe_incoming_mission([this](mavsdk::MissionRawServer::Result res, mavsdk::MissionRawServer::MissionPlan plan) {
@@ -128,7 +100,6 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
                 qDebug() << "MavsdkVehicleServer: got new mission but no WaypointFollower is set to receive it.";
 
         }
-
     });
 
     mMissionRawServer->subscribe_clear_all([this](uint32_t val) {
@@ -139,12 +110,22 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
             qDebug() << "MavsdkVehicleServer: got clear mission request but no WaypointFollower is set to receive it.";
     });
 
-    mMissionRawServer->subscribe_current_item_changed([this](mavsdk::MissionRawServer::MissionItem item){
+    mMissionRawServer->subscribe_current_item_changed([this](mavsdk::MissionRawServer::MissionItem item) {
         if (!mWaypointFollower.isNull() && item.seq == 0)
             emit resetWaypointFollower();
         else if (item.seq != 0)
             qDebug() << "Warning: jumping to seq ID in mission not implemented in MavsdkVehicleServer / WaypointFollower.";
+    });
 
+    mMavsdk.intercept_incoming_messages_async([](mavlink_message_t &message){
+        if (message.msgid == MAVLINK_MSG_ID_MANUAL_CONTROL) {
+            mavlink_manual_control_t manual_control;
+            mavlink_msg_manual_control_decode(&message, &manual_control);
+
+            qDebug() << "MAVLINK_MSG_ID_MANUAL_CONTROL" << manual_control.x << manual_control.y;
+        }
+
+        return true;
     });
 }
 
