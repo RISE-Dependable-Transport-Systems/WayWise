@@ -72,9 +72,9 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
     if (mVehicleType == MAV_TYPE::MAV_TYPE_GROUND_ROVER) // assumption: rover = WayWise on vehicle side -> get NED (shared ENU ref), global pos otherwise
         mTelemetry->subscribe_position_velocity_ned([this](mavsdk::Telemetry::PositionVelocityNed positionVelocity_ned) {
             auto pos = mVehicleState->getPosition();
-            pos.setX(positionVelocity_ned.position.east_m);
-            pos.setY(positionVelocity_ned.position.north_m);
-            pos.setHeight(-positionVelocity_ned.position.down_m);
+
+            xyz_t positionNED = {positionVelocity_ned.position.north_m, positionVelocity_ned.position.east_m, positionVelocity_ned.position.down_m};
+            pos.setXYZ(coordinateTransforms::nedToENU(positionNED));
 
             mVehicleState->setPosition(pos);
         });
@@ -94,10 +94,7 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
     mTelemetry->subscribe_heading([this](mavsdk::Telemetry::Heading heading) {
         auto pos = mVehicleState->getPosition();
 
-//        double heading_ENU = 90.0 - heading.heading_deg; // heading in NED [0.0:360.0] to ENU [-180.0:180.0]
-//        if (heading_ENU < -180.0)
-//            heading_ENU += 180.0;
-        pos.setYaw(heading.heading_deg);
+        pos.setYaw(coordinateTransforms::yawNEDtoENU(heading.heading_deg));
 
         mVehicleState->setPosition(pos);
     });
@@ -292,11 +289,8 @@ void MavsdkVehicleConnection::requestVelocityAndYaw(const xyz_t &velocityENU, co
             qDebug() << "MavsdkVehicleConnection: offboard mode started";
     }
 
-    // NOTE: conversion from ENU to NED
-    double yawDegNED = 90.0-yawDeg;
-    if (yawDegNED < 0.0)
-        yawDegNED += 360.0;
-    mOffboard->set_velocity_ned({(float)(velocityENU.y), (float)(velocityENU.x), (float)(-velocityENU.z), (float)(yawDegNED)});
+    xyz_t velocityNED = coordinateTransforms::enuToNED(velocityENU);
+    mOffboard->set_velocity_ned({(float)(velocityNED.x), (float)(velocityNED.y), (float)(velocityNED.z), (float)(coordinateTransforms::yawENUtoNED(yawDeg))});
 }
 
 void MavsdkVehicleConnection::inputRtcmData(const QByteArray &rtcmData)
@@ -364,10 +358,10 @@ void MavsdkVehicleConnection::sendLandingTargetLlh(const llh_t &landingTargetLlh
     mavLandingTargetNED.frame = MAV_FRAME_LOCAL_NED;
     mavLandingTargetNED.time_usec = QDateTime::currentDateTimeUtc().toMSecsSinceEpoch();
 
-    // ENU -> NED
-    mavLandingTargetNED.x = landingTargetENUgpsOrigin.y;
-    mavLandingTargetNED.y = landingTargetENUgpsOrigin.x;
-    mavLandingTargetNED.z = -landingTargetENUgpsOrigin.z;
+    xyz_t landingTargetNEDgpsOrigin = coordinateTransforms::enuToNED(landingTargetENUgpsOrigin);
+    mavLandingTargetNED.x = landingTargetNEDgpsOrigin.x;
+    mavLandingTargetNED.y = landingTargetNEDgpsOrigin.y;
+    mavLandingTargetNED.z = landingTargetNEDgpsOrigin.z;
 
     mavlink_msg_landing_target_encode(mMavlinkPassthrough->get_target_sysid(), mMavlinkPassthrough->get_target_compid(), &mavLandingTargetMsg, &mavLandingTargetNED);
     if (mMavlinkPassthrough->send_message(mavLandingTargetMsg) != mavsdk::MavlinkPassthrough::Result::Success)
@@ -441,7 +435,7 @@ mavsdk::MissionRaw::MissionItem MavsdkVehicleConnection::convertPosPointToMissio
 bool MavsdkVehicleConnection::isAutopilotActiveOnVehicle()
 {
     // TODO: mode == mission -> ap active?
-    return true;
+    return false;
 }
 
 void MavsdkVehicleConnection::restartAutopilotOnVehicle()

@@ -61,7 +61,7 @@ void CopterState::draw(QPainter &painter, const QTransform &drawTrans, const QTr
     pen.setWidthF(10.0);
     painter.setPen(pen);
     painter.translate(x, y);
-    painter.rotate(-pos.getYaw());
+    painter.rotate(pos.getYaw() - 90.0);
 
     QColor col_frame = getColor();
     QColor col_prop_main;
