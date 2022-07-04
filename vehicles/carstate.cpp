@@ -114,18 +114,45 @@ void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTrans
     //                    t.hour(), t.minute(), t.second(), t.msec());
 
     if (getDrawStatusText()) {
-        QPointF statusTextPoint;
-        QRectF statusTextRect;
-        QString statusText = getName() + "\nID: " +QString::number(getId());
+        // Print data
+        QString txt;
+        QPointF pt_txt;
+        QRectF rect_txt;
 
-        statusTextPoint.setX(x + car_w + car_len * ((cos(getPosition().getYaw() * (M_PI/180.0)) + 1) / 3));
-        statusTextPoint.setY(y - car_w / 2);
+        QString flightModeStr;
+        switch (getFlightMode()) {
+            case FlightMode::Unknown: flightModeStr = "unknown"; break;
+            case FlightMode::Ready: flightModeStr = "ready"; break;
+            case FlightMode::Takeoff: flightModeStr = "takeoff"; break;
+            case FlightMode::Hold: flightModeStr = "hold"; break;
+            case FlightMode::Mission: flightModeStr = "mission"; break;
+            case FlightMode::ReturnToLaunch: flightModeStr = "return to launch"; break;
+            case FlightMode::Land: flightModeStr = "land"; break;
+            case FlightMode::Offboard: flightModeStr = "offboard"; break;
+            case FlightMode::FollowMe: flightModeStr = "follow me"; break;
+            case FlightMode::Manual: flightModeStr = "manual"; break;
+            case FlightMode::Altctl: flightModeStr = "altitude"; break;
+            case FlightMode::Posctl: flightModeStr = "position"; break;
+            case FlightMode::Acro: flightModeStr = "acro"; break;
+            case FlightMode::Stabilized: flightModeStr = "stabilized"; break;
+            case FlightMode::Rattitude: flightModeStr = "rattitude"; break;
+        }
 
+        txt.sprintf("%s\n"
+                    "(%.3f, %.3f, %.3f, %.0f)\n"
+                    "State: %s\n"
+                    "Mode: %s\n",
+                    getName().toLocal8Bit().data(),
+                    pos.getX(), pos.getY(), pos.getHeight(), pos.getYaw(),
+                    (getIsArmed() ? "armed" : "disarmed"),
+                    flightModeStr.toLocal8Bit().data());
+        pt_txt.setX(x + car_w + car_len * ((cos(getPosition().getYaw() * (M_PI/180.0)) + 1) / 3));
+        pt_txt.setY(y);
         painter.setTransform(txtTrans);
-        statusTextPoint = drawTrans.map(statusTextPoint);
-        statusTextRect.setCoords(statusTextPoint.x(), statusTextPoint.y(),
-                                 statusTextPoint.x() + 400, statusTextPoint.y() + 100);
-        painter.drawText(statusTextRect, statusText);
+        pt_txt = drawTrans.map(pt_txt);
+        rect_txt.setCoords(pt_txt.x(), pt_txt.y() - 40,
+                           pt_txt.x() + 400, pt_txt.y() + 65);
+        painter.drawText(rect_txt, txt);
     }
 }
 

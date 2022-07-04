@@ -28,7 +28,7 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
     else
         mVehicleType = MAV_TYPE::MAV_TYPE_QUADROTOR;
 
-    mVehicleType = MAV_TYPE::MAV_TYPE_GROUND_ROVER; // DEBUG DEBUG DEBUG
+//    mVehicleType = MAV_TYPE::MAV_TYPE_GROUND_ROVER; // DEBUG DEBUG DEBUG
     switch (mVehicleType) {
     case MAV_TYPE_QUADROTOR:
         qDebug() << "MavsdkVehicleConnection: we are talking to a MAV_TYPE_QUADROTOR / PX4.";
@@ -95,7 +95,6 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
         auto pos = mVehicleState->getPosition();
 
         pos.setYaw(coordinateTransforms::yawNEDtoENU(heading.heading_deg));
-        qDebug() << pos.getYaw() << heading.heading_deg;
 
         mVehicleState->setPosition(pos);
     });
@@ -109,20 +108,20 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
         mTelemetry->subscribe_landed_state([this](mavsdk::Telemetry::LandedState landedState) {
            mVehicleState.dynamicCast<CopterState>()->setLandedState(static_cast<CopterState::LandedState>(landedState));
         });
+    }
 
-        mTelemetry->subscribe_flight_mode([this](mavsdk::Telemetry::FlightMode flightMode) {
-            mVehicleState.dynamicCast<CopterState>()->setFlightMode(static_cast<CopterState::FlightMode>(flightMode));
+    mTelemetry->subscribe_flight_mode([this](mavsdk::Telemetry::FlightMode flightMode) {
+        mVehicleState->setFlightMode(static_cast<CopterState::FlightMode>(flightMode));
 
-            if (flightMode != mavsdk::Telemetry::FlightMode::Offboard &&
-                    flightMode != mavsdk::Telemetry::FlightMode::Hold)
-                if (hasWaypointFollowerConnectionLocal() && isAutopilotActive()) {
-                    emit stopWaypointFollowerSignal();
-                    qDebug() << "Note: WaypointFollower stopped by flightmode change (can only be started in hold mode).";
-                }
+        if (flightMode != mavsdk::Telemetry::FlightMode::Offboard &&
+                flightMode != mavsdk::Telemetry::FlightMode::Hold)
+            if (hasWaypointFollowerConnectionLocal() && isAutopilotActive()) {
+                emit stopWaypointFollowerSignal();
+                qDebug() << "MavsdkVehicleConnection: connection-local WaypointFollower stopped by flightmode change (Note: can only be started in hold mode).";
+            }
 
 //            qDebug() << (int)flightMode << (mOffboard ? mOffboard->is_active() : false);
-        });
-    }
+    });
 
     // poll update of GpsGlobalOrigin once
     mTelemetry->get_gps_global_origin_async([this](mavsdk::Telemetry::Result result, mavsdk::Telemetry::GpsGlobalOrigin gpsGlobalOrigin){
@@ -435,8 +434,7 @@ mavsdk::MissionRaw::MissionItem MavsdkVehicleConnection::convertPosPointToMissio
 
 bool MavsdkVehicleConnection::isAutopilotActiveOnVehicle()
 {
-    // TODO: mode == mission -> ap active?
-    return false;
+    return mVehicleState->getFlightMode() == VehicleState::FlightMode::Mission;
 }
 
 void MavsdkVehicleConnection::restartAutopilotOnVehicle()
