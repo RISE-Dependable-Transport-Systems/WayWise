@@ -75,7 +75,8 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
                                                       static_cast<float>(mVehicleState->getVelocity().x),
                                                       static_cast<float>(-mVehicleState->getVelocity().z)};
 
-        mavsdk::TelemetryServer::Heading heading{mVehicleState->getPosition(PosType::fused).getYaw() + 90.0}; // heading NED
+        // TODO: Since SDVP times, the yaw direction of ENU is not correct (-90 is north, but 90 should be north)!
+        mavsdk::TelemetryServer::Heading heading{mVehicleState->getPosition(PosType::fused).getYaw() + 90.0}; // send heading in NED
 
         mavsdk::TelemetryServer::Position homePositionLlh{};
         mavsdk::TelemetryServer::Position positionLlh{};

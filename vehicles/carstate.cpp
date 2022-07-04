@@ -61,7 +61,7 @@ void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTrans
     painter.setBrush(QBrush(col_wheels));
     painter.save();
     painter.translate(x, y);
-    painter.rotate(-pos.getYaw());
+    painter.rotate(pos.getYaw());
     // Wheels
     painter.drawRoundedRect(-car_len / 12.0,-(car_w / 2), car_len / 6.0, car_w, car_corner / 3, car_corner / 3);
     painter.drawRoundedRect(car_len - car_len / 2.5,-(car_w / 2), car_len / 6.0, car_w, car_corner / 3, car_corner / 3);

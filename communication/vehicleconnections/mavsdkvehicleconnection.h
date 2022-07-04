@@ -15,6 +15,7 @@
 #include "vehicles/vehiclestate.h"
 #include "core/coordinatetransforms.h"
 #include "autopilot/gotowaypointfollower.h"
+//#include "autopilot/purepursuitwaypointfollower.h"
 #include "vehicles/copterstate.h"
 #include "vehicles/carstate.h"
 #include "sensors/camera/mavsdkgimbal.h"

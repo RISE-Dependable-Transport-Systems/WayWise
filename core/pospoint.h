@@ -73,6 +73,7 @@ public:
     void setY(double y);
     void setHeight(double height);
     void setXY(double x, double y);
+    void setXYZ(xyz_t xyz);
     void scaleXY(double scalefactor);
     void setRoll(double roll);
     void setPitch(double pitch);

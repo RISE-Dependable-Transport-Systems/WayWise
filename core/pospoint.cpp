@@ -113,6 +113,13 @@ void PosPoint::setXY(double x, double y)
     mY = y;
 }
 
+void PosPoint::setXYZ(xyz_t xyz)
+{
+    mX = xyz.x;
+    mY = xyz.y;
+    mHeight = xyz.z;
+}
+
 void PosPoint::setTime(const QTime &time)
 {
     mTime = time;
