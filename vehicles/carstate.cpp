@@ -199,10 +199,10 @@ void CarState::updateOdomPositionAndYaw(double drivenDistance, PosType usePosTyp
 
         double yawChange = drivenDistance / ((turnRadiusRear + turnRadiusFront) / 2.0);
 
-        currentPosition.setX(currentPosition.getX() + turnRadiusRear * (sin(-yawRad + yawChange) - sinf(-yawRad)));
-        currentPosition.setY(currentPosition.getY() + turnRadiusRear * (cos(-yawRad - yawChange) - cosf(-yawRad)));
+        currentPosition.setX(currentPosition.getX() - turnRadiusRear * (sin(yawRad - yawChange) - sinf(yawRad)));
+        currentPosition.setY(currentPosition.getY() - turnRadiusRear * (cos(yawRad + yawChange) - cosf(yawRad)));
 
-        double newYaw_deg = (yawRad - yawChange) * (180.0/M_PI);
+        double newYaw_deg = (yawRad + yawChange) * (180.0/M_PI);
 
         // normalize
         while (newYaw_deg < 0.0)
@@ -212,8 +212,8 @@ void CarState::updateOdomPositionAndYaw(double drivenDistance, PosType usePosTyp
 
         currentPosition.setYaw(newYaw_deg);
     } else { // Driving forward
-        currentPosition.setX(currentPosition.getX() + cos(-yawRad) * drivenDistance);
-        currentPosition.setY(currentPosition.getY() + sin(-yawRad) * drivenDistance);
+        currentPosition.setX(currentPosition.getX() + cos(yawRad) * drivenDistance);
+        currentPosition.setY(currentPosition.getY() + sin(yawRad) * drivenDistance);
     }
 
     currentPosition.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()));

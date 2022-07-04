@@ -274,9 +274,9 @@ void UbloxRover::updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt)
         // Yaw --- based on last GNSS position if fusion (F9R) unavailable
         static xyz_t lastXyz;
         if(pvt.head_veh_valid)
-            gnssPos.setYaw(pvt.head_veh + mIMUOrientationOffset.yawOffset_deg);
+            gnssPos.setYaw(coordinateTransforms::yawNEDtoENU(pvt.head_veh) + mIMUOrientationOffset.yawOffset_deg);
         else
-            gnssPos.setYaw(-atan2(xyz.y - lastXyz.y, xyz.x - lastXyz.x) * 180.0 / M_PI);
+            gnssPos.setYaw(atan2(xyz.y - lastXyz.y, xyz.x - lastXyz.x) * 180.0 / M_PI);
 
         // Time and speed
         gnssPos.setTime(QTime::fromMSecsSinceStartOfDay((pvt.i_tow % ms_per_day) - leapSeconds_ms));

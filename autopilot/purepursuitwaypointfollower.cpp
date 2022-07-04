@@ -128,8 +128,8 @@ double PurepursuitWaypointFollower::getCurvatureToPointInENU(QSharedPointer<Vehi
     pointInVehicleFrame.setY(point.y()-vehiclePos.getY());
     // rotate
     double currYaw_rad = vehiclePos.getYaw() * M_PI / 180.0;
-    const double newX = cos(currYaw_rad)*pointInVehicleFrame.x() - sin(currYaw_rad)*pointInVehicleFrame.y();
-    const double newY = sin(currYaw_rad)*pointInVehicleFrame.x() + cos(currYaw_rad)*pointInVehicleFrame.y();
+    const double newX = cos(-currYaw_rad)*pointInVehicleFrame.x() - sin(-currYaw_rad)*pointInVehicleFrame.y();
+    const double newY = sin(-currYaw_rad)*pointInVehicleFrame.x() + cos(-currYaw_rad)*pointInVehicleFrame.y();
     pointInVehicleFrame.setX(newX);
     pointInVehicleFrame.setY(newY);
 
@@ -227,8 +227,8 @@ void PurepursuitWaypointFollower::updateState()
 
             // clockwise rotation
             double currYaw_rad = carPosition.getYaw() * (M_PI / 180.0);
-            double newX =  cos(currYaw_rad)*intersections[0].x() + sin(currYaw_rad)*intersections[0].y();
-            double newY = -sin(currYaw_rad)*intersections[0].x() + cos(currYaw_rad)*intersections[0].y();
+            double newX =  cos(-currYaw_rad)*intersections[0].x() + sin(-currYaw_rad)*intersections[0].y();
+            double newY = -sin(-currYaw_rad)*intersections[0].x() + cos(-currYaw_rad)*intersections[0].y();
 
             // translation
             newX += carPosition.getX();

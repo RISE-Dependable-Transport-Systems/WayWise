@@ -113,8 +113,8 @@ void SDVPVehiclePositionFuser::correctPositionAndYawOdom(QSharedPointer<VehicleS
 
         // use Odom input from motorcontroller for IMU-based dead reckoning
         double yawRad = posFused.getYaw() / (180.0/M_PI);
-        posFused.setXY(posFused.getX() + cos(-yawRad) * distanceDriven,
-                       posFused.getY() + sin(-yawRad) * distanceDriven);
+        posFused.setXY(posFused.getX() + cos(yawRad) * distanceDriven,
+                       posFused.getY() + sin(yawRad) * distanceDriven);
 
         posFused.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()));
         vehicleState->setPosition(posFused);
@@ -153,9 +153,9 @@ void SDVPVehiclePositionFuser::correctPositionAndYawIMU(QSharedPointer<VehicleSt
 
         // 2. apply offset & normalize
         double yawResult = posIMU.getYaw() + mPosIMUyawOffset;
-        while (yawResult < 0.0)
+        while (yawResult < -180.0)
             yawResult += 360.0;
-        while (yawResult > 360.0)
+        while (yawResult >= 180.0)
             yawResult -= 360.0;
         posFused.setYaw(yawResult);
 
