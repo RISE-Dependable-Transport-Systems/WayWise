@@ -28,7 +28,7 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
     else
         mVehicleType = MAV_TYPE::MAV_TYPE_QUADROTOR;
 
-//    mVehicleType = MAV_TYPE::MAV_TYPE_GROUND_ROVER; // DEBUG DEBUG DEBUG
+    mVehicleType = MAV_TYPE::MAV_TYPE_GROUND_ROVER; // DEBUG DEBUG DEBUG
     switch (mVehicleType) {
     case MAV_TYPE_QUADROTOR:
         qDebug() << "MavsdkVehicleConnection: we are talking to a MAV_TYPE_QUADROTOR / PX4.";
@@ -95,6 +95,7 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
         auto pos = mVehicleState->getPosition();
 
         pos.setYaw(coordinateTransforms::yawNEDtoENU(heading.heading_deg));
+        qDebug() << pos.getYaw() << heading.heading_deg;
 
         mVehicleState->setPosition(pos);
     });
