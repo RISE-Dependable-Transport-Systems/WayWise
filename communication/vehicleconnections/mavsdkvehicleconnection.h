@@ -48,6 +48,7 @@ public:
     void sendLandingTargetENU(const xyz_t &landingTargetENU);
     void sendSetGpsOriginLlh(const llh_t &gpsOriginLlh);
     virtual void setActuatorOutput(int index, float value) override;
+    virtual void setManualControl(double x, double y, double z, double r, uint16_t buttonStateMask);
 
     void setConvertLocalPositionsToGlobalBeforeSending(bool convertLocalPositionsToGlobalBeforeSending);
 

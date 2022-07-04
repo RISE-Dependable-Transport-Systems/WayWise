@@ -11,7 +11,7 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
     mSystem = system;
 
     // Setup gimbal
-    mSystem->register_component_discovered_callback([this](mavsdk::System::ComponentType){
+    mSystem->subscribe_component_discovered([this](mavsdk::System::ComponentType){
         if (mSystem->has_gimbal() && mGimbal.isNull()) {
             mGimbal = QSharedPointer<MavsdkGimbal>::create(mSystem);
             emit detectedGimbal(mGimbal);
@@ -20,15 +20,10 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
     if (mSystem->has_gimbal() && mGimbal.isNull()) // Gimbal might have been discovered before callback was registered
         mGimbal = QSharedPointer<MavsdkGimbal>::create(mSystem);
 
-    // TODO: create respective class depending on MAV_TYPE (currently, not accessible in MAVSDK)
-    // TODO: even looking for vendor_id == WAYWISE_MAVLINK_VENDOR_ID is difficult, currently, as it is set on vehicle side after GCS connects...
-    mavsdk::System::AutopilotVersion apVersionData = mSystem->get_autopilot_version_data();
-    if (apVersionData.vendor_id == WAYWISE_MAVLINK_VENDOR_ID) // -> we are talking to WayWise -> this is a rover
-        mVehicleType = MAV_TYPE::MAV_TYPE_GROUND_ROVER;
-    else
-        mVehicleType = MAV_TYPE::MAV_TYPE_QUADROTOR;
+    // TODO: create respective class depending on MAV_TYPE (currently, not accessible in MAVSDK, use Passthrough plugin)
+    mVehicleType = MAV_TYPE::MAV_TYPE_GROUND_ROVER;
+//    mVehicleType = MAV_TYPE::MAV_TYPE_QUADROTOR;
 
-//    mVehicleType = MAV_TYPE::MAV_TYPE_GROUND_ROVER; // DEBUG DEBUG DEBUG
     switch (mVehicleType) {
     case MAV_TYPE_QUADROTOR:
         qDebug() << "MavsdkVehicleConnection: we are talking to a MAV_TYPE_QUADROTOR / PX4.";
@@ -405,6 +400,26 @@ void MavsdkVehicleConnection::setActuatorOutput(int index, float value)
         if (res != mavsdk::Action::Result::Success)
             qDebug() << "Warning: MavsdkVehicleConnection's set_actuator request failed.";
     });
+}
+
+void MavsdkVehicleConnection::setManualControl(double x, double y, double z, double r, uint16_t buttonStateMask)
+{
+    mavlink_manual_control_t manual_control {};
+    manual_control.x = (uint16_t) (x * 1000.0);
+    manual_control.y = (uint16_t) (y * 1000.0);
+    manual_control.z = (uint16_t) (z * 1000.0);
+    manual_control.r = (uint16_t) (r * 1000.0);
+    manual_control.buttons = buttonStateMask;
+
+    mavlink_message_t message;
+    if (mVehicleType == MAV_TYPE_GROUND_ROVER)
+        // TODO: ugly and hackish, but hopefully easier to fix with next MAVSDK release...
+        mavlink_msg_manual_control_encode(245, 190, &message, &manual_control);
+    else
+        mavlink_msg_manual_control_encode(mMavlinkPassthrough->get_target_sysid(), mMavlinkPassthrough->get_target_compid(), &message, &manual_control);
+
+    if (mMavlinkPassthrough->send_message(message) != mavsdk::MavlinkPassthrough::Result::Success)
+        qDebug() << "Warning: could not send MANUAL_CONTROL via MAVLINK.";
 }
 
 void MavsdkVehicleConnection::setConvertLocalPositionsToGlobalBeforeSending(bool convertLocalPositionsToGlobalBeforeSending)
