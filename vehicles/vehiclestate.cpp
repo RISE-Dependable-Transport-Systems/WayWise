@@ -99,3 +99,12 @@ PosPoint VehicleState::getPosition(PosType type) const
     return mPositionBySource[(int)type];
 }
 
+VehicleState::FlightMode VehicleState::getFlightMode() const
+{
+    return mFlightMode;
+}
+
+void VehicleState::setFlightMode(const FlightMode &flightMode)
+{
+    mFlightMode = flightMode;
+}

@@ -25,8 +25,26 @@ class VehicleState : public ObjectState
 {
     Q_OBJECT
 public:
-    VehicleState(ObjectID_t id = 0, Qt::GlobalColor color = Qt::red);
+    // like MAVSDK FlightMode
+    enum class FlightMode {
+        Unknown,
+        Ready,
+        Takeoff,
+        Hold,
+        Mission,
+        ReturnToLaunch,
+        Land,
+        Offboard,
+        FollowMe,
+        Manual,
+        Altctl,
+        Posctl,
+        Acro,
+        Stabilized,
+        Rattitude
+    };
 
+    VehicleState(ObjectID_t id = 0, Qt::GlobalColor color = Qt::red);
 
     // Static state
     double getLength() const { return mLength; }
@@ -44,6 +62,14 @@ public:
     virtual void setPosition(PosPoint &point) override;
     virtual QTime getTime() const override { return mTime; }
     virtual void setTime(const QTime &time) override { mTime = time; }
+    FlightMode getFlightMode() const;
+    void setFlightMode(const FlightMode &flightMode);
+    double getSteering() const;
+    virtual void setSteering(double steering);
+    PosPoint getHomePosition() const;
+    void setHomePosition(const PosPoint &homePosition);
+    bool getIsArmed() const;
+    void setIsArmed(bool isArmed);
 
     void simulationStep(double dt_ms, PosType usePosType = PosType::simulated); // Take current state and simulate step forward for dt_ms milliseconds, update state accordingly
     virtual void updateOdomPositionAndYaw(double drivenDistance, PosType usePosType = PosType::odom) = 0;
@@ -55,14 +81,6 @@ public:
     std::array<float, 3> getAccelerometerXYZ() const;
     void setAccelerometerXYZ(const std::array<float, 3> &accelerometerXYZ);
 
-    double getSteering() const;
-    virtual void setSteering(double steering);
-
-    PosPoint getHomePosition() const;
-    void setHomePosition(const PosPoint &homePosition);
-
-    bool getIsArmed() const;
-    void setIsArmed(bool isArmed);
 
 private:
     // Static state
@@ -79,6 +97,7 @@ private:
     QTime mTime;
     PosPoint mHomePosition;
     bool mIsArmed = false;
+    FlightMode mFlightMode = FlightMode::Unknown;
 
     std::array<float,3> mGyroscopeXYZ = std::array<float,3>({0.0, 0.0, 0.0}); // [deg/s]
     std::array<float,3> mAccelerometerXYZ = std::array<float,3>({0.0, 0.0, 0.0}); // [g]

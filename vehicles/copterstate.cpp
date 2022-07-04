@@ -138,7 +138,7 @@ void CopterState::draw(QPainter &painter, const QTransform &drawTrans, const QTr
     }
     
     QString flightModeStr;
-    switch (mFlightMode) {
+    switch (getFlightMode()) {
         case FlightMode::Unknown: flightModeStr = "unknown"; break;
         case FlightMode::Ready: flightModeStr = "ready"; break;
         case FlightMode::Takeoff: flightModeStr = "takeoff"; break;
@@ -220,14 +220,4 @@ CopterState::LandedState CopterState::getLandedState() const
 void CopterState::setLandedState(const CopterState::LandedState &landedState)
 {
     mLandedState = landedState;
-}
-
-CopterState::FlightMode CopterState::getFlightMode() const
-{
-    return mFlightMode;
-}
-
-void CopterState::setFlightMode(const FlightMode &flightMode)
-{
-    mFlightMode = flightMode;
 }
