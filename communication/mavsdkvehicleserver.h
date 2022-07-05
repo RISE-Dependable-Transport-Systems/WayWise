@@ -24,6 +24,7 @@ public:
     void setUbloxRover(QSharedPointer<UbloxRover> ubloxRover);
     void setWaypointFollower(QSharedPointer<WaypointFollower> waypointFollower);
     void setMovementController(QSharedPointer<MovementController> movementController);
+    void setManualControlMaxSpeed(double manualControlMaxSpeed_ms);
 
 signals:
     void startWaypointFollower(bool fromBeginning); // to enable starting from MAVSDK thread
@@ -53,6 +54,7 @@ private:
     void heartbeatReset();
     PosPoint convertMissionItemToPosPoint(const mavsdk::MissionRawServer::MissionItem &item);
     void handleManualControlMessage(mavlink_manual_control_t manualControl);
+    double mManualControlMaxSpeed = 2.0; // [m/s]
 
 };
 
