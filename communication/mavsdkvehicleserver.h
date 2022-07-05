@@ -10,10 +10,11 @@
 #include <mavsdk/plugins/telemetry_server/telemetry_server.h>
 #include <mavsdk/plugins/action_server/action_server.h>
 #include <mavsdk/plugins/mission_raw_server/mission_raw_server.h>
+#include "waywise.h"
 #include "vehicles/vehiclestate.h"
 #include "sensors/gnss/ubloxrover.h"
 #include "autopilot/waypointfollower.h"
-#include "waywise.h"
+#include "vehicles/controller/movementcontroller.h"
 
 class MavsdkVehicleServer : public QObject
 {
@@ -22,6 +23,7 @@ public:
     explicit MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleState);
     void setUbloxRover(QSharedPointer<UbloxRover> ubloxRover);
     void setWaypointFollower(QSharedPointer<WaypointFollower> waypointFollower);
+    void setMovementController(QSharedPointer<MovementController> movementController);
 
 signals:
     void startWaypointFollower(bool fromBeginning); // to enable starting from MAVSDK thread
@@ -41,6 +43,7 @@ private:
     QSharedPointer<VehicleState> mVehicleState;
     QSharedPointer<UbloxRover> mUbloxRover;
     QSharedPointer<WaypointFollower> mWaypointFollower;
+    QSharedPointer<MovementController> mMovementController;
 
     bool mHeartbeat;
     QTimer mHeartbeatTimer;
@@ -49,6 +52,7 @@ private:
     void heartbeatTimeout();
     void heartbeatReset();
     PosPoint convertMissionItemToPosPoint(const mavsdk::MissionRawServer::MissionItem &item);
+    void handleManualControlMessage(mavlink_manual_control_t manualControl);
 
 };
 
