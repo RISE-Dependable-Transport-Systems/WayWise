@@ -13,6 +13,7 @@
 #include <QSharedPointer>
 #include <QSerialPortInfo>
 #include <mavsdk/mavsdk.h>
+#include <mavsdk/plugins/mavlink_passthrough/mavlink_passthrough.h>
 #include "mavsdkvehicleconnection.h"
 
 class MavsdkStation : public QObject

@@ -26,12 +26,13 @@
 #include <mavsdk/plugins/mavlink_passthrough/mavlink_passthrough.h>
 #include <mavsdk/plugins/offboard/offboard.h>
 #include <mavsdk/plugins/mission_raw/mission_raw.h>
+#include <mavsdk/plugins/info/info.h>
 
 class MavsdkVehicleConnection : public VehicleConnection
 {
     Q_OBJECT
 public:
-    explicit MavsdkVehicleConnection(std::shared_ptr<mavsdk::System> system);
+    explicit MavsdkVehicleConnection(std::shared_ptr<mavsdk::System> system, MAV_TYPE vehicleType);
     void setEnuReference(const llh_t &enuReference);
     void setHomeLlh(const llh_t &homeLlh);
     virtual void requestArm() override;
@@ -51,6 +52,9 @@ public:
     virtual void setManualControl(double x, double y, double z, double r, uint16_t buttonStateMask);
 
     void setConvertLocalPositionsToGlobalBeforeSending(bool convertLocalPositionsToGlobalBeforeSending);
+
+    std::shared_ptr<mavsdk::MavlinkPassthrough> getMavlinkPassthrough() const;
+    void setMavlinkPassthrough(const std::shared_ptr<mavsdk::MavlinkPassthrough> &getMavlinkPassthrough);
 
 signals:
     void gotVehicleHomeLlh(const llh_t &homePositionLlh);
