@@ -132,12 +132,16 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
         } else if (!mHeartbeat)
             return false; // Drop incoming messages until heartbeat restored
 
-//        qDebug() << "in:" << message.msgid;
-        if (message.msgid == MAVLINK_MSG_ID_MANUAL_CONTROL) {
+//        qDebug() << "in:" << message.msgid << message.sysid << message.compid;
+
+        switch (message.msgid) {
+        case MAVLINK_MSG_ID_MANUAL_CONTROL:
             mavlink_manual_control_t manual_control;
             mavlink_msg_manual_control_decode(&message, &manual_control);
-
-            qDebug() << "MAVLINK_MSG_ID_MANUAL_CONTROL" << message.sysid << message.compid << manual_control.x << manual_control.y;
+            handleManualControlMessage(manual_control);
+            break;
+        default:
+            ;
         }
 
         return true;
@@ -203,6 +207,11 @@ void MavsdkVehicleServer::setWaypointFollower(QSharedPointer<WaypointFollower> w
     connect(this, &MavsdkVehicleServer::clearRouteOnWaypointFollower, mWaypointFollower.get(), &WaypointFollower::clearRoute);
 }
 
+void MavsdkVehicleServer::setMovementController(QSharedPointer<MovementController> movementController)
+{
+    mMovementController = movementController;
+}
+
 PosPoint MavsdkVehicleServer::convertMissionItemToPosPoint(const mavsdk::MissionRawServer::MissionItem &item)
 {
     PosPoint routePoint;
@@ -214,4 +223,20 @@ PosPoint MavsdkVehicleServer::convertMissionItemToPosPoint(const mavsdk::Mission
 //    qDebug() << routePoint.getX() << routePoint.getY() << routePoint.getHeight();
 
     return routePoint;
+}
+
+void MavsdkVehicleServer::handleManualControlMessage(mavlink_manual_control_t manualControl)
+{
+    if (!mMovementController.isNull()) {
+        mVehicleState->setFlightMode(VehicleState::FlightMode::Manual);
+
+        if (!mWaypointFollower.isNull() && mWaypointFollower->isActive()) {
+            qDebug() << "MavsdkVehicleServer: WaypointFollower stopped by manual control input.";
+            mWaypointFollower->stop();
+        }
+
+        mMovementController->setDesiredSpeed((manualControl.x / 1000.0) * 10.0);
+        mMovementController->setDesiredSteering(manualControl.r / 1000.0);
+    } else
+        qDebug() << "Warning: MavsdkVehicleServer got manual control message, but has no MovementController to talk to.";
 }
