@@ -299,7 +299,7 @@ void MavsdkVehicleConnection::inputRtcmData(const QByteArray &rtcmData)
         mavRtcmData.flags = (sequenceId & 0x1F) << 3;
         memcpy(mavRtcmData.data, rtcmData.data(), rtcmData.size());
 
-        mavlink_msg_gps_rtcm_data_encode(mMavlinkPassthrough->get_target_sysid(), mMavlinkPassthrough->get_target_compid(), &mavRtcmMsg, &mavRtcmData);
+        mavlink_msg_gps_rtcm_data_encode(mMavlinkPassthrough->get_our_sysid(), mMavlinkPassthrough->get_our_compid(), &mavRtcmMsg, &mavRtcmData);
         if (mMavlinkPassthrough->send_message(mavRtcmMsg) != mavsdk::MavlinkPassthrough::Result::Success)
             qDebug() << "Warning: could not send RTCM via MAVLINK.";
     } else { // rtcm data needs to be fragmented into multiple messages
@@ -313,7 +313,7 @@ void MavsdkVehicleConnection::inputRtcmData(const QByteArray &rtcmData)
             mavRtcmData.len = fragmentLength;
             memcpy(mavRtcmData.data, rtcmData.data() + numBytesProcessed, fragmentLength);
 
-            mavlink_msg_gps_rtcm_data_encode(mMavlinkPassthrough->get_target_sysid(), mMavlinkPassthrough->get_target_compid(), &mavRtcmMsg, &mavRtcmData);
+            mavlink_msg_gps_rtcm_data_encode(mMavlinkPassthrough->get_our_sysid(), mMavlinkPassthrough->get_our_compid(), &mavRtcmMsg, &mavRtcmData);
             if (mMavlinkPassthrough->send_message(mavRtcmMsg) != mavsdk::MavlinkPassthrough::Result::Success)
                 qDebug() << "Warning: could not send RTCM via MAVLINK.";
             numBytesProcessed += fragmentLength;
@@ -353,7 +353,7 @@ void MavsdkVehicleConnection::sendLandingTargetLlh(const llh_t &landingTargetLlh
     mavLandingTargetNED.y = landingTargetNEDgpsOrigin.y;
     mavLandingTargetNED.z = landingTargetNEDgpsOrigin.z;
 
-    mavlink_msg_landing_target_encode(mMavlinkPassthrough->get_target_sysid(), mMavlinkPassthrough->get_target_compid(), &mavLandingTargetMsg, &mavLandingTargetNED);
+    mavlink_msg_landing_target_encode(mMavlinkPassthrough->get_our_sysid(), mMavlinkPassthrough->get_our_compid(), &mavLandingTargetMsg, &mavLandingTargetNED);
     if (mMavlinkPassthrough->send_message(mavLandingTargetMsg) != mavsdk::MavlinkPassthrough::Result::Success)
         qDebug() << "Warning: could not send LANDING_TARGET via MAVLINK.";
 
@@ -382,7 +382,7 @@ void MavsdkVehicleConnection::sendSetGpsOriginLlh(const llh_t &gpsOriginLlh)
     mavGpsGlobalOrigin.altitude = (int) (gpsOriginLlh.height * 1e3);
     mavGpsGlobalOrigin.target_system = mMavlinkPassthrough->get_target_sysid();
 
-    mavlink_msg_set_gps_global_origin_encode(mMavlinkPassthrough->get_target_sysid(), mMavlinkPassthrough->get_target_compid(), &mavGpsGlobalOriginMsg, &mavGpsGlobalOrigin);
+    mavlink_msg_set_gps_global_origin_encode(mMavlinkPassthrough->get_our_sysid(), mMavlinkPassthrough->get_our_compid(), &mavGpsGlobalOriginMsg, &mavGpsGlobalOrigin);
     if (mMavlinkPassthrough->send_message(mavGpsGlobalOriginMsg) != mavsdk::MavlinkPassthrough::Result::Success)
         qDebug() << "Warning: could not send GPS_GLOBAL_ORIGIN via MAVLINK.";
     else
@@ -407,11 +407,7 @@ void MavsdkVehicleConnection::setManualControl(double x, double y, double z, dou
     manual_control.buttons = buttonStateMask;
 
     mavlink_message_t message;
-    if (mVehicleType == MAV_TYPE_GROUND_ROVER)
-        // TODO: ugly and hackish, but hopefully easier to fix with next MAVSDK release...
-        mavlink_msg_manual_control_encode(245, 190, &message, &manual_control);
-    else
-        mavlink_msg_manual_control_encode(mMavlinkPassthrough->get_target_sysid(), mMavlinkPassthrough->get_target_compid(), &message, &manual_control);
+    mavlink_msg_manual_control_encode(mMavlinkPassthrough->get_our_sysid(), mMavlinkPassthrough->get_our_compid(), &message, &manual_control);
 
     if (mMavlinkPassthrough->send_message(message) != mavsdk::MavlinkPassthrough::Result::Success)
         qDebug() << "Warning: could not send MANUAL_CONTROL via MAVLINK.";
