@@ -138,7 +138,9 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
         case MAVLINK_MSG_ID_MANUAL_CONTROL:
             mavlink_manual_control_t manual_control;
             mavlink_msg_manual_control_decode(&message, &manual_control);
-            handleManualControlMessage(manual_control);
+
+            if (mVehicleState->getFlightMode() == VehicleState::FlightMode::Manual)
+                handleManualControlMessage(manual_control);
             break;
         default:
             ;
@@ -235,8 +237,13 @@ void MavsdkVehicleServer::handleManualControlMessage(mavlink_manual_control_t ma
             mWaypointFollower->stop();
         }
 
-        mMovementController->setDesiredSpeed((manualControl.x / 1000.0) * 10.0);
+        mMovementController->setDesiredSpeed((manualControl.x / 1000.0) * mManualControlMaxSpeed);
         mMovementController->setDesiredSteering(manualControl.r / 1000.0);
     } else
         qDebug() << "Warning: MavsdkVehicleServer got manual control message, but has no MovementController to talk to.";
+}
+
+void MavsdkVehicleServer::setManualControlMaxSpeed(double manualControlMaxSpeed_ms)
+{
+    mManualControlMaxSpeed = manualControlMaxSpeed_ms;
 }
