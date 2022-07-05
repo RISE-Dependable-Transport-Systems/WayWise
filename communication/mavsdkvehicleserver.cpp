@@ -118,14 +118,40 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
     });
 
     mMavsdk.intercept_incoming_messages_async([](mavlink_message_t &message){
+//        qDebug() << "in:" << message.msgid;
         if (message.msgid == MAVLINK_MSG_ID_MANUAL_CONTROL) {
             mavlink_manual_control_t manual_control;
             mavlink_msg_manual_control_decode(&message, &manual_control);
 
-            qDebug() << "MAVLINK_MSG_ID_MANUAL_CONTROL" << manual_control.x << manual_control.y;
+            qDebug() << "MAVLINK_MSG_ID_MANUAL_CONTROL" << message.sysid << message.compid << manual_control.x << manual_control.y;
         }
 
         return true;
+    });
+
+    mMavsdk.intercept_outgoing_messages_async([](mavlink_message_t &message){
+        switch (message.msgid) {
+        case MAVLINK_MSG_ID_HEARTBEAT: // Fix some info in heartbeat s.th. MAVSDK / ControlTower detects vehicle correctly
+            mavlink_heartbeat_t heartbeat;
+            mavlink_msg_heartbeat_decode(&message, &heartbeat);
+            heartbeat.type = MAV_TYPE_GROUND_ROVER;
+            heartbeat.autopilot = WAYWISE_MAVLINK_AUTOPILOT_ID;
+            heartbeat.base_mode |= MAV_MODE_FLAG_SAFETY_ARMED | MAV_MODE_FLAG_CUSTOM_MODE_ENABLED; // Note: behave like PX4...
+            mavlink_msg_heartbeat_encode(message.sysid, message.compid, &message, &heartbeat);
+//            qDebug() << "MAVLINK_MSG_ID_HEARTBEAT:" << heartbeat.type << heartbeat.autopilot << heartbeat.base_mode << heartbeat.custom_mode << heartbeat.system_status << heartbeat.mavlink_version;
+            break;
+//        case MAVLINK_MSG_ID_AUTOPILOT_VERSION:
+//            mavlink_autopilot_version_t autopilot_version;
+//            mavlink_msg_autopilot_version_decode(&message, &autopilot_version);
+//            qDebug() << "MAVLINK_MSG_ID_AUTOPILOT_VERSION:" << autopilot_version.capabilities << autopilot_version.flight_sw_version << autopilot_version.middleware_sw_version <<
+//                        autopilot_version.os_sw_version << autopilot_version.board_version << autopilot_version.flight_custom_version << autopilot_version.middleware_custom_version <<
+//                        autopilot_version.os_custom_version << autopilot_version.vendor_id << autopilot_version.product_id << autopilot_version.uid << autopilot_version.uid2;
+//            break;
+        default: ;
+//            qDebug() << "out:" << message.msgid;
+        }
+        return true;
+
     });
 }
 
