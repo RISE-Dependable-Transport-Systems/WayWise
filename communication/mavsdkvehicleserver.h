@@ -28,6 +28,7 @@ signals:
     void pauseWaypointFollower();
     void resetWaypointFollower();
     void clearRouteOnWaypointFollower();
+    void resetHeartbeat();
 
 private:
     mavsdk::Mavsdk mMavsdk;
@@ -41,6 +42,12 @@ private:
     QSharedPointer<UbloxRover> mUbloxRover;
     QSharedPointer<WaypointFollower> mWaypointFollower;
 
+    bool mHeartbeat;
+    QTimer mHeartbeatTimer;
+    const unsigned mCountdown_ms = 2000;
+
+    void heartbeatTimeout();
+    void heartbeatReset();
     PosPoint convertMissionItemToPosPoint(const mavsdk::MissionRawServer::MissionItem &item);
 
 };

@@ -117,7 +117,21 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
             qDebug() << "Warning: jumping to seq ID in mission not implemented in MavsdkVehicleServer / WaypointFollower.";
     });
 
-    mMavsdk.intercept_incoming_messages_async([](mavlink_message_t &message){
+    // Safety heartbeat
+    mHeartbeat = false;
+    mHeartbeatTimer.setSingleShot(true);
+    connect(&mHeartbeatTimer, &QTimer::timeout, this, &MavsdkVehicleServer::heartbeatTimeout);
+    connect(this, &MavsdkVehicleServer::resetHeartbeat, this, &MavsdkVehicleServer::heartbeatReset);
+
+    mMavsdk.intercept_incoming_messages_async([this](mavlink_message_t &message){
+        if (message.msgid == MAVLINK_MSG_ID_HEARTBEAT) { // TODO: make sure this is actually for us
+            if (!mHeartbeat) {
+                qDebug() << "MavsdkVehicleServer: got heartbeat, timeout was reset.";
+            }
+            emit resetHeartbeat();
+        } else if (!mHeartbeat)
+            return false; // Drop incoming messages until heartbeat restored
+
 //        qDebug() << "in:" << message.msgid;
         if (message.msgid == MAVLINK_MSG_ID_MANUAL_CONTROL) {
             mavlink_manual_control_t manual_control;
@@ -153,6 +167,26 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
         return true;
 
     });
+}
+
+void MavsdkVehicleServer::heartbeatTimeout() {
+    mHeartbeat = false;
+    qDebug() << "MavsdkVehicleServer: heartbeat timed out";
+
+    if (mWaypointFollower) {
+        mWaypointFollower->stop();
+     }
+
+//     if (mMovementController) {
+//              mMovementController->setDesiredSteering(0.0);
+//              mMovementController->setDesiredSpeed(0.0);
+    //     }
+}
+
+void MavsdkVehicleServer::heartbeatReset()
+{
+    mHeartbeatTimer.start(mCountdown_ms);
+    mHeartbeat = true;
 }
 
 void MavsdkVehicleServer::setUbloxRover(QSharedPointer<UbloxRover> ubloxRover)
