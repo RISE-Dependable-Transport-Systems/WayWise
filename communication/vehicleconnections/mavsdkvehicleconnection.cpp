@@ -428,6 +428,11 @@ void MavsdkVehicleConnection::setMavlinkPassthrough(const std::shared_ptr<mavsdk
     mMavlinkPassthrough = mavlinkPassthrough;
 }
 
+MAV_TYPE MavsdkVehicleConnection::getVehicleType() const
+{
+    return mVehicleType;
+}
+
 mavsdk::MissionRaw::MissionItem MavsdkVehicleConnection::convertPosPointToMissionItem(const PosPoint& posPoint, int sequenceId, bool current) {
     mavsdk::MissionRaw::MissionItem missionItem = {};
 

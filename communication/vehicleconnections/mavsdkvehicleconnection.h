@@ -56,6 +56,8 @@ public:
     std::shared_ptr<mavsdk::MavlinkPassthrough> getMavlinkPassthrough() const;
     void setMavlinkPassthrough(const std::shared_ptr<mavsdk::MavlinkPassthrough> &getMavlinkPassthrough);
 
+    MAV_TYPE getVehicleType() const;
+
 signals:
     void gotVehicleHomeLlh(const llh_t &homePositionLlh);
     void stopWaypointFollowerSignal(); // Used internally from MAVSDK callbacks (that live in other threads)
