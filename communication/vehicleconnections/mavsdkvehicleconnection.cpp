@@ -6,9 +6,10 @@
 #include <QDebug>
 #include <QDateTime>
 
-MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System> system)
+MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System> system, MAV_TYPE vehicleType)
 {
     mSystem = system;
+    mVehicleType = vehicleType;
 
     // Setup gimbal
     mSystem->subscribe_component_discovered([this](mavsdk::System::ComponentType){
@@ -19,10 +20,6 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
     });
     if (mSystem->has_gimbal() && mGimbal.isNull()) // Gimbal might have been discovered before callback was registered
         mGimbal = QSharedPointer<MavsdkGimbal>::create(mSystem);
-
-    // TODO: create respective class depending on MAV_TYPE (currently, not accessible in MAVSDK, use Passthrough plugin)
-    mVehicleType = MAV_TYPE::MAV_TYPE_GROUND_ROVER;
-//    mVehicleType = MAV_TYPE::MAV_TYPE_QUADROTOR;
 
     switch (mVehicleType) {
     case MAV_TYPE_QUADROTOR:
@@ -37,6 +34,7 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
         mVehicleState->setName("Car " + QString::number(mSystem->get_system_id()));
         break;
     default:
+        qDebug() << "MavsdkVehicleConnection: unknown / unsupported vehicle type.";
         break;
     }
 
@@ -134,9 +132,6 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
 //    // Precision Landing: set required target tracking accuracy for starting approach
 //    if (mParam->set_param_float("PLD_HACC_RAD", 5.0) != mavsdk::Param::Result::Success)
 //        qDebug() << "Warning: failed to set PLD_HACC_RAD";
-
-    // Set up MAVLINK passthrough to send rtcm data to drone (no plugin exists for this in MAVSDK v1.2.0)
-    mMavlinkPassthrough.reset(new mavsdk::MavlinkPassthrough(mSystem));
 
     // Necessary such that MAVSDK callbacks (from other threads) can stop WaypointFollower (QTimer)
     connect(this, &MavsdkVehicleConnection::stopWaypointFollowerSignal, this, &MavsdkVehicleConnection::stopAutopilot);
@@ -425,6 +420,16 @@ void MavsdkVehicleConnection::setManualControl(double x, double y, double z, dou
 void MavsdkVehicleConnection::setConvertLocalPositionsToGlobalBeforeSending(bool convertLocalPositionsToGlobalBeforeSending)
 {
     mConvertLocalPositionsToGlobalBeforeSending = convertLocalPositionsToGlobalBeforeSending;
+}
+
+std::shared_ptr<mavsdk::MavlinkPassthrough> MavsdkVehicleConnection::getMavlinkPassthrough() const
+{
+    return mMavlinkPassthrough;
+}
+
+void MavsdkVehicleConnection::setMavlinkPassthrough(const std::shared_ptr<mavsdk::MavlinkPassthrough> &mavlinkPassthrough)
+{
+    mMavlinkPassthrough = mavlinkPassthrough;
 }
 
 mavsdk::MissionRaw::MissionItem MavsdkVehicleConnection::convertPosPointToMissionItem(const PosPoint& posPoint, int sequenceId, bool current) {

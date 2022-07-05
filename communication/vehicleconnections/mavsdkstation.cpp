@@ -12,14 +12,26 @@ MavsdkStation::MavsdkStation(QObject *parent) : QObject(parent)
         for (const auto &system : mMavsdk.systems()) {
             if (!mVehicleConnectionMap.contains(system->get_system_id())) {
                 if (system->has_autopilot()) {
-                    QSharedPointer<MavsdkVehicleConnection> vehicleConnection = QSharedPointer<MavsdkVehicleConnection>::create(system);
-                    mVehicleConnectionMap.insert(system->get_system_id(), vehicleConnection);
+                    qDebug() << "MavsdkStation: detected system" << system->get_system_id() << "waiting for another heartbeat for initializing MavsdkVehicleConnection...";
 
-                    // move to same QThread MavsdkStation lives in
-                    vehicleConnection->moveToThread(thread());
+                    // Wait for heartbeat using passthrough to instantiate vehicleConnection (mainly needed to get MAV_TYPE)
+                    auto mavlinkPassthrough = std::make_shared<mavsdk::MavlinkPassthrough>(system);
+                    mavlinkPassthrough->subscribe_message(MAVLINK_MSG_ID_HEARTBEAT, [this, system, mavlinkPassthrough](const mavlink_message_t &message){
+                        mavlink_heartbeat_t heartbeat;
+                        mavlink_msg_heartbeat_decode(&message, &heartbeat);
 
-                    qDebug() << "Note: MavsdkStation added system" << system->get_system_id();
-                    emit gotNewVehicleConnection(vehicleConnection);
+                        QSharedPointer<MavsdkVehicleConnection> vehicleConnection = QSharedPointer<MavsdkVehicleConnection>::create(system, (MAV_TYPE) heartbeat.type);
+                        vehicleConnection->setMavlinkPassthrough(mavlinkPassthrough);
+                        mVehicleConnectionMap.insert(system->get_system_id(), vehicleConnection);
+
+                        // move to same QThread MavsdkStation lives in
+                        vehicleConnection->moveToThread(thread());
+
+                        // unsubscribe
+                        mavlinkPassthrough->subscribe_message(MAVLINK_MSG_ID_HEARTBEAT, nullptr);
+
+                        emit gotNewVehicleConnection(vehicleConnection);
+                    });
                 } else
                     qDebug() << "Note: MavsdkStation ignored system" << system->get_system_id();
             }
