@@ -21,13 +21,14 @@ class VehicleConnection : public QObject
 public:
     virtual void requestGotoENU(const xyz_t &xyz, bool changeAutopilotMode = false) = 0;
     virtual void requestVelocityAndYaw(const xyz_t &velocityENU, const double &yawDeg) = 0;
-    virtual void setActuatorOutput(int index, float value) = 0;
     virtual void requestArm() = 0;
     virtual void requestDisarm() = 0;
     virtual void requestTakeoff() = 0;
     virtual void requestLanding() = 0;
     virtual void requestPrecisionLanding() = 0;
     virtual void requestReturnToHome() = 0;
+    virtual void setManualControl(double x, double y, double z, double r, uint16_t buttonStateMask) = 0;
+    virtual void setActuatorOutput(int index, float value) = 0;
 
 
     void setWaypointFollowerConnectionLocal(const QSharedPointer<WaypointFollower> &waypointFollower);
