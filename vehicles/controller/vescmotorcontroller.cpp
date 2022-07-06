@@ -19,7 +19,7 @@ VESCMotorController::VESCMotorController()
     });
 
     connect(&mVESCPacket, &VESC::Packet::packetReceived, this, &VESCMotorController::processVESCPacket);
-    connect(&mVESCPacket, &VESC::Packet::dataToSend, this, [this](QByteArray &data){
+    connect(&mVESCPacket, &VESC::Packet::dataToSend, this, [this](const QByteArray data){
         if (mSerialPort.isOpen()) {
             mSerialPort.write(data);
         }
