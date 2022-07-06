@@ -73,9 +73,9 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
         mVehicleState->setPosition(pos);
     });
 
-    mTelemetry->subscribe_attitude_quaternion([this](mavsdk::Telemetry::Quaternion q) {
+    mTelemetry->subscribe_heading([this](mavsdk::Telemetry::Heading heading) {
         auto pos = mVehicleState->getPosition();
-        pos.setYaw(atan2f(q.w * q.z + q.x * q.y, 0.5 - (q.y * q.y + q.z * q.z)) * 180.0 / M_PI); // extract yaw from quaternion
+        pos.setYaw(heading.heading_deg);
         mVehicleState->setPosition(pos);
     });
 

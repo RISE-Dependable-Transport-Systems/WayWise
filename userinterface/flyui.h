@@ -11,7 +11,7 @@
 #include <QWidget>
 #include <QSharedPointer>
 #include "communication/vehicleconnections/mavsdkvehicleconnection.h"
-#include "autopilot/waypointfollower.h"
+#include "autopilot/gotowaypointfollower.h"
 #include "userinterface/map/mapwidget.h"
 
 namespace Ui {
@@ -76,6 +76,8 @@ private:
     Ui::FlyUI *ui;
     QSharedPointer<GotoClickOnMapModule> mGotoClickOnMapModule;
     QSharedPointer<MavsdkVehicleConnection> mCurrentVehicleConnection;
+    unsigned mLineOfSightDistance = 200; // [m]
+
 };
 
 #endif // FLYUI_H

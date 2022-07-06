@@ -13,7 +13,7 @@
 #include "vehicleconnection.h"
 #include "vehicles/vehiclestate.h"
 #include "core/coordinatetransforms.h"
-#include "autopilot/waypointfollower.h"
+#include "autopilot/gotowaypointfollower.h"
 #include <mavsdk/mavsdk.h>
 #include <mavsdk/plugins/telemetry/telemetry.h>
 #include <mavsdk/plugins/action/action.h>
