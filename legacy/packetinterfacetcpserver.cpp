@@ -291,12 +291,12 @@ void PacketInterfaceTCPServer::setMovementController(const QSharedPointer<Moveme
     mMovementController = movementController;
 }
 
-QSharedPointer<WaypointFollower> PacketInterfaceTCPServer::getWaypointFollower() const
+QSharedPointer<PurepursuitWaypointFollower> PacketInterfaceTCPServer::getWaypointFollower() const
 {
     return mWaypointFollower;
 }
 
-void PacketInterfaceTCPServer::setWaypointFollower(const QSharedPointer<WaypointFollower> &waypointFollower)
+void PacketInterfaceTCPServer::setWaypointFollower(const QSharedPointer<PurepursuitWaypointFollower> &waypointFollower)
 {
     mWaypointFollower = waypointFollower;
 }
