@@ -436,7 +436,7 @@ MAV_TYPE MavsdkVehicleConnection::getVehicleType() const
 mavsdk::MissionRaw::MissionItem MavsdkVehicleConnection::convertPosPointToMissionItem(const PosPoint& posPoint, int sequenceId, bool current) {
     mavsdk::MissionRaw::MissionItem missionItem = {};
 
-    if (mVehicleType == MAV_TYPE_GROUND_ROVER || true) { // assumption: rover = WayWise on vehicle side
+    if (mVehicleType == MAV_TYPE_GROUND_ROVER) { // assumption: rover = WayWise on vehicle side
         missionItem.mission_type = MAV_MISSION_TYPE_MISSION;
         missionItem.frame = MAV_FRAME_LOCAL_ENU;
         missionItem.command = MAV_CMD_NAV_WAYPOINT;
