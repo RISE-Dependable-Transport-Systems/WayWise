@@ -113,8 +113,8 @@ void FlyUI::gotRouteForAutopilot(const QList<PosPoint> &route)
     if (mCurrentVehicleConnection.isNull())
         return;
 
-//    if (!mCurrentVehicleConnection->hasWaypointFollowerConnectionLocal())
-//        mCurrentVehicleConnection->setWaypointFollowerConnectionLocal(QSharedPointer<GotoWaypointFollower>::create(mCurrentVehicleConnection, PosType::defaultPosType));
+    if (!mCurrentVehicleConnection->hasWaypointFollowerConnectionLocal())
+        mCurrentVehicleConnection->setWaypointFollowerConnectionLocal(QSharedPointer<GotoWaypointFollower>::create(mCurrentVehicleConnection, PosType::defaultPosType));
 
     bool safetyCheckFailed = false;
     for (int i=0; i<route.length(); i++) {
