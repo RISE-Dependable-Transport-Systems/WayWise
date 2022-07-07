@@ -41,6 +41,7 @@ public:
     virtual void requestLanding() override;
     virtual void requestPrecisionLanding() override;
     virtual void requestReturnToHome() override;
+    virtual void requestFollowPoint() override;
     void requestGotoLlh(const llh_t &llh, bool changeFlightmodeToHold = false);
     virtual void requestGotoENU(const xyz_t &xyz, bool changeFlightmodeToHold = false) override;
     virtual void requestVelocityAndYaw(const xyz_t &velocityENU, const double &yawDeg) override;
