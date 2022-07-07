@@ -30,6 +30,9 @@ public:
     virtual void stop() = 0;
     virtual void resetState() = 0;
 
+    // TODO: refactor FollowPoint from WaypointFollower to separate class
+    virtual void startFollowPoint() {throw std::logic_error("WaypointFollower::startFollowPoint() not implemented.");};
+
 signals:
 
 };

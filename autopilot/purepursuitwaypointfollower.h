@@ -67,7 +67,7 @@ public:
     virtual void stop() override;
     virtual void resetState() override;
 
-    virtual void startFollowPoint();
+    virtual void startFollowPoint() override;
 
     static double getCurvatureToPointInENU(QSharedPointer<VehicleState> vehicleState, const QPointF& point, PosType vehiclePosType = PosType::simulated);
     double getCurvatureToPointInENU(const QPointF& point);

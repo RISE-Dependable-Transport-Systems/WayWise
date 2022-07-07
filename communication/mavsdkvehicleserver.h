@@ -31,6 +31,7 @@ signals:
     void pauseWaypointFollower();
     void resetWaypointFollower();
     void clearRouteOnWaypointFollower();
+    void startFollowPoint();
     void resetHeartbeat();
 
 private:
