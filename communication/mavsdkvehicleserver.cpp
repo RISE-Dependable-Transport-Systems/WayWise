@@ -78,10 +78,17 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
            case mavsdk::ActionServer::FlightMode::Mission:
                emit startWaypointFollower(false);
                break;
+           case mavsdk::ActionServer::FlightMode::FollowMe:
+               emit startFollowPoint();
+               break;
            default:
+               ;
+           }
+
+           if (mode != mavsdk::ActionServer::FlightMode::Mission &&
+                   mode != mavsdk::ActionServer::FlightMode::FollowMe)
                if (mWaypointFollower->isActive())
                    emit pauseWaypointFollower();
-           }
     });
 
     mMissionRawServer->subscribe_incoming_mission([this](mavsdk::MissionRawServer::Result res, mavsdk::MissionRawServer::MissionPlan plan) {
@@ -183,10 +190,10 @@ void MavsdkVehicleServer::heartbeatTimeout() {
         mWaypointFollower->stop();
      }
 
-//     if (mMovementController) {
-//              mMovementController->setDesiredSteering(0.0);
-//              mMovementController->setDesiredSpeed(0.0);
-    //     }
+     if (mMovementController) {
+              mMovementController->setDesiredSteering(0.0);
+              mMovementController->setDesiredSpeed(0.0);
+     }
 }
 
 void MavsdkVehicleServer::heartbeatReset()
@@ -207,6 +214,7 @@ void MavsdkVehicleServer::setWaypointFollower(QSharedPointer<WaypointFollower> w
     connect(this, &MavsdkVehicleServer::pauseWaypointFollower, mWaypointFollower.get(), &WaypointFollower::stop);
     connect(this, &MavsdkVehicleServer::resetWaypointFollower, mWaypointFollower.get(), &WaypointFollower::resetState);
     connect(this, &MavsdkVehicleServer::clearRouteOnWaypointFollower, mWaypointFollower.get(), &WaypointFollower::clearRoute);
+    connect(this, &MavsdkVehicleServer::startFollowPoint, mWaypointFollower.get(), &WaypointFollower::startFollowPoint);
 }
 
 void MavsdkVehicleServer::setMovementController(QSharedPointer<MovementController> movementController)
