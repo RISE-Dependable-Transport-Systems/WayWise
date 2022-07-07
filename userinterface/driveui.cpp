@@ -57,14 +57,22 @@ void DriveUI::gotRouteForAutopilot(const QList<PosPoint> &route)
 
 void DriveUI::on_apRestartButton_clicked()
 {
-    if (mCurrentVehicleConnection)
-        mCurrentVehicleConnection->restartAutopilot();
+    if (mCurrentVehicleConnection) {
+        if (ui->apExecuteRouteRadioButton->isChecked())
+            mCurrentVehicleConnection->restartAutopilot();
+        else
+            mCurrentVehicleConnection->requestFollowPoint();
+    }
 }
 
 void DriveUI::on_apStartButton_clicked()
 {
-    if (mCurrentVehicleConnection)
-        mCurrentVehicleConnection->startAutopilot();
+    if (mCurrentVehicleConnection) {
+        if (ui->apExecuteRouteRadioButton->isChecked())
+            mCurrentVehicleConnection->startAutopilot();
+        else
+            mCurrentVehicleConnection->requestFollowPoint();
+    }
 }
 
 void DriveUI::on_apPauseButton_clicked()
@@ -75,8 +83,12 @@ void DriveUI::on_apPauseButton_clicked()
 
 void DriveUI::on_apStopButton_clicked()
 {
-    if (mCurrentVehicleConnection)
-        mCurrentVehicleConnection->stopAutopilot();
+    if (mCurrentVehicleConnection) {
+        if (ui->apExecuteRouteRadioButton->isChecked())
+            mCurrentVehicleConnection->stopAutopilot();
+        else
+            mCurrentVehicleConnection->pauseAutopilot();
+    }
 }
 
 
