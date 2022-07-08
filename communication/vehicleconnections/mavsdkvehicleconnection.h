@@ -41,6 +41,7 @@ public:
     virtual void requestLanding() override;
     virtual void requestPrecisionLanding() override;
     virtual void requestReturnToHome() override;
+    virtual void requestManualControl() override;
     virtual void requestFollowPoint() override;
     void requestGotoLlh(const llh_t &llh, bool changeFlightmodeToHold = false);
     virtual void requestGotoENU(const xyz_t &xyz, bool changeFlightmodeToHold = false) override;
@@ -53,9 +54,6 @@ public:
     virtual void setManualControl(double x, double y, double z, double r, uint16_t buttonStateMask) override;
 
     void setConvertLocalPositionsToGlobalBeforeSending(bool convertLocalPositionsToGlobalBeforeSending);
-
-    std::shared_ptr<mavsdk::MavlinkPassthrough> getMavlinkPassthrough() const;
-    void setMavlinkPassthrough(const std::shared_ptr<mavsdk::MavlinkPassthrough> &getMavlinkPassthrough);
 
     MAV_TYPE getVehicleType() const;
 
