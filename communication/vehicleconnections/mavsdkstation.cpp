@@ -15,20 +15,19 @@ MavsdkStation::MavsdkStation(QObject *parent) : QObject(parent)
                     qDebug() << "MavsdkStation: detected system" << system->get_system_id() << "waiting for another heartbeat for initializing MavsdkVehicleConnection...";
 
                     // Wait for heartbeat using passthrough to instantiate vehicleConnection (mainly needed to get MAV_TYPE)
-                    auto mavlinkPassthrough = std::make_shared<mavsdk::MavlinkPassthrough>(system);
+                    auto mavlinkPassthrough = new mavsdk::MavlinkPassthrough(system);
                     mavlinkPassthrough->subscribe_message(MAVLINK_MSG_ID_HEARTBEAT, [this, system, mavlinkPassthrough](const mavlink_message_t &message){
+                        // unsubscribe from further heartbeats by deleting passthrough
+                        delete mavlinkPassthrough;
+
                         mavlink_heartbeat_t heartbeat;
                         mavlink_msg_heartbeat_decode(&message, &heartbeat);
 
                         QSharedPointer<MavsdkVehicleConnection> vehicleConnection = QSharedPointer<MavsdkVehicleConnection>::create(system, (MAV_TYPE) heartbeat.type);
-                        vehicleConnection->setMavlinkPassthrough(mavlinkPassthrough);
                         mVehicleConnectionMap.insert(system->get_system_id(), vehicleConnection);
 
                         // move to same QThread MavsdkStation lives in
                         vehicleConnection->moveToThread(thread());
-
-                        // unsubscribe
-                        mavlinkPassthrough->subscribe_message(MAVLINK_MSG_ID_HEARTBEAT, nullptr);
 
                         emit gotNewVehicleConnection(vehicleConnection);
                     });

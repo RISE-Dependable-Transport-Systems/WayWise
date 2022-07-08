@@ -10,6 +10,7 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
 {
     mSystem = system;
     mVehicleType = vehicleType;
+    mMavlinkPassthrough.reset(new mavsdk::MavlinkPassthrough(system));
 
     // Setup gimbal
     mSystem->subscribe_component_discovered([this](mavsdk::System::ComponentType){
@@ -232,6 +233,20 @@ void MavsdkVehicleConnection::requestReturnToHome()
         qDebug() << "Warning: MavsdkVehicleConnection is trying to land with an unknown/incompatible vehicle type, ignored.";
 }
 
+void MavsdkVehicleConnection::requestManualControl()
+{
+    mavsdk::MavlinkPassthrough::CommandLong ComLong;
+    memset(&ComLong, 0, sizeof (ComLong));
+    ComLong.target_compid = mMavlinkPassthrough->get_target_compid();
+    ComLong.target_sysid = mMavlinkPassthrough->get_target_sysid();
+    ComLong.command = MAV_CMD_DO_SET_MODE;
+    ComLong.param1 = MAV_MODE_FLAG_SAFETY_ARMED | MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
+    ComLong.param2 = 1; // PX4_CUSTOM_MAIN_MODE_MANUAL
+
+    if (mMavlinkPassthrough->send_command_long(ComLong) != mavsdk::MavlinkPassthrough::Result::Success)
+        qDebug() << "Warning: MavsdkVehicleConnection's mode change request failed.";
+}
+
 void MavsdkVehicleConnection::requestFollowPoint()
 {
     if (isAutopilotActiveOnVehicle())
@@ -436,16 +451,6 @@ void MavsdkVehicleConnection::setConvertLocalPositionsToGlobalBeforeSending(bool
     mConvertLocalPositionsToGlobalBeforeSending = convertLocalPositionsToGlobalBeforeSending;
 }
 
-std::shared_ptr<mavsdk::MavlinkPassthrough> MavsdkVehicleConnection::getMavlinkPassthrough() const
-{
-    return mMavlinkPassthrough;
-}
-
-void MavsdkVehicleConnection::setMavlinkPassthrough(const std::shared_ptr<mavsdk::MavlinkPassthrough> &mavlinkPassthrough)
-{
-    mMavlinkPassthrough = mavlinkPassthrough;
-}
-
 MAV_TYPE MavsdkVehicleConnection::getVehicleType() const
 {
     return mVehicleType;
@@ -477,7 +482,10 @@ bool MavsdkVehicleConnection::isAutopilotActiveOnVehicle()
 }
 
 void MavsdkVehicleConnection::restartAutopilotOnVehicle()
-{
+{ 
+    if (!mMissionRaw)
+        mMissionRaw.reset(new mavsdk::MissionRaw(mSystem));
+
     mMissionRaw->set_current_mission_item_async(0, [this](mavsdk::MissionRaw::Result res) {
         if (res != mavsdk::MissionRaw::Result::Success)
             qDebug() << "Warning: MavsdkVehicleConnection's set current mission item request failed.";
@@ -491,6 +499,9 @@ void MavsdkVehicleConnection::restartAutopilotOnVehicle()
 
 void MavsdkVehicleConnection::startAutopilotOnVehicle()
 {
+    if (!mMissionRaw)
+        mMissionRaw.reset(new mavsdk::MissionRaw(mSystem));
+
     mMissionRaw->start_mission_async([](mavsdk::MissionRaw::Result res) {
         if (res != mavsdk::MissionRaw::Result::Success)
             qDebug() << "Warning: MavsdkVehicleConnection's start mission request failed.";
@@ -499,19 +510,13 @@ void MavsdkVehicleConnection::startAutopilotOnVehicle()
 
 void MavsdkVehicleConnection::pauseAutopilotOnVehicle()
 {
-    // Note: mavsdk::MissionRaw::pause_mission tries to transition to hold mode, but this is not supported by MAVSDK ActionServer (WayWise vehicle side)
-    if (mVehicleType == MAV_TYPE_GROUND_ROVER) { // assumption: rover = WayWise on vehicle side
-        mavsdk::MavlinkPassthrough::CommandLong ComLong;
-        memset(&ComLong, 0, sizeof (ComLong));
-        ComLong.target_compid = mMavlinkPassthrough->get_target_compid();
-        ComLong.target_sysid = mMavlinkPassthrough->get_target_sysid();
-        ComLong.command = MAV_CMD_DO_SET_MODE;
-        ComLong.param1 = MAV_MODE_FLAG_SAFETY_ARMED | MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
-        ComLong.param2 = 1; // PX4_CUSTOM_MAIN_MODE_MANUAL
+    if (!mMissionRaw)
+        mMissionRaw.reset(new mavsdk::MissionRaw(mSystem));
 
-        if (mMavlinkPassthrough->send_command_long(ComLong) != mavsdk::MavlinkPassthrough::Result::Success)
-            qDebug() << "Warning: MavsdkVehicleConnection's mode change request failed.";
-    } else
+    // Note: mavsdk::MissionRaw::pause_mission tries to transition to hold mode, but this is not supported by MAVSDK ActionServer (WayWise vehicle side)
+    if (mVehicleType == MAV_TYPE_GROUND_ROVER) // assumption: rover = WayWise on vehicle side
+        requestManualControl();
+    else
         if (mMissionRaw->pause_mission() != mavsdk::MissionRaw::Result::Success)
             qDebug() << "Warning: MavsdkVehicleConnection's pause mission request failed.";
 }

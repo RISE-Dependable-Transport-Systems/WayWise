@@ -27,6 +27,7 @@ public:
     virtual void requestLanding() = 0;
     virtual void requestPrecisionLanding() = 0;
     virtual void requestReturnToHome() = 0;
+    virtual void requestManualControl() = 0;
     virtual void requestFollowPoint() = 0;
     virtual void setManualControl(double x, double y, double z, double r, uint16_t buttonStateMask) = 0;
     virtual void setActuatorOutput(int index, float value) = 0;
