@@ -25,6 +25,7 @@ public:
     int getNumberOfRoutes();
     void addNewRoute();
     void addRoute(QList<PosPoint> route);
+    void appendRouteToCurrentRoute(QList<PosPoint> route);
     bool removeCurrentRoute();
     void removeRoute(int index);
     void setNewPointHeight(double height);
