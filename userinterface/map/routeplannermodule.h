@@ -27,6 +27,11 @@ public:
     void addRoute(QList<PosPoint> route);
     bool removeCurrentRoute();
     void removeRoute(int index);
+    void setNewPointHeight(double height);
+    void setNewPointSpeed(double speed);
+    void setNewPointTime(QTime time);
+    void setNewPointAttribute(uint32_t attribute);
+    void setUpdatePointOnClick(bool update);
 
 private:
     typedef enum {
@@ -39,11 +44,16 @@ private:
         int currentRouteIndex = 0;
         int currentPointIndex = -1;
         bool drawRouteText = true;
+        bool updatePointOnClick = true;
+        double newPointHeight = 0.0;
+        double newPointSpeed = 0.5; // [m/s]
+        QTime newPointTime;
+        uint32_t newPointAttribute = 0;
+
     } mPlannerState;
 
     void drawRoute(QPainter &painter, QTransform drawTrans, QTransform txtTrans, bool highQuality, double scaleFactor, const QList<PosPoint> &route, int routeID, bool isSelected, bool drawAnnotations);
     void drawCircleFast(QPainter &painter, QPointF center, double radius, int type);
-    void addRoutePoint(double px, double py, double speed, QTime time);
 
     QList<QPixmap> mPixmaps;
     QList<QList<PosPoint> > mRoutes;

@@ -38,6 +38,14 @@ private slots:
 
     void on_sendToAutopilotButton_clicked();
 
+    void on_heightSpinBox_valueChanged(double arg1);
+
+    void on_speedSpinBox_valueChanged(double arg1);
+
+    void on_attributeLineEdit_textChanged(const QString &arg1);
+
+    void on_updatePointCheckBox_toggled(bool checked);
+
 private:
     Ui::PlanUI *ui;
     QSharedPointer<RoutePlannerModule> mRoutePlanner;
