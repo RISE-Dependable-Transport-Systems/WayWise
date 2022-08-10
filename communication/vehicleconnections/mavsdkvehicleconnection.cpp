@@ -466,6 +466,9 @@ mavsdk::MissionRaw::MissionItem MavsdkVehicleConnection::convertPosPointToMissio
         missionItem.seq = sequenceId;
         missionItem.current = current;
         missionItem.autocontinue = true;
+        // TODO: does not follow MAV_CMD_NAV_WAYPOINT definition
+        missionItem.param1 = posPoint.getSpeed();
+        missionItem.param2 = posPoint.getAttributes();
         missionItem.param4 = NAN; // yaw
         missionItem.x = (int)(posPoint.getX() * 10e4);
         missionItem.y = (int)(posPoint.getY() * 10e4);

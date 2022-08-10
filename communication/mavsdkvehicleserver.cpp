@@ -229,6 +229,9 @@ PosPoint MavsdkVehicleServer::convertMissionItemToPosPoint(const mavsdk::Mission
     routePoint.setX(item.x / 10e4);
     routePoint.setY(item.y / 10e4);
     routePoint.setHeight(item.z);
+     // TODO: does not follow MAV_CMD_NAV_WAYPOINT definition
+    routePoint.setSpeed(item.param1);
+    routePoint.setAttributes(item.param2);
 
 //    qDebug() << routePoint.getX() << routePoint.getY() << routePoint.getHeight();
 
