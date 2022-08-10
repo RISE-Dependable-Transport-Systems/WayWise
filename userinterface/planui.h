@@ -10,6 +10,9 @@
 
 #include <QWidget>
 #include <QSharedPointer>
+#include <QFileDialog>
+#include <QMessageBox>
+#include <QXmlStreamWriter>
 #include "userinterface/map/routeplannermodule.h"
 
 namespace Ui {
@@ -46,9 +49,16 @@ private slots:
 
     void on_updatePointCheckBox_toggled(bool checked);
 
+    void on_exportCurrentRouteButton_clicked();
+
+    void on_exportAllRoutesButton_clicked();
+
+    void on_importRouteButton_clicked();
+
 private:
     Ui::PlanUI *ui;
     QSharedPointer<RoutePlannerModule> mRoutePlanner;
+    void xmlStreamWriteRoute(QXmlStreamWriter &xmlWriteStream, const QList<PosPoint> route);
 };
 
 #endif // PLANUI_H

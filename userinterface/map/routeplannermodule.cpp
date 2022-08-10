@@ -166,6 +166,13 @@ void RoutePlannerModule::addNewRoute()
 void RoutePlannerModule::addRoute(QList<PosPoint> route)
 {
     mRoutes.append(route);
+    emit requestRepaint();
+}
+
+void RoutePlannerModule::appendRouteToCurrentRoute(QList<PosPoint> route)
+{
+    mRoutes[mPlannerState.currentRouteIndex].append(route);
+    emit requestRepaint();
 }
 
 bool RoutePlannerModule::removeCurrentRoute()
