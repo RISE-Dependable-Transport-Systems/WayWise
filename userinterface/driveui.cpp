@@ -52,7 +52,21 @@ void DriveUI::gotRouteForAutopilot(const QList<PosPoint> &route)
     if (mCurrentVehicleConnection.isNull())
         return;
 
-    mCurrentVehicleConnection->setRoute(route);
+    bool safetyCheckFailed = false;
+
+    bool speedPositive = route.at(0).getSpeed() >= 0.0;
+    for (int i = 0; i < route.length(); i++) {
+        if ((route.at(i).getSpeed() >= 0.0) != speedPositive) {
+            safetyCheckFailed = true;
+            qDebug () << "Warning: Route contains nodes with positive and negative speeds. Either one or the other is allowed within a single route. Route is discarded.";
+            break;
+        }
+    }
+
+    if (safetyCheckFailed)
+        mCurrentVehicleConnection->clearRoute();
+    else
+        mCurrentVehicleConnection->setRoute(route);
 }
 
 void DriveUI::on_apRestartButton_clicked()

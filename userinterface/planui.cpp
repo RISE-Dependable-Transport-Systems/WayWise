@@ -50,3 +50,24 @@ void PlanUI::on_sendToAutopilotButton_clicked()
 {
     emit routeDoneForUse(mRoutePlanner->getCurrentRoute());
 }
+
+void PlanUI::on_heightSpinBox_valueChanged(double arg1)
+{
+    mRoutePlanner->setNewPointHeight(arg1);
+}
+
+void PlanUI::on_speedSpinBox_valueChanged(double arg1)
+{
+    mRoutePlanner->setNewPointSpeed(arg1 / 3.6);
+}
+
+void PlanUI::on_attributeLineEdit_textChanged(const QString &arg1)
+{
+    QString tmp = arg1;
+    mRoutePlanner->setNewPointAttribute(tmp.replace(" ", "").toUInt(nullptr, 16));
+}
+
+void PlanUI::on_updatePointCheckBox_toggled(bool checked)
+{
+    mRoutePlanner->setUpdatePointOnClick(checked);
+}
