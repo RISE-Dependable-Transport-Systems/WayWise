@@ -53,7 +53,7 @@ MapWidget::MapWidget(QWidget *parent) : QWidget(parent)
     //mRefLlh = {57.78100308, 12.76925422, 253.76};
 
     // RISE RTK base station
-    mRefLlh = {57.69176177328906, 11.82301504920545, 0};
+    mRefLlh = {56.859943, 5.620350, 0};
 
     // Hardcoded for now
     mOsm->setCacheDir("osm_tiles");
@@ -713,35 +713,35 @@ void MapWidget::drawOSMTiles(QPainter& painter, QTransform drawTrans, double vie
             }
         }
 
-        for (int j = 0;j < 40;j++) {
-            for (int i = 0;i < 40;i++) {
-                int xt_i = xt + i - t_ofs_x;
-                int yt_i = yt + j - t_ofs_y;
-                double ts_x = xyz.x + w * i - (double)t_ofs_x * w;
-                double ts_y = -xyz.y + w * j - (double)t_ofs_y * w;
+//        for (int j = 0;j < 40;j++) {
+//            for (int i = 0;i < 40;i++) {
+//                int xt_i = xt + i - t_ofs_x;
+//                int yt_i = yt + j - t_ofs_y;
+//                double ts_x = xyz.x + w * i - (double)t_ofs_x * w;
+//                double ts_y = -xyz.y + w * j - (double)t_ofs_y * w;
 
-                // We are outside the view
-                if (ts_x > (viewCenter.x() + viewWidth / 2.0)) {
-                    break;
-                } else if ((ts_y - w) > (-viewCenter.y() + viewHeight / 2.0)) {
-                    break;
-                }
+//                // We are outside the view
+//                if (ts_x > (viewCenter.x() + viewWidth / 2.0)) {
+//                    break;
+//                } else if ((ts_y - w) > (-viewCenter.y() + viewHeight / 2.0)) {
+//                    break;
+//                }
 
-                int res;
-                OsmTile t = mOsmOverlay->getTile(mOsmZoomLevel, xt_i, yt_i, res);
+//                int res;
+//                OsmTile t = mOsmOverlay->getTile(mOsmZoomLevel, xt_i, yt_i, res);
 
-                if (w < 0.0) {
-                    w = t.getWidthTop();
-                }
+//                if (w < 0.0) {
+//                    w = t.getWidthTop();
+//                }
 
-                painter.drawPixmap(ts_x * 1000.0, ts_y * 1000.0,
-                                   w * 1000.0, w * 1000.0, t.pixmap());
+//                painter.drawPixmap(ts_x * 1000.0, ts_y * 1000.0,
+//                                   w * 1000.0, w * 1000.0, t.pixmap());
 
-                if (res == 0 && !mOsmOverlay->downloadQueueFull()) {
-                    mOsmOverlay->downloadTile(mOsmZoomLevel, xt_i, yt_i);
-                }
-            }
-        }
+//                if (res == 0 && !mOsmOverlay->downloadQueueFull()) {
+//                    mOsmOverlay->downloadTile(mOsmZoomLevel, xt_i, yt_i);
+//                }
+//            }
+//        }
 
         if (!highQuality) {
             painter.setRenderHint(QPainter::SmoothPixmapTransform, mAntialiasDrawings);
@@ -837,19 +837,6 @@ void MapWidget::paint(QPainter &painter, int width, int height, bool highQuality
     drawOSMTiles(painter, drawTrans, viewWidth, viewHeight, viewCenter, highQuality);
     painter.restore();
 
-    double gridResolution;
-    if (mDrawGrid)
-        gridResolution = drawGrid(painter, drawTrans, txtTrans, width, height);
-
-    // Map module painting
-    painter.save();
-    painter.setPen(QPen(QPalette::Foreground));
-    for (const auto& m: mMapModules) {
-        m->processPaint(painter, width, height, highQuality,
-                        drawTrans, txtTrans, mScaleFactor);
-    }
-    painter.restore();
-
     // Draw DFDS Petunia
     painter.save();
     painter.setTransform(drawTrans);
@@ -860,7 +847,7 @@ void MapWidget::paint(QPainter &painter, int width, int height, bool highQuality
     pen.setWidthF(500.0);
     painter.setPen(pen);
 
-    painter.rotate(79.3);
+    painter.rotate(-82);
     painter.translate(-13000, -16000);
     double petuniaLength_mm = 200 * 1000;
     double petuniaWidth_mm = 30 * 1000;
@@ -874,6 +861,18 @@ void MapWidget::paint(QPainter &painter, int width, int height, bool highQuality
     painter.drawPath(path);
     painter.restore();
 
+    double gridResolution;
+    if (mDrawGrid)
+        gridResolution = drawGrid(painter, drawTrans, txtTrans, width, height);
+
+    // Map module painting
+    painter.save();
+    painter.setPen(QPen(QPalette::Foreground));
+    for (const auto& m: mMapModules) {
+        m->processPaint(painter, width, height, highQuality,
+                        drawTrans, txtTrans, mScaleFactor);
+    }
+    painter.restore();
 
     // Draw vehicles
     painter.setPen(QPen(QPalette::Foreground));

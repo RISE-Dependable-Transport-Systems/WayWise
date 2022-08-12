@@ -44,7 +44,7 @@ private:
     struct {
         int currentRouteIndex = 0;
         int currentPointIndex = -1;
-        bool drawRouteText = true;
+        bool drawRouteText = false;
         bool updatePointOnClick = true;
         double newPointHeight = 0.0;
         double newPointSpeed = 0.5; // [m/s]
