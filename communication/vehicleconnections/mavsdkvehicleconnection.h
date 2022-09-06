@@ -53,6 +53,7 @@ signals:
     void gotVehicleHomeLlh(const llh_t &homePositionLlh);
     void stopWaypointFollowerSignal(); // Used internally from MAVSDK callbacks (that live in other threads)
 
+    void precisionLandRequest(bool);
 private:
     void stopWaypointFollower();
 

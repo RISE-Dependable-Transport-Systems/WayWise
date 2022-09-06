@@ -18,6 +18,28 @@ FlyUI::~FlyUI()
     delete ui;
 }
 
+void FlyUI::updatePrecisionLandPosition(double x, double y, double z){
+mPrecisionLandPosition.x = x;
+mPrecisionLandPosition.y = y;
+mPrecisionLandPosition.z = z;
+
+if(prescisionLandRequest){
+   // qDebug() << "updating land position";
+
+getCurrentVehicleConnection()->sendLandingTargetENU(mPrecisionLandPosition);//->sendLandingTargetENU(mPrecisionLandPosition);
+}
+
+
+}
+
+void FlyUI::updatePrecisionLandRequest(bool req){
+    qDebug() << "updating precland request";
+
+
+
+prescisionLandRequest = req;
+
+}
 void FlyUI::setCurrentVehicleConnection(const QSharedPointer<MavsdkVehicleConnection> &currentVehicleConnection)
 {
     mCurrentVehicleConnection = currentVehicleConnection;

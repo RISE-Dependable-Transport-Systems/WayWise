@@ -33,6 +33,10 @@ public:
 public slots:
     void gotRouteForAutopilot(const QList<PosPoint>& route);
 
+    void updatePrecisionLandPosition(double, double, double);
+    void updatePrecisionLandRequest(bool req);
+
+
 private slots:
     void on_takeoffButton_clicked();
 
@@ -76,6 +80,8 @@ private:
     Ui::FlyUI *ui;
     QSharedPointer<GotoClickOnMapModule> mGotoClickOnMapModule;
     QSharedPointer<MavsdkVehicleConnection> mCurrentVehicleConnection;
+    xyz_t mPrecisionLandPosition;
+    bool prescisionLandRequest;
 };
 
 #endif // FLYUI_H

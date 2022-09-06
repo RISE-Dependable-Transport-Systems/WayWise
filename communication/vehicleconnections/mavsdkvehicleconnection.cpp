@@ -109,8 +109,24 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
     // Set up praram plugin
     mParam.reset(new mavsdk::Param(mSystem));
     // Precision Landing: set required target tracking accuracy for starting approach
-    if (mParam->set_param_float("PLD_HACC_RAD", 5.0) != mavsdk::Param::Result::Success)
+    if (mParam->set_param_float("PLD_HACC_RAD", 0.05) != mavsdk::Param::Result::Success)
         qDebug() << "Warning: failed to set PLD_HACC_RAD";
+
+    if (mParam->set_param_float("PLD_BTOUT", 15.0) != mavsdk::Param::Result::Success)
+        qDebug() << "Warning: failed to set PLD_BTOUT";
+
+    if (mParam->set_param_float("PLD_FAPPR_ALT", 0.1) != mavsdk::Param::Result::Success)
+        qDebug() << "Warning: failed to set PLD_FAPPR_ALT";
+
+    if (mParam->set_param_float("PLD_SRCH_ALT", 2.0) != mavsdk::Param::Result::Success)
+        qDebug() << "Warning: failed to set PLD_SRCH_TOUT";
+
+    if (mParam->set_param_float("PLD_SRCH_TOUT", 60.0) != mavsdk::Param::Result::Success)
+        qDebug() << "Warning: failed to set PLD_SRCH_TOUT";
+
+    if (mParam->set_param_float("LTEST_MODE", 0) != mavsdk::Param::Result::Success)
+        qDebug() << "Warning: failed to set   LTEST_MODE";
+
 
     // Set up MAVLINK passthrough to send rtcm data to drone (no plugin exists for this in MAVSDK v1.2.0)
     mMavlinkPassthrough.reset(new mavsdk::MavlinkPassthrough(mSystem));
@@ -198,9 +214,14 @@ void MavsdkVehicleConnection::requestPrecisionLanding()
     ComLong.param1 = MAV_MODE_FLAG_SAFETY_ARMED | MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
     ComLong.param2 = 4; // PX4_CUSTOM_MAIN_MODE_AUTO
     ComLong.param3 = 9; // PX4_CUSTOM_SUB_MODE_AUTO_PRECLAND
+    emit precisionLandRequest(true);
 
-    if (mMavlinkPassthrough->send_command_long(ComLong) != mavsdk::MavlinkPassthrough::Result::Success)
+    if (mMavlinkPassthrough->send_command_long(ComLong) != mavsdk::MavlinkPassthrough::Result::Success){
         qDebug() << "Warning: MavsdkVehicleConnection's precision land request failed.";
+        emit precisionLandRequest(false);
+
+    }
+
 }
 
 void MavsdkVehicleConnection::requestReturnToHome()
@@ -330,6 +351,7 @@ void MavsdkVehicleConnection::sendLandingTargetLlh(const llh_t &landingTargetLlh
     memset(&mavLandingTargetNED, 0, sizeof(mavlink_landing_target_t));
 
     mavLandingTargetNED.position_valid = 1;
+    mavLandingTargetNED.type = LANDING_TARGET_TYPE_VISION_OTHER;
     mavLandingTargetNED.frame = MAV_FRAME_LOCAL_NED;
     mavLandingTargetNED.time_usec = QDateTime::currentDateTimeUtc().toMSecsSinceEpoch();
 
