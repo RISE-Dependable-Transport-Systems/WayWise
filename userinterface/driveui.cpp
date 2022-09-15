@@ -31,7 +31,7 @@ DriveUI::DriveUI(QWidget *parent) :
         ui->throttleBar->setValue(mKeyControlState.throttle * 100);
         ui->steeringBar->setValue(mKeyControlState.steering * 100);
 
-        if (mCurrentVehicleConnection)
+        if (mCurrentVehicleConnection && mCurrentVehicleConnection->getVehicleState()->getFlightMode() == VehicleState::FlightMode::Manual)
             mCurrentVehicleConnection->setManualControl(mKeyControlState.throttle, 0, 0, mKeyControlState.steering, 0);
     });
     mKeyControlTimer.start(40);
