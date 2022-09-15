@@ -50,10 +50,7 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
 
         mavsdk::TelemetryServer::Position homePositionLlh{};
         mavsdk::TelemetryServer::Position positionLlh{};
-        // TODO: publish gpsOrigin and the following
-//        mavsdk::TelemetryServer::RawGps rawGps{
-//            0, 55.953251, -3.188267, 0, NAN, NAN, 0, NAN, 0, 0, 0, 0, 0, 0};
-//        mavsdk::TelemetryServer::GpsInfo gpsInfo{11, mavsdk::TelemetryServer::FixType::Fix3D};
+        // TODO: publish gpsOrigin
 
         if (!mUbloxRover.isNull()) {
             homePositionLlh = {mUbloxRover->getEnuRef().latitude, mUbloxRover->getEnuRef().longitude, static_cast<float>(mUbloxRover->getEnuRef().height), 0};
@@ -65,7 +62,7 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
         mTelemetryServer->publish_position(positionLlh, velocity, heading);
         mTelemetryServer->publish_home(homePositionLlh);
         mTelemetryServer->publish_position_velocity_ned(positionVelocityNed);
-        //mTelemetryServer->publish_raw_gps(rawGps, gpsInfo);
+        mTelemetryServer->publish_raw_gps(mRawGps, mGpsInfo);
     });
     // TODO: publish rates
     mPublishMavlinkTimer.start(100);
@@ -204,7 +201,41 @@ void MavsdkVehicleServer::heartbeatReset()
 
 void MavsdkVehicleServer::setUbloxRover(QSharedPointer<UbloxRover> ubloxRover)
 {
+    if (!mUbloxRover.isNull())
+        disconnect(mUbloxRover.get(), &UbloxRover::txNavPvt, this, &MavsdkVehicleServer::updateRawGpsAndGpsInfoFromUbx);
+
     mUbloxRover = ubloxRover;
+    connect(mUbloxRover.get(), &UbloxRover::txNavPvt, this, &MavsdkVehicleServer::updateRawGpsAndGpsInfoFromUbx);
+}
+
+void MavsdkVehicleServer::updateRawGpsAndGpsInfoFromUbx(const ubx_nav_pvt &pvt) {
+    mRawGps.timestamp_us = pvt.i_tow*1000; // TODO
+    mRawGps.latitude_deg = pvt.lat;
+    mRawGps.longitude_deg = pvt.lon;
+    mRawGps.absolute_altitude_m = pvt.height;
+    mRawGps.hdop = pvt.p_dop; // hdop <= pdop
+    mRawGps.vdop = pvt.p_dop; // vdop <= pdop
+    mRawGps.velocity_m_s = sqrt(pvt.vel_n*pvt.vel_n + pvt.vel_e*pvt.vel_e + pvt.vel_d*pvt.vel_d);
+    mRawGps.cog_deg = pvt.head_mot;
+    mRawGps.altitude_ellipsoid_m = pvt.height;
+    mRawGps.horizontal_uncertainty_m = pvt.h_acc;
+    mRawGps.vertical_uncertainty_m = pvt.v_acc;
+    mRawGps.velocity_uncertainty_m_s = pvt.s_acc;
+    mRawGps.heading_uncertainty_deg = pvt.head_acc;
+    mRawGps.yaw_deg = pvt.head_veh;
+
+    mGpsInfo.num_satellites = pvt.num_sv;
+    mGpsInfo.fix_type = mavsdk::TelemetryServer::FixType::NoFix;
+    if (pvt.fix_type == 2)
+        mGpsInfo.fix_type = mavsdk::TelemetryServer::FixType::Fix2D;
+    else if (pvt.fix_type == 3 || pvt.fix_type == 4) {
+        mGpsInfo.fix_type= mavsdk::TelemetryServer::FixType::Fix3D;
+        if (pvt.carr_soln == 1)
+            mGpsInfo.fix_type= mavsdk::TelemetryServer::FixType::RtkFloat;
+        else if (pvt.carr_soln == 2)
+            mGpsInfo.fix_type= mavsdk::TelemetryServer::FixType::RtkFixed;
+    }
+
 }
 
 void MavsdkVehicleServer::setWaypointFollower(QSharedPointer<WaypointFollower> waypointFollower)

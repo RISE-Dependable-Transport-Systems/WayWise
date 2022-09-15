@@ -37,6 +37,8 @@ signals:
 private:
     mavsdk::Mavsdk mMavsdk;
     std::shared_ptr<mavsdk::TelemetryServer> mTelemetryServer;
+    mavsdk::TelemetryServer::RawGps mRawGps;
+    mavsdk::TelemetryServer::GpsInfo mGpsInfo {0, mavsdk::TelemetryServer::FixType::NoGps};
     std::shared_ptr<mavsdk::ActionServer> mActionServer;
     std::shared_ptr<mavsdk::ParamServer> mParamServer;
     std::shared_ptr<mavsdk::MissionRawServer> mMissionRawServer;
@@ -51,6 +53,7 @@ private:
     QTimer mHeartbeatTimer;
     const unsigned mCountdown_ms = 2000;
 
+    void updateRawGpsAndGpsInfoFromUbx(const ubx_nav_pvt &pvt);
     void heartbeatTimeout();
     void heartbeatReset();
     PosPoint convertMissionItemToPosPoint(const mavsdk::MissionRawServer::MissionItem &item);
