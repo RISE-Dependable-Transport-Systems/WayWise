@@ -104,13 +104,13 @@ void CANopenMovementController::commandStatusReceived(quint8 status) {
     mCANOpenAutopilotControlState.followMe = (status >> 2) & 1;
     mCANOpenAutopilotControlState.pause = (status >> 3) & 1;
     mCANOpenAutopilotControlState.resume = (status >> 4) & 1;
-
-    emit sendActualStatus(status); // TODO: ack back to CAN
+    mCANOpenAutopilotControlState.routeID = (status >> 5);
 
     if (lastStatus != status)
         emit CANOpenAutopilotControlStateChanged(mCANOpenAutopilotControlState);
 
     lastStatus = status;
+    emit sendActualStatus(lastStatus);
 }
 
 void CANopenMovementController::batterySOCReceived(double batterysoc) {
