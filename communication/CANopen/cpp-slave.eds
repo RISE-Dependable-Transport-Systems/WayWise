@@ -5,7 +5,7 @@ Description=SDVP hest
 CreationTime=04:20PM
 CreationDate=23-09-2021
 ModificationTime=04:20PM
-ModificationDate=23-09-2021
+ModificationDate=03-10-2022
 FileName=cpp-slave.eds
 FileVersion=001
 FileRevision=01
@@ -57,7 +57,7 @@ Dummy001B=1
 [Comments]
 Lines=7
 Line1=
-Line2=First release
+Line2=For machines "Haestmaskin, MacTrac and Drever"
 Line3=
 Line4=cpp-slave.eds 
 Line5=
@@ -617,18 +617,18 @@ ParameterValue=0x20000308
 [1A01]
 ParameterName=Transmit PDO Mapping Parameter 1
 ObjectType=0x9
-SubNumber=5
+SubNumber=6
 
 [1A01sub0]
 ParameterName=Number of entries
 ObjectType=0x7
 DataType=0x0005
 AccessType=rw
-DefaultValue=4
+DefaultValue=5
 PDOMapping=0
 LowLimit=0
 HighLimit=8
-ParameterValue=4
+ParameterValue=5
 
 [1A01sub1]
 ParameterName=PDO Mapping Entry
@@ -673,6 +673,17 @@ PDOMapping=0
 LowLimit=0
 HighLimit=0xFFFFFFFF
 ParameterValue=0x20020408
+
+[1A01sub5]
+ParameterName=PDO Mapping Entry
+ObjectType=0x7
+DataType=0x0007
+AccessType=rw
+DefaultValue=0x20020508
+PDOMapping=0
+LowLimit=0
+HighLimit=0xFFFFFFFF
+ParameterValue=0x20020508
 
 [1A02]
 ParameterName=Transmit PDO Mapping Parameter 2
@@ -866,18 +877,18 @@ HighLimit=0x000186A0
 [2002]
 ParameterName=GNSS
 ObjectType=0x9
-SubNumber=5
+SubNumber=6
 
 [2002sub0]
 ParameterName=LastSubIndex
 ObjectType=0x7
 DataType=0x0005
 AccessType=ro
-DefaultValue=4
+DefaultValue=5
 PDOMapping=1
 LowLimit=0
 HighLimit=255
-ParameterValue=4
+ParameterValue=5
 
 [2002sub1]
 ParameterName=Ground Speed [cm/s]
@@ -918,3 +929,13 @@ DefaultValue=0
 PDOMapping=1
 LowLimit=-128
 HighLimit=127
+
+[2002sub5]
+ParameterName=DistanceOfRouteLeft [m]
+ObjectType=0x7
+DataType=0x0005
+AccessType=rw
+DefaultValue=0
+PDOMapping=1
+LowLimit=-0
+HighLimit=255

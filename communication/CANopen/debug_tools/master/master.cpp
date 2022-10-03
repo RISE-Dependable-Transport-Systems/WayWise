@@ -205,6 +205,11 @@ class MyDriver : public canopen::FiberDriver {
       int8_t val = rpdo_mapped[0x2002][4];
       std::cout << "Mottaget (2002:04) " << (int16_t)val << std::endl;
     }
+     if (idx == 0x2002 && subidx == 5) {
+      // Obtain the value sent by PDO from object 2000:06 on the slave.
+      uint8_t val = rpdo_mapped[0x2002][5];
+      std::cout << "Mottaget (2002:05) " << (int16_t)val << std::endl;
+    }    
   }
 };
 

@@ -30,6 +30,7 @@ CANopenMovementController::CANopenMovementController(QSharedPointer<VehicleState
     QObject::connect(this, &CANopenMovementController::sendCommandAttributes, mCANopenControllerInterface.get(), &CANopenControllerInterface::commandAttributesReceived, Qt::QueuedConnection);
     QObject::connect(this, &CANopenMovementController::sendActualStatus, mCANopenControllerInterface.get(), &CANopenControllerInterface::actualStatusReceived, Qt::QueuedConnection);
     QObject::connect(this, &CANopenMovementController::sendGNSSDataToCAN, mCANopenControllerInterface.get(), &CANopenControllerInterface::GNSSDataToCANReceived, Qt::QueuedConnection);
+    QObject::connect(this, &CANopenMovementController::txDistOfRouteLeft, mCANopenControllerInterface.get(), &CANopenControllerInterface::rxDistOfRouteLeft, Qt::QueuedConnection);
 
     QObject::connect(mCANopenControllerInterface.get(), &CANopenControllerInterface::sendActualSpeed, this, &CANopenMovementController::actualSpeedReceived);
     QObject::connect(mCANopenControllerInterface.get(), &CANopenControllerInterface::sendActualSteeringCurvature, this, &CANopenMovementController::actualSteeringCurvatureReceived);
@@ -130,4 +131,8 @@ void CANopenMovementController::rxNavPvt(const ubx_nav_pvt &pvt) {
     QVariant gnssData;
     gnssData.setValue(pvt);
     emit sendGNSSDataToCAN(gnssData);
+}
+
+void CANopenMovementController::rxDistOfRouteLeft(double dist) {
+    emit txDistOfRouteLeft(dist);
 }

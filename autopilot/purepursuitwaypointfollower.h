@@ -79,6 +79,7 @@ public:
     void setPosTypeUsed(const PosType &posTypeUsed);
 
 signals:
+    void txDistOfRouteLeft(double meters);
 
 public slots:
     void updateFollowPointInVehicleFrame(const PosPoint &point);
@@ -100,6 +101,7 @@ private:
     QTimer mUpdateStateTimer;
 
     void holdPosition();
+    void calculateDistanceOfRouteLeft();
 };
 
 #endif // PUREPURSUITWAYPOINTFOLLOWER_H

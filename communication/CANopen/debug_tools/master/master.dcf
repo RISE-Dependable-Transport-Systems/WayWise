@@ -376,14 +376,15 @@ ParameterName=RPDO mapping parameter
 ObjectType=0x09
 DataType=0x0007
 AccessType=rw
-CompactSubObj=4
+CompactSubObj=5
 
 [1601Value]
-NrOfEntries=4
+NrOfEntries=5
 1=0x20010110
 2=0x20010210
 3=0x20010310
 4=0x20010408
+5=0x20010508
 
 [1602]
 ParameterName=RPDO mapping parameter
@@ -585,7 +586,7 @@ AccessType=rww
 PDOMapping=1
 
 [2001]
-SubNumber=5
+SubNumber=6
 ParameterName=Mapped application objects for RPDO 2
 ObjectType=0x09
 
@@ -593,7 +594,7 @@ ObjectType=0x09
 ParameterName=Highest sub-index supported
 DataType=0x0005
 AccessType=const
-DefaultValue=4
+DefaultValue=5
 
 [2001sub1]
 ParameterName=slave_2: Ground Speed [cm/s]
@@ -616,6 +617,12 @@ PDOMapping=1
 [2001sub4]
 ParameterName=slave_2: Status
 DataType=0x0002
+AccessType=rww
+PDOMapping=1
+
+[2001sub5]
+ParameterName=slave_2: DistanceOfRouteLeft [m]
+DataType=0x0005
 AccessType=rww
 PDOMapping=1
 
@@ -707,14 +714,15 @@ ParameterName=Remote TPDO mapping parameter
 ObjectType=0x08
 DataType=0x0007
 AccessType=rw
-CompactSubObj=4
+CompactSubObj=5
 
 [5A01Value]
-NrOfEntries=4
+NrOfEntries=5
 1=0x20020110
 2=0x20020210
 3=0x20020310
 4=0x20020408
+5=0x20020508
 
 [5A02]
 ParameterName=Remote TPDO mapping parameter

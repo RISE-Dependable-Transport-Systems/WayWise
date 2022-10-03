@@ -66,6 +66,11 @@ void MySlave::GNSSDataToCANReceived(const QVariant& gnssData) {
     }
 }
 
+// Distance of route left to be sent with TPDO
+void MySlave::rxDistOfRouteLeft(double dist) {
+     (*this)[0x2002][5] = (uint8_t)std::round(dist); // [m]
+}
+
 // Read the value just written to object 200X:0X by RPDO
 void MySlave::OnWrite(uint16_t idx, uint8_t subidx) noexcept {
     if (idx == 0x2001 && subidx == 1) {

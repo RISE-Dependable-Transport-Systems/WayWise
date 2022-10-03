@@ -87,6 +87,7 @@ void PurepursuitWaypointFollower::stop()
     mUpdateStateTimer.stop();
 
     holdPosition();
+    emit txDistOfRouteLeft(0);
 }
 
 void PurepursuitWaypointFollower::startFollowPoint()
@@ -111,6 +112,7 @@ void PurepursuitWaypointFollower::resetState()
 
     mCurrentState.stmState = WayPointFollowerSTMstates::NONE;
     mCurrentState.currentWaypointIndex = mWaypointList.size();
+    emit txDistOfRouteLeft(0);
 }
 
 double PurepursuitWaypointFollower::getCurvatureToPointInENU(QSharedPointer<VehicleState> vehicleState, const QPointF &point, PosType vehiclePosType)
@@ -253,7 +255,6 @@ void PurepursuitWaypointFollower::updateState()
     // FOLLOW_ROUTE: waypoints describe a route to be followed waypoint by waypoint
     case FOLLOW_ROUTE_INIT:
         currentVehiclePositionXY = getCurrentVehiclePosition().getPoint();
-
         if (mWaypointList.size()) {
             mCurrentState.currentWaypointIndex = 0;
             mCurrentState.currentGoal = mWaypointList.at(0);
@@ -263,6 +264,7 @@ void PurepursuitWaypointFollower::updateState()
         break;
 
     case FOLLOW_ROUTE_GOTO_BEGIN: {
+        calculateDistanceOfRouteLeft();
         currentVehiclePositionXY = getCurrentVehiclePosition().getPoint();
 
         // draw straight line to first point and apply purePursuitRadius to find intersection
@@ -277,6 +279,7 @@ void PurepursuitWaypointFollower::updateState()
     } break;
 
     case FOLLOW_ROUTE_FOLLOWING: {
+        calculateDistanceOfRouteLeft();
         currentVehiclePositionXY = getCurrentVehiclePosition().getPoint();
         QPointF currentWaypointPoint = mWaypointList.at(mCurrentState.currentWaypointIndex).getPoint();
 
@@ -469,4 +472,14 @@ double PurepursuitWaypointFollower::getFollowPointSpeed() const
 void PurepursuitWaypointFollower::setFollowPointSpeed(double value)
 {
     mCurrentState.followPointSpeed = value;
+}
+
+void PurepursuitWaypointFollower::calculateDistanceOfRouteLeft()
+{
+    double distance = QLineF(getCurrentVehiclePosition().getPoint(), mWaypointList.at(mCurrentState.currentWaypointIndex).getPoint()).length();
+
+    for (int index = mCurrentState.currentWaypointIndex; index < mWaypointList.size()-1; index++) {
+        distance += QLineF(mWaypointList.at(index).getPoint(), mWaypointList.at(index+1).getPoint()).length();
+    }
+    emit txDistOfRouteLeft(distance);
 }
