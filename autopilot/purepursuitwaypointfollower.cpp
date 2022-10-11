@@ -17,7 +17,7 @@ PurepursuitWaypointFollower::PurepursuitWaypointFollower(QSharedPointer<Movement
     mCurrentState.followPointTimedOut = true;
     PurepursuitWaypointFollower::mFollowPointHeartbeatTimer.setSingleShot(true);
     connect(&mFollowPointHeartbeatTimer, &QTimer::timeout, this, [&](){
-        if ((mCurrentState.stmState == FOLLOW_POINT_FOLLOWING || mCurrentState.stmState == FOLLOW_POINT_WAITING) && this->isActive()) {
+        if ((mCurrentState.stmState == WayPointFollowerSTMstates::FOLLOW_POINT_FOLLOWING || mCurrentState.stmState == WayPointFollowerSTMstates::FOLLOW_POINT_WAITING) && this->isActive()) {
             qDebug() << "WARNING: Follow point timed out. Stopping WaypointFollower.";
             this->stop();
         }
@@ -55,11 +55,11 @@ void PurepursuitWaypointFollower::startFollowingRoute(bool fromBeginning)
     mCurrentState.overrideAltitude = vehicleState->getPosition(mPosTypeUsed).getHeight();
     qDebug() << "Note: WaypointFollower starts following route. Height info from route is ignored (staying at" << QString::number(mCurrentState.overrideAltitude, 'g', 2) << "m).";
 
-    if (fromBeginning || mCurrentState.stmState == NONE)
-        mCurrentState.stmState = FOLLOW_ROUTE_INIT;
+    if (fromBeginning || mCurrentState.stmState == WayPointFollowerSTMstates::NONE)
+        mCurrentState.stmState = WayPointFollowerSTMstates::FOLLOW_ROUTE_INIT;
 
-    if (mCurrentState.stmState == FOLLOW_POINT_FOLLOWING || mCurrentState.stmState == FOLLOW_POINT_WAITING) {
-        mCurrentState.stmState = NONE;
+    if (mCurrentState.stmState == WayPointFollowerSTMstates::FOLLOW_POINT_FOLLOWING || mCurrentState.stmState == WayPointFollowerSTMstates::FOLLOW_POINT_WAITING) {
+        mCurrentState.stmState = WayPointFollowerSTMstates::NONE;
         qDebug() << "WARNING: trying to follow route while follow point is active. Stopping WaypointFollower.";
     } else {
         mFollowPointHeartbeatTimer.start(mFollowPointTimeout_ms);
@@ -95,7 +95,7 @@ void PurepursuitWaypointFollower::startFollowPoint()
     // Check that we got a recent point to follow
     if (isOnVehicle() && mCurrentState.currentFollowPointInVehicleFrame.getTime() > mCurrentState.currentGoal.getTime()) {
         mFollowPointHeartbeatTimer.start(mFollowPointTimeout_ms);
-        mCurrentState.stmState = FOLLOW_POINT_FOLLOWING;
+        mCurrentState.stmState = WayPointFollowerSTMstates::FOLLOW_POINT_FOLLOWING;
         mUpdateStateTimer.start(mUpdateStatePeriod_ms);
     } else {
         if (isOnVehicle())
@@ -210,12 +210,12 @@ void PurepursuitWaypointFollower::updateState()
     QPointF currentVehiclePositionXY = getCurrentVehiclePosition().getPoint();
 
     switch (mCurrentState.stmState) {
-    case NONE:
+    case WayPointFollowerSTMstates::NONE:
         qDebug() << "WARNING: WayPointFollower running uninitialized statemachine.";
         break;
 
     // FOLLOW_POINT: we follow a point that is moving "follow me", works on vehicle frame to be independent of positioning
-    case FOLLOW_POINT_FOLLOWING: {
+    case WayPointFollowerSTMstates::FOLLOW_POINT_FOLLOWING: {
         // draw straight line to follow point and apply purePursuitRadius to find intersection
         QLineF carToFollowPointLine(QPointF(0,0), mCurrentState.currentFollowPointInVehicleFrame.getPoint());
         QVector<QPointF> intersections = findIntersectionsBetweenCircleAndLine(QPair<QPointF, double>(QPointF(0,0), mCurrentState.purePursuitRadius), carToFollowPointLine);
@@ -240,30 +240,30 @@ void PurepursuitWaypointFollower::updateState()
             mMovementController->setDesiredSteeringCurvature(getCurvatureToPointInVehicleFrame(QPointF(intersections[0].x(), intersections[0].y())));
             mMovementController->setDesiredSpeed(mCurrentState.followPointSpeed);
         } else // FollowPoint within circle -> wait
-            mCurrentState.stmState = FOLLOW_POINT_WAITING;
+            mCurrentState.stmState = WayPointFollowerSTMstates::FOLLOW_POINT_WAITING;
     } break;
 
-    case FOLLOW_POINT_WAITING:
+    case WayPointFollowerSTMstates::FOLLOW_POINT_WAITING:
         holdPosition();
 
         if (QLineF(QPointF(0,0), mCurrentState.currentFollowPointInVehicleFrame.getPoint()).length() > mCurrentState.followPointDistance)
         {
-            mCurrentState.stmState = FOLLOW_POINT_FOLLOWING;
+            mCurrentState.stmState = WayPointFollowerSTMstates::FOLLOW_POINT_FOLLOWING;
         }
         break;
 
     // FOLLOW_ROUTE: waypoints describe a route to be followed waypoint by waypoint
-    case FOLLOW_ROUTE_INIT:
+    case WayPointFollowerSTMstates::FOLLOW_ROUTE_INIT:
         currentVehiclePositionXY = getCurrentVehiclePosition().getPoint();
         if (mWaypointList.size()) {
             mCurrentState.currentWaypointIndex = 0;
             mCurrentState.currentGoal = mWaypointList.at(0);
-            mCurrentState.stmState = FOLLOW_ROUTE_GOTO_BEGIN;
+            mCurrentState.stmState = WayPointFollowerSTMstates::FOLLOW_ROUTE_GOTO_BEGIN;
         } else
-            mCurrentState.stmState = FOLLOW_ROUTE_FINISHED;
+            mCurrentState.stmState = WayPointFollowerSTMstates::FOLLOW_ROUTE_FINISHED;
         break;
 
-    case FOLLOW_ROUTE_GOTO_BEGIN: {
+    case WayPointFollowerSTMstates::FOLLOW_ROUTE_GOTO_BEGIN: {
         calculateDistanceOfRouteLeft();
         currentVehiclePositionXY = getCurrentVehiclePosition().getPoint();
 
@@ -275,10 +275,10 @@ void PurepursuitWaypointFollower::updateState()
             mCurrentState.currentGoal.setXY(intersections[0].x(), intersections[0].y());
             updateControl(mCurrentState.currentGoal);
         } else // first waypoint within circle -> start route
-            mCurrentState.stmState = FOLLOW_ROUTE_FOLLOWING;
+            mCurrentState.stmState = WayPointFollowerSTMstates::FOLLOW_ROUTE_FOLLOWING;
     } break;
 
-    case FOLLOW_ROUTE_FOLLOWING: {
+    case WayPointFollowerSTMstates::FOLLOW_ROUTE_FOLLOWING: {
         calculateDistanceOfRouteLeft();
         currentVehiclePositionXY = getCurrentVehiclePosition().getPoint();
         QPointF currentWaypointPoint = mWaypointList.at(mCurrentState.currentWaypointIndex).getPoint();
@@ -287,7 +287,7 @@ void PurepursuitWaypointFollower::updateState()
             mCurrentState.currentWaypointIndex++;
 
         if (mCurrentState.currentWaypointIndex == mWaypointList.size() && !mCurrentState.repeatRoute)
-                mCurrentState.stmState = FOLLOW_ROUTE_FINISHED;
+                mCurrentState.stmState = WayPointFollowerSTMstates::FOLLOW_ROUTE_FINISHED;
         else {
             // --- Calculate current goal on route (which lies between two waypoints)
             // 1. Find intersection between circle around vehicle and route
@@ -364,8 +364,8 @@ void PurepursuitWaypointFollower::updateState()
         }
     } break;
 
-    case FOLLOW_ROUTE_FINISHED:
-        mCurrentState.stmState = NONE;
+    case WayPointFollowerSTMstates::FOLLOW_ROUTE_FINISHED:
+        mCurrentState.stmState = WayPointFollowerSTMstates::NONE;
         mCurrentState.currentWaypointIndex = mWaypointList.size();
         stop();
         break;
@@ -445,7 +445,7 @@ void PurepursuitWaypointFollower::updateFollowPointInVehicleFrame(const PosPoint
 {
     mCurrentState.currentFollowPointInVehicleFrame = point;
 
-    if ((mCurrentState.stmState == FOLLOW_POINT_FOLLOWING || mCurrentState.stmState == FOLLOW_POINT_WAITING) &&
+    if ((mCurrentState.stmState == WayPointFollowerSTMstates::FOLLOW_POINT_FOLLOWING || mCurrentState.stmState == WayPointFollowerSTMstates::FOLLOW_POINT_WAITING) &&
          (mCurrentState.currentFollowPointInVehicleFrame.getTime() > mCurrentState.currentGoal.getTime())) {
         if (mCurrentState.followPointTimedOut) {
             qDebug() << "Follow Point: timeout reset.";
