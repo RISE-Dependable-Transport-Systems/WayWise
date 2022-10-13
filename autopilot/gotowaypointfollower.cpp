@@ -1,3 +1,8 @@
+/*
+ *     Copyright 2022 Rickard Häll   rickard.hall@ri.se
+ *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
+ */
+
 #include "gotowaypointfollower.h"
 
 GotoWaypointFollower::GotoWaypointFollower(QSharedPointer<VehicleConnection> vehicleConnection, PosType posTypeUsed)

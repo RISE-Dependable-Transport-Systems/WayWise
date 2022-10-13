@@ -14,7 +14,7 @@
 #include "core/vbytearray.h"
 #include "vehicles/vehiclestate.h"
 #include "vehicles/controller/movementcontroller.h"
-#include "autopilot/purepursuitwaypointfollower.h"
+#include "autopilot/multiwaypointfollower.h"
 #include "sensors/gnss/ubloxrover.h"
 #include "legacy/datatypes.h"
 #include <QTimer>
@@ -32,8 +32,8 @@ public:
     QSharedPointer<MovementController> getMovementController() const;
     void setMovementController(const QSharedPointer<MovementController> &movementController);
 
-    QSharedPointer<PurepursuitWaypointFollower> getWaypointFollower() const;
-    void setWaypointFollower(const QSharedPointer<PurepursuitWaypointFollower> &waypointFollower);
+    QSharedPointer<MultiWaypointFollower> getWaypointFollower() const;
+    void setWaypointFollower(const QSharedPointer<MultiWaypointFollower> &waypointFollower);
 
     QSharedPointer<UbloxRover> getUbloxRover() const;
     void setUbloxRover(const QSharedPointer<UbloxRover> &uBloxRover);
@@ -52,7 +52,7 @@ private:
     TcpServerSimple mTcpServer;
     QSharedPointer<VehicleState> mVehicleState;
     QSharedPointer<MovementController> mMovementController;
-    QSharedPointer<PurepursuitWaypointFollower> mWaypointFollower;
+    QSharedPointer<MultiWaypointFollower> mWaypointFollower;
     QSharedPointer<UbloxRover> mUbloxRover;
 
     const unsigned mCountdown_ms = 1000;
