@@ -1,3 +1,8 @@
+/*
+ *     Copyright 2022 Rickard Häll   rickard.hall@ri.se
+ *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
+ */
+
 #include "gotowaypointfollower.h"
 
 GotoWaypointFollower::GotoWaypointFollower(QSharedPointer<VehicleConnection> vehicleConnection, PosType posTypeUsed)
@@ -42,11 +47,11 @@ void GotoWaypointFollower::startFollowingRoute(bool fromBeginning)
     mCurrentState.overrideAltitude = mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getHeight(); // Remove this line in order to use route height
     qDebug() << "Note: WaypointFollower starts following route. Height info from route is ignored (staying at" << QString::number(mCurrentState.overrideAltitude, 'g', 2) << "m).";
 
-    if (fromBeginning || mCurrentState.stmState == NONE) {
-        mCurrentState.stmState = FOLLOW_ROUTE_INIT;
+    if (fromBeginning || mCurrentState.stmState == GotoWayPointFollowerSTMstates::NONE) {
+        mCurrentState.stmState = GotoWayPointFollowerSTMstates::FOLLOW_ROUTE_INIT;
         mUpdateStateTimer.start(mUpdateStatePeriod_ms);
     } else {
-        mCurrentState.stmState = FOLLOW_ROUTE_GOTO;
+        mCurrentState.stmState = GotoWayPointFollowerSTMstates::FOLLOW_ROUTE_GOTO;
         mUpdateStateTimer.start(mUpdateStatePeriod_ms);
     }
 }
@@ -104,37 +109,37 @@ void GotoWaypointFollower::holdPosition()
 void GotoWaypointFollower::updateState()
 {
     switch (mCurrentState.stmState) {
-    case NONE:
+    case GotoWayPointFollowerSTMstates::NONE:
         qDebug() << "WARNING: WayPointFollower running uninitialized statemachine.";
         break;
 
-    case FOLLOW_ROUTE_INIT:
+    case GotoWayPointFollowerSTMstates::FOLLOW_ROUTE_INIT:
         if (mWaypointList.size()) {
             mCurrentState.currentWaypointIndex = 0;
             mCurrentState.currentGoal = mWaypointList.at(0);
             if (mCurrentState.overrideAltitude > 0)
                 mCurrentState.currentGoal.setHeight(mCurrentState.overrideAltitude);
-            mCurrentState.stmState = FOLLOW_ROUTE_GOTO;
+            mCurrentState.stmState = GotoWayPointFollowerSTMstates::FOLLOW_ROUTE_GOTO;
         } else {
-            mCurrentState.stmState = FOLLOW_ROUTE_FINISHED;
+            mCurrentState.stmState = GotoWayPointFollowerSTMstates::FOLLOW_ROUTE_FINISHED;
             qDebug() << "Route is missing. Waypointfollower stopped";
         }
         break;
 
-    case FOLLOW_ROUTE_GOTO:
+    case GotoWayPointFollowerSTMstates::FOLLOW_ROUTE_GOTO:
             mVehicleConnection->requestGotoENU({mCurrentState.currentGoal.getX(), mCurrentState.currentGoal.getY(), mCurrentState.currentGoal.getHeight()});
-            mCurrentState.stmState = FOLLOWING_ROUTE;
+            mCurrentState.stmState = GotoWayPointFollowerSTMstates::FOLLOWING_ROUTE;
         break;
 
-    case FOLLOWING_ROUTE:
+    case GotoWayPointFollowerSTMstates::FOLLOWING_ROUTE:
         if (getCurrentVehiclePosition().getDistanceTo3d(mCurrentState.currentGoal) < mCurrentState.waypointProximity){ // Consider previous waypoint as reached
-            mCurrentState.stmState = FOLLOW_ROUTE_HOLD_POSITION;
+            mCurrentState.stmState = GotoWayPointFollowerSTMstates::FOLLOW_ROUTE_HOLD_POSITION;
             qDebug() << "Holding position for: " << mUpdateWaypointPeriod_ms*0.001 << " seconds";
         } else
             qDebug() << "Distance to waypoint: " << getCurrentVehiclePosition().getDistanceTo3d(mCurrentState.currentGoal) << " [m]";
         break;
 
-    case FOLLOW_ROUTE_HOLD_POSITION:
+    case GotoWayPointFollowerSTMstates::FOLLOW_ROUTE_HOLD_POSITION:
         // Holding position for mUpdateWaypointPeriod_ms
         if (mUpdateStateSumator >= mUpdateWaypointPeriod_ms) {
             mUpdateStateSumator = 0;
@@ -143,19 +148,19 @@ void GotoWaypointFollower::updateState()
                 mCurrentState.currentGoal = mWaypointList.at(mCurrentState.currentWaypointIndex);
                 if (mCurrentState.overrideAltitude > 0)
                     mCurrentState.currentGoal.setHeight(mCurrentState.overrideAltitude);
-                mCurrentState.stmState = FOLLOW_ROUTE_GOTO;
+                mCurrentState.stmState = GotoWayPointFollowerSTMstates::FOLLOW_ROUTE_GOTO;
             } else {
                 if (mCurrentState.repeatRoute)
-                    mCurrentState.stmState = FOLLOW_ROUTE_INIT;
+                    mCurrentState.stmState = GotoWayPointFollowerSTMstates::FOLLOW_ROUTE_INIT;
                 else
-                    mCurrentState.stmState = FOLLOW_ROUTE_FINISHED;
+                    mCurrentState.stmState = GotoWayPointFollowerSTMstates::FOLLOW_ROUTE_FINISHED;
             }
         } else
             mUpdateStateSumator+=mUpdateStatePeriod_ms;
         break;
 
-    case FOLLOW_ROUTE_FINISHED:
-        mCurrentState.stmState = NONE;
+    case GotoWayPointFollowerSTMstates::FOLLOW_ROUTE_FINISHED:
+        mCurrentState.stmState = GotoWayPointFollowerSTMstates::NONE;
         mCurrentState.currentWaypointIndex = mWaypointList.size();
         stop();
         qDebug() << "Route finished";

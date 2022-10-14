@@ -13,9 +13,9 @@
 #include "autopilot/waypointfollower.h"
 #include "communication/vehicleconnections/vehicleconnection.h"
 
-enum GotoWayPointFollowerSTMstates {NONE, FOLLOW_ROUTE_INIT, FOLLOW_ROUTE_GOTO, FOLLOWING_ROUTE, FOLLOW_ROUTE_HOLD_POSITION, FOLLOW_ROUTE_FINISHED};
+enum class GotoWayPointFollowerSTMstates {NONE, FOLLOW_ROUTE_INIT, FOLLOW_ROUTE_GOTO, FOLLOWING_ROUTE, FOLLOW_ROUTE_HOLD_POSITION, FOLLOW_ROUTE_FINISHED};
 struct GotoWayPointFollowerState {
-    GotoWayPointFollowerSTMstates stmState = NONE;
+    GotoWayPointFollowerSTMstates stmState = GotoWayPointFollowerSTMstates::NONE;
     PosPoint currentGoal;
     int currentWaypointIndex;
     double waypointProximity = 3.0; // [m]

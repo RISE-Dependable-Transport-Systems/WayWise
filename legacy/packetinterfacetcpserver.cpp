@@ -21,6 +21,8 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
     QObject::connect(mTcpServer.packet(), &Packet::packetReceived, [this](QByteArray& data){ // data from controlstation to rover
         VByteArray packetData;
         // drop id & cmd and copy actual data, TODO: unnecessary to copy
+        // mWaypointFollowerID = ? TODO: add waypointfollower id to message from controlstation
+        // If new waypointfollowerID, create new waypointfollower, otherwise mWaypointFollower->setActiveWaypointFollower(int waypointfollowerID);
         packetData.resize(data.size()-2);
         quint8 recipientID = data.at(0);
         CMD_PACKET commandID = (CMD_PACKET)(quint8)data.at(1);
@@ -90,7 +92,7 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
                     ret.vbAppendDouble32(mVehicleState->getPosition(PosType::GNSS).getY(), 1e4);
                     ret.vbAppendDouble32(mWaypointFollower ? mWaypointFollower->getCurrentGoal().getX() : 0.0, 1e4); // autopilot_goal_x
                     ret.vbAppendDouble32(mWaypointFollower ? mWaypointFollower->getCurrentGoal().getY() : 0.0, 1e4); // autopilot_goal_y
-                    ret.vbAppendDouble32(mWaypointFollower ? mWaypointFollower->getPurePursuitRadius() : 0.0, 1e6); // autopilot_pp_radius
+                    ret.vbAppendDouble32(mWaypointFollower ? qSharedPointerCast<PurepursuitWaypointFollower>(mWaypointFollower->getActiveWaypointFollower())->getPurePursuitRadius() : 0.0, 1e6); // autopilot_pp_radius
                     ret.vbAppendInt32(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()).msecsSinceStartOfDay());
                     ret.vbAppendInt16(0); // autopilot_route_left
                     ret.vbAppendDouble32(mVehicleState->getPosition(PosType::UWB).getX(), 1e4); // UWB px
@@ -215,7 +217,7 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
                             mWaypointFollower->startFollowingRoute(resetAutopilotState);
                             break;
                         case AP_MODE_FOLLOW_ME:
-                            mWaypointFollower->startFollowPoint();
+                            qSharedPointerCast<PurepursuitWaypointFollower>(mWaypointFollower->getActiveWaypointFollower())->startFollowPoint();
                             break;
                         default:
                             break;
@@ -291,12 +293,12 @@ void PacketInterfaceTCPServer::setMovementController(const QSharedPointer<Moveme
     mMovementController = movementController;
 }
 
-QSharedPointer<PurepursuitWaypointFollower> PacketInterfaceTCPServer::getWaypointFollower() const
+QSharedPointer<MultiWaypointFollower> PacketInterfaceTCPServer::getWaypointFollower() const
 {
     return mWaypointFollower;
 }
 
-void PacketInterfaceTCPServer::setWaypointFollower(const QSharedPointer<PurepursuitWaypointFollower> &waypointFollower)
+void PacketInterfaceTCPServer::setWaypointFollower(const QSharedPointer<MultiWaypointFollower> &waypointFollower)
 {
     mWaypointFollower = waypointFollower;
 }
