@@ -12,70 +12,72 @@ MultiWaypointFollower::MultiWaypointFollower(QSharedPointer<WaypointFollower> wa
 
 bool MultiWaypointFollower::getRepeatRoute() const
 {
-    return mWayPointFollowerList[mRouteID]->getRepeatRoute();
+    return mWayPointFollowerList[mWaypointFollowerID]->getRepeatRoute();
 }
 
 void MultiWaypointFollower::setRepeatRoute(bool value)
 {
-    mWayPointFollowerList[mRouteID]->setRepeatRoute(value);
+    mWayPointFollowerList[mWaypointFollowerID]->setRepeatRoute(value);
 }
 
 const PosPoint MultiWaypointFollower::getCurrentGoal()
 {
-    return mWayPointFollowerList[mRouteID]->getCurrentGoal();
+    return mWayPointFollowerList[mWaypointFollowerID]->getCurrentGoal();
 }
 
 void MultiWaypointFollower::clearRoute()
 {
-    mWayPointFollowerList[mRouteID]->clearRoute();
+    mWayPointFollowerList[mWaypointFollowerID]->clearRoute();
 }
 
 void MultiWaypointFollower::addWaypoint(const PosPoint &point)
 {
-    mWayPointFollowerList[mRouteID]->addWaypoint(point);
+    mWayPointFollowerList[mWaypointFollowerID]->addWaypoint(point);
 }
 
 void MultiWaypointFollower::addRoute(const QList<PosPoint> &route)
 {
-    mWayPointFollowerList[mRouteID]->addRoute(route);
+    mWayPointFollowerList[mWaypointFollowerID]->addRoute(route);
 }
 
 void MultiWaypointFollower::startFollowingRoute(bool fromBeginning)
 {
-    mWayPointFollowerList[mRouteID]->startFollowingRoute(fromBeginning);
+    mWayPointFollowerList[mWaypointFollowerID]->startFollowingRoute(fromBeginning);
 }
 
 bool MultiWaypointFollower::isActive()
 {
-    return mWayPointFollowerList[mRouteID]->isActive();
+    return mWayPointFollowerList[mWaypointFollowerID]->isActive();
 }
 
 void MultiWaypointFollower::stop()
 {
-    mWayPointFollowerList[mRouteID]->stop();
+    mWayPointFollowerList[mWaypointFollowerID]->stop();
 }
 
 void MultiWaypointFollower::resetState()
 {
-    mWayPointFollowerList[mRouteID]->resetState();
+    mWayPointFollowerList[mWaypointFollowerID]->resetState();
 }
 
-void MultiWaypointFollower::addWaypointFollower(QSharedPointer<WaypointFollower> waypointfollower)
+int MultiWaypointFollower::addWaypointFollower(QSharedPointer<WaypointFollower> waypointfollower)
 {
     mWayPointFollowerList.append(waypointfollower);
+
+    return (getNumberOfWaypointFollowers() - 1) ;
 }
 
-void MultiWaypointFollower::setActiveRoute(int routeID)
+void MultiWaypointFollower::setActiveWaypointFollower(int waypointfollowerID)
 {
-    mRouteID = routeID;
+    mWaypointFollowerID = waypointfollowerID;
 }
 
 QSharedPointer<WaypointFollower> MultiWaypointFollower::getActiveWaypointFollower()
 {
-    return mWayPointFollowerList[mRouteID];
+    return mWayPointFollowerList[mWaypointFollowerID];
 }
 
-int MultiWaypointFollower::getNumberOfRoutes()
+int MultiWaypointFollower::getNumberOfWaypointFollowers()
 {
     return mWayPointFollowerList.size();
 }

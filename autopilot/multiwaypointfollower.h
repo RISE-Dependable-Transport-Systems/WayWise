@@ -34,15 +34,15 @@ public:
     virtual void stop() override;
     virtual void resetState() override;
 
-    void addWaypointFollower(QSharedPointer<WaypointFollower> waypointfollower);
-    void setActiveRoute(int routeID);
+    int addWaypointFollower(QSharedPointer<WaypointFollower> waypointfollower);
+    void setActiveWaypointFollower(int waypointfollowerID);
     QSharedPointer<WaypointFollower> getActiveWaypointFollower();
-    int getNumberOfRoutes();
+    int getNumberOfWaypointFollowers();
 
 private:
     QList<QSharedPointer<WaypointFollower>> mWayPointFollowerList;
 
-    int mRouteID = 0;
+    int mWaypointFollowerID = 0;
 
 signals:
 

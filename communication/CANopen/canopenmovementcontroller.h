@@ -21,7 +21,7 @@ struct CANOpenAutopilotControlState {
     bool followMe = false;
     bool pause = false;
     bool resume = false;
-    int routeID = 0;
+    int waypointfollowerID = 0;
 };
 
 class CANopenMovementController : public MovementController

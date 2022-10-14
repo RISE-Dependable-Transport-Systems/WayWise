@@ -105,7 +105,7 @@ void CANopenMovementController::commandStatusReceived(quint8 status) {
     mCANOpenAutopilotControlState.followMe = (status >> 2) & 1;
     mCANOpenAutopilotControlState.pause = (status >> 3) & 1;
     mCANOpenAutopilotControlState.resume = (status >> 4) & 1;
-    mCANOpenAutopilotControlState.routeID = (status >> 5);
+    mCANOpenAutopilotControlState.waypointfollowerID = (status >> 5);
 
     if (lastStatus != status)
         emit CANOpenAutopilotControlStateChanged(mCANOpenAutopilotControlState);

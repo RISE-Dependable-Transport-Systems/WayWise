@@ -21,8 +21,8 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
     QObject::connect(mTcpServer.packet(), &Packet::packetReceived, [this](QByteArray& data){ // data from controlstation to rover
         VByteArray packetData;
         // drop id & cmd and copy actual data, TODO: unnecessary to copy
-        // mRouteID = ? TODO: add route id to message from controlstation
-        // If new routeID, create new waypointfollower, otherwise mWaypointFollower->setActiveRoute(int routeID);
+        // mWaypointFollowerID = ? TODO: add waypointfollower id to message from controlstation
+        // If new waypointfollowerID, create new waypointfollower, otherwise mWaypointFollower->setActiveWaypointFollower(int waypointfollowerID);
         packetData.resize(data.size()-2);
         quint8 recipientID = data.at(0);
         CMD_PACKET commandID = (CMD_PACKET)(quint8)data.at(1);
