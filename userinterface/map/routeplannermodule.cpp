@@ -311,7 +311,7 @@ void RoutePlannerModule::drawRoute(QPainter& painter, QTransform drawTrans, QTra
         // Draw text only for selected route
         if (isSelected && drawAnnotations) {
             //QTime t = route[i].getTime();
-            pointLabel.sprintf("P: %d %s\n"
+            pointLabel.asprintf("P: %d %s\n"
                                "(%.2f, %.2f, %.2f)\n"
                                "%.1f km/h\n"
                                //"%02d:%02d:%02d:%03d\n"
@@ -332,7 +332,7 @@ void RoutePlannerModule::drawRoute(QPainter& painter, QTransform drawTrans, QTra
                                           pointLabelPos.x() + 500, pointLabelPos.y() + 100);
             painter.drawText(pointLabelRectangle, pointLabel);
         } else {
-            pointLabel.sprintf("%d", routeID);
+            pointLabel.asprintf("%d", routeID);
             pointLabelPos.setX(p.x());
             pointLabelPos.setY(p.y());
             painter.setTransform(txtTrans);
