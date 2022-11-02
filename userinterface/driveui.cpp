@@ -157,3 +157,13 @@ double DriveUI::getMaxSignedStepFromValueTowardsGoal(double value, double goal, 
 
     return goal - value;
 }
+
+void DriveUI::on_spinBox_valueChanged(int arg1)
+{
+    if (mCurrentVehicleConnection) {
+        if (mCurrentVehicleConnection->isAutopilotActive())
+            mCurrentVehicleConnection->pauseAutopilot();
+        mCurrentVehicleConnection->setActiveRouteID(arg1);
+    }
+}
+

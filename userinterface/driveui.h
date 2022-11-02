@@ -30,6 +30,8 @@ private slots:
 
     void on_apStopButton_clicked();
 
+    void on_spinBox_valueChanged(int arg1);
+
 private:
     Ui::DriveUI *ui;
 

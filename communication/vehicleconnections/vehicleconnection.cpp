@@ -88,3 +88,11 @@ QSharedPointer<Gimbal> VehicleConnection::getGimbal() const {
 bool VehicleConnection::hasGimbal() const {
     return !mGimbal.isNull();
 }
+
+void VehicleConnection::setActiveRouteID(int id)
+{
+    if (!mWaypointFollower.isNull())
+        qDebug() << "Not implemented for connection-local WaypointFollower";
+    else
+        setActiveRouteIDOnVehicle(id);
+};
