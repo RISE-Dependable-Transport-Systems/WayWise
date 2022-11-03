@@ -561,19 +561,17 @@ void MavsdkVehicleConnection::appendToRouteOnVehicle(const QList<PosPoint> &rout
     });
 }
 
-void MavsdkVehicleConnection::setActiveRouteIDOnVehicle(int id)
+void MavsdkVehicleConnection::setActiveAutopilotIDOnVehicle(int id)
 {
-    if (mMavlinkPassthrough == nullptr)
-        return;
+    mavsdk::MavlinkPassthrough::CommandLong ComLong;
+    memset(&ComLong, 0, sizeof (ComLong));
+    ComLong.target_compid = mMavlinkPassthrough->get_target_compid();
+    ComLong.target_sysid = mMavlinkPassthrough->get_target_sysid();
+    ComLong.command = MAV_CMD_DO_SET_MISSION_CURRENT;
+    ComLong.param1 = -1;
+    ComLong.param2 = 0;
+    ComLong.param3 = id; // Autopilot ID
 
-    mavlink_mission_set_current_t currentRouteID;
-    currentRouteID.seq = id;
-    currentRouteID.target_system = mMavlinkPassthrough->get_target_sysid();
-    currentRouteID.target_component = mMavlinkPassthrough->get_target_compid();
-
-    mavlink_message_t message;
-    mavlink_msg_mission_set_current_encode(mMavlinkPassthrough->get_our_sysid(), mMavlinkPassthrough->get_our_compid(), &message, &currentRouteID);
-
-    if (mMavlinkPassthrough->send_message(message) != mavsdk::MavlinkPassthrough::Result::Success)
+    if (mMavlinkPassthrough->send_command_long(ComLong) != mavsdk::MavlinkPassthrough::Result::Success)
         qDebug() << "Warning: could not send MISSION_SET_CURRENT via MAVLINK.";
 }
