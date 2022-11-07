@@ -21,6 +21,9 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
     mParamServer.reset(new mavsdk::ParamServer(serverComponent));
     mMissionRawServer.reset(new mavsdk::MissionRawServer(serverComponent));
 
+    // Create mavlinkpassthrough plugin
+    mMavlinkPassthrough.reset(new mavsdk::MavlinkPassthrough(mMavsdk.systems().at(0)));
+
     // These are needed for MAVSDK at the moment
     mParamServer->provide_param_int("CAL_ACC0_ID", 1);
     mParamServer->provide_param_int("CAL_GYRO0_ID", 1);
@@ -68,24 +71,24 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
     mPublishMavlinkTimer.start(100);
 
     mActionServer->subscribe_flight_mode_change([this](mavsdk::ActionServer::Result res, mavsdk::ActionServer::FlightMode mode) {
-       if  (res == mavsdk::ActionServer::Result::Success)
-           mVehicleState->setFlightMode((VehicleState::FlightMode) mode);
+        if  (res == mavsdk::ActionServer::Result::Success)
+            mVehicleState->setFlightMode((VehicleState::FlightMode) mode);
 
-           switch (mode) {
-           case mavsdk::ActionServer::FlightMode::Mission:
-               emit startWaypointFollower(false);
-               break;
-           case mavsdk::ActionServer::FlightMode::FollowMe:
-               emit startFollowPoint();
-               break;
-           default:
-               ;
-           }
+        switch (mode) {
+        case mavsdk::ActionServer::FlightMode::Mission:
+            emit startWaypointFollower(false);
+            break;
+        case mavsdk::ActionServer::FlightMode::FollowMe:
+            emit startFollowPoint();
+            break;
+        default:
+            ;
+        }
 
-           if (mode != mavsdk::ActionServer::FlightMode::Mission &&
-                   mode != mavsdk::ActionServer::FlightMode::FollowMe)
-               if (mWaypointFollower->isActive())
-                   emit pauseWaypointFollower();
+        if (mode != mavsdk::ActionServer::FlightMode::Mission &&
+                mode != mavsdk::ActionServer::FlightMode::FollowMe)
+            if (mWaypointFollower->isActive())
+                emit pauseWaypointFollower();
     });
 
     mMissionRawServer->subscribe_incoming_mission([this](mavsdk::MissionRawServer::Result res, mavsdk::MissionRawServer::MissionPlan plan) {
@@ -126,6 +129,12 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
     mHeartbeatTimer.setSingleShot(true);
     connect(&mHeartbeatTimer, &QTimer::timeout, this, &MavsdkVehicleServer::heartbeatTimeout);
     connect(this, &MavsdkVehicleServer::resetHeartbeat, this, &MavsdkVehicleServer::heartbeatReset);
+
+    mMavlinkPassthrough->subscribe_message(MAVLINK_MSG_ID_COMMAND_LONG, [this](const mavlink_message_t &message) {
+        switch (mavlink_msg_command_long_get_command(&message))
+        case MAV_CMD_DO_SET_MISSION_CURRENT:
+            emit missionCurrentCommand(mavlink_msg_command_long_get_param3(&message));
+    });
 
     mMavsdk.intercept_incoming_messages_async([this](mavlink_message_t &message){
         if (message.msgid == MAVLINK_MSG_ID_HEARTBEAT) { // TODO: make sure this is actually for us
@@ -238,7 +247,7 @@ void MavsdkVehicleServer::updateRawGpsAndGpsInfoFromUbx(const ubx_nav_pvt &pvt) 
 
 }
 
-void MavsdkVehicleServer::setWaypointFollower(QSharedPointer<WaypointFollower> waypointFollower)
+void MavsdkVehicleServer::setWaypointFollower(QSharedPointer<MultiWaypointFollower> waypointFollower)
 {
     mWaypointFollower = waypointFollower;
     connect(this, &MavsdkVehicleServer::startWaypointFollower, mWaypointFollower.get(), &WaypointFollower::startFollowingRoute);
@@ -289,3 +298,10 @@ void MavsdkVehicleServer::setManualControlMaxSpeed(double manualControlMaxSpeed_
 {
     mManualControlMaxSpeed = manualControlMaxSpeed_ms;
 }
+
+void MavsdkVehicleServer::mavResult(MAV_RESULT result)
+{
+        mavlink_message_t ack;
+        ack = mMavlinkPassthrough->make_command_ack_message(mMavlinkPassthrough->get_target_sysid(), mMavlinkPassthrough->get_target_compid(), MAV_CMD_DO_SET_MISSION_CURRENT, result);
+        mMavlinkPassthrough->send_message(ack);
+};
