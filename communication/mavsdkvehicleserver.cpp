@@ -53,9 +53,12 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
 
         mavsdk::TelemetryServer::Position homePositionLlh{};
         mavsdk::TelemetryServer::Position positionLlh{};
-        // TODO: publish gpsOrigin
 
         if (!mUbloxRover.isNull()) {
+            // publish gpsOrigin
+            sendGpsOriginLlh(mUbloxRover->getEnuRef());
+
+            //TODO: homePositionLlh should not be EnuRef
             homePositionLlh = {mUbloxRover->getEnuRef().latitude, mUbloxRover->getEnuRef().longitude, static_cast<float>(mUbloxRover->getEnuRef().height), 0};
 
             llh_t fusedPosGlobal = coordinateTransforms::enuToLlh(mUbloxRover->getEnuRef(), {mVehicleState->getPosition(PosType::fused).getXYZ()});
@@ -304,4 +307,22 @@ void MavsdkVehicleServer::mavResult(MAV_RESULT result)
         mavlink_message_t ack;
         ack = mMavlinkPassthrough->make_command_ack_message(mMavlinkPassthrough->get_target_sysid(), mMavlinkPassthrough->get_target_compid(), MAV_CMD_DO_SET_MISSION_CURRENT, result);
         mMavlinkPassthrough->send_message(ack);
+};
+
+void MavsdkVehicleServer::sendGpsOriginLlh(const llh_t &gpsOriginLlh)
+{
+    if (mMavlinkPassthrough == nullptr)
+        return;
+
+    mavlink_message_t mavGpsGlobalOriginMsg;
+    mavlink_gps_global_origin_t mavGpsGlobalOrigin;
+    memset(&mavGpsGlobalOrigin, 0, sizeof(mavlink_gps_global_origin_t));
+
+    mavGpsGlobalOrigin.latitude = (int) (gpsOriginLlh.latitude * 1e7);
+    mavGpsGlobalOrigin.longitude = (int) (gpsOriginLlh.longitude * 1e7);
+    mavGpsGlobalOrigin.altitude = (int) (gpsOriginLlh.height * 1e3);
+
+    mavlink_msg_gps_global_origin_encode(mMavlinkPassthrough->get_our_sysid(), mMavlinkPassthrough->get_our_compid(), &mavGpsGlobalOriginMsg, &mavGpsGlobalOrigin);
+    if (mMavlinkPassthrough->send_message(mavGpsGlobalOriginMsg) != mavsdk::MavlinkPassthrough::Result::Success)
+        qDebug() << "Warning: could not send GPS_GLOBAL_ORIGIN via MAVLINK.";
 };
