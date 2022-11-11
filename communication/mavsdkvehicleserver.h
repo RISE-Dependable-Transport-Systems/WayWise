@@ -33,6 +33,7 @@ public:
     void setMovementController(QSharedPointer<MovementController> movementController);
     void setManualControlMaxSpeed(double manualControlMaxSpeed_ms);
     void mavResult(MAV_RESULT result);
+    void sendGpsOriginLlh(const llh_t &gpsOriginLlh);
 
 signals:
     void startWaypointFollower(bool fromBeginning); // to enable starting from MAVSDK thread
