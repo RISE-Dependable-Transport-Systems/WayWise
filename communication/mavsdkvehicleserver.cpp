@@ -176,6 +176,14 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
                 break;
             }
         });
+
+        mMavlinkPassthrough->subscribe_message(MAVLINK_MSG_ID_GPS_RTCM_DATA, [this](const mavlink_message_t &message) {
+        // PX4 does not use the sequence & fragment ID's
+            mavlink_gps_rtcm_data_t mavRtcmData;
+            mavlink_msg_gps_rtcm_data_decode(&message, &mavRtcmData);
+            QByteArray rtcmData = QByteArray::fromRawData(reinterpret_cast<char*>(mavRtcmData.data), 180);
+            emit rxRtcmData(rtcmData);
+        });
     });
 
     mMavsdk.intercept_outgoing_messages_async([](mavlink_message_t &message){
@@ -319,10 +327,10 @@ void MavsdkVehicleServer::setManualControlMaxSpeed(double manualControlMaxSpeed_
     mManualControlMaxSpeed = manualControlMaxSpeed_ms;
 }
 
-void MavsdkVehicleServer::mavResult(MAV_RESULT result)
+void MavsdkVehicleServer::mavResult(const uint16_t command, MAV_RESULT result)
 {
         mavlink_message_t ack;
-        ack = mMavlinkPassthrough->make_command_ack_message(mMavlinkPassthrough->get_target_sysid(), mMavlinkPassthrough->get_target_compid(), MAV_CMD_DO_SET_MISSION_CURRENT, result);
+        ack = mMavlinkPassthrough->make_command_ack_message(mMavlinkPassthrough->get_target_sysid(), mMavlinkPassthrough->get_target_compid(), command, result);
         mMavlinkPassthrough->send_message(ack);
 };
 
