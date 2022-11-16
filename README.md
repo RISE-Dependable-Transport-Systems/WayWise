@@ -3,7 +3,8 @@ WayWise ([way-wise](https://en.wiktionary.org/wiki/way-wise): _Expert or knowled
 It is developed within research projects at the RISE Dependable Transport Systems group to investigate the use of autonomous vehicles (rc cars, tractors, drones) and, especially, related functional safety as well as cybersecurity risks and opportunities they bring, in various use cases (road traffic, agriculture, maritime).
 It has roots in the [RISE Self-Driving Vehicle Platform (SDVP)](https://github.com/RISE-Dependable-Transport-Systems/rise_sdvp), originally developed by Benjamin Vedder, but was redesigned and rewritten based on C++ and Qt targeting commercial-of-the-shelf hardware (instead of custom hardware and firmware).
 The library is used to build the brains on-vehicle and the control application counterpart on the desktop.
-It does not target production readiness but exploring specific use cases by rapid prototyping.
+Vehicle and control application communicate with each other using the [MAVLINK protocol](https://mavlink.io/), which is implemented using [MAVSDK](http://mavsdk.io/).
+WayWise does not target production readiness but exploring specific use cases by rapid prototyping.
 
 Main authors are (firstname.lastname@ri.se):
 - Marvin Damschen
@@ -16,16 +17,17 @@ We do our best to avoid it, but things will break from time to time.
 
 A minimal example of a simulated rc car with an autopilot can be found here: \
 https://github.com/RISE-Dependable-Transport-Systems/RCCar_minimal_example
-This example can be connected to by [RControlStation](https://github.com/RISE-Dependable-Transport-Systems/rise_sdvp/tree/master/Linux/RControlStation) (still used from SDVP, but to be replaced "soon") and follow waypoints created on the map:
+This example can be connected to using [ControlTower](https://github.com/RISE-Dependable-Transport-Systems/ControlTower) and follow waypoints created on the map:
 
-![RCCar_minimal_example](https://user-images.githubusercontent.com/2404625/165896822-40313467-db43-4dab-aa87-d87f6867af92.gif)
+![RCCar_minimal_example](https://user-images.githubusercontent.com/2404625/202208555-1271ba0d-55f7-4c26-94ac-53920e6d18c5.gif)
 
 A fully-fledged rc car implementation (GNSS & IMU-based positioning, [VESC](https://vesc-project.com/)-based odometry, ...) can be found here: \
 https://github.com/RISE-Dependable-Transport-Systems/RCCar
 
 ### Current state
-The biggest general construction sites are documentation and replacing RControlstation (with something built on this library), i.e., implementing the building blocks for UI-based desktop applications.
-Within [LASH FIRE](https://lashfire.eu/), we are heavily working on drone support (desktop-side control application) based on [MAVSDK](https://mavsdk.mavlink.io/).
+The biggest general construction sites are documentation and improving [ControlTower](https://github.com/RISE-Dependable-Transport-Systems/ControlTower).
+ControlTower was built from scratch within the [LASH FIRE](https://lashfire.eu/) EU project and recently (#19) replaced [RControlStation](https://github.com/RISE-Dependable-Transport-Systems/rise_sdvp/tree/master/Linux/RControlStation) from SDVP times. 
+ControlTower communicates to vehicles via MAVLINK, which enables support for drones running [PX4](https://px4.io/) additionally to WayWise-based vehicles.
 
 ## Organization
 - **core**: fundamental classes/headers, e.g., for storing a position and transforming coordinates
