@@ -1,3 +1,8 @@
+/*
+ *     Copyright 2022 Marvin Damschen   marvin.damschen@ri.se
+ *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
+ */
+
 #include "mavsdkvehicleserver.h"
 #include <QDebug>
 #include <future>
