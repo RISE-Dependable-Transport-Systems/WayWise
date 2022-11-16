@@ -36,11 +36,11 @@ void DiffDriveVehicleState::updateOdomPositionAndYaw(double drivenDistance, PosT
     // Differential drive kinematic model, getWidth() should be distance between center of left/right wheel
     if (fabs(getSpeedLeft() - getSpeedRight()) > 1e-6) { // Turning
         double turnRadius = (getWidth() *  (getSpeedLeft() + getSpeedRight())) / (2 * (getSpeedLeft() - getSpeedRight()));
-        double yawChange = (drivenDistLeft - drivenDistRight) / getWidth();
+        double yawChange = (drivenDistRight - drivenDistLeft) / getWidth();
 
         // TODO the following part is generic -> move to parent class
-        currentPosition.setX(currentPosition.getX() - turnRadius * (sin(-yaw_rad - yawChange) - sin(-yaw_rad)));
-        currentPosition.setY(currentPosition.getY() - turnRadius * (cos(-yaw_rad + yawChange) - cos(-yaw_rad)));
+        currentPosition.setX(currentPosition.getX() - turnRadius * (sin(yaw_rad - yawChange) - sin(yaw_rad)));
+        currentPosition.setY(currentPosition.getY() - turnRadius * (cos(yaw_rad + yawChange) - cos(yaw_rad)));
 
         double nextYaw_rad = yaw_rad + yawChange;
         // normalize Yaw
@@ -50,8 +50,8 @@ void DiffDriveVehicleState::updateOdomPositionAndYaw(double drivenDistance, PosT
             nextYaw_rad += 2.0 * M_PI;
         currentPosition.setYaw(nextYaw_rad * 180.0 / M_PI);
     } else { // Driving forward
-        currentPosition.setX(currentPosition.getX() + cos(-yaw_rad) * drivenDistance);
-        currentPosition.setY(currentPosition.getY() + sin(-yaw_rad) * drivenDistance);
+        currentPosition.setX(currentPosition.getX() + cos(yaw_rad) * drivenDistance);
+        currentPosition.setY(currentPosition.getY() + sin(yaw_rad) * drivenDistance);
     }
 
     currentPosition.setTime(thisTimeCalled);

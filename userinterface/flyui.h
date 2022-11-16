@@ -12,6 +12,7 @@
 #include <QSharedPointer>
 #include "communication/vehicleconnections/mavsdkvehicleconnection.h"
 #include "autopilot/gotowaypointfollower.h"
+//#include "autopilot/purepursuitwaypointfollower.h"
 #include "userinterface/map/mapwidget.h"
 
 namespace Ui {
@@ -26,8 +27,8 @@ public:
     explicit FlyUI(QWidget *parent = nullptr);
     ~FlyUI();
 
-    void setCurrentVehicleConnection(const QSharedPointer<MavsdkVehicleConnection> &currentVehicleConnection);
-    QSharedPointer<MavsdkVehicleConnection> getCurrentVehicleConnection() const;
+    void setCurrentVehicleConnection(const QSharedPointer<VehicleConnection> &currentVehicleConnection);
+    QSharedPointer<VehicleConnection> getCurrentVehicleConnection() const;
     QSharedPointer<MapModule> getGotoClickOnMapModule();
 
 public slots:
@@ -75,7 +76,7 @@ private:
 
     Ui::FlyUI *ui;
     QSharedPointer<GotoClickOnMapModule> mGotoClickOnMapModule;
-    QSharedPointer<MavsdkVehicleConnection> mCurrentVehicleConnection;
+    QSharedPointer<VehicleConnection> mCurrentVehicleConnection;
     unsigned mLineOfSightDistance = 200; // [m]
 
 };

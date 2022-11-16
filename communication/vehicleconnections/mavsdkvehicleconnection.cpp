@@ -3,17 +3,17 @@
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
  */
 #include "mavsdkvehicleconnection.h"
-#include "vehicles/copterstate.h"
-#include "sensors/camera/mavsdkgimbal.h"
 #include <QDebug>
 #include <QDateTime>
 
-MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System> system)
+MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System> system, MAV_TYPE vehicleType)
 {
     mSystem = system;
+    mVehicleType = vehicleType;
+    mMavlinkPassthrough.reset(new mavsdk::MavlinkPassthrough(system));
 
     // Setup gimbal
-    mSystem->register_component_discovered_callback([this](mavsdk::System::ComponentType){
+    mSystem->subscribe_component_discovered([this](mavsdk::System::ComponentType){
         if (mSystem->has_gimbal() && mGimbal.isNull()) {
             mGimbal = QSharedPointer<MavsdkGimbal>::create(mSystem);
             emit detectedGimbal(mGimbal);
@@ -22,18 +22,20 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
     if (mSystem->has_gimbal() && mGimbal.isNull()) // Gimbal might have been discovered before callback was registered
         mGimbal = QSharedPointer<MavsdkGimbal>::create(mSystem);
 
-    // TODO: create respective class depending on MAV_TYPE (but not accessible in MAVSDK?!)
-    mVehicleType = MAV_TYPE::MAV_TYPE_QUADROTOR;
     switch (mVehicleType) {
     case MAV_TYPE_QUADROTOR:
+        qDebug() << "MavsdkVehicleConnection: we are talking to a MAV_TYPE_QUADROTOR / PX4.";
         mVehicleState = QSharedPointer<CopterState>::create(mSystem->get_system_id());
         mVehicleState->setName("Copter " + QString::number(mSystem->get_system_id()));
         break;
     case MAV_TYPE_GROUND_ROVER:
-        // TODO: car or diffdrive?
-        qDebug() << "MAV_TYPE_GROUND_ROVER not implemented.";
+        qDebug() << "MavsdkVehicleConnection: we are talking to a MAV_TYPE_GROUND_ROVER / WayWise.";
+        // TODO: detect different rover types...
+        mVehicleState = QSharedPointer<CarState>::create(mSystem->get_system_id());
+        mVehicleState->setName("Car " + QString::number(mSystem->get_system_id()));
         break;
     default:
+        qDebug() << "MavsdkVehicleConnection: unknown / unsupported vehicle type.";
         break;
     }
 
@@ -61,21 +63,33 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
         emit gotVehicleHomeLlh({position.latitude_deg, position.longitude_deg, position.absolute_altitude_m});
     });
 
-    mTelemetry->subscribe_position([this](mavsdk::Telemetry::Position position) {
-        llh_t llh = {position.latitude_deg, position.longitude_deg, position.absolute_altitude_m};
-        xyz_t xyz = coordinateTransforms::llhToEnu(mEnuReference, llh);
+    if (mVehicleType == MAV_TYPE::MAV_TYPE_GROUND_ROVER) // assumption: rover = WayWise on vehicle side -> get NED (shared ENU ref), global pos otherwise
+        mTelemetry->subscribe_position_velocity_ned([this](mavsdk::Telemetry::PositionVelocityNed positionVelocity_ned) {
+            auto pos = mVehicleState->getPosition();
 
-        auto pos = mVehicleState->getPosition();
-        pos.setX(xyz.x);
-        pos.setY(xyz.y);
-        pos.setHeight(xyz.z);
+            xyz_t positionNED = {positionVelocity_ned.position.north_m, positionVelocity_ned.position.east_m, positionVelocity_ned.position.down_m};
+            pos.setXYZ(coordinateTransforms::nedToENU(positionNED));
 
-        mVehicleState->setPosition(pos);
-    });
+            mVehicleState->setPosition(pos);
+        });
+    else
+        mTelemetry->subscribe_position([this](mavsdk::Telemetry::Position position) {
+            llh_t llh = {position.latitude_deg, position.longitude_deg, position.absolute_altitude_m};
+            xyz_t xyz = coordinateTransforms::llhToEnu(mEnuReference, llh);
+
+            auto pos = mVehicleState->getPosition();
+            pos.setX(xyz.x);
+            pos.setY(xyz.y);
+            pos.setHeight(xyz.z);
+
+            mVehicleState->setPosition(pos);
+        });
 
     mTelemetry->subscribe_heading([this](mavsdk::Telemetry::Heading heading) {
         auto pos = mVehicleState->getPosition();
-        pos.setYaw(heading.heading_deg);
+
+        pos.setYaw(coordinateTransforms::yawNEDtoENU(heading.heading_deg));
+
         mVehicleState->setPosition(pos);
     });
 
@@ -88,20 +102,20 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
         mTelemetry->subscribe_landed_state([this](mavsdk::Telemetry::LandedState landedState) {
            mVehicleState.dynamicCast<CopterState>()->setLandedState(static_cast<CopterState::LandedState>(landedState));
         });
+    }
 
-        mTelemetry->subscribe_flight_mode([this](mavsdk::Telemetry::FlightMode flightMode) {
-            mVehicleState.dynamicCast<CopterState>()->setFlightMode(static_cast<CopterState::FlightMode>(flightMode));
+    mTelemetry->subscribe_flight_mode([this](mavsdk::Telemetry::FlightMode flightMode) {
+        mVehicleState->setFlightMode(static_cast<CopterState::FlightMode>(flightMode));
 
-            if (flightMode != mavsdk::Telemetry::FlightMode::Offboard &&
-                    flightMode != mavsdk::Telemetry::FlightMode::Hold)
-                if (hasWaypointFollower() && getWaypointFollower()->isActive()) {
-                    emit stopWaypointFollowerSignal();
-                    qDebug() << "Note: WaypointFollower stopped by flightmode change (can only be started in hold mode).";
-                }
+        if (flightMode != mavsdk::Telemetry::FlightMode::Offboard &&
+                flightMode != mavsdk::Telemetry::FlightMode::Hold)
+            if (hasWaypointFollowerConnectionLocal() && isAutopilotActive()) {
+                emit stopWaypointFollowerSignal();
+                qDebug() << "MavsdkVehicleConnection: connection-local WaypointFollower stopped by flightmode change (Note: can only be started in hold mode).";
+            }
 
 //            qDebug() << (int)flightMode << (mOffboard ? mOffboard->is_active() : false);
-        });
-    }
+    });
 
     // poll update of GpsGlobalOrigin once
     mTelemetry->get_gps_global_origin_async([this](mavsdk::Telemetry::Result result, mavsdk::Telemetry::GpsGlobalOrigin gpsGlobalOrigin){
@@ -120,11 +134,8 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
 //    if (mParam->set_param_float("PLD_HACC_RAD", 5.0) != mavsdk::Param::Result::Success)
 //        qDebug() << "Warning: failed to set PLD_HACC_RAD";
 
-    // Set up MAVLINK passthrough to send rtcm data to drone (no plugin exists for this in MAVSDK v1.2.0)
-    mMavlinkPassthrough.reset(new mavsdk::MavlinkPassthrough(mSystem));
-
     // Necessary such that MAVSDK callbacks (from other threads) can stop WaypointFollower (QTimer)
-    connect(this, &MavsdkVehicleConnection::stopWaypointFollowerSignal, this, &MavsdkVehicleConnection::stopWaypointFollower);
+    connect(this, &MavsdkVehicleConnection::stopWaypointFollowerSignal, this, &MavsdkVehicleConnection::stopAutopilot);
 }
 
 void MavsdkVehicleConnection::setEnuReference(const llh_t &enuReference)
@@ -222,6 +233,38 @@ void MavsdkVehicleConnection::requestReturnToHome()
         qDebug() << "Warning: MavsdkVehicleConnection is trying to land with an unknown/incompatible vehicle type, ignored.";
 }
 
+void MavsdkVehicleConnection::requestManualControl()
+{
+    mavsdk::MavlinkPassthrough::CommandLong ComLong;
+    memset(&ComLong, 0, sizeof (ComLong));
+    ComLong.target_compid = mMavlinkPassthrough->get_target_compid();
+    ComLong.target_sysid = mMavlinkPassthrough->get_target_sysid();
+    ComLong.command = MAV_CMD_DO_SET_MODE;
+    ComLong.param1 = MAV_MODE_FLAG_SAFETY_ARMED | MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
+    ComLong.param2 = 1; // PX4_CUSTOM_MAIN_MODE_MANUAL
+
+    if (mMavlinkPassthrough->send_command_long(ComLong) != mavsdk::MavlinkPassthrough::Result::Success)
+        qDebug() << "Warning: MavsdkVehicleConnection's mode change request failed.";
+}
+
+void MavsdkVehicleConnection::requestFollowPoint()
+{
+    if (isAutopilotActiveOnVehicle())
+        pauseAutopilotOnVehicle();
+
+    mavsdk::MavlinkPassthrough::CommandLong ComLong;
+    memset(&ComLong, 0, sizeof (ComLong));
+    ComLong.target_compid = mMavlinkPassthrough->get_target_compid();
+    ComLong.target_sysid = mMavlinkPassthrough->get_target_sysid();
+    ComLong.command = MAV_CMD_DO_SET_MODE;
+    ComLong.param1 = MAV_MODE_FLAG_SAFETY_ARMED | MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
+    ComLong.param2 = 4; // PX4_CUSTOM_MAIN_MODE_AUTO
+    ComLong.param3 = 8; // PX4_CUSTOM_SUB_MODE_AUTO_FOLLOW_TARGET
+
+    if (mMavlinkPassthrough->send_command_long(ComLong) != mavsdk::MavlinkPassthrough::Result::Success)
+        qDebug() << "Warning: MavsdkVehicleConnection's follow point request failed.";
+}
+
 void MavsdkVehicleConnection::requestGotoLlh(const llh_t &llh, bool changeFlightmodeToHold)
 {
     if (changeFlightmodeToHold) { // MAVSDK will change flightmode if necessary, not always desired
@@ -269,11 +312,8 @@ void MavsdkVehicleConnection::requestVelocityAndYaw(const xyz_t &velocityENU, co
             qDebug() << "MavsdkVehicleConnection: offboard mode started";
     }
 
-    // NOTE: conversion from ENU to NED
-    double yawDegNED = 90.0-yawDeg;
-    if (yawDegNED < 0.0)
-        yawDegNED += 360.0;
-    mOffboard->set_velocity_ned({(float)(velocityENU.y), (float)(velocityENU.x), (float)(-velocityENU.z), (float)(yawDegNED)});
+    xyz_t velocityNED = coordinateTransforms::enuToNED(velocityENU);
+    mOffboard->set_velocity_ned({(float)(velocityNED.x), (float)(velocityNED.y), (float)(velocityNED.z), (float)(coordinateTransforms::yawENUtoNED(yawDeg))});
 }
 
 void MavsdkVehicleConnection::inputRtcmData(const QByteArray &rtcmData)
@@ -292,7 +332,7 @@ void MavsdkVehicleConnection::inputRtcmData(const QByteArray &rtcmData)
         mavRtcmData.flags = (sequenceId & 0x1F) << 3;
         memcpy(mavRtcmData.data, rtcmData.data(), rtcmData.size());
 
-        mavlink_msg_gps_rtcm_data_encode(mMavlinkPassthrough->get_target_sysid(), mMavlinkPassthrough->get_target_compid(), &mavRtcmMsg, &mavRtcmData);
+        mavlink_msg_gps_rtcm_data_encode(mMavlinkPassthrough->get_our_sysid(), mMavlinkPassthrough->get_our_compid(), &mavRtcmMsg, &mavRtcmData);
         if (mMavlinkPassthrough->send_message(mavRtcmMsg) != mavsdk::MavlinkPassthrough::Result::Success)
             qDebug() << "Warning: could not send RTCM via MAVLINK.";
     } else { // rtcm data needs to be fragmented into multiple messages
@@ -306,7 +346,7 @@ void MavsdkVehicleConnection::inputRtcmData(const QByteArray &rtcmData)
             mavRtcmData.len = fragmentLength;
             memcpy(mavRtcmData.data, rtcmData.data() + numBytesProcessed, fragmentLength);
 
-            mavlink_msg_gps_rtcm_data_encode(mMavlinkPassthrough->get_target_sysid(), mMavlinkPassthrough->get_target_compid(), &mavRtcmMsg, &mavRtcmData);
+            mavlink_msg_gps_rtcm_data_encode(mMavlinkPassthrough->get_our_sysid(), mMavlinkPassthrough->get_our_compid(), &mavRtcmMsg, &mavRtcmData);
             if (mMavlinkPassthrough->send_message(mavRtcmMsg) != mavsdk::MavlinkPassthrough::Result::Success)
                 qDebug() << "Warning: could not send RTCM via MAVLINK.";
             numBytesProcessed += fragmentLength;
@@ -341,12 +381,12 @@ void MavsdkVehicleConnection::sendLandingTargetLlh(const llh_t &landingTargetLlh
     mavLandingTargetNED.frame = MAV_FRAME_LOCAL_NED;
     mavLandingTargetNED.time_usec = QDateTime::currentDateTimeUtc().toMSecsSinceEpoch();
 
-    // ENU -> NED
-    mavLandingTargetNED.x = landingTargetENUgpsOrigin.y;
-    mavLandingTargetNED.y = landingTargetENUgpsOrigin.x;
-    mavLandingTargetNED.z = -landingTargetENUgpsOrigin.z;
+    xyz_t landingTargetNEDgpsOrigin = coordinateTransforms::enuToNED(landingTargetENUgpsOrigin);
+    mavLandingTargetNED.x = landingTargetNEDgpsOrigin.x;
+    mavLandingTargetNED.y = landingTargetNEDgpsOrigin.y;
+    mavLandingTargetNED.z = landingTargetNEDgpsOrigin.z;
 
-    mavlink_msg_landing_target_encode(mMavlinkPassthrough->get_target_sysid(), mMavlinkPassthrough->get_target_compid(), &mavLandingTargetMsg, &mavLandingTargetNED);
+    mavlink_msg_landing_target_encode(mMavlinkPassthrough->get_our_sysid(), mMavlinkPassthrough->get_our_compid(), &mavLandingTargetMsg, &mavLandingTargetNED);
     if (mMavlinkPassthrough->send_message(mavLandingTargetMsg) != mavsdk::MavlinkPassthrough::Result::Success)
         qDebug() << "Warning: could not send LANDING_TARGET via MAVLINK.";
 
@@ -375,7 +415,7 @@ void MavsdkVehicleConnection::sendSetGpsOriginLlh(const llh_t &gpsOriginLlh)
     mavGpsGlobalOrigin.altitude = (int) (gpsOriginLlh.height * 1e3);
     mavGpsGlobalOrigin.target_system = mMavlinkPassthrough->get_target_sysid();
 
-    mavlink_msg_set_gps_global_origin_encode(mMavlinkPassthrough->get_target_sysid(), mMavlinkPassthrough->get_target_compid(), &mavGpsGlobalOriginMsg, &mavGpsGlobalOrigin);
+    mavlink_msg_set_gps_global_origin_encode(mMavlinkPassthrough->get_our_sysid(), mMavlinkPassthrough->get_our_compid(), &mavGpsGlobalOriginMsg, &mavGpsGlobalOrigin);
     if (mMavlinkPassthrough->send_message(mavGpsGlobalOriginMsg) != mavsdk::MavlinkPassthrough::Result::Success)
         qDebug() << "Warning: could not send GPS_GLOBAL_ORIGIN via MAVLINK.";
     else
@@ -390,28 +430,133 @@ void MavsdkVehicleConnection::setActuatorOutput(int index, float value)
     });
 }
 
+void MavsdkVehicleConnection::setManualControl(double x, double y, double z, double r, uint16_t buttonStateMask)
+{
+    mavlink_manual_control_t manual_control {};
+    manual_control.x = (uint16_t) (x * 1000.0);
+    manual_control.y = (uint16_t) (y * 1000.0);
+    manual_control.z = (uint16_t) (z * 1000.0);
+    manual_control.r = (uint16_t) (r * 1000.0);
+    manual_control.buttons = buttonStateMask;
+
+    mavlink_message_t message;
+    mavlink_msg_manual_control_encode(mMavlinkPassthrough->get_our_sysid(), mMavlinkPassthrough->get_our_compid(), &message, &manual_control);
+
+    if (mMavlinkPassthrough->send_message(message) != mavsdk::MavlinkPassthrough::Result::Success)
+        qDebug() << "Warning: could not send MANUAL_CONTROL via MAVLINK.";
+}
+
 void MavsdkVehicleConnection::setConvertLocalPositionsToGlobalBeforeSending(bool convertLocalPositionsToGlobalBeforeSending)
 {
     mConvertLocalPositionsToGlobalBeforeSending = convertLocalPositionsToGlobalBeforeSending;
 }
 
-void MavsdkVehicleConnection::setWaypointFollower(const QSharedPointer<WaypointFollower> &waypointFollower)
+MAV_TYPE MavsdkVehicleConnection::getVehicleType() const
 {
-    mWaypointFollower = waypointFollower;
+    return mVehicleType;
 }
 
-bool MavsdkVehicleConnection::hasWaypointFollower()
-{
-    return !mWaypointFollower.isNull();
+mavsdk::MissionRaw::MissionItem MavsdkVehicleConnection::convertPosPointToMissionItem(const PosPoint& posPoint, int sequenceId, bool current) {
+    mavsdk::MissionRaw::MissionItem missionItem = {};
+
+    if (mVehicleType == MAV_TYPE_GROUND_ROVER) { // assumption: rover = WayWise on vehicle side
+        missionItem.mission_type = MAV_MISSION_TYPE_MISSION;
+        missionItem.frame = MAV_FRAME_LOCAL_ENU;
+        missionItem.command = MAV_CMD_NAV_WAYPOINT;
+        missionItem.seq = sequenceId;
+        missionItem.current = current;
+        missionItem.autocontinue = true;
+        // TODO: does not follow MAV_CMD_NAV_WAYPOINT definition
+        missionItem.param1 = posPoint.getSpeed();
+        missionItem.param2 = posPoint.getAttributes();
+        missionItem.param4 = NAN; // yaw
+        missionItem.x = (int)(posPoint.getX() * 10e4);
+        missionItem.y = (int)(posPoint.getY() * 10e4);
+        missionItem.z = (float)posPoint.getHeight();
+    } else     // TODO: PX4 only supports mission items in global frame / llh!
+        throw std::logic_error("converting mission items to global frame not implemented");
+
+    return missionItem;
 }
 
-void MavsdkVehicleConnection::stopWaypointFollower()
+bool MavsdkVehicleConnection::isAutopilotActiveOnVehicle()
 {
-    if (hasWaypointFollower())
-        getWaypointFollower()->stop();
+    return mVehicleState->getFlightMode() == VehicleState::FlightMode::Mission;
 }
 
-QSharedPointer<WaypointFollower> MavsdkVehicleConnection::getWaypointFollower() const
+void MavsdkVehicleConnection::restartAutopilotOnVehicle()
+{ 
+    if (!mMissionRaw)
+        mMissionRaw.reset(new mavsdk::MissionRaw(mSystem));
+
+    mMissionRaw->set_current_mission_item_async(0, [this](mavsdk::MissionRaw::Result res) {
+        if (res != mavsdk::MissionRaw::Result::Success)
+            qDebug() << "Warning: MavsdkVehicleConnection's set current mission item request failed.";
+        else
+            mMissionRaw->start_mission_async([](mavsdk::MissionRaw::Result res) {
+                if (res != mavsdk::MissionRaw::Result::Success)
+                    qDebug() << "Warning: MavsdkVehicleConnection's start mission request failed.";
+            });
+    });
+}
+
+void MavsdkVehicleConnection::startAutopilotOnVehicle()
 {
-    return mWaypointFollower;
+    if (!mMissionRaw)
+        mMissionRaw.reset(new mavsdk::MissionRaw(mSystem));
+
+    mMissionRaw->start_mission_async([](mavsdk::MissionRaw::Result res) {
+        if (res != mavsdk::MissionRaw::Result::Success)
+            qDebug() << "Warning: MavsdkVehicleConnection's start mission request failed.";
+    });
+}
+
+void MavsdkVehicleConnection::pauseAutopilotOnVehicle()
+{
+    if (!mMissionRaw)
+        mMissionRaw.reset(new mavsdk::MissionRaw(mSystem));
+
+    // Note: mavsdk::MissionRaw::pause_mission tries to transition to hold mode, but this is not supported by MAVSDK ActionServer (WayWise vehicle side)
+    if (mVehicleType == MAV_TYPE_GROUND_ROVER) // assumption: rover = WayWise on vehicle side
+        requestManualControl();
+    else
+        if (mMissionRaw->pause_mission() != mavsdk::MissionRaw::Result::Success)
+            qDebug() << "Warning: MavsdkVehicleConnection's pause mission request failed.";
+}
+
+void MavsdkVehicleConnection::stopAutopilotOnVehicle()
+{
+    pauseAutopilotOnVehicle();
+
+    mMissionRaw->set_current_mission_item_async(0, [](mavsdk::MissionRaw::Result res) {
+        if (res != mavsdk::MissionRaw::Result::Success)
+            qDebug() << "Warning: MavsdkVehicleConnection's set current mission item request failed.";
+    });
+}
+
+void MavsdkVehicleConnection::clearRouteOnVehicle(int id)
+{
+    Q_UNUSED(id)
+    if (!mMissionRaw)
+        mMissionRaw.reset(new mavsdk::MissionRaw(mSystem));
+
+    if (mMissionRaw->clear_mission() != mavsdk::MissionRaw::Result::Success)
+        qDebug() << "Warning: MavsdkVehicleConnection's clear mission request failed.";
+}
+
+void MavsdkVehicleConnection::appendToRouteOnVehicle(const QList<PosPoint> &route, int id)
+{
+    Q_UNUSED(id)
+    if (!mMissionRaw)
+        mMissionRaw.reset(new mavsdk::MissionRaw(mSystem));
+
+    // TODO: this does not actually append but replace
+    std::vector<mavsdk::MissionRaw::MissionItem> missionItems;
+    for (int i = 0; i < route.size(); i++)
+        missionItems.push_back(convertPosPointToMissionItem(route.at(i), i, i == 0));
+
+    mMissionRaw->upload_mission_async(missionItems, [](mavsdk::MissionRaw::Result res){
+        if (res != mavsdk::MissionRaw::Result::Success)
+            qDebug() << "Warning: MavsdkVehicleConnection's mission upload failed:" << (int)res;
+    });
 }

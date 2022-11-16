@@ -23,7 +23,7 @@ UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
     // Automatic IMU orientation alignment feature
     connect(&mUblox, &Ublox::rxEsfAlg, this, [this](const ubx_esf_alg &alg){
         if (alg.autoMntAlgOn)
-            setIMUOrientationOffset(alg.roll, alg.pitch, alg.yaw);
+            setIMUOrientationOffset(alg.roll, alg.pitch, (coordinateTransforms::yawNEDtoENU(alg.yaw) - 180.0));
 
     //        static int count = 0;
     //        if (count++%5)
@@ -273,10 +273,18 @@ void UbloxRover::updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt)
 
         // Yaw --- based on last GNSS position if fusion (F9R) unavailable
         static xyz_t lastXyz;
-        if(pvt.head_veh_valid)
-            gnssPos.setYaw(pvt.head_veh + mIMUOrientationOffset.yawOffset_deg);
-        else
-            gnssPos.setYaw(-atan2(xyz.y - lastXyz.y, xyz.x - lastXyz.x) * 180.0 / M_PI);
+        if(pvt.head_veh_valid) {
+            double yaw_degENU = coordinateTransforms::yawNEDtoENU(pvt.head_veh) + mIMUOrientationOffset.yawOffset_deg;
+
+            // normalize to [-180.0:180.0[
+            while (yaw_degENU < -180.0)
+                yaw_degENU += 360.0;
+            while (yaw_degENU >= 180.0)
+                yaw_degENU -= 360.0;
+
+            gnssPos.setYaw(yaw_degENU);
+        } else
+            gnssPos.setYaw(atan2(xyz.y - lastXyz.y, xyz.x - lastXyz.x) * 180.0 / M_PI);
 
         // Time and speed
         gnssPos.setTime(QTime::fromMSecsSinceStartOfDay((pvt.i_tow % ms_per_day) - leapSeconds_ms));

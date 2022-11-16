@@ -61,7 +61,7 @@ void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTrans
     painter.setBrush(QBrush(col_wheels));
     painter.save();
     painter.translate(x, y);
-    painter.rotate(-pos.getYaw());
+    painter.rotate(pos.getYaw());
     // Wheels
     painter.drawRoundedRect(-car_len / 12.0,-(car_w / 2), car_len / 6.0, car_w, car_corner / 3, car_corner / 3);
     painter.drawRoundedRect(car_len - car_len / 2.5,-(car_w / 2), car_len / 6.0, car_w, car_corner / 3, car_corner / 3);
@@ -114,18 +114,45 @@ void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTrans
     //                    t.hour(), t.minute(), t.second(), t.msec());
 
     if (getDrawStatusText()) {
-        QPointF statusTextPoint;
-        QRectF statusTextRect;
-        QString statusText = getName() + "\nID: " +QString::number(getId());
+        // Print data
+        QString txt;
+        QPointF pt_txt;
+        QRectF rect_txt;
 
-        statusTextPoint.setX(x + car_w + car_len * ((cos(getPosition().getYaw() * (M_PI/180.0)) + 1) / 3));
-        statusTextPoint.setY(y - car_w / 2);
+        QString flightModeStr;
+        switch (getFlightMode()) {
+            case FlightMode::Unknown: flightModeStr = "unknown"; break;
+            case FlightMode::Ready: flightModeStr = "ready"; break;
+            case FlightMode::Takeoff: flightModeStr = "takeoff"; break;
+            case FlightMode::Hold: flightModeStr = "hold"; break;
+            case FlightMode::Mission: flightModeStr = "mission"; break;
+            case FlightMode::ReturnToLaunch: flightModeStr = "return to launch"; break;
+            case FlightMode::Land: flightModeStr = "land"; break;
+            case FlightMode::Offboard: flightModeStr = "offboard"; break;
+            case FlightMode::FollowMe: flightModeStr = "follow me"; break;
+            case FlightMode::Manual: flightModeStr = "manual"; break;
+            case FlightMode::Altctl: flightModeStr = "altitude"; break;
+            case FlightMode::Posctl: flightModeStr = "position"; break;
+            case FlightMode::Acro: flightModeStr = "acro"; break;
+            case FlightMode::Stabilized: flightModeStr = "stabilized"; break;
+            case FlightMode::Rattitude: flightModeStr = "rattitude"; break;
+        }
 
+        txt.sprintf("%s\n"
+                    "(%.3f, %.3f, %.3f, %.0f)\n"
+                    "State: %s\n"
+                    "Mode: %s\n",
+                    getName().toLocal8Bit().data(),
+                    pos.getX(), pos.getY(), pos.getHeight(), pos.getYaw(),
+                    (getIsArmed() ? "armed" : "disarmed"),
+                    flightModeStr.toLocal8Bit().data());
+        pt_txt.setX(x + car_w + car_len * ((cos(getPosition().getYaw() * (M_PI/180.0)) + 1) / 3));
+        pt_txt.setY(y);
         painter.setTransform(txtTrans);
-        statusTextPoint = drawTrans.map(statusTextPoint);
-        statusTextRect.setCoords(statusTextPoint.x(), statusTextPoint.y(),
-                                 statusTextPoint.x() + 400, statusTextPoint.y() + 100);
-        painter.drawText(statusTextRect, statusText);
+        pt_txt = drawTrans.map(pt_txt);
+        rect_txt.setCoords(pt_txt.x(), pt_txt.y() - 40,
+                           pt_txt.x() + 400, pt_txt.y() + 65);
+        painter.drawText(rect_txt, txt);
     }
 }
 
@@ -199,10 +226,10 @@ void CarState::updateOdomPositionAndYaw(double drivenDistance, PosType usePosTyp
 
         double yawChange = drivenDistance / ((turnRadiusRear + turnRadiusFront) / 2.0);
 
-        currentPosition.setX(currentPosition.getX() + turnRadiusRear * (sin(-yawRad + yawChange) - sinf(-yawRad)));
-        currentPosition.setY(currentPosition.getY() + turnRadiusRear * (cos(-yawRad - yawChange) - cosf(-yawRad)));
+        currentPosition.setX(currentPosition.getX() - turnRadiusRear * (sin(yawRad - yawChange) - sinf(yawRad)));
+        currentPosition.setY(currentPosition.getY() - turnRadiusRear * (cos(yawRad + yawChange) - cosf(yawRad)));
 
-        double newYaw_deg = (yawRad - yawChange) * (180.0/M_PI);
+        double newYaw_deg = (yawRad + yawChange) * (180.0/M_PI);
 
         // normalize
         while (newYaw_deg < 0.0)
@@ -212,8 +239,8 @@ void CarState::updateOdomPositionAndYaw(double drivenDistance, PosType usePosTyp
 
         currentPosition.setYaw(newYaw_deg);
     } else { // Driving forward
-        currentPosition.setX(currentPosition.getX() + cos(-yawRad) * drivenDistance);
-        currentPosition.setY(currentPosition.getY() + sin(-yawRad) * drivenDistance);
+        currentPosition.setX(currentPosition.getX() + cos(yawRad) * drivenDistance);
+        currentPosition.setY(currentPosition.getY() + sin(yawRad) * drivenDistance);
     }
 
     currentPosition.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()));

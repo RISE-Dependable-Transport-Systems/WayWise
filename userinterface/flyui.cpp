@@ -18,7 +18,7 @@ FlyUI::~FlyUI()
     delete ui;
 }
 
-void FlyUI::setCurrentVehicleConnection(const QSharedPointer<MavsdkVehicleConnection> &currentVehicleConnection)
+void FlyUI::setCurrentVehicleConnection(const QSharedPointer<VehicleConnection> &currentVehicleConnection)
 {
     mCurrentVehicleConnection = currentVehicleConnection;
 }
@@ -81,31 +81,29 @@ void FlyUI::on_getPositionButton_clicked()
 
 void FlyUI::on_apRestartButton_clicked()
 {
-    if (mCurrentVehicleConnection->hasWaypointFollower())
-        mCurrentVehicleConnection->getWaypointFollower()->startFollowingRoute(true);
+    if (mCurrentVehicleConnection)
+        mCurrentVehicleConnection->restartAutopilot();
 }
 
 void FlyUI::on_apStartButton_clicked()
 {
-    if (mCurrentVehicleConnection->hasWaypointFollower())
-        mCurrentVehicleConnection->getWaypointFollower()->startFollowingRoute(false);
+    if (mCurrentVehicleConnection)
+        mCurrentVehicleConnection->startAutopilot();
 }
 
 void FlyUI::on_apPauseButton_clicked()
 {
-    if (mCurrentVehicleConnection->hasWaypointFollower())
-        mCurrentVehicleConnection->getWaypointFollower()->stop();
+    if (mCurrentVehicleConnection)
+        mCurrentVehicleConnection->pauseAutopilot();
 }
 
 void FlyUI::on_apStopButton_clicked()
 {
-    if (mCurrentVehicleConnection->hasWaypointFollower()) {
-        mCurrentVehicleConnection->getWaypointFollower()->stop();
-        mCurrentVehicleConnection->getWaypointFollower()->resetState();
-    }
+    if (mCurrentVehicleConnection)
+        mCurrentVehicleConnection->stopAutopilot();
 }
 
-QSharedPointer<MavsdkVehicleConnection> FlyUI::getCurrentVehicleConnection() const
+QSharedPointer<VehicleConnection> FlyUI::getCurrentVehicleConnection() const
 {
     return mCurrentVehicleConnection;
 }
@@ -115,19 +113,22 @@ void FlyUI::gotRouteForAutopilot(const QList<PosPoint> &route)
     if (mCurrentVehicleConnection.isNull())
         return;
 
-    if (!mCurrentVehicleConnection->hasWaypointFollower()) {
-        mCurrentVehicleConnection->setWaypointFollower(QSharedPointer<GotoWaypointFollower>::create(mCurrentVehicleConnection, PosType::defaultPosType));
-    }
+    if (!mCurrentVehicleConnection->hasWaypointFollowerConnectionLocal())
+        mCurrentVehicleConnection->setWaypointFollowerConnectionLocal(QSharedPointer<GotoWaypointFollower>::create(mCurrentVehicleConnection, PosType::defaultPosType));
 
+    bool safetyCheckFailed = false;
     for (int i=0; i<route.length(); i++) {
         if (mCurrentVehicleConnection->getVehicleState()->getHomePosition().getDistanceTo3d(route.at(i)) > mLineOfSightDistance){
-            qDebug() << "Waypoint:" << i << "is beyond line of sight. Route discarded!";
-            return;
+            qDebug() << "Warning: Waypoint:" << i << "is beyond line of sight of" << mLineOfSightDistance << "m. Route is discarded.";
+            safetyCheckFailed = true;
+            break;
         }
     }
 
-    mCurrentVehicleConnection->getWaypointFollower()->clearRoute();
-    mCurrentVehicleConnection->getWaypointFollower()->addRoute(route);
+    if (safetyCheckFailed)
+        mCurrentVehicleConnection->clearRoute();
+    else
+        mCurrentVehicleConnection->setRoute(route);
 }
 
 
@@ -139,9 +140,9 @@ FlyUI::GotoClickOnMapModule::GotoClickOnMapModule(FlyUI *parent) : mFlyUI(parent
     mGotoContextMenu->addAction(mGotoAction.get());
     connect(mGotoAction.get(), &QAction::triggered, [&](){
         if (mFlyUI->mCurrentVehicleConnection) {
-            if (mFlyUI->mCurrentVehicleConnection->hasWaypointFollower() && mFlyUI->mCurrentVehicleConnection->getWaypointFollower()->isActive()) {
-                mFlyUI->mCurrentVehicleConnection->getWaypointFollower()->stop();
-                qDebug() << "Note: Waypointfollower stopped by goto request from map.";
+            if (mFlyUI->mCurrentVehicleConnection->isAutopilotActive()) {
+                mFlyUI->mCurrentVehicleConnection->stopAutopilot();
+                qDebug() << "Note: Autopilot stopped by goto request from map.";
             }
 
             mFlyUI->mCurrentVehicleConnection->requestGotoENU({mLastClickedMapPos.x, mLastClickedMapPos.y,

@@ -47,6 +47,11 @@ double PosPoint::getHeight() const
     return mHeight;
 }
 
+xyz_t PosPoint::getXYZ() const
+{
+    return {mX, mY, mHeight};
+}
+
 double PosPoint::getRoll() const
 {
     return mRoll;
@@ -106,6 +111,13 @@ void PosPoint::setXY(double x, double y)
 {
     mX = x;
     mY = y;
+}
+
+void PosPoint::setXYZ(xyz_t xyz)
+{
+    mX = xyz.x;
+    mY = xyz.y;
+    mHeight = xyz.z;
 }
 
 void PosPoint::setTime(const QTime &time)

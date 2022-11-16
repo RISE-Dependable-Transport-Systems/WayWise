@@ -28,7 +28,7 @@ namespace coordinateTransforms {
 #define FE_WGS84        (1.0/298.257223563) // earth flattening (WGS84)
 #define RE_WGS84        6378137.0           // earth semimajor axis (WGS84) (m)
 
-static inline xyz_t llhToXyz(llh_t llh)
+inline xyz_t llhToXyz(llh_t llh)
 {
     double sinp = sin(llh.latitude * M_PI / 180.0);
     double cosp = cos(llh.latitude * M_PI / 180.0);
@@ -44,7 +44,7 @@ static inline xyz_t llhToXyz(llh_t llh)
     return res;
 }
 
-static inline llh_t xyzToLlh(const xyz_t &xyz)
+inline llh_t xyzToLlh(const xyz_t &xyz)
 {
     double e2 = FE_WGS84 * (2.0 - FE_WGS84);
     double r2 = xyz.x * xyz.x + xyz.y * xyz.y;
@@ -67,7 +67,7 @@ static inline llh_t xyzToLlh(const xyz_t &xyz)
     return res;
 }
 
-static inline void createEnuMatrix(double lat, double lon, double *enuMat)
+inline void createEnuMatrix(double lat, double lon, double *enuMat)
 {
     double so = sin(lon * M_PI / 180.0);
     double co = cos(lon * M_PI / 180.0);
@@ -101,7 +101,7 @@ static inline void createEnuMatrix(double lat, double lon, double *enuMat)
     //    enuMat[8] = -sa;
 }
 
-static inline xyz_t llhToEnu(const llh_t &iLlh, const llh_t &llh)
+inline xyz_t llhToEnu(const llh_t &iLlh, const llh_t &llh)
 {
     xyz_t iXyz = llhToXyz(iLlh);
     xyz_t xyz = llhToXyz(llh);
@@ -118,7 +118,7 @@ static inline xyz_t llhToEnu(const llh_t &iLlh, const llh_t &llh)
     return xyz;
 }
 
-static inline llh_t enuToLlh(const llh_t &iLlh, const xyz_t &xyz)
+inline llh_t enuToLlh(const llh_t &iLlh, const xyz_t &xyz)
 {
     xyz_t iXyz = llhToXyz(iLlh);
 
@@ -132,6 +132,38 @@ static inline llh_t enuToLlh(const llh_t &iLlh, const xyz_t &xyz)
     };
 
     return xyzToLlh(temp_xyz);
+}
+
+inline xyz_t nedToENU(const xyz_t &xyzNED) {
+    return {xyzNED.y, xyzNED.x, -xyzNED.z};
+}
+
+inline xyz_t enuToNED(const xyz_t &xyzENU) {
+    return nedToENU(xyzENU);
+}
+
+inline double yawNEDtoENU(double yaw_degNED) {
+    double yaw_degENU = 90.0 - yaw_degNED;
+
+    // normalize to [-180.0:180.0[
+    while (yaw_degENU < -180.0)
+        yaw_degENU += 360.0;
+    while (yaw_degENU >= 180.0)
+        yaw_degENU -= 360.0;
+
+    return yaw_degENU;
+}
+
+inline double yawENUtoNED(double yaw_degENU) {
+    double yaw_degNED = 90.0 - yaw_degENU;
+
+    // normalize to [0.0:360.0[
+    while (yaw_degNED < 0.0)
+        yaw_degNED += 360.0;
+    while (yaw_degNED >= 360.0)
+        yaw_degNED -= 360.0;
+
+    return yaw_degNED;
 }
 
 } // coordinateTransforms

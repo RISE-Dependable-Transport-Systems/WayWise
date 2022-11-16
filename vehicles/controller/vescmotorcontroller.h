@@ -61,7 +61,7 @@ private:
             QSharedPointer<VehicleState> vehicleState = getVehicleState();
             PosPoint currIMUPos = vehicleState->getPosition(PosType::IMU);
 
-            currIMUPos.setRollPitchYaw(roll, pitch, yaw);
+            currIMUPos.setRollPitchYaw(roll, pitch, coordinateTransforms::yawNEDtoENU(yaw));
             currIMUPos.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()));
             vehicleState->setPosition(currIMUPos);
 

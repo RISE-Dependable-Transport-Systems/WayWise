@@ -33,6 +33,7 @@ enum class PosType {
     _LAST_,
     defaultPosType = simulated
 };
+#include "coordinatetransforms.h"
 
 class PosPoint : public QObject
 {
@@ -49,6 +50,7 @@ public:
     double getX() const;
     double getY() const;
     double getHeight() const;
+    xyz_t getXYZ() const;
     double getRoll() const;
     double getPitch() const;
     double getYaw() const;
@@ -71,6 +73,7 @@ public:
     void setY(double y);
     void setHeight(double height);
     void setXY(double x, double y);
+    void setXYZ(xyz_t xyz);
     void scaleXY(double scalefactor);
     void setRoll(double roll);
     void setPitch(double pitch);

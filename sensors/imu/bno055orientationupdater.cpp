@@ -29,7 +29,7 @@ BNO055OrientationUpdater::BNO055OrientationUpdater(QSharedPointer<VehicleState> 
                 QSharedPointer<VehicleState> vehicleState = getVehicleState();
                 PosPoint currIMUPos = vehicleState->getPosition(PosType::IMU);
 
-                currIMUPos.setRollPitchYaw(bnod.eul_roll, bnod.eul_pitc, bnod.eul_head);
+                currIMUPos.setRollPitchYaw(bnod.eul_roll, bnod.eul_pitc, coordinateTransforms::yawNEDtoENU(bnod.eul_head));
                 currIMUPos.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()));
                 vehicleState->setPosition(currIMUPos);
 
