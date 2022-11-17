@@ -20,6 +20,7 @@ public:
     virtual bool processMouse(bool isPress, bool isRelease, bool isMove, bool isWheel, QPoint widgetPos, PosPoint mapPos, double wheelAngleDelta, Qt::KeyboardModifiers keyboardModifiers, Qt::MouseButtons mouseButtons, double scale) override;
     void setCurrentRouteIndex(int index);
     int getCurrentRouteIndex();
+    void setDrawRouteText(bool draw);
     QList<PosPoint> getCurrentRoute();
     QList<PosPoint> getRoute(int index);
     int getNumberOfRoutes();
@@ -27,6 +28,7 @@ public:
     void addRoute(QList<PosPoint> route);
     void appendRouteToCurrentRoute(QList<PosPoint> route);
     bool removeCurrentRoute();
+    void clearCurrentRoute();
     void removeRoute(int index);
     void setNewPointHeight(double height);
     void setNewPointSpeed(double speed);

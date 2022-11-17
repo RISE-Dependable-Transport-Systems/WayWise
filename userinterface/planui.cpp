@@ -13,6 +13,19 @@ PlanUI::PlanUI(QWidget *parent) :
 
 
     mRoutePlanner = QSharedPointer<RoutePlannerModule>::create();
+    mRouteGeneratorUI = QSharedPointer<RouteGeneratorUI>::create(this);
+    connect(mRouteGeneratorUI.get(), &RouteGeneratorUI::routeDoneForUse, [this](const QList<PosPoint>& route) {
+                if (mRoutePlanner->getCurrentRoute().size() > 0) {
+                    mRoutePlanner->addNewRoute();
+                    mRoutePlanner->setCurrentRouteIndex(mRoutePlanner->getNumberOfRoutes()-1);
+                }
+                mRoutePlanner->appendRouteToCurrentRoute(route);
+
+                ui->currentRouteSpinBox->setValue(mRoutePlanner->getCurrentRouteIndex() + 1);
+                ui->currentRouteSpinBox->setMaximum(mRoutePlanner->getNumberOfRoutes());
+                ui->currentRouteSpinBox->setSuffix(" / " + QString::number(mRoutePlanner->getNumberOfRoutes()));
+
+    });
 }
 
 PlanUI::~PlanUI()
@@ -23,6 +36,11 @@ PlanUI::~PlanUI()
 QSharedPointer<RoutePlannerModule> PlanUI::getRoutePlannerModule() const
 {
     return mRoutePlanner;
+}
+
+QSharedPointer<RouteGeneratorUI> PlanUI::getRouteGeneratorUI() const
+{
+    return mRouteGeneratorUI;
 }
 
 void PlanUI::on_addRouteButton_clicked()
@@ -205,4 +223,9 @@ void PlanUI::on_importRouteButton_clicked()
     ui->currentRouteSpinBox->setValue(mRoutePlanner->getCurrentRouteIndex() + 1);
     ui->currentRouteSpinBox->setMaximum(mRoutePlanner->getNumberOfRoutes());
     ui->currentRouteSpinBox->setSuffix(" / " + QString::number(mRoutePlanner->getNumberOfRoutes()));
+}
+
+void PlanUI::on_generateRouteButton_clicked()
+{
+    mRouteGeneratorUI->show();
 }
