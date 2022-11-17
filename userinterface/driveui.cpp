@@ -6,6 +6,7 @@
 
 #include "driveui.h"
 #include "ui_driveui.h"
+#include <QInputDialog>
 
 DriveUI::DriveUI(QWidget *parent) :
     QWidget(parent),
@@ -164,11 +165,15 @@ double DriveUI::getMaxSignedStepFromValueTowardsGoal(double value, double goal, 
     return goal - value;
 }
 
-void DriveUI::on_apIdSpinBox_valueChanged(int apID)
+void DriveUI::on_apSetActiveIDButton_clicked()
 {
-    if (mCurrentVehicleConnection) {
-        if (mCurrentVehicleConnection->isAutopilotActive())
-            mCurrentVehicleConnection->pauseAutopilot();
-        mCurrentVehicleConnection->setActiveAutopilotID(apID);
-    }
+    bool gotOK;
+    int apID = QInputDialog::getInt(this, tr("Set Active Autopilot ID..."),
+                                 tr("Autopilot ID vehicle should switch to:"), 0, 0, 9, 1, &gotOK);
+    if (gotOK)
+        if (mCurrentVehicleConnection) {
+                if (mCurrentVehicleConnection->isAutopilotActive())
+                    mCurrentVehicleConnection->pauseAutopilot();
+                mCurrentVehicleConnection->setActiveAutopilotID(apID);
+        }
 }

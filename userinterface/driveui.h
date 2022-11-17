@@ -36,7 +36,7 @@ private slots:
 
     void on_apStopButton_clicked();
 
-    void on_apIdSpinBox_valueChanged(int apID);
+    void on_apSetActiveIDButton_clicked();
 
 private:
     Ui::DriveUI *ui;
