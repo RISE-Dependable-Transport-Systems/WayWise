@@ -14,6 +14,7 @@
 #include <QMessageBox>
 #include <QXmlStreamWriter>
 #include "userinterface/map/routeplannermodule.h"
+#include "userinterface/routegeneratorui.h"
 
 namespace Ui {
 class PlanUI;
@@ -28,6 +29,7 @@ public:
     ~PlanUI();
 
     QSharedPointer<RoutePlannerModule> getRoutePlannerModule() const;
+    QSharedPointer<RouteGeneratorUI> getRouteGeneratorUI() const;
 
 signals:
     void routeDoneForUse(const QList<PosPoint>& route);
@@ -55,9 +57,12 @@ private slots:
 
     void on_importRouteButton_clicked();
 
+    void on_generateRouteButton_clicked();
+
 private:
     Ui::PlanUI *ui;
     QSharedPointer<RoutePlannerModule> mRoutePlanner;
+    QSharedPointer<RouteGeneratorUI> mRouteGeneratorUI;
     void xmlStreamWriteRoute(QXmlStreamWriter &xmlWriteStream, const QList<PosPoint> route);
 };
 

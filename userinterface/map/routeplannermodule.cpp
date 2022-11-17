@@ -143,6 +143,11 @@ int RoutePlannerModule::getCurrentRouteIndex()
     return mPlannerState.currentRouteIndex;
 }
 
+void RoutePlannerModule::setDrawRouteText(bool draw)
+{
+    mPlannerState.drawRouteText = draw;
+}
+
 QList<PosPoint> RoutePlannerModule::getCurrentRoute()
 {
     return getRoute(mPlannerState.currentRouteIndex);
@@ -183,6 +188,12 @@ bool RoutePlannerModule::removeCurrentRoute()
     removeRoute(mPlannerState.currentRouteIndex);
 
     return true;
+}
+
+void RoutePlannerModule::clearCurrentRoute()
+{
+    mRoutes[mPlannerState.currentRouteIndex].clear();
+    emit requestRepaint();
 }
 
 void RoutePlannerModule::removeRoute(int index)
