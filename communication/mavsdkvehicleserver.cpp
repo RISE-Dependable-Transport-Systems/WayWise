@@ -28,9 +28,6 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
     mParamServer.reset(new mavsdk::ParamServer(serverComponent));
     mMissionRawServer.reset(new mavsdk::MissionRawServer(serverComponent));
 
-    // Create mavlinkpassthrough plugin
-    mMavlinkPassthrough.reset(new mavsdk::MavlinkPassthrough(mMavsdk.systems().at(0)));
-
     // These are needed for MAVSDK at the moment
     mParamServer->provide_param_int("CAL_ACC0_ID", 1);
     mParamServer->provide_param_int("CAL_GYRO0_ID", 1);
@@ -138,18 +135,6 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
     connect(&mHeartbeatTimer, &QTimer::timeout, this, &MavsdkVehicleServer::heartbeatTimeout);
     connect(this, &MavsdkVehicleServer::resetHeartbeat, this, &MavsdkVehicleServer::heartbeatReset);
 
-    mMavlinkPassthrough->subscribe_message(MAVLINK_MSG_ID_COMMAND_LONG, [this](const mavlink_message_t &message) {
-        switch (mavlink_msg_command_long_get_command(&message)) {
-        case MAV_CMD_DO_SET_MISSION_CURRENT: // used to switch between multiple autopilots
-            static const QMetaMethod switchAutopilotIDSignal = QMetaMethod::fromSignal(&MavsdkVehicleServer::switchAutopilotID);
-            if (isSignalConnected(switchAutopilotIDSignal))
-                emit switchAutopilotID(mavlink_msg_command_long_get_param3(&message));
-            else
-                qDebug() << "Warning: got request to change autopilot id, but switchAutopilotID(..) signal is not connected.";
-            break;
-        }
-    });
-
     mMavsdk.intercept_incoming_messages_async([this](mavlink_message_t &message){
         if (message.msgid == MAVLINK_MSG_ID_HEARTBEAT) { // TODO: make sure this is actually for us
             if (!mHeartbeat) {
@@ -174,6 +159,24 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
         }
 
         return true;
+    });
+
+    // --- Things that we should implement/fix in MAVSDK follow from here :-)
+    // Create mavlinkpassthrough plugin (TODO: should not be used on vehicle side...)
+    mMavsdk.subscribe_on_new_system([this](){
+        mMavlinkPassthrough.reset(new mavsdk::MavlinkPassthrough(mMavsdk.systems().at(0)));
+
+        mMavlinkPassthrough->subscribe_message(MAVLINK_MSG_ID_COMMAND_LONG, [this](const mavlink_message_t &message) {
+            switch (mavlink_msg_command_long_get_command(&message)) {
+            case MAV_CMD_DO_SET_MISSION_CURRENT: // used to switch between multiple autopilots
+                static const QMetaMethod switchAutopilotIDSignal = QMetaMethod::fromSignal(&MavsdkVehicleServer::switchAutopilotID);
+                if (isSignalConnected(switchAutopilotIDSignal))
+                    emit switchAutopilotID(mavlink_msg_command_long_get_param3(&message));
+                else
+                    qDebug() << "Warning: got request to change autopilot id, but switchAutopilotID(..) signal is not connected.";
+                break;
+            }
+        });
     });
 
     mMavsdk.intercept_outgoing_messages_async([](mavlink_message_t &message){
