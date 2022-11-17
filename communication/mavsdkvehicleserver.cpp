@@ -16,10 +16,6 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
     mavsdk::Mavsdk::Configuration configuration(mavsdk::Mavsdk::Configuration::UsageType::Autopilot);
     mMavsdk.set_configuration(configuration);
 
-    mavsdk::ConnectionResult result = mMavsdk.add_any_connection("udp://127.0.0.1:14540");
-    if (result == mavsdk::ConnectionResult::Success)
-        qDebug() << "MavsdkVehicleServer is listening...";
-
     std::shared_ptr<mavsdk::ServerComponent> serverComponent = mMavsdk.server_component_by_type(mavsdk::Mavsdk::ServerComponentType::Autopilot);
 
     // Create server plugins
@@ -203,6 +199,10 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
         return true;
 
     });
+
+    mavsdk::ConnectionResult result = mMavsdk.add_any_connection("udp://127.0.0.1:14540");
+    if (result == mavsdk::ConnectionResult::Success)
+        qDebug() << "MavsdkVehicleServer is listening...";
 }
 
 void MavsdkVehicleServer::heartbeatTimeout() {
