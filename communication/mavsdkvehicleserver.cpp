@@ -7,6 +7,7 @@
 #include "mavsdkvehicleserver.h"
 #include <QDebug>
 #include <future>
+#include <QMetaMethod>
 
 MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleState)
 {
@@ -77,18 +78,19 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
     mPublishMavlinkTimer.start(100);
 
     mActionServer->subscribe_flight_mode_change([this](mavsdk::ActionServer::Result res, mavsdk::ActionServer::FlightMode mode) {
-        if  (res == mavsdk::ActionServer::Result::Success)
+        if  (res == mavsdk::ActionServer::Result::Success) {
             mVehicleState->setFlightMode((VehicleState::FlightMode) mode);
 
-        switch (mode) {
-        case mavsdk::ActionServer::FlightMode::Mission:
-            emit startWaypointFollower(false);
-            break;
-        case mavsdk::ActionServer::FlightMode::FollowMe:
-            emit startFollowPoint();
-            break;
-        default:
-            ;
+            switch (mode) {
+            case mavsdk::ActionServer::FlightMode::Mission:
+                emit startWaypointFollower(false);
+                break;
+            case mavsdk::ActionServer::FlightMode::FollowMe:
+                emit startFollowPoint();
+                break;
+            default:
+                ;
+            }
         }
 
         if (mode != mavsdk::ActionServer::FlightMode::Mission &&
@@ -137,9 +139,15 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
     connect(this, &MavsdkVehicleServer::resetHeartbeat, this, &MavsdkVehicleServer::heartbeatReset);
 
     mMavlinkPassthrough->subscribe_message(MAVLINK_MSG_ID_COMMAND_LONG, [this](const mavlink_message_t &message) {
-        switch (mavlink_msg_command_long_get_command(&message))
-        case MAV_CMD_DO_SET_MISSION_CURRENT:
-            emit missionCurrentCommand(mavlink_msg_command_long_get_param3(&message));
+        switch (mavlink_msg_command_long_get_command(&message)) {
+        case MAV_CMD_DO_SET_MISSION_CURRENT: // used to switch between multiple autopilots
+            static const QMetaMethod switchAutopilotIDSignal = QMetaMethod::fromSignal(&MavsdkVehicleServer::switchAutopilotID);
+            if (isSignalConnected(switchAutopilotIDSignal))
+                emit switchAutopilotID(mavlink_msg_command_long_get_param3(&message));
+            else
+                qDebug() << "Warning: got request to change autopilot id, but switchAutopilotID(..) signal is not connected.";
+            break;
+        }
     });
 
     mMavsdk.intercept_incoming_messages_async([this](mavlink_message_t &message){
@@ -253,7 +261,7 @@ void MavsdkVehicleServer::updateRawGpsAndGpsInfoFromUbx(const ubx_nav_pvt &pvt) 
 
 }
 
-void MavsdkVehicleServer::setWaypointFollower(QSharedPointer<MultiWaypointFollower> waypointFollower)
+void MavsdkVehicleServer::setWaypointFollower(QSharedPointer<WaypointFollower> waypointFollower)
 {
     mWaypointFollower = waypointFollower;
     connect(this, &MavsdkVehicleServer::startWaypointFollower, mWaypointFollower.get(), &WaypointFollower::startFollowingRoute);
