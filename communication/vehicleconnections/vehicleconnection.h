@@ -43,6 +43,7 @@ public:
     void clearRoute(int id = 0);
     void appendToRoute(const QList<PosPoint> &route, int id = 0);
     void setRoute(const QList<PosPoint> &route, int id = 0);
+    void setActiveAutopilotID(int id = 0);
 
     QSharedPointer<VehicleState> getVehicleState() const;
     QSharedPointer<Gimbal> getGimbal() const;
@@ -61,6 +62,7 @@ protected:
     virtual void stopAutopilotOnVehicle() {throw  std::logic_error("Function not implemented");};
     virtual void clearRouteOnVehicle(int id = 0) {Q_UNUSED(id) throw  std::logic_error("Function not implemented");};
     virtual void appendToRouteOnVehicle(const QList<PosPoint> &route, int id = 0) {Q_UNUSED(route )Q_UNUSED(id) throw  std::logic_error("Function not implemented");};
+    virtual void setActiveAutopilotIDOnVehicle(int id = 0) {Q_UNUSED(id) throw  std::logic_error("Function not implemented");};
 
     QSharedPointer<VehicleState> mVehicleState;
     QSharedPointer<Gimbal> mGimbal;

@@ -1,5 +1,6 @@
 /*
  *     Copyright 2022 Marvin Damschen   marvin.damschen@ri.se
+ *               2022 Rickard Häll      rickard.hall@ri.se
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
  */
 
@@ -34,6 +35,8 @@ private slots:
     void on_apPauseButton_clicked();
 
     void on_apStopButton_clicked();
+
+    void on_apSetActiveIDButton_clicked();
 
 private:
     Ui::DriveUI *ui;

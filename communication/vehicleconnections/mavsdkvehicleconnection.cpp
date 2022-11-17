@@ -560,3 +560,18 @@ void MavsdkVehicleConnection::appendToRouteOnVehicle(const QList<PosPoint> &rout
             qDebug() << "Warning: MavsdkVehicleConnection's mission upload failed:" << (int)res;
     });
 }
+
+void MavsdkVehicleConnection::setActiveAutopilotIDOnVehicle(int id)
+{
+    mavsdk::MavlinkPassthrough::CommandLong ComLong;
+    memset(&ComLong, 0, sizeof (ComLong));
+    ComLong.target_compid = mMavlinkPassthrough->get_target_compid();
+    ComLong.target_sysid = mMavlinkPassthrough->get_target_sysid();
+    ComLong.command = MAV_CMD_DO_SET_MISSION_CURRENT;
+    ComLong.param1 = -1;
+    ComLong.param2 = 0;
+    ComLong.param3 = id; // Autopilot ID
+
+    if (mMavlinkPassthrough->send_command_long(ComLong) != mavsdk::MavlinkPassthrough::Result::Success)
+        qDebug() << "Warning: could not send MISSION_SET_CURRENT via MAVLINK.";
+}

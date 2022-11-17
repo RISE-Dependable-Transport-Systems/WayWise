@@ -1,10 +1,12 @@
 /*
  *     Copyright 2022 Marvin Damschen   marvin.damschen@ri.se
+ *               2022 Rickard Häll      rickard.hall@ri.se
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
  */
 
 #include "driveui.h"
 #include "ui_driveui.h"
+#include <QInputDialog>
 
 DriveUI::DriveUI(QWidget *parent) :
     QWidget(parent),
@@ -161,4 +163,17 @@ double DriveUI::getMaxSignedStepFromValueTowardsGoal(double value, double goal, 
         return -maxStepSize;
 
     return goal - value;
+}
+
+void DriveUI::on_apSetActiveIDButton_clicked()
+{
+    bool gotOK;
+    int apID = QInputDialog::getInt(this, tr("Set Active Autopilot ID..."),
+                                 tr("Autopilot ID vehicle should switch to:"), 0, 0, 9, 1, &gotOK);
+    if (gotOK)
+        if (mCurrentVehicleConnection) {
+                if (mCurrentVehicleConnection->isAutopilotActive())
+                    mCurrentVehicleConnection->pauseAutopilot();
+                mCurrentVehicleConnection->setActiveAutopilotID(apID);
+        }
 }

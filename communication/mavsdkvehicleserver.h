@@ -1,5 +1,6 @@
 /*
  *     Copyright 2022 Marvin Damschen   marvin.damschen@ri.se
+ *               2022 Rickard Häll      rickard.hall@ri.se
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
  */
 
@@ -10,16 +11,17 @@
 #include <QSharedPointer>
 #include <QTimer>
 #include <mavsdk/mavsdk.h>
-#include <mavsdk/server_component.h>
+#include <mavsdk/plugins/action_server/action_server.h>
+#include <mavsdk/plugins/mavlink_passthrough/mavlink_passthrough.h>
+#include <mavsdk/plugins/mission_raw_server/mission_raw_server.h>
 #include <mavsdk/plugins/param_server/param_server.h>
 #include <mavsdk/plugins/telemetry_server/telemetry_server.h>
-#include <mavsdk/plugins/action_server/action_server.h>
-#include <mavsdk/plugins/mission_raw_server/mission_raw_server.h>
-#include "waywise.h"
-#include "vehicles/vehiclestate.h"
-#include "sensors/gnss/ubloxrover.h"
+#include <mavsdk/server_component.h>
 #include "autopilot/waypointfollower.h"
+#include "sensors/gnss/ubloxrover.h"
 #include "vehicles/controller/movementcontroller.h"
+#include "vehicles/vehiclestate.h"
+#include "waywise.h"
 
 class MavsdkVehicleServer : public QObject
 {
@@ -30,6 +32,7 @@ public:
     void setWaypointFollower(QSharedPointer<WaypointFollower> waypointFollower);
     void setMovementController(QSharedPointer<MovementController> movementController);
     void setManualControlMaxSpeed(double manualControlMaxSpeed_ms);
+    void mavResult(MAV_RESULT result);
 
 signals:
     void startWaypointFollower(bool fromBeginning); // to enable starting from MAVSDK thread
@@ -38,6 +41,7 @@ signals:
     void clearRouteOnWaypointFollower();
     void startFollowPoint();
     void resetHeartbeat();
+    void switchAutopilotID(const float autopilotID);
 
 private:
     mavsdk::Mavsdk mMavsdk;
@@ -47,6 +51,7 @@ private:
     std::shared_ptr<mavsdk::ActionServer> mActionServer;
     std::shared_ptr<mavsdk::ParamServer> mParamServer;
     std::shared_ptr<mavsdk::MissionRawServer> mMissionRawServer;
+    std::shared_ptr<mavsdk::MavlinkPassthrough> mMavlinkPassthrough;
     QTimer mPublishMavlinkTimer;
 
     QSharedPointer<VehicleState> mVehicleState;
@@ -64,7 +69,6 @@ private:
     PosPoint convertMissionItemToPosPoint(const mavsdk::MissionRawServer::MissionItem &item);
     void handleManualControlMessage(mavlink_manual_control_t manualControl);
     double mManualControlMaxSpeed = 2.0; // [m/s]
-
 };
 
 #endif // MAVSDKVEHICLESERVER_H

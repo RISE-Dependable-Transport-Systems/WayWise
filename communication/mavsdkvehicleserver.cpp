@@ -1,11 +1,13 @@
 /*
  *     Copyright 2022 Marvin Damschen   marvin.damschen@ri.se
+ *               2022 Rickard Häll      rickard.hall@ri.se
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
  */
 
 #include "mavsdkvehicleserver.h"
 #include <QDebug>
 #include <future>
+#include <QMetaMethod>
 
 MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleState)
 {
@@ -13,10 +15,6 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
 
     mavsdk::Mavsdk::Configuration configuration(mavsdk::Mavsdk::Configuration::UsageType::Autopilot);
     mMavsdk.set_configuration(configuration);
-
-    mavsdk::ConnectionResult result = mMavsdk.add_any_connection("udp://127.0.0.1:14540");
-    if (result == mavsdk::ConnectionResult::Success)
-        qDebug() << "MavsdkVehicleServer is listening...";
 
     std::shared_ptr<mavsdk::ServerComponent> serverComponent = mMavsdk.server_component_by_type(mavsdk::Mavsdk::ServerComponentType::Autopilot);
 
@@ -73,24 +71,25 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
     mPublishMavlinkTimer.start(100);
 
     mActionServer->subscribe_flight_mode_change([this](mavsdk::ActionServer::Result res, mavsdk::ActionServer::FlightMode mode) {
-       if  (res == mavsdk::ActionServer::Result::Success)
-           mVehicleState->setFlightMode((VehicleState::FlightMode) mode);
+        if  (res == mavsdk::ActionServer::Result::Success) {
+            mVehicleState->setFlightMode((VehicleState::FlightMode) mode);
 
-           switch (mode) {
-           case mavsdk::ActionServer::FlightMode::Mission:
-               emit startWaypointFollower(false);
-               break;
-           case mavsdk::ActionServer::FlightMode::FollowMe:
-               emit startFollowPoint();
-               break;
-           default:
-               ;
-           }
+            switch (mode) {
+            case mavsdk::ActionServer::FlightMode::Mission:
+                emit startWaypointFollower(false);
+                break;
+            case mavsdk::ActionServer::FlightMode::FollowMe:
+                emit startFollowPoint();
+                break;
+            default:
+                ;
+            }
+        }
 
-           if (mode != mavsdk::ActionServer::FlightMode::Mission &&
-                   mode != mavsdk::ActionServer::FlightMode::FollowMe)
-               if (mWaypointFollower->isActive())
-                   emit pauseWaypointFollower();
+        if (mode != mavsdk::ActionServer::FlightMode::Mission &&
+                mode != mavsdk::ActionServer::FlightMode::FollowMe)
+            if (mWaypointFollower->isActive())
+                emit pauseWaypointFollower();
     });
 
     mMissionRawServer->subscribe_incoming_mission([this](mavsdk::MissionRawServer::Result res, mavsdk::MissionRawServer::MissionPlan plan) {
@@ -158,6 +157,24 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
         return true;
     });
 
+    // --- Things that we should implement/fix in MAVSDK follow from here :-)
+    // Create mavlinkpassthrough plugin (TODO: should not be used on vehicle side...)
+    mMavsdk.subscribe_on_new_system([this](){
+        mMavlinkPassthrough.reset(new mavsdk::MavlinkPassthrough(mMavsdk.systems().at(0)));
+
+        mMavlinkPassthrough->subscribe_message(MAVLINK_MSG_ID_COMMAND_LONG, [this](const mavlink_message_t &message) {
+            switch (mavlink_msg_command_long_get_command(&message)) {
+            case MAV_CMD_DO_SET_MISSION_CURRENT: // used to switch between multiple autopilots
+                static const QMetaMethod switchAutopilotIDSignal = QMetaMethod::fromSignal(&MavsdkVehicleServer::switchAutopilotID);
+                if (isSignalConnected(switchAutopilotIDSignal))
+                    emit switchAutopilotID(mavlink_msg_command_long_get_param3(&message));
+                else
+                    qDebug() << "Warning: got request to change autopilot id, but switchAutopilotID(..) signal is not connected.";
+                break;
+            }
+        });
+    });
+
     mMavsdk.intercept_outgoing_messages_async([](mavlink_message_t &message){
         switch (message.msgid) {
         case MAVLINK_MSG_ID_HEARTBEAT: // Fix some info in heartbeat s.th. MAVSDK / ControlTower detects vehicle correctly
@@ -182,6 +199,10 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
         return true;
 
     });
+
+    mavsdk::ConnectionResult result = mMavsdk.add_any_connection("udp://127.0.0.1:14540");
+    if (result == mavsdk::ConnectionResult::Success)
+        qDebug() << "MavsdkVehicleServer is listening...";
 }
 
 void MavsdkVehicleServer::heartbeatTimeout() {
@@ -294,3 +315,10 @@ void MavsdkVehicleServer::setManualControlMaxSpeed(double manualControlMaxSpeed_
 {
     mManualControlMaxSpeed = manualControlMaxSpeed_ms;
 }
+
+void MavsdkVehicleServer::mavResult(MAV_RESULT result)
+{
+        mavlink_message_t ack;
+        ack = mMavlinkPassthrough->make_command_ack_message(mMavlinkPassthrough->get_target_sysid(), mMavlinkPassthrough->get_target_compid(), MAV_CMD_DO_SET_MISSION_CURRENT, result);
+        mMavlinkPassthrough->send_message(ack);
+};
