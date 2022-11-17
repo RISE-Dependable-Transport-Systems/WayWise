@@ -92,7 +92,7 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
                     ret.vbAppendDouble32(mVehicleState->getPosition(PosType::GNSS).getY(), 1e4);
                     ret.vbAppendDouble32(mWaypointFollower ? mWaypointFollower->getCurrentGoal().getX() : 0.0, 1e4); // autopilot_goal_x
                     ret.vbAppendDouble32(mWaypointFollower ? mWaypointFollower->getCurrentGoal().getY() : 0.0, 1e4); // autopilot_goal_y
-                    ret.vbAppendDouble32(mWaypointFollower ? qSharedPointerCast<PurepursuitWaypointFollower>(mWaypointFollower->getActiveWaypointFollower())->getPurePursuitRadius() : 0.0, 1e6); // autopilot_pp_radius
+                    ret.vbAppendDouble32(mWaypointFollower ? mWaypointFollower->getPurePursuitRadius() : 0.0, 1e6); // autopilot_pp_radius
                     ret.vbAppendInt32(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()).msecsSinceStartOfDay());
                     ret.vbAppendInt16(0); // autopilot_route_left
                     ret.vbAppendDouble32(mVehicleState->getPosition(PosType::UWB).getX(), 1e4); // UWB px
@@ -217,7 +217,7 @@ PacketInterfaceTCPServer::PacketInterfaceTCPServer(QObject *parent) : QObject(pa
                             mWaypointFollower->startFollowingRoute(resetAutopilotState);
                             break;
                         case AP_MODE_FOLLOW_ME:
-                            qSharedPointerCast<PurepursuitWaypointFollower>(mWaypointFollower->getActiveWaypointFollower())->startFollowPoint();
+                            mWaypointFollower->startFollowPoint();
                             break;
                         default:
                             break;
@@ -293,12 +293,12 @@ void PacketInterfaceTCPServer::setMovementController(const QSharedPointer<Moveme
     mMovementController = movementController;
 }
 
-QSharedPointer<MultiWaypointFollower> PacketInterfaceTCPServer::getWaypointFollower() const
+QSharedPointer<PurepursuitWaypointFollower> PacketInterfaceTCPServer::getWaypointFollower() const
 {
     return mWaypointFollower;
 }
 
-void PacketInterfaceTCPServer::setWaypointFollower(const QSharedPointer<MultiWaypointFollower> &waypointFollower)
+void PacketInterfaceTCPServer::setWaypointFollower(const QSharedPointer<PurepursuitWaypointFollower> &waypointFollower)
 {
     mWaypointFollower = waypointFollower;
 }
