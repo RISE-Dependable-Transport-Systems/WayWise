@@ -39,8 +39,8 @@ void DiffDriveVehicleState::updateOdomPositionAndYaw(double drivenDistance, PosT
         double yawChange = (drivenDistRight - drivenDistLeft) / getWidth();
 
         // TODO the following part is generic -> move to parent class
-        currentPosition.setX(currentPosition.getX() - turnRadius * (sin(yaw_rad - yawChange) - sin(yaw_rad)));
-        currentPosition.setY(currentPosition.getY() - turnRadius * (cos(yaw_rad + yawChange) - cos(yaw_rad)));
+        currentPosition.setX(currentPosition.getX() + turnRadius * (sin(yaw_rad - yawChange) - sin(yaw_rad)));
+        currentPosition.setY(currentPosition.getY() + turnRadius * (cos(yaw_rad + yawChange) - cos(yaw_rad)));
 
         double nextYaw_rad = yaw_rad + yawChange;
         // normalize Yaw
