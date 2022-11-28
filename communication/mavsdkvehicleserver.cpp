@@ -8,6 +8,7 @@
 #include <QDebug>
 #include <future>
 #include <QMetaMethod>
+#include <algorithm>
 
 MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleState)
 {
@@ -177,13 +178,59 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
             }
         });
 
-        mMavlinkPassthrough->subscribe_message(MAVLINK_MSG_ID_GPS_RTCM_DATA, [this](const mavlink_message_t &message) {
-        // PX4 does not use the sequence & fragment ID's
-            mavlink_gps_rtcm_data_t mavRtcmData;
-            mavlink_msg_gps_rtcm_data_decode(&message, &mavRtcmData);
-            QByteArray rtcmData = QByteArray::fromRawData(reinterpret_cast<char*>(mavRtcmData.data), 180);
-            emit rxRtcmData(rtcmData);
-        });
+		// Handle RTCM data
+		mMavlinkPassthrough->subscribe_message(MAVLINK_MSG_ID_GPS_RTCM_DATA, [this](const mavlink_message_t &message) {
+		    mavlink_gps_rtcm_data_t mavRtcmData;
+		    mavlink_msg_gps_rtcm_data_decode(&message, &mavRtcmData);
+		    static const uint8_t maxMavlinkMessageLength = 180;
+		    static QByteArray fragments[4];
+		    static uint8_t lastFragment = 0;
+		    static uint8_t sequenceIdBuffer[4] = {0};
+		    static uint8_t sequenceId = 0;
+		    QByteArray rtcmData;
+
+		    if ((mavRtcmData.flags & 0x1) != 0) {// LSB set indicates message is fragmented
+		        sequenceId = ((mavRtcmData.flags >> 3) & 1);  // 5 bits are sequence id
+		        switch (((mavRtcmData.flags >> 1) & 1)) { // 2 bits are fragment id
+		        case 0:
+		            sequenceIdBuffer[0] = sequenceId;
+		            fragments[0].fill('X', std::min(mavRtcmData.len, maxMavlinkMessageLength));
+		            memcpy(fragments[0].data(), mavRtcmData.data, maxMavlinkMessageLength);
+		            break;
+		        case 1:
+		            if (mavRtcmData.len < maxMavlinkMessageLength) // Last fragment
+		                lastFragment = 1;
+		            sequenceIdBuffer[1] = sequenceId;
+		            fragments[1].fill('X', std::min(mavRtcmData.len, maxMavlinkMessageLength));
+		            memcpy(fragments[1].data(), mavRtcmData.data, std::min(mavRtcmData.len, maxMavlinkMessageLength));
+		            break;
+		        case 2:
+		            if (mavRtcmData.len < maxMavlinkMessageLength) // Last fragment
+		                lastFragment = 2;
+		            sequenceIdBuffer[2] = sequenceId;
+		            fragments[2].fill('X', std::min(mavRtcmData.len, maxMavlinkMessageLength));
+		            memcpy(fragments[2].data(), mavRtcmData.data, std::min(mavRtcmData.len, maxMavlinkMessageLength));
+		            break;
+		        case 3:
+		            sequenceIdBuffer[3] = sequenceId;
+		            lastFragment = 3;
+		            fragments[3].fill('X', std::min(mavRtcmData.len, maxMavlinkMessageLength));
+		            memcpy(fragments[3].data(), mavRtcmData.data, std::min(mavRtcmData.len, maxMavlinkMessageLength));
+		            break;
+		        default:    ;
+		        }
+		        if (lastFragment > 0 && std::all_of(sequenceIdBuffer, sequenceIdBuffer + lastFragment, [](uint8_t x) { return x == sequenceId;})) { // Buffer is reconstructed with same sequence id
+		            for (int i = 0; i <= lastFragment; i++)
+		                rtcmData.append(fragments[i]);
+		            emit rxRtcmData(rtcmData);
+		            lastFragment = 0;
+		        }
+		    } else {
+		        rtcmData.fill('X', mavRtcmData.len);
+		        memcpy(rtcmData.data(), mavRtcmData.data, mavRtcmData.len);
+		        emit rxRtcmData(rtcmData);
+		    }
+		});
     });
 
     mMavsdk.intercept_outgoing_messages_async([](mavlink_message_t &message){
