@@ -38,7 +38,7 @@ signals:
     void startFollowPoint();
     void resetHeartbeat();
     void missionCurrentCommand(const float autopilotID);
-    void rxRtcmData(const QByteArray rtcmData);
+    void rxRtcmData(const QByteArray &rtcmData);
 
 private:
     mavsdk::Mavsdk mMavsdk;
