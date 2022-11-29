@@ -196,7 +196,7 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
                     lastFragment = fragmentId;
                 sequenceIdBuffer[fragmentId] = sequenceId;
                 fragments[fragmentId].resize(std::min(mavRtcmData.len, maxMavlinkMessageLength));
-                memcpy(fragments[fragmentId].data(), mavRtcmData.data, maxMavlinkMessageLength);
+                memcpy(fragments[fragmentId].data(), mavRtcmData.data, std::min(mavRtcmData.len, maxMavlinkMessageLength));
 
                 if (lastFragment > 0 && std::all_of(sequenceIdBuffer, sequenceIdBuffer + lastFragment, [sequenceId](uint8_t x) { return x == sequenceId;})) { // Buffer is reconstructed with same sequence id
                     for (int i = 0; i <= lastFragment; i++)
