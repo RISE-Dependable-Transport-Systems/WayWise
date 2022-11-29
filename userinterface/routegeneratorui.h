@@ -1,3 +1,7 @@
+/*
+ *     Copyright 2022 Marvin Damschen   marvin.damschen@ri.se
+ *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
+ */
 #ifndef ROUTEGENERATORUI_H
 #define ROUTEGENERATORUI_H
 
@@ -16,6 +20,9 @@ class RouteGeneratorUI : public QDialog
     Q_OBJECT
 
 public:
+    static const int boundRouteIndex = 0;
+    static const int generatedRouteIndex = 1;
+
     explicit RouteGeneratorUI(QWidget *parent = nullptr);
     ~RouteGeneratorUI();
 
@@ -25,34 +32,6 @@ signals:
     void routeDoneForUse(const QList<PosPoint>& route);
 
 private slots:
-    void on_zigZagToolbox_currentChanged(int index);
-
-    void on_resetBoundButton_clicked();
-
-    void on_boundDoneButton_clicked();
-
-    void on_speedStraightsSpinBox_valueChanged(double arg1);
-
-    void on_speedTurnsSpinBox_valueChanged(double arg1);
-
-    void on_rowSpacingSpinBox_valueChanged(double arg1);
-
-    void on_visitEverySpinBox_valueChanged(int arg1);
-
-    void on_attributeStraightEdit_textChanged(const QString &arg1);
-
-    void on_attributeTurnEdit_textEdited(const QString &arg1);
-
-    void on_attributeDistanceAfterTurnSpinBox_valueChanged(double arg1);
-
-    void on_attributeDistanceBeforeTurnSpinBox_valueChanged(double arg1);
-
-    void on_stepsForTurningSpinBox_valueChanged(int arg1);
-
-    void on_forceTurnsIntoBoundsCheckBox_stateChanged(int arg1);
-
-    void on_generateFrameCheckBox_stateChanged(int arg1);
-
     void on_cancelButton_clicked();
 
     void on_useRouteButton_clicked();
@@ -61,10 +40,6 @@ private:
     Ui::RouteGeneratorUI *ui;
 
     QSharedPointer<RoutePlannerModule> mRoutePlannerModule;
-    const int boundRouteIndex = 0;
-    const int generatedRouteIndex = 1;
-
-    void updatePreviewRoute();
 
     // https://forum.qt.io/post/433000
     class CustomTabStyle : public QProxyStyle {
