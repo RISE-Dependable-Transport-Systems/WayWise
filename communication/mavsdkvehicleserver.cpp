@@ -8,6 +8,7 @@
 #include <QDebug>
 #include <future>
 #include <QMetaMethod>
+#include <algorithm>
 
 MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleState)
 {
@@ -53,9 +54,12 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
 
         mavsdk::TelemetryServer::Position homePositionLlh{};
         mavsdk::TelemetryServer::Position positionLlh{};
-        // TODO: publish gpsOrigin
 
         if (!mUbloxRover.isNull()) {
+            // publish gpsOrigin
+            sendGpsOriginLlh(mUbloxRover->getEnuRef());
+
+            //TODO: homePositionLlh should not be EnuRef
             homePositionLlh = {mUbloxRover->getEnuRef().latitude, mUbloxRover->getEnuRef().longitude, static_cast<float>(mUbloxRover->getEnuRef().height), 0};
 
             llh_t fusedPosGlobal = coordinateTransforms::enuToLlh(mUbloxRover->getEnuRef(), {mVehicleState->getPosition(PosType::fused).getXYZ()});
@@ -173,6 +177,60 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
                 break;
             }
         });
+
+		// Handle RTCM data
+		mMavlinkPassthrough->subscribe_message(MAVLINK_MSG_ID_GPS_RTCM_DATA, [this](const mavlink_message_t &message) {
+		    mavlink_gps_rtcm_data_t mavRtcmData;
+		    mavlink_msg_gps_rtcm_data_decode(&message, &mavRtcmData);
+		    static const uint8_t maxMavlinkMessageLength = 180;
+		    static QByteArray fragments[4];
+		    static uint8_t lastFragment = 0;
+		    static uint8_t sequenceIdBuffer[4] = {0};
+		    static uint8_t sequenceId = 0;
+		    QByteArray rtcmData;
+
+		    if ((mavRtcmData.flags & 0x1) != 0) {// LSB set indicates message is fragmented
+		        sequenceId = ((mavRtcmData.flags >> 3) & 1);  // 5 bits are sequence id
+		        switch (((mavRtcmData.flags >> 1) & 1)) { // 2 bits are fragment id
+		        case 0:
+		            sequenceIdBuffer[0] = sequenceId;
+		            fragments[0].fill('X', std::min(mavRtcmData.len, maxMavlinkMessageLength));
+		            memcpy(fragments[0].data(), mavRtcmData.data, maxMavlinkMessageLength);
+		            break;
+		        case 1:
+		            if (mavRtcmData.len < maxMavlinkMessageLength) // Last fragment
+		                lastFragment = 1;
+		            sequenceIdBuffer[1] = sequenceId;
+		            fragments[1].fill('X', std::min(mavRtcmData.len, maxMavlinkMessageLength));
+		            memcpy(fragments[1].data(), mavRtcmData.data, std::min(mavRtcmData.len, maxMavlinkMessageLength));
+		            break;
+		        case 2:
+		            if (mavRtcmData.len < maxMavlinkMessageLength) // Last fragment
+		                lastFragment = 2;
+		            sequenceIdBuffer[2] = sequenceId;
+		            fragments[2].fill('X', std::min(mavRtcmData.len, maxMavlinkMessageLength));
+		            memcpy(fragments[2].data(), mavRtcmData.data, std::min(mavRtcmData.len, maxMavlinkMessageLength));
+		            break;
+		        case 3:
+		            sequenceIdBuffer[3] = sequenceId;
+		            lastFragment = 3;
+		            fragments[3].fill('X', std::min(mavRtcmData.len, maxMavlinkMessageLength));
+		            memcpy(fragments[3].data(), mavRtcmData.data, std::min(mavRtcmData.len, maxMavlinkMessageLength));
+		            break;
+		        default:    ;
+		        }
+		        if (lastFragment > 0 && std::all_of(sequenceIdBuffer, sequenceIdBuffer + lastFragment, [](uint8_t x) { return x == sequenceId;})) { // Buffer is reconstructed with same sequence id
+		            for (int i = 0; i <= lastFragment; i++)
+		                rtcmData.append(fragments[i]);
+		            emit rxRtcmData(rtcmData);
+		            lastFragment = 0;
+		        }
+		    } else {
+		        rtcmData.fill('X', mavRtcmData.len);
+		        memcpy(rtcmData.data(), mavRtcmData.data, mavRtcmData.len);
+		        emit rxRtcmData(rtcmData);
+		    }
+		});
     });
 
     mMavsdk.intercept_outgoing_messages_async([](mavlink_message_t &message){
@@ -316,9 +374,27 @@ void MavsdkVehicleServer::setManualControlMaxSpeed(double manualControlMaxSpeed_
     mManualControlMaxSpeed = manualControlMaxSpeed_ms;
 }
 
-void MavsdkVehicleServer::mavResult(MAV_RESULT result)
+void MavsdkVehicleServer::mavResult(const uint16_t command, MAV_RESULT result)
 {
         mavlink_message_t ack;
-        ack = mMavlinkPassthrough->make_command_ack_message(mMavlinkPassthrough->get_target_sysid(), mMavlinkPassthrough->get_target_compid(), MAV_CMD_DO_SET_MISSION_CURRENT, result);
+        ack = mMavlinkPassthrough->make_command_ack_message(mMavlinkPassthrough->get_target_sysid(), mMavlinkPassthrough->get_target_compid(), command, result);
         mMavlinkPassthrough->send_message(ack);
+};
+
+void MavsdkVehicleServer::sendGpsOriginLlh(const llh_t &gpsOriginLlh)
+{
+    if (mMavlinkPassthrough == nullptr)
+        return;
+
+    mavlink_message_t mavGpsGlobalOriginMsg;
+    mavlink_gps_global_origin_t mavGpsGlobalOrigin;
+    memset(&mavGpsGlobalOrigin, 0, sizeof(mavlink_gps_global_origin_t));
+
+    mavGpsGlobalOrigin.latitude = (int) (gpsOriginLlh.latitude * 1e7);
+    mavGpsGlobalOrigin.longitude = (int) (gpsOriginLlh.longitude * 1e7);
+    mavGpsGlobalOrigin.altitude = (int) (gpsOriginLlh.height * 1e3);
+
+    mavlink_msg_gps_global_origin_encode(mMavlinkPassthrough->get_our_sysid(), mMavlinkPassthrough->get_our_compid(), &mavGpsGlobalOriginMsg, &mavGpsGlobalOrigin);
+    if (mMavlinkPassthrough->send_message(mavGpsGlobalOriginMsg) != mavsdk::MavlinkPassthrough::Result::Success)
+        qDebug() << "Warning: could not send GPS_GLOBAL_ORIGIN via MAVLINK.";
 };

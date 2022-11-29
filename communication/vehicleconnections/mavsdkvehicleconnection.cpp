@@ -119,8 +119,10 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
 
     // poll update of GpsGlobalOrigin once
     mTelemetry->get_gps_global_origin_async([this](mavsdk::Telemetry::Result result, mavsdk::Telemetry::GpsGlobalOrigin gpsGlobalOrigin){
-        if (result == mavsdk::Telemetry::Result::Success)
+        if (result == mavsdk::Telemetry::Result::Success){
             mGpsGlobalOrigin = {gpsGlobalOrigin.latitude_deg, gpsGlobalOrigin.longitude_deg, gpsGlobalOrigin.altitude_m};
+            emit gotVehicleGpsOriginLlh(mGpsGlobalOrigin);
+        }
     });
 
     // Set up action plugin

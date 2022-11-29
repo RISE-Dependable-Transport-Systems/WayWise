@@ -32,7 +32,8 @@ public:
     void setWaypointFollower(QSharedPointer<WaypointFollower> waypointFollower);
     void setMovementController(QSharedPointer<MovementController> movementController);
     void setManualControlMaxSpeed(double manualControlMaxSpeed_ms);
-    void mavResult(MAV_RESULT result);
+    void mavResult(const uint16_t command, MAV_RESULT result);
+    void sendGpsOriginLlh(const llh_t &gpsOriginLlh);
 
 signals:
     void startWaypointFollower(bool fromBeginning); // to enable starting from MAVSDK thread
@@ -42,6 +43,7 @@ signals:
     void startFollowPoint();
     void resetHeartbeat();
     void switchAutopilotID(const float autopilotID);
+    void rxRtcmData(const QByteArray rtcmData);
 
 private:
     mavsdk::Mavsdk mMavsdk;

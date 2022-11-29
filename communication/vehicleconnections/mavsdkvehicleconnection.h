@@ -58,6 +58,7 @@ public:
     MAV_TYPE getVehicleType() const;
 
 signals:
+    void gotVehicleGpsOriginLlh(const llh_t &gpsOriginLlh);
     void gotVehicleHomeLlh(const llh_t &homePositionLlh);
     void stopWaypointFollowerSignal(); // Used internally from MAVSDK callbacks (that live in other threads)
 
