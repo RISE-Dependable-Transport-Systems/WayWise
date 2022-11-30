@@ -219,7 +219,7 @@ void PurepursuitWaypointFollower::updateState()
     case WayPointFollowerSTMstates::FOLLOW_POINT_FOLLOWING: {
         // draw straight line to follow point and apply purePursuitRadius to find intersection
         QLineF carToFollowPointLine(QPointF(0,0), mCurrentState.currentFollowPointInVehicleFrame.getPoint());
-        QVector<QPointF> intersections = findIntersectionsBetweenCircleAndLine(QPair<QPointF, double>(QPointF(0,0), mCurrentState.purePursuitRadius), carToFollowPointLine);
+        QVector<QPointF> intersections = findIntersectionsBetweenCircleAndLine(QPair<QPointF, double>(QPointF(0,0), adaptivePurePursuitRadius(mCurrentState.currentGoal.getSpeed())), carToFollowPointLine);
 
         if (intersections.size()) {
             // Translate to ENU for correct representation of currentGoal (when positioning is working), TODO: general transform in vehicleState?
@@ -270,7 +270,7 @@ void PurepursuitWaypointFollower::updateState()
 
         // draw straight line to first point and apply purePursuitRadius to find intersection
         QLineF carToStartLine(currentVehiclePositionXY, mWaypointList.at(0).getPoint());
-        QVector<QPointF> intersections = findIntersectionsBetweenCircleAndLine(QPair<QPointF, double>(currentVehiclePositionXY, mCurrentState.purePursuitRadius), carToStartLine);
+        QVector<QPointF> intersections = findIntersectionsBetweenCircleAndLine(QPair<QPointF, double>(currentVehiclePositionXY, adaptivePurePursuitRadius(mCurrentState.currentGoal.getSpeed())), carToStartLine);
 
         if (intersections.size()) {
             mCurrentState.currentGoal.setXY(intersections[0].x(), intersections[0].y());
@@ -284,7 +284,7 @@ void PurepursuitWaypointFollower::updateState()
         currentVehiclePositionXY = getCurrentVehiclePosition().getPoint();
         QPointF currentWaypointPoint = mWaypointList.at(mCurrentState.currentWaypointIndex).getPoint();
 
-        if (QLineF(currentVehiclePositionXY, currentWaypointPoint).length() < mCurrentState.purePursuitRadius) // consider previous waypoint as reached
+        if (QLineF(currentVehiclePositionXY, currentWaypointPoint).length() < adaptivePurePursuitRadius(mCurrentState.currentGoal.getSpeed())) // consider previous waypoint as reached
             mCurrentState.currentWaypointIndex++;
 
         if (mCurrentState.currentWaypointIndex == mWaypointList.size() && !mCurrentState.repeatRoute)
@@ -311,7 +311,7 @@ void PurepursuitWaypointFollower::updateState()
                 QPointF iWaypoint = lookAheadWaypoints.at(i).getPoint();
                 QLineF iLineSegment(lookAheadWaypoints.at(i-1).getPoint(), iWaypoint);
 
-                intersections = findIntersectionsBetweenCircleAndLine(QPair<QPointF, double>(currentVehiclePositionXY, mCurrentState.purePursuitRadius), iLineSegment);
+                intersections = findIntersectionsBetweenCircleAndLine(QPair<QPointF, double>(currentVehiclePositionXY, adaptivePurePursuitRadius(mCurrentState.currentGoal.getSpeed())), iLineSegment);
                 if (intersections.size() > 0) {
                     mCurrentState.currentWaypointIndex = (i + mCurrentState.currentWaypointIndex - 1) % mWaypointList.size();
                     currentWaypointPoint = iWaypoint;
@@ -483,4 +483,11 @@ void PurepursuitWaypointFollower::calculateDistanceOfRouteLeft()
         distance += QLineF(mWaypointList.at(index).getPoint(), mWaypointList.at(index+1).getPoint()).length();
     }
     emit txDistOfRouteLeft(distance);
+}
+
+double PurepursuitWaypointFollower::adaptivePurePursuitRadius(double speed)
+{
+    // Radius linearly dependent on speed
+    // Todo: choose suiting coefficient
+    return speed*1;
 }
