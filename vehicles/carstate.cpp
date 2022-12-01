@@ -77,6 +77,12 @@ void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTrans
     painter.setBrush(col_center);
     painter.drawEllipse(QPointF(x, y), car_w / 15.0, car_w / 15.0);
 
+    // Turning radius
+    painter.setPen(QPen(Qt::red, 40));
+    painter.setBrush(Qt::transparent);
+    painter.drawEllipse(QPointF(x, y), getAdaptivePurePursuitRadius()*2000, getAdaptivePurePursuitRadius()*2000); // Todo: set appropriate constant
+    painter.setPen(Qt::black);
+
     //        // GPS Location
     //        painter.setBrush(col_gps);
     //        painter.drawEllipse(QPointF(x_gps, y_gps), car_w / 15.0, car_w / 15.0);

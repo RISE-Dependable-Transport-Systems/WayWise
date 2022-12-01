@@ -108,3 +108,15 @@ void VehicleState::setFlightMode(const FlightMode &flightMode)
 {
     mFlightMode = flightMode;
 }
+
+void VehicleState::setAdaptivePurePursuitRadius(double speed)
+{
+    // Radius linearly dependent on speed
+    // Todo: set coefficient as mavlink parameter?
+    mAdaptivePurePursuitRadius = speed*1;
+}
+
+double VehicleState::getAdaptivePurePursuitRadius()
+{
+    return mAdaptivePurePursuitRadius;
+}
