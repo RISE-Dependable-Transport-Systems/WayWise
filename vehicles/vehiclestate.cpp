@@ -39,6 +39,9 @@ void VehicleState::simulationStep(double dt_ms, PosType usePosType)
 {
     double drivenDistance = getSpeed() * dt_ms / 1000;
     updateOdomPositionAndYaw(drivenDistance, usePosType);
+    // For the adaptive pure pursuit radius
+    VehicleState::Velocity simVelocity {getSpeed(), 0, 0};
+    setVelocity(simVelocity);
 }
 
 std::array<float, 3> VehicleState::getGyroscopeXYZ() const
