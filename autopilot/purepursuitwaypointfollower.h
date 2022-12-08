@@ -102,7 +102,6 @@ private:
 
     void holdPosition();
     void calculateDistanceOfRouteLeft();
-    double adaptivePurePursuitRadius(double speed);
 };
 
 #endif // PUREPURSUITWAYPOINTFOLLOWER_H
