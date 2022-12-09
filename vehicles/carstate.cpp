@@ -144,7 +144,7 @@ void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTrans
             case FlightMode::Rattitude: flightModeStr = "rattitude"; break;
         }
 
-        txt.sprintf("%s\n"
+        txt.asprintf("%s\n"
                     "(%.3f, %.3f, %.3f, %.0f)\n"
                     "State: %s\n"
                     "Mode: %s\n",

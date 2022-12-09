@@ -96,7 +96,6 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
     mTelemetry->subscribe_velocity_ned([this](mavsdk::Telemetry::VelocityNed velocity) {
         VehicleState::Velocity velocityCopter {velocity.east_m_s, velocity.north_m_s, -velocity.down_m_s};
         mVehicleState->setVelocity(velocityCopter);
-        mVehicleState->setAdaptivePurePursuitRadius(sqrt((velocity.east_m_s*velocity.east_m_s + velocity.north_m_s*velocity.north_m_s + velocity.down_m_s*velocity.down_m_s)));
     });
 
     if (mVehicleType == MAV_TYPE::MAV_TYPE_QUADROTOR) {
@@ -123,6 +122,16 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
         if (result == mavsdk::Telemetry::Result::Success){
             mGpsGlobalOrigin = {gpsGlobalOrigin.latitude_deg, gpsGlobalOrigin.longitude_deg, gpsGlobalOrigin.altitude_m};
             emit gotVehicleGpsOriginLlh(mGpsGlobalOrigin);
+        }
+    });
+
+    // Adaptive pure pursuit radius
+    mMavlinkPassthrough->subscribe_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, [this](const mavlink_message_t &message) {
+        mavlink_named_value_float_t mavMsg;
+        mavlink_msg_named_value_float_decode(&message, &mavMsg);
+        if (strcmp(mavMsg.name,"APPR") == 0) {
+            mavlink_msg_named_value_float_decode(&message, &mavMsg);
+            mVehicleState->setAdaptivePurePursuitRadius(mavMsg.value);
         }
     });
 
