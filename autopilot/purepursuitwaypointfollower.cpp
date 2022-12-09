@@ -86,7 +86,6 @@ void PurepursuitWaypointFollower::holdPosition()
 void PurepursuitWaypointFollower::stop()
 {
     mUpdateStateTimer.stop();
-
     (isOnVehicle() ? mMovementController->getVehicleState() : mVehicleConnection->getVehicleState())->setAdaptivePurePursuitRadius(0);
     holdPosition();
     emit txDistOfRouteLeft(0);
