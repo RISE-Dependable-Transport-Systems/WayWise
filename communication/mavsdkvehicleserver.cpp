@@ -9,6 +9,7 @@
 #include <future>
 #include <QMetaMethod>
 #include <algorithm>
+#include <chrono>
 
 MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleState)
 {
@@ -71,6 +72,21 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
         mTelemetryServer->publish_position_velocity_ned(positionVelocityNed);
         mTelemetryServer->publish_raw_gps(mRawGps, mGpsInfo);
     });
+
+    // Publish adaptive pure pursuit radius
+    connect(&mPublishMavlinkTimer, &QTimer::timeout, [this](){
+        mavlink_message_t mavAdaptivePurePursuitRadiusmMsg;
+        mavlink_named_value_float_t adaptivePurePursuitRadius;
+        memset(&adaptivePurePursuitRadius, 0, sizeof(mavlink_named_value_float_t));
+        std::chrono::milliseconds counter;
+        adaptivePurePursuitRadius.time_boot_ms = counter.count();
+        adaptivePurePursuitRadius.value = mVehicleState->getAdaptivePurePursuitRadius();
+        strcpy(adaptivePurePursuitRadius.name, "APPR");
+        mavlink_msg_named_value_float_encode(mMavlinkPassthrough->get_our_sysid(), mMavlinkPassthrough->get_our_compid(), &mavAdaptivePurePursuitRadiusmMsg, &adaptivePurePursuitRadius);
+        if (mMavlinkPassthrough->send_message(mavAdaptivePurePursuitRadiusmMsg) != mavsdk::MavlinkPassthrough::Result::Success)
+            qDebug() << "Warning: could not send APPR via MAVLINK.";
+    });
+
     // TODO: publish rates
     mPublishMavlinkTimer.start(100);
 
