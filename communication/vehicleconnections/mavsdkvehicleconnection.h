@@ -1,5 +1,6 @@
 /*
  *     Copyright 2022 Marvin Damschen   marvin.damschen@ri.se
+ *               2022 Rickard Häll      rickard.hall@ri.se
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
  *
  * Implementation of VehicleConnection to communicate with MAVLINK-based vehicles using MAVSDK

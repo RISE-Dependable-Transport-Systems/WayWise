@@ -2,6 +2,7 @@
  *     Copyright 2012 Benjamin Vedder   benjamin@vedder.se
  *               2020 Marvin Damschen   marvin.damschen@ri.se
  *               2021 Lukas Wikander    lukas.wikander@astazero.com
+ *               2022 Rickard Häll      rickard.hall@ri.se
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
  * 
  * Specific implementation of VehicleState for car-type (ackermann) vehicles, storing all (dynamic and static) state
@@ -80,7 +81,7 @@ void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTrans
     // Turning radius
     painter.setPen(QPen(Qt::red, 40));
     painter.setBrush(Qt::transparent);
-    painter.drawEllipse(QPointF(x, y), getAdaptivePurePursuitRadius()*2000, getAdaptivePurePursuitRadius()*2000); // Todo: set appropriate constant
+    painter.drawEllipse(QPointF(x, y), getAdaptivePurePursuitRadius()*1000.0, getAdaptivePurePursuitRadius()*1000.0);
     painter.setPen(Qt::black);
 
     //        // GPS Location
