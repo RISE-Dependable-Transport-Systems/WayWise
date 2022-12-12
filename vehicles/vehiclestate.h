@@ -2,6 +2,7 @@
  *     Copyright 2012 Benjamin Vedder   benjamin@vedder.se
  *               2020 Marvin Damschen   marvin.damschen@ri.se
  *               2021 Lukas Wikander    lukas.wikander@astazero.com
+ *               2022 Rickard Häll      rickard.hall@ri.se
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
  * 
  * Specialisation of ObjectState for vehicles, storing all (dynamic and static) state
