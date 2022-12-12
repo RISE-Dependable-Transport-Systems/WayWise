@@ -24,6 +24,7 @@ struct WayPointFollowerState {
     WayPointFollowerSTMstates stmState = WayPointFollowerSTMstates::NONE;
     PosPoint currentGoal;
     int currentWaypointIndex;
+    bool adaptivePurePursuitRadius = false;
     double purePursuitRadius = 1.0;
     // Follow Route
     int numWaypointsLookahead = 8;
@@ -102,6 +103,7 @@ private:
 
     void holdPosition();
     void calculateDistanceOfRouteLeft();
+    double purePursuitRadius();
 };
 
 #endif // PUREPURSUITWAYPOINTFOLLOWER_H

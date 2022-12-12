@@ -81,7 +81,7 @@ void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTrans
     // Turning radius
     painter.setPen(QPen(Qt::red, 40));
     painter.setBrush(Qt::transparent);
-    painter.drawEllipse(QPointF(x, y), getAdaptivePurePursuitRadius()*1000.0, getAdaptivePurePursuitRadius()*1000.0);
+    painter.drawEllipse(QPointF(x, y), getAutopilotRadius()*1000.0, getAutopilotRadius()*1000.0);
     painter.setPen(Qt::black);
 
     //        // GPS Location
@@ -145,7 +145,7 @@ void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTrans
             case FlightMode::Rattitude: flightModeStr = "rattitude"; break;
         }
 
-        txt.asprintf("%s\n"
+        txt.sprintf("%s\n"
                     "(%.3f, %.3f, %.3f, %.0f)\n"
                     "State: %s\n"
                     "Mode: %s\n",

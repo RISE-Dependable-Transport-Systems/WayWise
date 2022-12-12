@@ -71,8 +71,8 @@ public:
     void setHomePosition(const PosPoint &homePosition);
     bool getIsArmed() const;
     void setIsArmed(bool isArmed);
-    void setAdaptivePurePursuitRadius(double speed);
-    double getAdaptivePurePursuitRadius();
+    void setAutopilotRadius(double radius);
+    double getAutopilotRadius();
 
     void simulationStep(double dt_ms, PosType usePosType = PosType::simulated); // Take current state and simulate step forward for dt_ms milliseconds, update state accordingly
     virtual void updateOdomPositionAndYaw(double drivenDistance, PosType usePosType = PosType::odom) = 0;
@@ -101,7 +101,7 @@ private:
     PosPoint mHomePosition;
     bool mIsArmed = false;
     FlightMode mFlightMode = FlightMode::Unknown;
-    double mAdaptivePurePursuitRadius = 0;
+    double mAutopilotRadius = 0;
 
     std::array<float,3> mGyroscopeXYZ = std::array<float,3>({0.0, 0.0, 0.0}); // [deg/s]
     std::array<float,3> mAccelerometerXYZ = std::array<float,3>({0.0, 0.0, 0.0}); // [g]
