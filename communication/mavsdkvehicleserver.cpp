@@ -73,23 +73,6 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
         mTelemetryServer->publish_raw_gps(mRawGps, mGpsInfo);
     });
 
-    // Publish adaptive pure pursuit radius
-    connect(&mPublishMavlinkTimer, &QTimer::timeout, [this](){
-        mavlink_message_t mavAdaptivePurePursuitRadiusmMsg;
-        mavlink_named_value_float_t adaptivePurePursuitRadius;
-        memset(&adaptivePurePursuitRadius, 0, sizeof(mavlink_named_value_float_t));
-        std::chrono::milliseconds counter;
-        adaptivePurePursuitRadius.time_boot_ms = counter.count();
-        adaptivePurePursuitRadius.value = mVehicleState->getAdaptivePurePursuitRadius();
-        strcpy(adaptivePurePursuitRadius.name, "APPR");
-        mavlink_msg_named_value_float_encode(mMavlinkPassthrough->get_our_sysid(), mMavlinkPassthrough->get_our_compid(), &mavAdaptivePurePursuitRadiusmMsg, &adaptivePurePursuitRadius);
-        if (mMavlinkPassthrough->send_message(mavAdaptivePurePursuitRadiusmMsg) != mavsdk::MavlinkPassthrough::Result::Success)
-            qDebug() << "Warning: could not send APPR via MAVLINK.";
-    });
-
-    // TODO: publish rates
-    mPublishMavlinkTimer.start(100);
-
     mActionServer->subscribe_flight_mode_change([this](mavsdk::ActionServer::Result res, mavsdk::ActionServer::FlightMode mode) {
         if  (res == mavsdk::ActionServer::Result::Success) {
             mVehicleState->setFlightMode((VehicleState::FlightMode) mode);
@@ -226,6 +209,20 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
                 emit rxRtcmData(rtcmData);
             }
         });
+
+        // Publish adaptive pure pursuit radius
+        connect(&mPublishMavlinkTimer, &QTimer::timeout, [this](){
+            mavlink_message_t mavAdaptivePurePursuitRadiusmMsg;
+            mavlink_named_value_float_t adaptivePurePursuitRadius;
+            memset(&adaptivePurePursuitRadius, 0, sizeof(mavlink_named_value_float_t));
+            std::chrono::milliseconds counter;
+            adaptivePurePursuitRadius.time_boot_ms = counter.count();
+            adaptivePurePursuitRadius.value = mVehicleState->getAutopilotRadius();
+            strcpy(adaptivePurePursuitRadius.name, "APPR");
+            mavlink_msg_named_value_float_encode(mMavlinkPassthrough->get_our_sysid(), mMavlinkPassthrough->get_our_compid(), &mavAdaptivePurePursuitRadiusmMsg, &adaptivePurePursuitRadius);
+            if (mMavlinkPassthrough->send_message(mavAdaptivePurePursuitRadiusmMsg) != mavsdk::MavlinkPassthrough::Result::Success)
+                qDebug() << "Warning: could not send APPR via MAVLINK.";
+        });
     });
 
     mMavsdk.intercept_outgoing_messages_async([](mavlink_message_t &message){
@@ -252,6 +249,9 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
         return true;
 
     });
+
+    // Start publishing status on MAVLink (TODO: rate?)
+    mPublishMavlinkTimer.start(100);
 
     mavsdk::ConnectionResult result = mMavsdk.add_any_connection("udp://127.0.0.1:14540");
     if (result == mavsdk::ConnectionResult::Success)
