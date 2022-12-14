@@ -39,10 +39,10 @@ public:
     bool isConnected();
     void disconnect();
     static llh_t decodeLllhFromReferenceStationInfo(const QByteArray data);
-
     QString getCurrentHost() const;
-
     qint16 getCurrentPort() const;
+
+    void forwardNmeaGgaToServer(const QByteArray& nmeaGgaStr);
 
 signals:
     void rtcmData(const QByteArray &data);
@@ -53,6 +53,7 @@ private:
     QString mCurrentHost;
     qint16 mCurrentPort;
     NtripConnectionInfo mCurrentNtripConnectionInfo;
+    bool mFoundReferenceStationInfo = false;
 
     // For parsing RTCMv3 (from RTKLIB)
     const char RTCM3_PREAMBLE = 0xD3;

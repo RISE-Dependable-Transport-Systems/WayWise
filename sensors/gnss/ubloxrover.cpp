@@ -20,6 +20,9 @@ UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
     // Save-on-shutdown feature
     connect(&mUblox, &Ublox::rxUpdSos, this, &UbloxRover::updSosResponse);
 
+    // Fordward received NMEA GGA messages
+    connect(&mUblox, &Ublox::rxNmeaGga, this, &UbloxRover::gotNmeaGga);
+
     // Automatic IMU orientation alignment feature
     connect(&mUblox, &Ublox::rxEsfAlg, this, [this](const ubx_esf_alg &alg){
         if (alg.autoMntAlgOn)
@@ -206,8 +209,10 @@ bool UbloxRover::configureUblox()
         result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_4072_1, 0);
         result &= mUblox.ubxCfgMsg(UBX_CLASS_NAV, UBX_NAV_SVIN, 0);
 
-        // Disable NMEA output
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_GGA, 0);
+        // Enable NMEA GGA output (required by some NTRIP/RTCM servers)
+        result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_GGA, 1);
+
+        // Disable NMEA output (all but GGA)
         result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_GSV, 0);
         result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_GLL, 0);
         result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_GSA, 0);

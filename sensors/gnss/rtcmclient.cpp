@@ -9,6 +9,7 @@ RtcmClient::RtcmClient(QObject *parent) : QObject(parent)
 {
     connect(&mTcpSocket, &QTcpSocket::readyRead, [this]{
         QByteArray data =  mTcpSocket.readAll();
+//        qDebug() << data;
 
         // Make sure to skip "ICY 200 OK" when connection to NTRIP
         static bool skipFirstReply = true;
@@ -21,8 +22,7 @@ RtcmClient::RtcmClient(QObject *parent) : QObject(parent)
         // See RTKLIB for how RTCM is decoded (https://github.com/tomojitakasu/RTKLIB)
         // We are not CRC checking here (getting data via TCP anyways)
         // TODO: wait for rest of incomplete message?
-        static bool foundReferenceStationInfo = false;
-        if (!foundReferenceStationInfo) {
+        if (!mFoundReferenceStationInfo) {
             const char* dataPtr = data.constData();
             while ((dataPtr = std::find(dataPtr, data.constEnd(), RTCM3_PREAMBLE)) != data.constEnd()) {
                 if (dataPtr + 5 < data.constEnd()) {
@@ -31,7 +31,8 @@ RtcmClient::RtcmClient(QObject *parent) : QObject(parent)
                     if (dataPtr + length < data.constEnd() && (type == 1005 || type == 1006)) {
                         llh_t baseLlh = decodeLllhFromReferenceStationInfo(data.mid(dataPtr - data.constData(), length));
 //                        qDebug() << baseLlh.latitude << baseLlh.longitude << baseLlh.height << dataPtr - data.data() << length;
-                        foundReferenceStationInfo = true;
+                        qDebug() << "RtcmClient got base station position:" << baseLlh.latitude << baseLlh.longitude << baseLlh.height;
+                        mFoundReferenceStationInfo = true;
                         emit baseStationPosition(baseLlh);
                     }
                 }
@@ -118,6 +119,14 @@ QString RtcmClient::getCurrentHost() const
 qint16 RtcmClient::getCurrentPort() const
 {
     return mCurrentPort;
+}
+
+void RtcmClient::forwardNmeaGgaToServer(const QByteArray &nmeaGgaStr)
+{
+    // Send NMEA GGA to NTRIP/RTCM server until we got reference station information.
+    // Some NTRIP servers will not start sending RTCM unless they got NMEA GGA.
+    if (isConnected() && !mFoundReferenceStationInfo)
+        mTcpSocket.write(nmeaGgaStr);
 }
 
 unsigned int RtcmClient::getbitu(const char *buff, int pos, int len) {
