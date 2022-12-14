@@ -210,18 +210,18 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
             }
         });
 
-        // Publish adaptive pure pursuit radius
+        // Publish autopilot radius
         connect(&mPublishMavlinkTimer, &QTimer::timeout, [this](){
-            mavlink_message_t mavAdaptivePurePursuitRadiusmMsg;
-            mavlink_named_value_float_t adaptivePurePursuitRadius;
-            memset(&adaptivePurePursuitRadius, 0, sizeof(mavlink_named_value_float_t));
+            mavlink_message_t mavAutopilotRadiusmMsg;
+            mavlink_named_value_float_t autopilotRadius;
+            memset(&autopilotRadius, 0, sizeof(mavlink_named_value_float_t));
             std::chrono::milliseconds counter;
-            adaptivePurePursuitRadius.time_boot_ms = counter.count();
-            adaptivePurePursuitRadius.value = mVehicleState->getAutopilotRadius();
-            strcpy(adaptivePurePursuitRadius.name, "APPR");
-            mavlink_msg_named_value_float_encode(mMavlinkPassthrough->get_our_sysid(), mMavlinkPassthrough->get_our_compid(), &mavAdaptivePurePursuitRadiusmMsg, &adaptivePurePursuitRadius);
-            if (mMavlinkPassthrough->send_message(mavAdaptivePurePursuitRadiusmMsg) != mavsdk::MavlinkPassthrough::Result::Success)
-                qDebug() << "Warning: could not send APPR via MAVLINK.";
+            autopilotRadius.time_boot_ms = counter.count();
+            autopilotRadius.value = mVehicleState->getAutopilotRadius();
+            strcpy(autopilotRadius.name, "AR");
+            mavlink_msg_named_value_float_encode(mMavlinkPassthrough->get_our_sysid(), mMavlinkPassthrough->get_our_compid(), &mavAutopilotRadiusmMsg, &autopilotRadius);
+            if (mMavlinkPassthrough->send_message(mavAutopilotRadiusmMsg) != mavsdk::MavlinkPassthrough::Result::Success)
+                qDebug() << "Warning: could not send autopilot radius via MAVLINK.";
         });
     });
 

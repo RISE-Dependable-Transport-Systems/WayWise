@@ -412,9 +412,10 @@ double PurepursuitWaypointFollower::getPurePursuitRadius() const
     return mCurrentState.purePursuitRadius;
 }
 
-void PurepursuitWaypointFollower::setPurePursuitRadius(double value)
+void PurepursuitWaypointFollower::setPurePursuitRadius(double value, bool adaptive)
 {
     mCurrentState.purePursuitRadius = value;
+    mCurrentState.adaptivePurePursuitRadius = adaptive;
 }
 
 bool PurepursuitWaypointFollower::getRepeatRoute() const

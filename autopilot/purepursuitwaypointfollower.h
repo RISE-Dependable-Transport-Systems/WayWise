@@ -49,7 +49,7 @@ public:
     inline bool isOnVehicle() {return !mMovementController.isNull();}
 
     double getPurePursuitRadius() const;
-    void setPurePursuitRadius(double value);
+    void setPurePursuitRadius(double value, bool adaptive = false);
 
     virtual double getFollowPointSpeed() const;
     virtual void setFollowPointSpeed(double value);
