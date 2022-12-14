@@ -648,6 +648,7 @@ signals:
     void ubxRx(const QByteArray &data);
     void rtcmRx(const QByteArray &data, const int &type);
     void rxUpdSos(const ubx_upd_sos &sos);
+    void rxNmeaGga(const QByteArray &nmeaGgaStr);
 
 public slots:
 
