@@ -130,7 +130,7 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
     mMavlinkPassthrough->subscribe_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, [this](const mavlink_message_t &message) {
         mavlink_named_value_float_t mavMsg;
         mavlink_msg_named_value_float_decode(&message, &mavMsg);
-        if (strcmp(mavMsg.name,"APPR") == 0) {
+        if (strcmp(mavMsg.name,"AR") == 0) {
             mavlink_msg_named_value_float_decode(&message, &mavMsg);
             mVehicleState->setAutopilotRadius(mavMsg.value);
         }
