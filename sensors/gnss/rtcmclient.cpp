@@ -124,7 +124,7 @@ void RtcmClient::forwardNmeaGgaToServer(const QByteArray &nmeaGgaStr)
 {
     // Send NMEA GGA to NTRIP/RTCM server until we got reference station information.
     // Some NTRIP servers will not start sending RTCM unless they got NMEA GGA.
-    if (isConnected() && mSkippedFirstReply && !mFoundReferenceStationInfo)
+    if (isConnected() && mSkippedFirstReply)
         mTcpSocket.write(nmeaGgaStr);
 }
 
