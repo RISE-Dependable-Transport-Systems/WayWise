@@ -54,6 +54,7 @@ private:
     qint16 mCurrentPort;
     NtripConnectionInfo mCurrentNtripConnectionInfo;
     bool mFoundReferenceStationInfo = false;
+    bool mSkippedFirstReply = false;
 
     // For parsing RTCMv3 (from RTKLIB)
     const char RTCM3_PREAMBLE = 0xD3;

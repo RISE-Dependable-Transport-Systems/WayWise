@@ -12,9 +12,8 @@ RtcmClient::RtcmClient(QObject *parent) : QObject(parent)
 //        qDebug() << data;
 
         // Make sure to skip "ICY 200 OK" when connection to NTRIP
-        static bool skipFirstReply = true;
-        if (skipFirstReply) {
-            skipFirstReply = false;
+        if (!mSkippedFirstReply) {
+            mSkippedFirstReply = true;
             return;
         }
 
@@ -125,7 +124,7 @@ void RtcmClient::forwardNmeaGgaToServer(const QByteArray &nmeaGgaStr)
 {
     // Send NMEA GGA to NTRIP/RTCM server until we got reference station information.
     // Some NTRIP servers will not start sending RTCM unless they got NMEA GGA.
-    if (isConnected() && !mFoundReferenceStationInfo)
+    if (isConnected() && mSkippedFirstReply && !mFoundReferenceStationInfo)
         mTcpSocket.write(nmeaGgaStr);
 }
 
