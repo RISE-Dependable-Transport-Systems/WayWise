@@ -1134,7 +1134,34 @@ void Ublox::serialDataAvailable()
                 }
             }
 
-            // Note: see RConstrolStation for NMEA support
+            // NMEA
+            if (!ch_used) {
+                mDecoderState.line[mDecoderState.line_pos++] = ch;
+                if (mDecoderState.line_pos == sizeof (mDecoderState.line)) {
+                    mDecoderState.line_pos = 0;
+                }
+
+                if (mDecoderState.line_pos > 0 && mDecoderState.line[mDecoderState.line_pos - 1] == '\n') {
+                    mDecoderState.line[mDecoderState.line_pos] = '\0';
+                    mDecoderState.line_pos = 0;
+
+                    QByteArray line((char*)mDecoderState.line);
+                    // Check whether this is NMEA GGA with correct checksum
+                    // Example: $GNGGA,120020.115,5743.153,N,01256.431,E,1,12,1.0,0.0,M,0.0,M,,*6E
+                    if (line.at(0) == '$' && line.size() > 6)
+                        if (line.mid(3, 3).compare("GGA") == 0) {
+                            QList split = line.split('*');
+                            if (split.size() == 2) {
+                                // Test checksum
+                                int checksum = 0;
+                                for (int i = 1; i < split.at(0).size(); i++)
+                                    checksum ^= split.at(0).at(i);
+                                if (checksum == split.at(1).trimmed().toInt(nullptr, 16))
+                                    emit rxNmeaGga(line);
+                            }
+                        }
+                }
+            }
         }
     }
 }
