@@ -52,6 +52,8 @@ void PurepursuitWaypointFollower::addRoute(const QList<PosPoint> &route)
 
 void PurepursuitWaypointFollower::startFollowingRoute(bool fromBeginning)
 {
+    // Activate emergency brake for follow route
+    emit activateEmergencyBrake();
     const auto &vehicleState = (isOnVehicle() ? mMovementController->getVehicleState() : mVehicleConnection->getVehicleState());
     mCurrentState.overrideAltitude = vehicleState->getPosition(mPosTypeUsed).getHeight();
     qDebug() << "Note: WaypointFollower starts following route. Height info from route is ignored (staying at" << QString::number(mCurrentState.overrideAltitude, 'g', 2) << "m).";
@@ -93,6 +95,8 @@ void PurepursuitWaypointFollower::stop()
 
 void PurepursuitWaypointFollower::startFollowPoint()
 {
+    // Deactivate emergency brake in order to use follow point
+    emit deactivateEmergencyBrake();
     // Check that we got a recent point to follow
     if (isOnVehicle() && mCurrentState.currentFollowPointInVehicleFrame.getTime() > mCurrentState.currentGoal.getTime()) {
         mFollowPointHeartbeatTimer.start(mFollowPointTimeout_ms);
@@ -265,7 +269,6 @@ void PurepursuitWaypointFollower::updateState()
         break;
 
     case WayPointFollowerSTMstates::FOLLOW_ROUTE_GOTO_BEGIN: {
-        emergencyBrake(mCurrentState.detectedObjectInVehicleFrame);
         calculateDistanceOfRouteLeft();
         currentVehiclePositionXY = getCurrentVehiclePosition().getPoint();
 
@@ -281,7 +284,6 @@ void PurepursuitWaypointFollower::updateState()
     } break;
 
     case WayPointFollowerSTMstates::FOLLOW_ROUTE_FOLLOWING: {
-        emergencyBrake(mCurrentState.detectedObjectInVehicleFrame);
         calculateDistanceOfRouteLeft();
         currentVehiclePositionXY = getCurrentVehiclePosition().getPoint();
         QPointF currentWaypointPoint = mWaypointList.at(mCurrentState.currentWaypointIndex).getPoint();
@@ -497,18 +499,4 @@ double PurepursuitWaypointFollower::purePursuitRadius()
         vehicleState->setAutopilotRadius(mCurrentState.purePursuitRadius);
 
     return vehicleState->getAutopilotRadius();
-}
-
-void PurepursuitWaypointFollower::emergencyBrake(const PosPoint &point)
-{
-    double objectDistance = sqrt(point.getX()*point.getX() + point.getY()*point.getY() + point.getHeight()*point.getHeight());
-
-    //When no object is detected, objectDistance is zero
-    if (objectDistance > 0 && objectDistance < mCurrentState.emergencyBrakeDistance)
-        stop();
-}
-
-void PurepursuitWaypointFollower::updateDetectedObjectInVehicleFrame(const PosPoint &point)
-{
-    mCurrentState.detectedObjectInVehicleFrame = point;
 }

@@ -26,11 +26,9 @@ struct WayPointFollowerState {
     int currentWaypointIndex;
     bool adaptivePurePursuitRadius = false;
     double purePursuitRadius = 1.0;
-    PosPoint detectedObjectInVehicleFrame;
     // Follow Route
     int numWaypointsLookahead = 8;
     bool repeatRoute = false;
-    double emergencyBrakeDistance = 10; // [m] brake when object comes closer than
     // -- for flying vehicles
     double overrideAltitude = 0.0;
     // Follow Point
@@ -86,7 +84,6 @@ signals:
 
 public slots:
     void updateFollowPointInVehicleFrame(const PosPoint &point);
-    void updateDetectedObjectInVehicleFrame(const PosPoint &point);
 
 private:
     const unsigned mFollowPointTimeout_ms = 1000;
@@ -107,7 +104,6 @@ private:
     void holdPosition();
     void calculateDistanceOfRouteLeft();
     double purePursuitRadius();
-    void emergencyBrake(const PosPoint &point);
 };
 
 #endif // PUREPURSUITWAYPOINTFOLLOWER_H
