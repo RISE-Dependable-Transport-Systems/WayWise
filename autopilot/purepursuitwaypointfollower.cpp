@@ -265,6 +265,7 @@ void PurepursuitWaypointFollower::updateState()
         break;
 
     case WayPointFollowerSTMstates::FOLLOW_ROUTE_GOTO_BEGIN: {
+        emergencyBrake(mCurrentState.detectedObjectInVehicleFrame);
         calculateDistanceOfRouteLeft();
         currentVehiclePositionXY = getCurrentVehiclePosition().getPoint();
 
@@ -280,6 +281,7 @@ void PurepursuitWaypointFollower::updateState()
     } break;
 
     case WayPointFollowerSTMstates::FOLLOW_ROUTE_FOLLOWING: {
+        emergencyBrake(mCurrentState.detectedObjectInVehicleFrame);
         calculateDistanceOfRouteLeft();
         currentVehiclePositionXY = getCurrentVehiclePosition().getPoint();
         QPointF currentWaypointPoint = mWaypointList.at(mCurrentState.currentWaypointIndex).getPoint();
@@ -495,4 +497,18 @@ double PurepursuitWaypointFollower::purePursuitRadius()
         vehicleState->setAutopilotRadius(mCurrentState.purePursuitRadius);
 
     return vehicleState->getAutopilotRadius();
+}
+
+void PurepursuitWaypointFollower::emergencyBrake(const PosPoint &point)
+{
+    double objectDistance = sqrt(point.getX()*point.getX() + point.getY()*point.getY() + point.getHeight()*point.getHeight());
+
+    //When no object is detected, objectDistance is zero
+    if (objectDistance > 0 && objectDistance < mCurrentState.emergencyBrakeDistance)
+        stop();
+}
+
+void PurepursuitWaypointFollower::updateDetectedObjectInVehicleFrame(const PosPoint &point)
+{
+    mCurrentState.detectedObjectInVehicleFrame = point;
 }
