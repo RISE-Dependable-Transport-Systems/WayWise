@@ -3,33 +3,37 @@
 EmergencyBrake::EmergencyBrake(QObject *parent)
     : QObject{parent}
 {
-    connect(&mUpdateStateTimer, &QTimer::timeout, this, &EmergencyBrake::decissionLogic);
+
 }
 
 void EmergencyBrake::deactivateEmergencyBrake()
 {
-    mUpdateStateTimer.stop();
+    mCurrentState.emergencyBrakeIsActive = false;
 };
 
 void EmergencyBrake::activateEmergencyBrake()
 {
-    mUpdateStateTimer.start(mUpdateStatePeriod_ms);
+    mCurrentState.emergencyBrakeIsActive = true;
 };
 
-void EmergencyBrake::camera(const PosPoint &point)
+void EmergencyBrake::brakeForDetectedCameraObject(const PosPoint &detectedObject)
 {
     //When no object is detected, objectDistance is zero
-    double objectDistance = sqrt(point.getX()*point.getX() + point.getY()*point.getY() + point.getHeight()*point.getHeight());
+    double objectDistance = sqrt(detectedObject.getX()*detectedObject.getX() + detectedObject.getY()*detectedObject.getY() + detectedObject.getHeight()*detectedObject.getHeight());
 
-    if (objectDistance > 0 && objectDistance < objectBrakeDistance)
-        mCurrentState.cameraBrake = true;
+    if (objectDistance > 0 && objectDistance < mCurrentState.brakeForObjectAtDistance)
+        mCurrentState.brakeForDetectedCameraObject = true;
     else
-        mCurrentState.cameraBrake = false;
+        mCurrentState.brakeForDetectedCameraObject = false;
+
+    fuseSensorsAndTakeBrakeDecision();
 };
 
-void EmergencyBrake::decissionLogic()
+void EmergencyBrake::fuseSensorsAndTakeBrakeDecision()
 {
-    // ToDo: create decission logic depending on multiple sensor inputs
-    if (mCurrentState.cameraBrake)
-        emit emergencyBrake();
+    if (mCurrentState.emergencyBrakeIsActive) {
+        // ToDo: create decission logic depending on multiple sensor inputs
+        if (mCurrentState.brakeForDetectedCameraObject)
+            emit emergencyBrake();
+    }
 }

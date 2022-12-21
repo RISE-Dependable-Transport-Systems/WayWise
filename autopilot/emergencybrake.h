@@ -6,9 +6,11 @@
 #include "core/pospoint.h"
 
 struct EmergencyBrakeState {
-    bool cameraBrake = false;
-    bool lidarBrake = false;
-    bool radarBrake = false;
+    bool brakeForDetectedCameraObject = false;
+    bool brakeForDetectedLidarObject = false;
+    bool brakeForDetectedRadarObject = false;
+    double brakeForObjectAtDistance = 10; // [m] brake when detected object comes closer than
+    bool emergencyBrakeIsActive = false;
 };
 
 class EmergencyBrake : public QObject
@@ -23,14 +25,11 @@ signals:
 public slots:
     void deactivateEmergencyBrake();
     void activateEmergencyBrake();
-    void camera(const PosPoint &detectedObject);
+    void brakeForDetectedCameraObject(const PosPoint &detectedObject);
 
 private:
-    double objectBrakeDistance = 10; // [m] brake when detected object comes closer than
     EmergencyBrakeState mCurrentState;
-    unsigned mUpdateStatePeriod_ms = 50;
-    QTimer mUpdateStateTimer;
-    void decissionLogic();
+    void fuseSensorsAndTakeBrakeDecision();
 };
 
 #endif // EMERGENCYBRAKE_H

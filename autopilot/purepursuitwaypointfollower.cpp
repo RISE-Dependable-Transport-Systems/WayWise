@@ -91,6 +91,7 @@ void PurepursuitWaypointFollower::stop()
     (isOnVehicle() ? mMovementController->getVehicleState() : mVehicleConnection->getVehicleState())->setAutopilotRadius(0);
     holdPosition();
     emit txDistOfRouteLeft(0);
+    emit deactivateEmergencyBrake();
 }
 
 void PurepursuitWaypointFollower::startFollowPoint()
