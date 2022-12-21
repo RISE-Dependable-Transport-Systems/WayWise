@@ -52,6 +52,8 @@ void PurepursuitWaypointFollower::addRoute(const QList<PosPoint> &route)
 
 void PurepursuitWaypointFollower::startFollowingRoute(bool fromBeginning)
 {
+    // Activate emergency brake for follow route
+    emit activateEmergencyBrake();
     const auto &vehicleState = (isOnVehicle() ? mMovementController->getVehicleState() : mVehicleConnection->getVehicleState());
     mCurrentState.overrideAltitude = vehicleState->getPosition(mPosTypeUsed).getHeight();
     qDebug() << "Note: WaypointFollower starts following route. Height info from route is ignored (staying at" << QString::number(mCurrentState.overrideAltitude, 'g', 2) << "m).";
@@ -89,10 +91,13 @@ void PurepursuitWaypointFollower::stop()
     (isOnVehicle() ? mMovementController->getVehicleState() : mVehicleConnection->getVehicleState())->setAutopilotRadius(0);
     holdPosition();
     emit txDistOfRouteLeft(0);
+    emit deactivateEmergencyBrake();
 }
 
 void PurepursuitWaypointFollower::startFollowPoint()
 {
+    // Deactivate emergency brake in order to use follow point
+    emit deactivateEmergencyBrake();
     // Check that we got a recent point to follow
     if (isOnVehicle() && mCurrentState.currentFollowPointInVehicleFrame.getTime() > mCurrentState.currentGoal.getTime()) {
         mFollowPointHeartbeatTimer.start(mFollowPointTimeout_ms);

@@ -34,7 +34,8 @@ public:
     virtual void startFollowPoint() {throw std::logic_error("WaypointFollower::startFollowPoint() not implemented.");};
 
 signals:
-
+    void deactivateEmergencyBrake();
+    void activateEmergencyBrake();
 };
 
 #endif // WAYPOINTFOLLOWER_H
