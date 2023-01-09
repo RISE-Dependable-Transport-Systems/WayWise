@@ -10,7 +10,9 @@
 #include <QWidget>
 #include <QKeyEvent>
 #include <QTimer>
+#include <QTableWidget>
 #include "communication/vehicleconnections/vehicleconnection.h"
+#include "userinterface/vehicleparameterui.h"
 
 namespace Ui {
 class DriveUI;
@@ -24,7 +26,7 @@ public:
     explicit DriveUI(QWidget *parent = nullptr);
     ~DriveUI();
 
-    void setCurrentVehicleConnection(const QSharedPointer<VehicleConnection> &currentVehicleConnection);
+    void setCurrentVehicleConnection(const QSharedPointer<MavsdkVehicleConnection> &currentVehicleConnection);
     void gotRouteForAutopilot(const QList<PosPoint>& route);
 
 private slots:
@@ -38,10 +40,13 @@ private slots:
 
     void on_apSetActiveIDButton_clicked();
 
+    void on_vehicleParameterButton_clicked();
+
 private:
     Ui::DriveUI *ui;
 
-    QSharedPointer<VehicleConnection> mCurrentVehicleConnection;
+    QSharedPointer<VehicleParameterUI> mVehicleParameterUI;
+    QSharedPointer<MavsdkVehicleConnection> mCurrentVehicleConnection;
     struct {bool upPressed, downPressed, leftPressed, rightPressed;} mArrowKeyStates;
     struct {double throttle, steering;} mKeyControlState;
     QTimer mKeyControlTimer;
@@ -50,8 +55,8 @@ private:
 
     // QWidget interface
 protected:
-    virtual void keyPressEvent(QKeyEvent *event) override;
-    virtual void keyReleaseEvent(QKeyEvent *event) override;
+//    virtual void keyPressEvent(QKeyEvent *event) override;
+//    virtual void keyReleaseEvent(QKeyEvent *event) override;
 };
 
 #endif // DRIVEUI_H

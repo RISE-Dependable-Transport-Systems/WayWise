@@ -139,8 +139,8 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
     // Set up action plugin
     mAction.reset(new mavsdk::Action(mSystem));
 
-//    // Set up praram plugin
-//    mParam.reset(new mavsdk::Param(mSystem));
+    // Set up param plugin
+    mParam.reset(new mavsdk::Param(mSystem));
 
 // TODO: this should not happen here (blocking)
 //    // Precision Landing: set required target tracking accuracy for starting approach
@@ -587,4 +587,24 @@ void MavsdkVehicleConnection::setActiveAutopilotIDOnVehicle(int id)
 
     if (mMavlinkPassthrough->send_command_long(ComLong) != mavsdk::MavlinkPassthrough::Result::Success)
         qDebug() << "Warning: could not send MISSION_SET_CURRENT via MAVLINK.";
+}
+
+mavsdk::Param::Result MavsdkVehicleConnection::setIntParameterOnVehicle(std::string name, int32_t value)
+{
+    return mParam->set_param_int(name, value);
+}
+
+mavsdk::Param::Result MavsdkVehicleConnection::setFloatParameterOnVehicle(std::string name, float value)
+{
+    return mParam->set_param_float(name, value);
+}
+
+mavsdk::Param::Result MavsdkVehicleConnection::setCustomParameterOnVehicle(std::string name, std::string value)
+{
+    return mParam->set_param_custom(name, value);
+}
+
+mavsdk::Param::AllParams MavsdkVehicleConnection::getAllParametersFromVehicle()
+{
+    return mParam->get_all_params();
 }

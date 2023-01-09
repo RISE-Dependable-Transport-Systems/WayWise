@@ -53,6 +53,10 @@ public:
     void sendSetGpsOriginLlh(const llh_t &gpsOriginLlh);
     virtual void setActuatorOutput(int index, float value) override;
     virtual void setManualControl(double x, double y, double z, double r, uint16_t buttonStateMask) override;
+    mavsdk::Param::Result setIntParameterOnVehicle(std::string name, int32_t value);
+    mavsdk::Param::Result setFloatParameterOnVehicle(std::string, float value);
+    mavsdk::Param::Result setCustomParameterOnVehicle(std::string name, std::string value);
+    mavsdk::Param::AllParams getAllParametersFromVehicle();
 
     void setConvertLocalPositionsToGlobalBeforeSending(bool convertLocalPositionsToGlobalBeforeSending);
 
