@@ -64,6 +64,7 @@ private:
     bool mHeartbeat;
     QTimer mHeartbeatTimer;
     const unsigned mCountdown_ms = 2000;
+    QTimer mSaveCurrentParametersToFileTimer;
 
     void updateRawGpsAndGpsInfoFromUbx(const ubx_nav_pvt &pvt);
     void heartbeatTimeout();
@@ -71,6 +72,7 @@ private:
     PosPoint convertMissionItemToPosPoint(const mavsdk::MissionRawServer::MissionItem &item);
     void handleManualControlMessage(mavlink_manual_control_t manualControl);
     double mManualControlMaxSpeed = 2.0; // [m/s]
+    void saveParametersToFile(mavsdk::ParamServer::AllParams parameters);
 };
 
 #endif // MAVSDKVEHICLESERVER_H

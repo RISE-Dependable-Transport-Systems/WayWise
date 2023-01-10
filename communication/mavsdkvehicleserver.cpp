@@ -10,6 +10,9 @@
 #include <QMetaMethod>
 #include <algorithm>
 #include <chrono>
+#include <iostream>
+#include <fstream>
+#include <iomanip>
 
 MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleState)
 {
@@ -32,6 +35,9 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
     mParamServer->provide_param_int("CAL_MAG0_ID", 1);
     mParamServer->provide_param_int("SYS_HITL", 0);
     mParamServer->provide_param_int("MIS_TAKEOFF_ALT", 0);
+    connect(&mSaveCurrentParametersToFileTimer, &QTimer::timeout, [this](){
+        saveParametersToFile(mParamServer->retrieve_all_params());
+    });
 
     // Allow the vehicle to change to auto mode (manual is always allowed) and arm, disable takeoff (only rover support for now)
     mActionServer->set_allowable_flight_modes({true, false, false});
@@ -253,6 +259,8 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
     // Start publishing status on MAVLink (TODO: rate?)
     mPublishMavlinkTimer.start(100);
 
+    mSaveCurrentParametersToFileTimer.start(10000);
+
     mavsdk::ConnectionResult result = mMavsdk.add_any_connection("udp://127.0.0.1:14540");
     if (result == mavsdk::ConnectionResult::Success)
         qDebug() << "MavsdkVehicleServer is listening...";
@@ -392,4 +400,22 @@ void MavsdkVehicleServer::sendGpsOriginLlh(const llh_t &gpsOriginLlh)
     mavlink_msg_gps_global_origin_encode(mMavlinkPassthrough->get_our_sysid(), mMavlinkPassthrough->get_our_compid(), &mavGpsGlobalOriginMsg, &mavGpsGlobalOrigin);
     if (mMavlinkPassthrough->send_message(mavGpsGlobalOriginMsg) != mavsdk::MavlinkPassthrough::Result::Success)
         qDebug() << "Warning: could not send GPS_GLOBAL_ORIGIN via MAVLINK.";
+};
+
+void MavsdkVehicleServer::saveParametersToFile(mavsdk::ParamServer::AllParams parameters)
+{
+    std::ofstream parameterFile("vehicle_parameters.txt");
+    parameterFile << std::setprecision(7);
+    for (const auto& vehicleParameter : parameters.int_params) {
+        parameterFile << vehicleParameter.name << " " << vehicleParameter.value << "\n";
+    }
+
+    for (const auto& vehicleParameter : parameters.float_params) {
+        parameterFile << vehicleParameter.name << " " << vehicleParameter.value << "\n";
+    }
+
+    for (const auto& vehicleParameter : parameters.custom_params) {
+        parameterFile << vehicleParameter.name << " " << vehicleParameter.value << "\n";
+    }
+    parameterFile.close();
 };
