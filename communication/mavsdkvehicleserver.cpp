@@ -10,9 +10,8 @@
 #include <QMetaMethod>
 #include <algorithm>
 #include <chrono>
-#include <iostream>
-#include <fstream>
-#include <iomanip>
+#include <QXmlStreamWriter>
+#include <QFile>
 
 MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleState)
 {
@@ -35,9 +34,6 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
     mParamServer->provide_param_int("CAL_MAG0_ID", 1);
     mParamServer->provide_param_int("SYS_HITL", 0);
     mParamServer->provide_param_int("MIS_TAKEOFF_ALT", 0);
-    connect(&mSaveCurrentParametersToFileTimer, &QTimer::timeout, [this](){
-        saveParametersToFile(mParamServer->retrieve_all_params());
-    });
 
     // Allow the vehicle to change to auto mode (manual is always allowed) and arm, disable takeoff (only rover support for now)
     mActionServer->set_allowable_flight_modes({true, false, false});
@@ -259,8 +255,6 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
     // Start publishing status on MAVLink (TODO: rate?)
     mPublishMavlinkTimer.start(100);
 
-    mSaveCurrentParametersToFileTimer.start(10000);
-
     mavsdk::ConnectionResult result = mMavsdk.add_any_connection("udp://127.0.0.1:14540");
     if (result == mavsdk::ConnectionResult::Success)
         qDebug() << "MavsdkVehicleServer is listening...";
@@ -402,20 +396,30 @@ void MavsdkVehicleServer::sendGpsOriginLlh(const llh_t &gpsOriginLlh)
         qDebug() << "Warning: could not send GPS_GLOBAL_ORIGIN via MAVLINK.";
 };
 
-void MavsdkVehicleServer::saveParametersToFile(mavsdk::ParamServer::AllParams parameters)
+void MavsdkVehicleServer::saveParametersToXmlFile()
 {
-    std::ofstream parameterFile("vehicle_parameters.txt");
-    parameterFile << std::setprecision(7);
+    mavsdk::ParamServer::AllParams parameters = mParamServer->retrieve_all_params();
+    QFile parameterFile("vehicle_parameters.xml");
+
+    if (!parameterFile.open(QIODevice::WriteOnly))
+        qDebug() << "Could not save parameters";
+
+    QXmlStreamWriter stream(&parameterFile);
+    stream.setCodec("UTF-8");
+    stream.setAutoFormatting(true);
+    stream.writeStartDocument();
+
     for (const auto& vehicleParameter : parameters.int_params) {
-        parameterFile << vehicleParameter.name << " " << vehicleParameter.value << "\n";
+        stream.writeTextElement(QString::fromStdString(vehicleParameter.name), QString::number(vehicleParameter.value));
     }
-
     for (const auto& vehicleParameter : parameters.float_params) {
-        parameterFile << vehicleParameter.name << " " << vehicleParameter.value << "\n";
+        stream.writeTextElement(QString::fromStdString(vehicleParameter.name), QString::number(vehicleParameter.value));
+    }
+    for (const auto& vehicleParameter : parameters.custom_params) {
+        stream.writeTextElement(QString::fromStdString(vehicleParameter.name), QString::fromStdString(vehicleParameter.value));
     }
 
-    for (const auto& vehicleParameter : parameters.custom_params) {
-        parameterFile << vehicleParameter.name << " " << vehicleParameter.value << "\n";
-    }
+    stream.writeEndElement();
+    stream.writeEndDocument();
     parameterFile.close();
 };

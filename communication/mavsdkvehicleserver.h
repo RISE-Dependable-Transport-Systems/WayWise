@@ -35,6 +35,9 @@ public:
     void mavResult(const uint16_t command, MAV_RESULT result);
     void sendGpsOriginLlh(const llh_t &gpsOriginLlh);
 
+public slots:
+    void saveParametersToXmlFile();
+
 signals:
     void startWaypointFollower(bool fromBeginning); // to enable starting from MAVSDK thread
     void pauseWaypointFollower();
@@ -64,7 +67,6 @@ private:
     bool mHeartbeat;
     QTimer mHeartbeatTimer;
     const unsigned mCountdown_ms = 2000;
-    QTimer mSaveCurrentParametersToFileTimer;
 
     void updateRawGpsAndGpsInfoFromUbx(const ubx_nav_pvt &pvt);
     void heartbeatTimeout();
@@ -72,7 +74,6 @@ private:
     PosPoint convertMissionItemToPosPoint(const mavsdk::MissionRawServer::MissionItem &item);
     void handleManualControlMessage(mavlink_manual_control_t manualControl);
     double mManualControlMaxSpeed = 2.0; // [m/s]
-    void saveParametersToFile(mavsdk::ParamServer::AllParams parameters);
 };
 
 #endif // MAVSDKVEHICLESERVER_H
