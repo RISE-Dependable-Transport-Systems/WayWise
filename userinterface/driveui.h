@@ -26,7 +26,7 @@ public:
     explicit DriveUI(QWidget *parent = nullptr);
     ~DriveUI();
 
-    void setCurrentVehicleConnection(const QSharedPointer<MavsdkVehicleConnection> &currentVehicleConnection);
+    void setCurrentVehicleConnection(const QSharedPointer<VehicleConnection> &currentVehicleConnection);
     void gotRouteForAutopilot(const QList<PosPoint>& route);
 
 private slots:
@@ -46,7 +46,7 @@ private:
     Ui::DriveUI *ui;
 
     QSharedPointer<VehicleParameterUI> mVehicleParameterUI;
-    QSharedPointer<MavsdkVehicleConnection> mCurrentVehicleConnection;
+    QSharedPointer<VehicleConnection> mCurrentVehicleConnection;
     struct {bool upPressed, downPressed, leftPressed, rightPressed;} mArrowKeyStates;
     struct {double throttle, steering;} mKeyControlState;
     QTimer mKeyControlTimer;

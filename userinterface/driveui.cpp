@@ -49,7 +49,7 @@ DriveUI::~DriveUI()
     delete ui;
 }
 
-void DriveUI::setCurrentVehicleConnection(const QSharedPointer<MavsdkVehicleConnection> &currentVehicleConnection)
+void DriveUI::setCurrentVehicleConnection(const QSharedPointer<VehicleConnection> &currentVehicleConnection)
 {
     mCurrentVehicleConnection = currentVehicleConnection;
 }

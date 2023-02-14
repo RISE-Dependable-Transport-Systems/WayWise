@@ -9,8 +9,7 @@
 #include <QWidget>
 #include <QDialog>
 #include <QTableWidget>
-#include "communication/vehicleconnections/mavsdkvehicleconnection.h"
-#include <mavsdk/plugins/param/param.h>
+#include "communication/vehicleconnections/vehicleconnection.h"
 
 namespace Ui {
 class VehicleParameterUI;
@@ -24,7 +23,7 @@ public:
     explicit VehicleParameterUI(QWidget *parent = nullptr);
     ~VehicleParameterUI();
 
-    void setCurrentVehicleConnection(const QSharedPointer<MavsdkVehicleConnection> &currentVehicleConnection);
+    void setCurrentVehicleConnection(const QSharedPointer<VehicleConnection> &currentVehicleConnection);
 
 private slots:
     void on_getAllParametersFromVehicleButton_clicked();
@@ -35,8 +34,8 @@ private:
     bool sendChangedParametersToVehicle();
 
     Ui::VehicleParameterUI *ui;
-    QSharedPointer<MavsdkVehicleConnection> mCurrentVehicleConnection;
-    mavsdk::Param::AllParams mVehicleParameters;
+    QSharedPointer<VehicleConnection> mCurrentVehicleConnection;
+    std::vector<std::variant<std::vector<std::pair<std::string, int32_t>>, std::vector<std::pair<std::string, float>>, std::vector<std::pair<std::string, std::string>>>> mVehicleParameters;
 };
 
 #endif // VEHICLEPARAMETERUI_H

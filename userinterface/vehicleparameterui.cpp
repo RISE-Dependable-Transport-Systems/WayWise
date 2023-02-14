@@ -19,7 +19,7 @@ VehicleParameterUI::~VehicleParameterUI()
     delete ui;
 }
 
-void VehicleParameterUI::setCurrentVehicleConnection(const QSharedPointer<MavsdkVehicleConnection> &currentVehicleConnection)
+void VehicleParameterUI::setCurrentVehicleConnection(const QSharedPointer<VehicleConnection> &currentVehicleConnection)
 {
     mCurrentVehicleConnection = currentVehicleConnection;
 }
@@ -40,32 +40,32 @@ void VehicleParameterUI::populateTableWithParameters()
     int row = 0;
     int column = 0;
 
-    for (const auto& vehicleParameter : mVehicleParameters.int_params) {
+    for (const auto& vehicleIntParameter : std::get<0>(mVehicleParameters.at(0))) {
         std::stringstream stream;
-        stream << std::fixed << std::setprecision(0) << vehicleParameter.value;
+        stream << std::fixed << std::setprecision(0) << vehicleIntParameter.second;
         std::string value = stream.str();
-        QTableWidgetItem *newItemName = new QTableWidgetItem(tr(vehicleParameter.name.c_str()));
+        QTableWidgetItem *newItemName = new QTableWidgetItem(tr(vehicleIntParameter.first.c_str()));
         ui->tableWidget->setItem(row, column, newItemName);
         QTableWidgetItem *newItemValue = new QTableWidgetItem(tr(value.c_str()));
         ui->tableWidget->setItem(row, column+1, newItemValue);
         row++;
     }
 
-    for (const auto& vehicleParameter : mVehicleParameters.float_params) {
+    for (const auto& vehicleFloatParameter : std::get<1>(mVehicleParameters.at(1))) {
         std::stringstream stream;
-        stream << std::fixed << std::setprecision(6) << vehicleParameter.value;
+        stream << std::fixed << std::setprecision(6) << vehicleFloatParameter.second;
         std::string value = stream.str();
-        QTableWidgetItem *newItemName = new QTableWidgetItem(tr(vehicleParameter.name.c_str()));
+        QTableWidgetItem *newItemName = new QTableWidgetItem(tr(vehicleFloatParameter.first.c_str()));
         ui->tableWidget->setItem(row, column, newItemName);
         QTableWidgetItem *newItemValue = new QTableWidgetItem(tr(value.c_str()));
         ui->tableWidget->setItem(row, column+1, newItemValue);
         row++;
     }
 
-    for (const auto& vehicleParameter : mVehicleParameters.custom_params) {
-        QTableWidgetItem *newItemName = new QTableWidgetItem(tr(vehicleParameter.name.c_str()));
+    for (const auto& vehicleCustomParameter : std::get<2>(mVehicleParameters.at(2))) {
+        QTableWidgetItem *newItemName = new QTableWidgetItem(tr(vehicleCustomParameter.first.c_str()));
         ui->tableWidget->setItem(row, column, newItemName);
-        QTableWidgetItem *newItemValue = new QTableWidgetItem(tr(vehicleParameter.value.c_str()));
+        QTableWidgetItem *newItemValue = new QTableWidgetItem(tr(vehicleCustomParameter.second.c_str()));
         ui->tableWidget->setItem(row, column+1, newItemValue);
         row++;
     }
@@ -91,31 +91,31 @@ bool VehicleParameterUI::sendChangedParametersToVehicle()
     int column = 1;
     bool hasParamChanged = false;
 
-    for (const auto& vehicleParameter : mVehicleParameters.int_params) {
+    for (const auto& vehicleIntParameter : std::get<0>(mVehicleParameters.at(0))) {
         int32_t tableWidgetParameterValue = ui->tableWidget->item(row, column)->text().toInt();
-        if (tableWidgetParameterValue != vehicleParameter.value) {
+        if (tableWidgetParameterValue != vehicleIntParameter.second) {
             hasParamChanged = true;
-            if (mavsdk::Param::Result::Success != mCurrentVehicleConnection->setIntParameterOnVehicle(vehicleParameter.name.c_str(), tableWidgetParameterValue))
+            if (mCurrentVehicleConnection->setIntParameterOnVehicle(vehicleIntParameter.first.c_str(), tableWidgetParameterValue).compare("Success") != 0)
                 return false;
         }
         row++;
     }
 
-    for (const auto& vehicleParameter : mVehicleParameters.float_params) {
+    for (const auto& vehicleFloatParameter : std::get<1>(mVehicleParameters.at(1))) {
         float tableWidgetParameterValue = ui->tableWidget->item(row, column)->text().toFloat();
-        if (tableWidgetParameterValue != vehicleParameter.value) {
+        if (tableWidgetParameterValue != vehicleFloatParameter.second) {
             hasParamChanged = true;
-            if (mavsdk::Param::Result::Success != mCurrentVehicleConnection->setFloatParameterOnVehicle(vehicleParameter.name.c_str(), tableWidgetParameterValue))
+            if (mCurrentVehicleConnection->setFloatParameterOnVehicle(vehicleFloatParameter.first.c_str(), tableWidgetParameterValue).compare("Success") != 0)
                  return false;
         }
         row++;
     }
 
-    for (const auto& vehicleParameter : mVehicleParameters.custom_params) {
+    for (const auto& vehicleCustomParameter : std::get<2>(mVehicleParameters.at(2))) {
         std::string tableWidgetParameterValue = ui->tableWidget->item(row, column)->text().toStdString();
-        if (tableWidgetParameterValue != vehicleParameter.value) {
+        if (tableWidgetParameterValue != vehicleCustomParameter.second) {
             hasParamChanged = true;
-            if (mavsdk::Param::Result::Success != mCurrentVehicleConnection->setCustomParameterOnVehicle(vehicleParameter.name.c_str(), tableWidgetParameterValue))
+            if (mCurrentVehicleConnection->setCustomParameterOnVehicle(vehicleCustomParameter.first.c_str(), tableWidgetParameterValue).compare("Success") != 0)
                  return false;
         }
         row++;
