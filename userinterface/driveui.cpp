@@ -112,7 +112,6 @@ void DriveUI::on_apStopButton_clicked()
     }
 }
 
-
 void DriveUI::keyPressEvent(QKeyEvent *event)
 {
     switch (event->key()) {
@@ -176,4 +175,13 @@ void DriveUI::on_apSetActiveIDButton_clicked()
                     mCurrentVehicleConnection->pauseAutopilot();
                 mCurrentVehicleConnection->setActiveAutopilotID(apID);
         }
+}
+
+void DriveUI::on_vehicleParameterButton_clicked()
+{
+    if (mVehicleParameterUI.isNull())
+        mVehicleParameterUI = QSharedPointer<VehicleParameterUI>::create(this);
+    mVehicleParameterUI->setCurrentVehicleConnection(mCurrentVehicleConnection);
+    mVehicleParameterUI->show();
+    this->releaseKeyboard();
 }

@@ -10,7 +10,9 @@
 #include <QWidget>
 #include <QKeyEvent>
 #include <QTimer>
+#include <QTableWidget>
 #include "communication/vehicleconnections/vehicleconnection.h"
+#include "userinterface/vehicleparameterui.h"
 
 namespace Ui {
 class DriveUI;
@@ -38,9 +40,12 @@ private slots:
 
     void on_apSetActiveIDButton_clicked();
 
+    void on_vehicleParameterButton_clicked();
+
 private:
     Ui::DriveUI *ui;
 
+    QSharedPointer<VehicleParameterUI> mVehicleParameterUI;
     QSharedPointer<VehicleConnection> mCurrentVehicleConnection;
     struct {bool upPressed, downPressed, leftPressed, rightPressed;} mArrowKeyStates;
     struct {double throttle, steering;} mKeyControlState;

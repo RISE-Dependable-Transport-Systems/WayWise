@@ -10,6 +10,8 @@
 #include <QMetaMethod>
 #include <algorithm>
 #include <chrono>
+#include <QXmlStreamWriter>
+#include <QFile>
 
 MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleState)
 {
@@ -392,4 +394,32 @@ void MavsdkVehicleServer::sendGpsOriginLlh(const llh_t &gpsOriginLlh)
     mavlink_msg_gps_global_origin_encode(mMavlinkPassthrough->get_our_sysid(), mMavlinkPassthrough->get_our_compid(), &mavGpsGlobalOriginMsg, &mavGpsGlobalOrigin);
     if (mMavlinkPassthrough->send_message(mavGpsGlobalOriginMsg) != mavsdk::MavlinkPassthrough::Result::Success)
         qDebug() << "Warning: could not send GPS_GLOBAL_ORIGIN via MAVLINK.";
+};
+
+void MavsdkVehicleServer::saveParametersToXmlFile()
+{
+    mavsdk::ParamServer::AllParams parameters = mParamServer->retrieve_all_params();
+    QFile parameterFile("vehicle_parameters.xml");
+
+    if (!parameterFile.open(QIODevice::WriteOnly))
+        qDebug() << "Could not save parameters";
+
+    QXmlStreamWriter stream(&parameterFile);
+    stream.setCodec("UTF-8");
+    stream.setAutoFormatting(true);
+    stream.writeStartDocument();
+
+    for (const auto& vehicleParameter : parameters.int_params) {
+        stream.writeTextElement(QString::fromStdString(vehicleParameter.name), QString::number(vehicleParameter.value));
+    }
+    for (const auto& vehicleParameter : parameters.float_params) {
+        stream.writeTextElement(QString::fromStdString(vehicleParameter.name), QString::number(vehicleParameter.value));
+    }
+    for (const auto& vehicleParameter : parameters.custom_params) {
+        stream.writeTextElement(QString::fromStdString(vehicleParameter.name), QString::fromStdString(vehicleParameter.value));
+    }
+
+    stream.writeEndElement();
+    stream.writeEndDocument();
+    parameterFile.close();
 };

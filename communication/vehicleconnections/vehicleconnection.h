@@ -31,7 +31,10 @@ public:
     virtual void requestFollowPoint() = 0;
     virtual void setManualControl(double x, double y, double z, double r, uint16_t buttonStateMask) = 0;
     virtual void setActuatorOutput(int index, float value) = 0;
-
+    virtual std::string setIntParameterOnVehicle(std::string name, int32_t value) = 0;
+    virtual std::string setFloatParameterOnVehicle(std::string, float value) = 0;
+    virtual std::string setCustomParameterOnVehicle(std::string name, std::string value) = 0;
+    virtual std::vector<std::variant<std::vector<std::pair<std::string, int32_t>>, std::vector<std::pair<std::string, float>>, std::vector<std::pair<std::string, std::string>>>> getAllParametersFromVehicle() = 0;
 
     void setWaypointFollowerConnectionLocal(const QSharedPointer<WaypointFollower> &waypointFollower);
     bool hasWaypointFollowerConnectionLocal();

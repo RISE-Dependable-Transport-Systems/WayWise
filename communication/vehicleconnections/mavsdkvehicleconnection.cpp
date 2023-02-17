@@ -6,6 +6,7 @@
 #include "mavsdkvehicleconnection.h"
 #include <QDebug>
 #include <QDateTime>
+#include <variant>
 
 MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System> system, MAV_TYPE vehicleType)
 {
@@ -139,8 +140,8 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
     // Set up action plugin
     mAction.reset(new mavsdk::Action(mSystem));
 
-//    // Set up praram plugin
-//    mParam.reset(new mavsdk::Param(mSystem));
+    // Set up param plugin
+    mParam.reset(new mavsdk::Param(mSystem));
 
 // TODO: this should not happen here (blocking)
 //    // Precision Landing: set required target tracking accuracy for starting approach
@@ -587,4 +588,63 @@ void MavsdkVehicleConnection::setActiveAutopilotIDOnVehicle(int id)
 
     if (mMavlinkPassthrough->send_command_long(ComLong) != mavsdk::MavlinkPassthrough::Result::Success)
         qDebug() << "Warning: could not send MISSION_SET_CURRENT via MAVLINK.";
+}
+
+std::string MavsdkVehicleConnection::setIntParameterOnVehicle(std::string name, int32_t value)
+{
+    return convertMavsdkParamResultToString(mParam->set_param_int(name, value));
+}
+
+std::string MavsdkVehicleConnection::setFloatParameterOnVehicle(std::string name, float value)
+{
+    return convertMavsdkParamResultToString(mParam->set_param_float(name, value));
+}
+
+std::string MavsdkVehicleConnection::setCustomParameterOnVehicle(std::string name, std::string value)
+{
+    return convertMavsdkParamResultToString(mParam->set_param_custom(name, value));
+}
+
+std::vector<std::variant<std::vector<std::pair<std::string, int32_t>>, std::vector<std::pair<std::string, float>>, std::vector<std::pair<std::string, std::string>>>> MavsdkVehicleConnection::getAllParametersFromVehicle()
+{
+    mavsdk::Param::AllParams vehicleParameters = mParam->get_all_params();
+    std::vector<std::pair<std::string, int32_t>> intParameters;
+    std::vector<std::pair<std::string, float>> floatParameters;
+    std::vector<std::pair<std::string, std::string>> customParameters;
+
+    for (const auto& vehicleParameter : vehicleParameters.int_params) {
+        intParameters.push_back(std::make_pair(vehicleParameter.name, vehicleParameter.value));
+    }
+    for (const auto& vehicleParameter : vehicleParameters.float_params) {
+        floatParameters.push_back(std::make_pair(vehicleParameter.name, vehicleParameter.value));
+    }
+    for (const auto& vehicleParameter : vehicleParameters.custom_params) {
+        customParameters.push_back(std::make_pair(vehicleParameter.name, vehicleParameter.value));
+    }
+
+    return {intParameters, floatParameters, customParameters};
+}
+
+std::string MavsdkVehicleConnection::convertMavsdkParamResultToString(mavsdk::Param::Result result)
+{
+    switch (result) {
+    case mavsdk::Param::Result::Success:
+        return "Success";
+    case mavsdk::Param::Result::Unknown:
+        return "Unknown";
+    case mavsdk::Param::Result::WrongType:
+        return "WrongType";
+    case mavsdk::Param::Result::Timeout:
+        return "Timeout";
+    case mavsdk::Param::Result::ParamValueTooLong:
+        return "ParamValueTooLong";
+    case mavsdk::Param::Result::ParamNameTooLong:
+        return "ParamNameTooLong";
+    case mavsdk::Param::Result::NoSystem:
+        return "NoSystem";
+    case mavsdk::Param::Result::ConnectionError:
+        return "ConnectionError";
+    default:
+        return "Not a known result";
+    }
 }

@@ -53,6 +53,10 @@ public:
     void sendSetGpsOriginLlh(const llh_t &gpsOriginLlh);
     virtual void setActuatorOutput(int index, float value) override;
     virtual void setManualControl(double x, double y, double z, double r, uint16_t buttonStateMask) override;
+    virtual std::string setIntParameterOnVehicle(std::string name, int32_t value) override;
+    virtual std::string setFloatParameterOnVehicle(std::string, float value) override;
+    virtual std::string setCustomParameterOnVehicle(std::string name, std::string value) override;
+    virtual std::vector<std::variant<std::vector<std::pair<std::string, int32_t>>, std::vector<std::pair<std::string, float>>, std::vector<std::pair<std::string, std::string>>>> getAllParametersFromVehicle() override;
 
     void setConvertLocalPositionsToGlobalBeforeSending(bool convertLocalPositionsToGlobalBeforeSending);
 
@@ -80,6 +84,7 @@ private:
     QSharedPointer<QTimer> mPosTimer;
 
     mavsdk::MissionRaw::MissionItem convertPosPointToMissionItem(const PosPoint& posPoint, int sequenceId, bool current = false);
+    std::string convertMavsdkParamResultToString(mavsdk::Param::Result result);
 
     // VehicleConnection interface
 protected:
