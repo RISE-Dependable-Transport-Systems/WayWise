@@ -47,6 +47,7 @@ signals:
     void resetHeartbeat();
     void switchAutopilotID(const float autopilotID);
     void rxRtcmData(const QByteArray rtcmData);
+    void shutdownOrRebootOnboardComputer(int value);
 
 private:
     mavsdk::Mavsdk mMavsdk;
