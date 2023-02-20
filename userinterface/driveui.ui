@@ -40,6 +40,23 @@
     </spacer>
    </item>
    <item>
+    <widget class="QPushButton" name="requestRebootButton">
+     <property name="text">
+      <string>Reboot Onboard Computer</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="requestShutdownButton">
+     <property name="text">
+      <string>Shutdown Onboard Computer</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLineEdit" name="requestRebootOrShutdownStatus"/>
+   </item>
+   <item>
     <widget class="QPushButton" name="vehicleParameterButton">
      <property name="text">
       <string>Vehicle Parameters</string>

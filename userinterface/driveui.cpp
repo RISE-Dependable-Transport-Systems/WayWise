@@ -185,3 +185,32 @@ void DriveUI::on_vehicleParameterButton_clicked()
     mVehicleParameterUI->show();
     this->releaseKeyboard();
 }
+
+void DriveUI::on_requestRebootButton_clicked()
+{
+    QPalette palette;
+    if (mCurrentVehicleConnection->requestRebootOrShutdownOfSystemComponents(2,1)) {
+        palette.setColor(QPalette::Base, Qt::green);
+        ui->requestRebootOrShutdownStatus->setPalette(palette);
+        ui->requestRebootOrShutdownStatus->setText("Onboard computer rebooted!");
+    } else {
+        palette.setColor(QPalette::Base, Qt::red);
+        ui->requestRebootOrShutdownStatus->setPalette(palette);
+        ui->requestRebootOrShutdownStatus->setText("Onboard computer did not reboot...");
+    }
+}
+
+void DriveUI::on_requestShutdownButton_clicked()
+{
+    QPalette palette;
+    if (mCurrentVehicleConnection->requestRebootOrShutdownOfSystemComponents(2,2)) {
+        palette.setColor(QPalette::Base, Qt::green);
+        ui->requestRebootOrShutdownStatus->setPalette(palette);
+        ui->requestRebootOrShutdownStatus->setText("Onboard computer has shutdown!");
+    } else {
+        palette.setColor(QPalette::Base, Qt::red);
+        ui->requestRebootOrShutdownStatus->setPalette(palette);
+        ui->requestRebootOrShutdownStatus->setText("Onboard computer did not shutdown...");
+    }
+}
+

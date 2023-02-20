@@ -35,6 +35,7 @@ public:
     virtual std::string setFloatParameterOnVehicle(std::string, float value) = 0;
     virtual std::string setCustomParameterOnVehicle(std::string name, std::string value) = 0;
     virtual std::vector<std::variant<std::vector<std::pair<std::string, int32_t>>, std::vector<std::pair<std::string, float>>, std::vector<std::pair<std::string, std::string>>>> getAllParametersFromVehicle() = 0;
+    virtual bool requestRebootOrShutdownOfSystemComponents(int param = 0, int value = 0) = 0;
 
     void setWaypointFollowerConnectionLocal(const QSharedPointer<WaypointFollower> &waypointFollower);
     bool hasWaypointFollowerConnectionLocal();

@@ -590,6 +590,40 @@ void MavsdkVehicleConnection::setActiveAutopilotIDOnVehicle(int id)
         qDebug() << "Warning: could not send MISSION_SET_CURRENT via MAVLINK.";
 }
 
+bool MavsdkVehicleConnection::requestRebootOrShutdownOfSystemComponents(int param, int value)
+{
+    mavsdk::MavlinkPassthrough::CommandLong ComLong;
+    memset(&ComLong, 0, sizeof (ComLong));
+    ComLong.target_compid = mMavlinkPassthrough->get_target_compid();
+    ComLong.target_sysid = mMavlinkPassthrough->get_target_sysid();
+    ComLong.command = MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN;
+    ComLong.param1 = 0; //0: Do nothing for autopilot, 1: Reboot autopilot, 2: Shutdown autopilot
+    ComLong.param2 = 0; //0: Do nothing for onboard computer, 1: Reboot onboard computer, 2: Shutdown onboard computer
+    ComLong.param3 = 0; //0: Do nothing for component, 1: Reboot component, 2: Shutdown component,
+    ComLong.param4 = 0; //MAVLink Component ID targeted in param3 (0 for all components)
+    ComLong.param5 = 0;
+    ComLong.param6 = 0;
+    ComLong.param7 = -1;
+
+    switch (param) {
+    case 1:
+        ComLong.param1 = value;
+        break;
+    case 2:
+        ComLong.param2 = value;
+        break;
+    case 3:
+        ComLong.param3 = value;
+        break;
+    }
+
+    if (mMavlinkPassthrough->send_command_long(ComLong) != mavsdk::MavlinkPassthrough::Result::Success) {
+        qDebug() << "Warning: could not send request for reboot or shutdown via MAVLINK.";
+        return false;
+    }
+    return true;
+}
+
 std::string MavsdkVehicleConnection::setIntParameterOnVehicle(std::string name, int32_t value)
 {
     return convertMavsdkParamResultToString(mParam->set_param_int(name, value));

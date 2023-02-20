@@ -57,6 +57,7 @@ public:
     virtual std::string setFloatParameterOnVehicle(std::string, float value) override;
     virtual std::string setCustomParameterOnVehicle(std::string name, std::string value) override;
     virtual std::vector<std::variant<std::vector<std::pair<std::string, int32_t>>, std::vector<std::pair<std::string, float>>, std::vector<std::pair<std::string, std::string>>>> getAllParametersFromVehicle() override;
+    virtual bool requestRebootOrShutdownOfSystemComponents(int param = 0, int value = 0) override;
 
     void setConvertLocalPositionsToGlobalBeforeSending(bool convertLocalPositionsToGlobalBeforeSending);
 
