@@ -2,6 +2,6 @@ The raspberry pi has a hardware i2c bug (see, e.g., https://forums.raspberrypi.c
 When using an overlay that enables hardware i2c, like the seeed-can-fd-hat-v2 overlay, the parameters cannot be changed in a way to avoid this bug.
 seeed-can-fd-hat-v2-mod-overlay.dts is the source for the overlay modified to not enable i2c (which is used for the real-time clock on the board only, not for CAN functionality).
 
-The *.dtbo file contains the overlay binary to be used on the raspberry pi, compiled as follows:
+The *.dtbo file contains the overlay binary to be used on the raspberry pi, compiled as follows (you need to clone the respective Linux kernel to ~/src/linux/include/):
 cpp -nostdinc -I ~/src/linux/include/ -undef -x assembler-with-cpp seeed-can-fd-hat-v2-mod-overlay.dts > seeed-can-fd-hat-v2-mod-overlay.tmp.dts
 dtc -@ -I dts -O dtb -o seeed-can-fd-hat-v2-mod-overlay.dtbo seeed-can-fd-hat-v2-mod-overlay.tmp.dts
