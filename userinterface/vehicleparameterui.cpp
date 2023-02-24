@@ -32,10 +32,7 @@ void VehicleParameterUI::on_getAllParametersFromVehicleButton_clicked()
 
 void VehicleParameterUI::populateTableWithParameters()
 {
-    QPalette palette;
-    palette.setColor(QPalette::Base, Qt::white);
-    ui->setNewParameterStatuslineEdit->setPalette(palette);
-    ui->setNewParameterStatuslineEdit->clear();
+    ui->setNewParameterOnVehicleStatus->clear();
 
     int row = 0;
     int column = 0;
@@ -73,15 +70,12 @@ void VehicleParameterUI::populateTableWithParameters()
 
 void VehicleParameterUI::on_setNewParametersOnVehicleButton_clicked()
 {
-    QPalette palette;
     if (sendChangedParametersToVehicle()) {
-        palette.setColor(QPalette::Base, Qt::green);
-        ui->setNewParameterStatuslineEdit->setPalette(palette);
-        ui->setNewParameterStatuslineEdit->setText("Vehicle parameters successfully updated!");
+        ui->setNewParameterOnVehicleStatus->setStyleSheet("QLabel {color : green; }");
+        ui->setNewParameterOnVehicleStatus->setText("Vehicle parameters successfully updated!");
     } else {
-        palette.setColor(QPalette::Base, Qt::red);
-        ui->setNewParameterStatuslineEdit->setPalette(palette);
-        ui->setNewParameterStatuslineEdit->setText("Vehicle parameters not updated!");
+        ui->setNewParameterOnVehicleStatus->setStyleSheet("QLabel {color : red; }");
+        ui->setNewParameterOnVehicleStatus->setText("Vehicle parameters not updated!");
     }
 }
 
