@@ -590,30 +590,27 @@ void MavsdkVehicleConnection::setActiveAutopilotIDOnVehicle(int id)
         qDebug() << "Warning: could not send MISSION_SET_CURRENT via MAVLINK.";
 }
 
-bool MavsdkVehicleConnection::requestRebootOrShutdownOfSystemComponents(int param, int value)
+bool MavsdkVehicleConnection::requestRebootOrShutdownOfSystemComponents(VehicleConnection::SystemComponent systemComponent, VehicleConnection::ComponentAction componentAction)
 {
     mavsdk::MavlinkPassthrough::CommandLong ComLong;
     memset(&ComLong, 0, sizeof (ComLong));
     ComLong.target_compid = mMavlinkPassthrough->get_target_compid();
     ComLong.target_sysid = mMavlinkPassthrough->get_target_sysid();
     ComLong.command = MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN;
-    ComLong.param1 = 0; //0: Do nothing for autopilot, 1: Reboot autopilot, 2: Shutdown autopilot
-    ComLong.param2 = 0; //0: Do nothing for onboard computer, 1: Reboot onboard computer, 2: Shutdown onboard computer
-    ComLong.param3 = 0; //0: Do nothing for component, 1: Reboot component, 2: Shutdown component,
+    ComLong.param1 = 0; // Autopilot
+    ComLong.param2 = 0; // Onboard Computer
+    ComLong.param3 = 0; // Component Action
     ComLong.param4 = 0; //MAVLink Component ID targeted in param3 (0 for all components)
-    ComLong.param5 = 0;
-    ComLong.param6 = 0;
-    ComLong.param7 = -1;
+    ComLong.param5 = 0; // Reserved (set to 0)
+    ComLong.param6 = 0; // Reserved (set to 0)
+    ComLong.param7 = -1; // WIP: ID (e.g camera ID -1 for all IDs)
 
-    switch (param) {
-    case 1:
-        ComLong.param1 = value;
+    switch (systemComponent) {
+    case VehicleConnection::SystemComponent::Autopilot:
+        ComLong.param1 = (float)componentAction;
         break;
-    case 2:
-        ComLong.param2 = value;
-        break;
-    case 3:
-        ComLong.param3 = value;
+    case VehicleConnection::SystemComponent::OnboardComputer:
+        ComLong.param2 = (float)componentAction;
         break;
     }
 

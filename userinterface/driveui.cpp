@@ -188,11 +188,11 @@ void DriveUI::on_vehicleParameterButton_clicked()
 
 void DriveUI::on_requestRebootButton_clicked()
 {
-    mCurrentVehicleConnection->requestRebootOrShutdownOfSystemComponents(2,1);
+    mCurrentVehicleConnection->requestRebootOrShutdownOfSystemComponents(VehicleConnection::SystemComponent::OnboardComputer,VehicleConnection::ComponentAction::Reboot);
 }
 
 void DriveUI::on_requestShutdownButton_clicked()
 {
-    mCurrentVehicleConnection->requestRebootOrShutdownOfSystemComponents(2,2);
+    mCurrentVehicleConnection->requestRebootOrShutdownOfSystemComponents(VehicleConnection::SystemComponent::OnboardComputer,VehicleConnection::ComponentAction::Shutdown);
 }
 
