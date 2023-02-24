@@ -35,7 +35,7 @@ private:
 
     Ui::VehicleParameterUI *ui;
     QSharedPointer<VehicleConnection> mCurrentVehicleConnection;
-    std::vector<std::variant<std::vector<std::pair<std::string, int32_t>>, std::vector<std::pair<std::string, float>>, std::vector<std::pair<std::string, std::string>>>> mVehicleParameters;
+    VehicleConnection::AllParameters mVehicleParameters;
 };
 
 #endif // VEHICLEPARAMETERUI_H
