@@ -19,6 +19,17 @@ class VehicleConnection : public QObject
 {
     Q_OBJECT
 public:
+    enum class SystemComponent {
+        Autopilot,
+        OnboardComputer,
+    };
+    enum class ComponentAction {
+        DoNothing,
+        Reboot,
+        Shutdown,
+        RebootComponentAndKeepItInTheBootloaderUntilUpgraded,
+    };
+
     virtual void requestGotoENU(const xyz_t &xyz, bool changeAutopilotMode = false) = 0;
     virtual void requestVelocityAndYaw(const xyz_t &velocityENU, const double &yawDeg) = 0;
     virtual void requestArm() = 0;
@@ -35,6 +46,7 @@ public:
     virtual std::string setFloatParameterOnVehicle(std::string, float value) = 0;
     virtual std::string setCustomParameterOnVehicle(std::string name, std::string value) = 0;
     virtual std::vector<std::variant<std::vector<std::pair<std::string, int32_t>>, std::vector<std::pair<std::string, float>>, std::vector<std::pair<std::string, std::string>>>> getAllParametersFromVehicle() = 0;
+    virtual bool requestRebootOrShutdownOfSystemComponents(SystemComponent systemComponent, ComponentAction componentAction) = 0;
 
     void setWaypointFollowerConnectionLocal(const QSharedPointer<WaypointFollower> &waypointFollower);
     bool hasWaypointFollowerConnectionLocal();

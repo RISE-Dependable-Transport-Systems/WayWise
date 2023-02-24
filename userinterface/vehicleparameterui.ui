@@ -207,7 +207,10 @@
      </widget>
     </item>
     <item>
-     <widget class="QLineEdit" name="setNewParameterStatuslineEdit">
+     <widget class="QLabel" name="setNewParameterOnVehicleStatus">
+      <property name="text">
+       <string/>
+      </property>
       <property name="alignment">
        <set>Qt::AlignCenter</set>
       </property>

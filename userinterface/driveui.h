@@ -42,6 +42,10 @@ private slots:
 
     void on_vehicleParameterButton_clicked();
 
+    void on_requestRebootButton_clicked();
+
+    void on_requestShutdownButton_clicked();
+
 private:
     Ui::DriveUI *ui;
 

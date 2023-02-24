@@ -590,6 +590,37 @@ void MavsdkVehicleConnection::setActiveAutopilotIDOnVehicle(int id)
         qDebug() << "Warning: could not send MISSION_SET_CURRENT via MAVLINK.";
 }
 
+bool MavsdkVehicleConnection::requestRebootOrShutdownOfSystemComponents(VehicleConnection::SystemComponent systemComponent, VehicleConnection::ComponentAction componentAction)
+{
+    mavsdk::MavlinkPassthrough::CommandLong ComLong;
+    memset(&ComLong, 0, sizeof (ComLong));
+    ComLong.target_compid = mMavlinkPassthrough->get_target_compid();
+    ComLong.target_sysid = mMavlinkPassthrough->get_target_sysid();
+    ComLong.command = MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN;
+    ComLong.param1 = 0; // Autopilot
+    ComLong.param2 = 0; // Onboard Computer
+    ComLong.param3 = 0; // Component Action
+    ComLong.param4 = 0; //MAVLink Component ID targeted in param3 (0 for all components)
+    ComLong.param5 = 0; // Reserved (set to 0)
+    ComLong.param6 = 0; // Reserved (set to 0)
+    ComLong.param7 = -1; // WIP: ID (e.g camera ID -1 for all IDs)
+
+    switch (systemComponent) {
+    case VehicleConnection::SystemComponent::Autopilot:
+        ComLong.param1 = (float)componentAction;
+        break;
+    case VehicleConnection::SystemComponent::OnboardComputer:
+        ComLong.param2 = (float)componentAction;
+        break;
+    }
+
+    if (mMavlinkPassthrough->send_command_long(ComLong) != mavsdk::MavlinkPassthrough::Result::Success) {
+        qDebug() << "Warning: could not send request for reboot or shutdown via MAVLINK.";
+        return false;
+    }
+    return true;
+}
+
 std::string MavsdkVehicleConnection::setIntParameterOnVehicle(std::string name, int32_t value)
 {
     return convertMavsdkParamResultToString(mParam->set_param_int(name, value));
