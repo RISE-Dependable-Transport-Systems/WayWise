@@ -178,9 +178,12 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
                 break;
             case MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN:
                 auto param2Value = mavlink_msg_command_long_get_param2(&message);
-                if (param2Value == 1 || param2Value == 2) {
+                if (param2Value == 1) {
                     mavResult(MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, MAV_RESULT_ACCEPTED);
-                    emit shutdownOrRebootOnboardComputer(param2Value);
+                    emit shutdownOrRebootOnboardComputer(false);
+                } else if (param2Value == 2) {
+                    mavResult(MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, MAV_RESULT_ACCEPTED);
+                    emit shutdownOrRebootOnboardComputer(true);
                 } else
                     mavResult(MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, MAV_RESULT_DENIED);
                 break;
