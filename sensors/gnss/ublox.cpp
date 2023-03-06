@@ -1149,7 +1149,7 @@ void Ublox::serialDataAvailable()
                     // Check whether this is NMEA GGA with correct checksum
                     // Example: $GNGGA,120020.115,5743.153,N,01256.431,E,1,12,1.0,0.0,M,0.0,M,,*6E
                     if (line.at(0) == '$' && line.size() > 6)
-                        if (line.mid(3, 3).compare("GGA") == 0) {
+                        if (line.mid(3, 3) == QString("GGA")) {
                             QList split = line.split('*');
                             if (split.size() == 2) {
                                 // Test checksum
