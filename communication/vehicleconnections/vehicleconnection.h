@@ -1,5 +1,6 @@
 /*
  *     Copyright 2022 Marvin Damschen   marvin.damschen@ri.se
+ *               2022 Rickard Häll      rickard.hall@ri.se
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
  *
  * Abstract class to communicate with a vehicle using a remote VehicleConnection
@@ -30,6 +31,35 @@ public:
         RebootComponentAndKeepItInTheBootloaderUntilUpgraded,
     };
 
+    struct IntParameter {
+        std::string name{};
+        int32_t value{};
+    };
+    struct FloatParameter {
+        std::string name{};
+        float value{};
+    };
+    struct CustomParameter {
+        std::string name{};
+        std::string value{};
+    };
+    struct AllParameters {
+        std::vector<IntParameter>
+            intParameters{};
+        std::vector<FloatParameter> floatParameters{};
+        std::vector<CustomParameter> customParameters{};
+    };
+    enum class Result {
+        Unknown,
+        Success,
+        Timeout,
+        ConnectionError,
+        WrongType,
+        ParamNameTooLong,
+        NoSystem,
+        ParamValueTooLong,
+    };
+
     virtual void requestGotoENU(const xyz_t &xyz, bool changeAutopilotMode = false) = 0;
     virtual void requestVelocityAndYaw(const xyz_t &velocityENU, const double &yawDeg) = 0;
     virtual void requestArm() = 0;
@@ -42,11 +72,14 @@ public:
     virtual void requestFollowPoint() = 0;
     virtual void setManualControl(double x, double y, double z, double r, uint16_t buttonStateMask) = 0;
     virtual void setActuatorOutput(int index, float value) = 0;
-    virtual std::string setIntParameterOnVehicle(std::string name, int32_t value) = 0;
-    virtual std::string setFloatParameterOnVehicle(std::string, float value) = 0;
-    virtual std::string setCustomParameterOnVehicle(std::string name, std::string value) = 0;
-    virtual std::vector<std::variant<std::vector<std::pair<std::string, int32_t>>, std::vector<std::pair<std::string, float>>, std::vector<std::pair<std::string, std::string>>>> getAllParametersFromVehicle() = 0;
     virtual bool requestRebootOrShutdownOfSystemComponents(SystemComponent systemComponent, ComponentAction componentAction) = 0;
+    virtual Result setIntParameterOnVehicle(std::string name, int32_t value) = 0;
+    virtual Result setFloatParameterOnVehicle(std::string, float value) = 0;
+    virtual Result setCustomParameterOnVehicle(std::string name, std::string value) = 0;
+    virtual std::pair<Result, int32_t> getIntParameterFromVehicle(std::string name) const = 0;
+    virtual std::pair<Result, float> getFloatParameterFromVehicle(std::string name) const = 0;
+    virtual std::pair<Result, std::string> getCustomParameterFromVehicle(std::string name) const = 0;
+    virtual AllParameters getAllParametersFromVehicle() = 0;
 
     void setWaypointFollowerConnectionLocal(const QSharedPointer<WaypointFollower> &waypointFollower);
     bool hasWaypointFollowerConnectionLocal();

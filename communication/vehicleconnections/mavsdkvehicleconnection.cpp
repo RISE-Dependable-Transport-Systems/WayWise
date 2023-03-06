@@ -621,61 +621,89 @@ bool MavsdkVehicleConnection::requestRebootOrShutdownOfSystemComponents(VehicleC
     return true;
 }
 
-std::string MavsdkVehicleConnection::setIntParameterOnVehicle(std::string name, int32_t value)
+VehicleConnection::Result MavsdkVehicleConnection::setIntParameterOnVehicle(std::string name, int32_t value)
 {
-    return convertMavsdkParamResultToString(mParam->set_param_int(name, value));
+    return convertResult(mParam->set_param_int(name, value));
 }
 
-std::string MavsdkVehicleConnection::setFloatParameterOnVehicle(std::string name, float value)
+VehicleConnection::Result MavsdkVehicleConnection::setFloatParameterOnVehicle(std::string name, float value)
 {
-    return convertMavsdkParamResultToString(mParam->set_param_float(name, value));
+    return convertResult(mParam->set_param_float(name, value));
 }
 
-std::string MavsdkVehicleConnection::setCustomParameterOnVehicle(std::string name, std::string value)
+VehicleConnection::Result MavsdkVehicleConnection::setCustomParameterOnVehicle(std::string name, std::string value)
 {
-    return convertMavsdkParamResultToString(mParam->set_param_custom(name, value));
+    return convertResult(mParam->set_param_custom(name, value));
 }
 
-std::vector<std::variant<std::vector<std::pair<std::string, int32_t>>, std::vector<std::pair<std::string, float>>, std::vector<std::pair<std::string, std::string>>>> MavsdkVehicleConnection::getAllParametersFromVehicle()
+std::pair<VehicleConnection::Result, int32_t> MavsdkVehicleConnection::getIntParameterFromVehicle(std::string name) const
 {
-    mavsdk::Param::AllParams vehicleParameters = mParam->get_all_params();
-    std::vector<std::pair<std::string, int32_t>> intParameters;
-    std::vector<std::pair<std::string, float>> floatParameters;
-    std::vector<std::pair<std::string, std::string>> customParameters;
+    auto intParameter =  mParam->get_param_int(name);
 
-    for (const auto& vehicleParameter : vehicleParameters.int_params) {
-        intParameters.push_back(std::make_pair(vehicleParameter.name, vehicleParameter.value));
+    return std::make_pair(convertResult(intParameter.first), intParameter.second);
+};
+
+std::pair<VehicleConnection::Result, float> MavsdkVehicleConnection::getFloatParameterFromVehicle(std::string name) const
+{
+    auto intParameter =  mParam->get_param_float(name);
+
+    return std::make_pair(convertResult(intParameter.first), intParameter.second);
+};
+
+std::pair<VehicleConnection::Result, std::string> MavsdkVehicleConnection::getCustomParameterFromVehicle(std::string name) const
+{
+    auto intParameter =  mParam->get_param_custom(name);
+
+    return std::make_pair(convertResult(intParameter.first), intParameter.second);
+};
+
+VehicleConnection::AllParameters MavsdkVehicleConnection::getAllParametersFromVehicle()
+{
+    mavsdk::Param::AllParams mavsdkVehicleParameters = mParam->get_all_params();
+    VehicleConnection::IntParameter intParameter;
+    VehicleConnection::FloatParameter floatParameter;
+    VehicleConnection::CustomParameter customParameter;
+    VehicleConnection::AllParameters allParameters;
+
+    for (const auto& vehicleParameter : mavsdkVehicleParameters.int_params) {
+        intParameter.name = vehicleParameter.name;
+        intParameter.value = vehicleParameter.value;
+        allParameters.intParameters.push_back(intParameter);
     }
-    for (const auto& vehicleParameter : vehicleParameters.float_params) {
-        floatParameters.push_back(std::make_pair(vehicleParameter.name, vehicleParameter.value));
+    for (const auto& vehicleParameter : mavsdkVehicleParameters.float_params) {
+        floatParameter.name = vehicleParameter.name;
+        floatParameter.value = vehicleParameter.value;
+        allParameters.floatParameters.push_back(floatParameter);
     }
-    for (const auto& vehicleParameter : vehicleParameters.custom_params) {
-        customParameters.push_back(std::make_pair(vehicleParameter.name, vehicleParameter.value));
+    for (const auto& vehicleParameter : mavsdkVehicleParameters.custom_params) {
+        customParameter.name = vehicleParameter.name;
+        customParameter.value = vehicleParameter.value;
+        allParameters.customParameters.push_back(customParameter);
     }
 
-    return {intParameters, floatParameters, customParameters};
+    return allParameters;
 }
 
-std::string MavsdkVehicleConnection::convertMavsdkParamResultToString(mavsdk::Param::Result result)
+VehicleConnection::Result MavsdkVehicleConnection::convertResult(mavsdk::Param::Result result) const
 {
     switch (result) {
     case mavsdk::Param::Result::Success:
-        return "Success";
+        return VehicleConnection::Result::Success;
     case mavsdk::Param::Result::Unknown:
-        return "Unknown";
+        return VehicleConnection::Result::Unknown;
     case mavsdk::Param::Result::WrongType:
-        return "WrongType";
+        return VehicleConnection::Result::WrongType;
     case mavsdk::Param::Result::Timeout:
-        return "Timeout";
+        return VehicleConnection::Result::Timeout;
     case mavsdk::Param::Result::ParamValueTooLong:
-        return "ParamValueTooLong";
+        return VehicleConnection::Result::ParamValueTooLong;
     case mavsdk::Param::Result::ParamNameTooLong:
-        return "ParamNameTooLong";
+        return VehicleConnection::Result::ParamNameTooLong;
     case mavsdk::Param::Result::NoSystem:
-        return "NoSystem";
+        return VehicleConnection::Result::NoSystem;
     case mavsdk::Param::Result::ConnectionError:
-        return "ConnectionError";
+        return VehicleConnection::Result::ConnectionError;
     default:
-        return "Not a known result";
+        return VehicleConnection::Result::Unknown;
     }
 }

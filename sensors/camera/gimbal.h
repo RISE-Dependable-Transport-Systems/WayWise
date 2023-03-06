@@ -19,7 +19,6 @@ public:
     virtual void setPitchAndYaw(double pitch_deg, double yaw_deg) = 0;
     virtual void setYawLocked(bool setLocked) = 0;
 
-
 signals:
 
 };
