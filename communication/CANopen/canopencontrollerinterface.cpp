@@ -1,4 +1,4 @@
-/*
+﻿/*
  *     Copyright 2021 Marvin Damschen   marvin.damschen@ri.se
  *               2021 Rickard Häll      rickard.hall@ri.se
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
@@ -68,6 +68,10 @@ void CANopenControllerInterface::rxDistOfRouteLeft(double dist) {
     emit txDistOfRouteLeft(dist);
 }
 
+void CANopenControllerInterface::finishEventLoop() {
+    mContinueEventLoop = false;
+}
+
 // --- PROCESS ---
 // Start processing data.
 void CANopenControllerInterface::startDevice() {
@@ -127,7 +131,7 @@ void CANopenControllerInterface::startDevice() {
         // command.
         mSlave.Reset();
         // Run the event loop once, then check for Qt events
-        while (true) {
+        while (mContinueEventLoop) {
             loop.run_one();
             thread()->eventDispatcher()->processEvents(QEventLoop::ProcessEventsFlag::AllEvents);
         }
@@ -135,4 +139,5 @@ void CANopenControllerInterface::startDevice() {
         qDebug() << "WARNING: CANopenControllerInterface could not open CAN device, trying to activate simulation.";
         emit activateSimulation();
     }
+    emit finished();
 }

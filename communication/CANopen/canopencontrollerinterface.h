@@ -28,6 +28,7 @@ public slots:
     void commandAttributesReceived(const quint32& attributes);
     void GNSSDataToCANReceived(const QVariant& gnssData);
     void rxDistOfRouteLeft(double dist);
+    void finishEventLoop();
 
 signals:
     void finished();
@@ -44,6 +45,9 @@ signals:
     void activateSimulation();
     void sendGNSSDataToCAN(const QVariant&);
     void txDistOfRouteLeft(double dist);
+
+private:
+    bool mContinueEventLoop = true;
 };
 
 #endif // CANOPENCONTROLLERINTERFACE_H

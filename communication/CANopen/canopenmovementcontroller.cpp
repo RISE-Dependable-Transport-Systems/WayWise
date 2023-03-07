@@ -17,7 +17,7 @@ CANopenMovementController::CANopenMovementController(QSharedPointer<VehicleState
     mCANopenControllerInterface.reset(new CANopenControllerInterface());
     mCANopenControllerInterface->moveToThread(mCanopenThread.get());
     QObject::connect(mCanopenThread.get(), &QThread::started, mCANopenControllerInterface.get(), &CANopenControllerInterface::startDevice);
-    QObject::connect(mCANopenControllerInterface.get(), &CANopenControllerInterface::finished, mCanopenThread.get(), &QThread::quit);
+    QObject::connect(mCANopenControllerInterface.get(), &CANopenControllerInterface::finished, mCanopenThread.get(), &QThread::quit, Qt::DirectConnection);
     QObject::connect(mCANopenControllerInterface.get(), &CANopenControllerInterface::activateSimulation, [&](){
         qDebug() << "WARNING: CANopenMovementController could not connect to CAN bus, simulating movement.";
         mSimulateMovement = true;
@@ -37,8 +37,11 @@ CANopenMovementController::CANopenMovementController(QSharedPointer<VehicleState
     QObject::connect(mCANopenControllerInterface.get(), &CANopenControllerInterface::sendCommandStatus, this, &CANopenMovementController::commandStatusReceived);
     QObject::connect(mCANopenControllerInterface.get(), &CANopenControllerInterface::sendBatterySOC, this, &CANopenMovementController::batterySOCReceived);
     QObject::connect(mCANopenControllerInterface.get(), &CANopenControllerInterface::sendBatteryVoltage, this, &CANopenMovementController::batteryVoltageReceived);
+}
 
-
+CANopenMovementController::~CANopenMovementController() {
+    mCANopenControllerInterface.get()->finishEventLoop();
+    if (mCanopenThread->wait(5000)) {} else mCanopenThread->terminate();
 }
 
 void CANopenMovementController::setDesiredSteeringCurvature(double desiredSteeringCurvature)
