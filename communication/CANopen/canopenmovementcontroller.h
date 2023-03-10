@@ -29,6 +29,7 @@ class CANopenMovementController : public MovementController
     Q_OBJECT
 public:
     CANopenMovementController(QSharedPointer<VehicleState> vehicleState);
+    ~CANopenMovementController();
 
     // MovementController interface
     virtual void setDesiredSpeed(double desiredSpeed) override;
@@ -67,6 +68,5 @@ private:
 
     QSharedPointer<QThread> mCanopenThread;
     QSharedPointer<CANopenControllerInterface> mCANopenControllerInterface;
-
 };
 #endif // CANOPENMOVEMENTCONTROLLER_H
