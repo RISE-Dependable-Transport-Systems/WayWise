@@ -157,6 +157,11 @@ void UbloxRover::setIMUOrientationOffset(double roll_deg, double pitch_deg, doub
     mIMUOrientationOffset = {roll_deg, pitch_deg, yaw_deg};
 }
 
+void UbloxRover::setGNSSPositionOffset(double xOffset, double yOffset)
+{
+    mGNSSPositionOffset = {xOffset, yOffset, 0.0};
+}
+
 bool UbloxRover::configureUblox()
 {
     // The u-blox receiver detects the previously stored data in the flash.
@@ -272,8 +277,17 @@ void UbloxRover::updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt)
             xyz = coordinateTransforms::llhToEnu(mEnuReference, llh);
 
         // Position
-        gnssPos.setX(xyz.x);
-        gnssPos.setY(xyz.y);
+        // Apply antenna offset to reference point (e.g., back axle) if set. Assumes fused yaw is updated.
+        if (mGNSSPositionOffset.x != 0.0 || mGNSSPositionOffset.y != 0.0) {
+            PosPoint fusedPos = mVehicleState->getPosition(PosType::fused);
+            double fusedYaw_radENU = fusedPos.getYaw() * M_PI / 180.0;
+
+            gnssPos.setX(xyz.x - (cos(fusedYaw_radENU) * mGNSSPositionOffset.x - sin(fusedYaw_radENU) * mGNSSPositionOffset.y));
+            gnssPos.setY(xyz.y - (sin(fusedYaw_radENU) * mGNSSPositionOffset.x + cos(fusedYaw_radENU) * mGNSSPositionOffset.y));
+        } else {
+            gnssPos.setX(xyz.x);
+            gnssPos.setY(xyz.y);
+        }
         gnssPos.setHeight(xyz.z);
 
         // Yaw --- based on last GNSS position if fusion (F9R) unavailable
