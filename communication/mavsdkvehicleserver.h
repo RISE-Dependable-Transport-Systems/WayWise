@@ -14,7 +14,6 @@
 #include <mavsdk/plugins/action_server/action_server.h>
 #include <mavsdk/plugins/mavlink_passthrough/mavlink_passthrough.h>
 #include <mavsdk/plugins/mission_raw_server/mission_raw_server.h>
-#include <mavsdk/plugins/param_server/param_server.h>
 #include <mavsdk/plugins/telemetry_server/telemetry_server.h>
 #include <mavsdk/server_component.h>
 #include "autopilot/waypointfollower.h"
@@ -22,6 +21,7 @@
 #include "vehicles/controller/movementcontroller.h"
 #include "vehicles/vehiclestate.h"
 #include "waywise.h"
+#include "communication/parameterserver.h"
 
 class MavsdkVehicleServer : public QObject
 {
@@ -34,9 +34,7 @@ public:
     void setManualControlMaxSpeed(double manualControlMaxSpeed_ms);
     void mavResult(const uint16_t command, MAV_RESULT result);
     void sendGpsOriginLlh(const llh_t &gpsOriginLlh);
-
-public slots:
-    void saveParametersToXmlFile();
+    QSharedPointer<ParameterServer> getParameterServer();
 
 signals:
     void startWaypointFollower(bool fromBeginning); // to enable starting from MAVSDK thread
@@ -55,7 +53,6 @@ private:
     mavsdk::TelemetryServer::RawGps mRawGps;
     mavsdk::TelemetryServer::GpsInfo mGpsInfo {0, mavsdk::TelemetryServer::FixType::NoGps};
     std::shared_ptr<mavsdk::ActionServer> mActionServer;
-    std::shared_ptr<mavsdk::ParamServer> mParamServer;
     std::shared_ptr<mavsdk::MissionRawServer> mMissionRawServer;
     std::shared_ptr<mavsdk::MavlinkPassthrough> mMavlinkPassthrough;
     QTimer mPublishMavlinkTimer;
@@ -64,6 +61,7 @@ private:
     QSharedPointer<UbloxRover> mUbloxRover;
     QSharedPointer<WaypointFollower> mWaypointFollower;
     QSharedPointer<MovementController> mMovementController;
+    QSharedPointer<ParameterServer> mParameterServer;
 
     bool mHeartbeat;
     QTimer mHeartbeatTimer;
