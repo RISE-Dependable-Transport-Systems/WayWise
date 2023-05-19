@@ -24,7 +24,7 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
     mTelemetryServer.reset(new mavsdk::TelemetryServer(serverComponent));
     mActionServer.reset(new mavsdk::ActionServer(serverComponent));
     mMissionRawServer.reset(new mavsdk::MissionRawServer(serverComponent));
-    mParameterServer.reset(new ParameterServer(serverComponent));
+    mParameterServer.reset(new MavlinkParameterServer(serverComponent));
 
     // Allow the vehicle to change to auto mode (manual is always allowed) and arm, disable takeoff (only rover support for now)
     mActionServer->set_allowable_flight_modes({true, false, false});
