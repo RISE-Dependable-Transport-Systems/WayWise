@@ -26,6 +26,7 @@ struct WayPointFollowerState {
     int currentWaypointIndex;
     bool adaptivePurePursuitRadius = false;
     double purePursuitRadius = 1.0;
+    double adaptivePurePursuitRadiusCoefficient = 1.0;
     // Follow Route
     int numWaypointsLookahead = 8;
     bool repeatRoute = false;
@@ -49,7 +50,10 @@ public:
     inline bool isOnVehicle() {return !mMovementController.isNull();}
 
     double getPurePursuitRadius() const;
-    void setPurePursuitRadius(double value, bool adaptive = false);
+    void setPurePursuitRadius(double value);
+    void activateAdaptivePurePursuitRadius(bool adaptive);
+    double getAdaptivePurePursuitRadiusCoefficient();
+    void setAdaptivePurePursuitRadiusCoefficient(double coefficient);
 
     virtual double getFollowPointSpeed() const;
     virtual void setFollowPointSpeed(double value);

@@ -417,10 +417,19 @@ double PurepursuitWaypointFollower::getPurePursuitRadius() const
     return mCurrentState.purePursuitRadius;
 }
 
-void PurepursuitWaypointFollower::setPurePursuitRadius(double value, bool adaptive)
+void PurepursuitWaypointFollower::setPurePursuitRadius(double value)
 {
     mCurrentState.purePursuitRadius = value;
-    mCurrentState.adaptivePurePursuitRadius = adaptive;
+}
+
+void PurepursuitWaypointFollower::setAdaptivePurePursuitRadiusCoefficient(double coefficient)
+{
+    mCurrentState.adaptivePurePursuitRadiusCoefficient = coefficient;
+}
+
+double PurepursuitWaypointFollower::getAdaptivePurePursuitRadiusCoefficient()
+{
+    return mCurrentState.adaptivePurePursuitRadiusCoefficient;
 }
 
 bool PurepursuitWaypointFollower::getRepeatRoute() const
@@ -495,9 +504,14 @@ double PurepursuitWaypointFollower::purePursuitRadius()
 {
     const auto& vehicleState = (isOnVehicle() ? mMovementController->getVehicleState() : mVehicleConnection->getVehicleState());
     if (mCurrentState.adaptivePurePursuitRadius)
-        vehicleState->setAutopilotRadius(mCurrentState.currentGoal.getSpeed()); // TODO: calculation?
+        vehicleState->setAutopilotRadius(mCurrentState.adaptivePurePursuitRadiusCoefficient*mCurrentState.currentGoal.getSpeed()); // TODO: calculation?
     else
         vehicleState->setAutopilotRadius(mCurrentState.purePursuitRadius);
 
     return vehicleState->getAutopilotRadius();
+}
+
+void PurepursuitWaypointFollower::activateAdaptivePurePursuitRadius(bool adaptive)
+{
+    mCurrentState.adaptivePurePursuitRadius = adaptive;
 }
