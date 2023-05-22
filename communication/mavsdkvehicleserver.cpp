@@ -10,8 +10,6 @@
 #include <QMetaMethod>
 #include <algorithm>
 #include <chrono>
-#include <QXmlStreamWriter>
-#include <QFile>
 
 MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleState)
 {
@@ -25,15 +23,8 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
     // Create server plugins
     mTelemetryServer.reset(new mavsdk::TelemetryServer(serverComponent));
     mActionServer.reset(new mavsdk::ActionServer(serverComponent));
-    mParamServer.reset(new mavsdk::ParamServer(serverComponent));
     mMissionRawServer.reset(new mavsdk::MissionRawServer(serverComponent));
-
-    // These are needed for MAVSDK at the moment
-    mParamServer->provide_param_int("CAL_ACC0_ID", 1);
-    mParamServer->provide_param_int("CAL_GYRO0_ID", 1);
-    mParamServer->provide_param_int("CAL_MAG0_ID", 1);
-    mParamServer->provide_param_int("SYS_HITL", 0);
-    mParamServer->provide_param_int("MIS_TAKEOFF_ALT", 0);
+    mParameterServer.reset(new MavlinkParameterServer(serverComponent));
 
     // Allow the vehicle to change to auto mode (manual is always allowed) and arm, disable takeoff (only rover support for now)
     mActionServer->set_allowable_flight_modes({true, false, false});
@@ -73,7 +64,7 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
         mTelemetryServer->publish_home(homePositionLlh);
         mTelemetryServer->publish_position_velocity_ned(positionVelocityNed);
         mTelemetryServer->publish_raw_gps(mRawGps, mGpsInfo);
-    });
+    });    
 
     mActionServer->subscribe_flight_mode_change([this](mavsdk::ActionServer::Result res, mavsdk::ActionServer::FlightMode mode) {
         if  (res == mavsdk::ActionServer::Result::Success) {
@@ -238,7 +229,7 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
         });
     });
 
-    mMavsdk.intercept_outgoing_messages_async([](mavlink_message_t &message){
+    mMavsdk.intercept_outgoing_messages_async([this](mavlink_message_t &message){
         switch (message.msgid) {
         case MAVLINK_MSG_ID_HEARTBEAT: // Fix some info in heartbeat s.th. MAVSDK / ControlTower detects vehicle correctly
             mavlink_heartbeat_t heartbeat;
@@ -256,6 +247,11 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
 //                        autopilot_version.os_sw_version << autopilot_version.board_version << autopilot_version.flight_custom_version << autopilot_version.middleware_custom_version <<
 //                        autopilot_version.os_custom_version << autopilot_version.vendor_id << autopilot_version.product_id << autopilot_version.uid << autopilot_version.uid2;
 //            break;
+        case MAVLINK_MSG_ID_PARAM_VALUE: // This message is sent when a parameter has been changed
+            mavlink_param_value_t parameter;
+            mavlink_msg_param_value_decode(&message, &parameter);
+            if (parameter.param_type == 9) // Float
+                mParameterServer->updateParameter(parameter.param_id, parameter.param_value);
         default: ;
 //            qDebug() << "out:" << message.msgid;
         }
@@ -407,30 +403,7 @@ void MavsdkVehicleServer::sendGpsOriginLlh(const llh_t &gpsOriginLlh)
         qDebug() << "Warning: could not send GPS_GLOBAL_ORIGIN via MAVLINK.";
 };
 
-void MavsdkVehicleServer::saveParametersToXmlFile()
+QSharedPointer<ParameterServer> MavsdkVehicleServer::getParameterServer()
 {
-    mavsdk::ParamServer::AllParams parameters = mParamServer->retrieve_all_params();
-    QFile parameterFile("vehicle_parameters.xml");
-
-    if (!parameterFile.open(QIODevice::WriteOnly))
-        qDebug() << "Could not save parameters";
-
-    QXmlStreamWriter stream(&parameterFile);
-    stream.setCodec("UTF-8");
-    stream.setAutoFormatting(true);
-    stream.writeStartDocument();
-
-    for (const auto& vehicleParameter : parameters.int_params) {
-        stream.writeTextElement(QString::fromStdString(vehicleParameter.name), QString::number(vehicleParameter.value));
-    }
-    for (const auto& vehicleParameter : parameters.float_params) {
-        stream.writeTextElement(QString::fromStdString(vehicleParameter.name), QString::number(vehicleParameter.value));
-    }
-    for (const auto& vehicleParameter : parameters.custom_params) {
-        stream.writeTextElement(QString::fromStdString(vehicleParameter.name), QString::fromStdString(vehicleParameter.value));
-    }
-
-    stream.writeEndElement();
-    stream.writeEndDocument();
-    parameterFile.close();
-};
+    return mParameterServer;
+}
