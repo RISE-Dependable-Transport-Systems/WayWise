@@ -503,9 +503,13 @@ void PurepursuitWaypointFollower::calculateDistanceOfRouteLeft()
 double PurepursuitWaypointFollower::purePursuitRadius()
 {
     const auto& vehicleState = (isOnVehicle() ? mMovementController->getVehicleState() : mVehicleConnection->getVehicleState());
-    if (mCurrentState.adaptivePurePursuitRadius)
-        vehicleState->setAutopilotRadius(mCurrentState.adaptivePurePursuitRadiusCoefficient*mCurrentState.currentGoal.getSpeed()); // TODO: calculation?
-    else
+    if (mCurrentState.adaptivePurePursuitRadius) {
+        // y = k*x + m
+        double dynamicRadius =  mCurrentState.adaptivePurePursuitRadiusCoefficient*mCurrentState.currentGoal.getSpeed();
+        if (dynamicRadius > mCurrentState.purePursuitRadius)
+            vehicleState->setAutopilotRadius(dynamicRadius);
+        else vehicleState->setAutopilotRadius(mCurrentState.purePursuitRadius);
+    } else
         vehicleState->setAutopilotRadius(mCurrentState.purePursuitRadius);
 
     return vehicleState->getAutopilotRadius();
