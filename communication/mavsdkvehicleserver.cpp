@@ -326,7 +326,7 @@ void MavsdkVehicleServer::updateRawGpsAndGpsInfoFromUbx(const ubx_nav_pvt &pvt) 
 
 }
 
-void MavsdkVehicleServer::setWaypointFollower(QSharedPointer<WaypointFollower> waypointFollower)
+void MavsdkVehicleServer::setWaypointFollower(QSharedPointer<MultiWaypointFollower> waypointFollower)
 {
     mWaypointFollower = waypointFollower;
     connect(this, &MavsdkVehicleServer::startWaypointFollower, mWaypointFollower.get(), &WaypointFollower::startFollowingRoute);

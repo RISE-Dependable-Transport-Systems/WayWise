@@ -9,3 +9,8 @@ void ParameterServer::updateParameter(std::string parameterName, float parameter
     auto setParameterFunction = mParameterToClassMapping.find(parameterName)->second.first;
     setParameterFunction(parameterValue);
 }
+
+void ParameterServer::parameterToClassMapping(std::string parameterName, std::function<void(float)> setClassParameterFunction, std::function<float(void)> getClassParameterFunction)
+{
+    mParameterToClassMapping.insert_or_assign(parameterName, std::make_pair(setClassParameterFunction, getClassParameterFunction));
+};

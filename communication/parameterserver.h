@@ -31,8 +31,8 @@ public:
     };
 
     void updateParameter(std::string parameterName, float parameterValue);
+    void parameterToClassMapping(std::string parameterName, std::function<void(float)> setClassParameterFunction, std::function<float(void)> getClassParameterFunction);
 
-    virtual void provideParameter(std::string parameterName, std::function<void(float)> setClassParameterFunction, std::function<float(void)> getClassParameterFunction) = 0;
     virtual void saveParametersToXmlFile() = 0;
 
 protected:

@@ -16,7 +16,7 @@
 #include <mavsdk/plugins/mission_raw_server/mission_raw_server.h>
 #include <mavsdk/plugins/telemetry_server/telemetry_server.h>
 #include <mavsdk/server_component.h>
-#include "autopilot/waypointfollower.h"
+#include "autopilot/multiwaypointfollower.h"
 #include "sensors/gnss/ubloxrover.h"
 #include "vehicles/controller/movementcontroller.h"
 #include "vehicles/vehiclestate.h"
@@ -29,7 +29,7 @@ class MavsdkVehicleServer : public QObject
 public:
     explicit MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleState);
     void setUbloxRover(QSharedPointer<UbloxRover> ubloxRover);
-    void setWaypointFollower(QSharedPointer<WaypointFollower> waypointFollower);
+    void setWaypointFollower(QSharedPointer<MultiWaypointFollower> waypointFollower);
     void setMovementController(QSharedPointer<MovementController> movementController);
     void setManualControlMaxSpeed(double manualControlMaxSpeed_ms);
     void mavResult(const uint16_t command, MAV_RESULT result);
@@ -59,7 +59,7 @@ private:
 
     QSharedPointer<VehicleState> mVehicleState;
     QSharedPointer<UbloxRover> mUbloxRover;
-    QSharedPointer<WaypointFollower> mWaypointFollower;
+    QSharedPointer<MultiWaypointFollower> mWaypointFollower;
     QSharedPointer<MovementController> mMovementController;
     QSharedPointer<ParameterServer> mParameterServer;
 
