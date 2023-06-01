@@ -59,6 +59,8 @@ private slots:
 
     void on_generateRouteButton_clicked();
 
+    void on_reverseButton_clicked();
+
 private:
     Ui::PlanUI *ui;
     QSharedPointer<RoutePlannerModule> mRoutePlanner;

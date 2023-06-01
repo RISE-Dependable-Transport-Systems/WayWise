@@ -63,6 +63,13 @@
           </property>
          </widget>
         </item>
+        <item row="1" column="1">
+         <widget class="QPushButton" name="exportAllRoutesButton">
+          <property name="text">
+           <string>Export All...</string>
+          </property>
+         </widget>
+        </item>
         <item row="0" column="1">
          <widget class="QPushButton" name="removeRouteButton">
           <property name="sizePolicy">
@@ -80,13 +87,6 @@
          <widget class="QPushButton" name="importRouteButton">
           <property name="text">
            <string>Import...</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="1">
-         <widget class="QPushButton" name="exportAllRoutesButton">
-          <property name="text">
-           <string>Export All...</string>
           </property>
          </widget>
         </item>
@@ -108,6 +108,13 @@
         </property>
         <property name="text">
          <string>Send to Autopilot</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="reverseButton">
+        <property name="text">
+         <string>Reverse Route</string>
         </property>
        </widget>
       </item>
