@@ -204,6 +204,16 @@ void RoutePlannerModule::removeRoute(int index)
         mPlannerState.currentRouteIndex--;
 }
 
+void RoutePlannerModule::reverseRoute()
+{
+    int size = mRoutes[mPlannerState.currentRouteIndex].size(); // for readability
+
+    for(int i = 0; i < size/2; i++)
+        mRoutes[mPlannerState.currentRouteIndex].swapItemsAt(i, size - (1+i));  // reverses QList
+
+    emit requestRepaint();
+}
+
 void RoutePlannerModule::setNewPointHeight(double height)
 {
     mPlannerState.newPointHeight = height;

@@ -30,6 +30,7 @@ public:
     bool removeCurrentRoute();
     void clearCurrentRoute();
     void removeRoute(int index);
+    void reverseRoute();
     void setNewPointHeight(double height);
     void setNewPointSpeed(double speed);
     void setNewPointTime(QTime time);
