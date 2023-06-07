@@ -112,6 +112,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="reverseButton">
+        <property name="text">
+         <string>Reverse Route</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="exportCurrentRouteButton">
         <property name="text">
          <string>Export to File...</string>
