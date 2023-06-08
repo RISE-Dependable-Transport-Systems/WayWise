@@ -112,7 +112,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="reverseButton">
+       <widget class="QPushButton" name="Reverse">
         <property name="text">
          <string>Reverse Route</string>
         </property>

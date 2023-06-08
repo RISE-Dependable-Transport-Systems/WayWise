@@ -230,8 +230,8 @@ void PlanUI::on_generateRouteButton_clicked()
     mRouteGeneratorUI->show();
 }
 
-void PlanUI::on_reverseButton_clicked()
+void PlanUI::on_Reverse_clicked()
 {
-    mRoutePlanner->reverseRoute();
+    mRoutePlanner->reverseCurrentRoute();
 }
 

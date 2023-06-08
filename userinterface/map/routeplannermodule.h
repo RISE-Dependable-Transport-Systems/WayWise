@@ -35,7 +35,7 @@ public:
     void setNewPointTime(QTime time);
     void setNewPointAttribute(uint32_t attribute);
     void setUpdatePointOnClick(bool update);
-    void reverseRoute();
+    void reverseCurrentRoute();
 
 private:
     typedef enum {

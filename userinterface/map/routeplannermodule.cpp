@@ -357,7 +357,7 @@ void RoutePlannerModule::drawRoute(QPainter& painter, QTransform drawTrans, QTra
     }
 }
 
-void RoutePlannerModule::reverseRoute()
+void RoutePlannerModule::reverseCurrentRoute()
 {
     int size = mRoutes[mPlannerState.currentRouteIndex].size(); // for readability
 
