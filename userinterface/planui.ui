@@ -119,6 +119,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="Merge">
+        <property name="text">
+         <string>Merge with...</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="exportCurrentRouteButton">
         <property name="text">
          <string>Export to File...</string>

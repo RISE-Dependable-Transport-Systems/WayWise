@@ -13,6 +13,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QXmlStreamWriter>
+#include <QInputDialog>
 #include "userinterface/map/routeplannermodule.h"
 #include "userinterface/routegeneratorui.h"
 
@@ -60,6 +61,8 @@ private slots:
     void on_generateRouteButton_clicked();
 
     void on_Reverse_clicked();
+
+    void on_Merge_clicked();
 
 private:
     Ui::PlanUI *ui;
