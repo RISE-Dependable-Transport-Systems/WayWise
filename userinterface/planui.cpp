@@ -230,12 +230,12 @@ void PlanUI::on_generateRouteButton_clicked()
     mRouteGeneratorUI->show();
 }
 
-void PlanUI::on_Reverse_clicked()
+void PlanUI::on_reverseButton_clicked()
 {
     mRoutePlanner->reverseCurrentRoute();
 }
 
-void PlanUI::on_Merge_clicked()
+void PlanUI::on_mergeButton_clicked()
 {
     int index = QInputDialog::getInt(this, tr("Merge with..."),
                                      tr("Select route to merge with:"), 1,
