@@ -237,11 +237,12 @@ void PlanUI::on_reverseButton_clicked()
 
 void PlanUI::on_appendButton_clicked()
 {
+    bool ok;    // set to false if user presses Cancel (or "x")
     int index = QInputDialog::getInt(this, tr("Append to..."),
                                      tr("Select route to append:"), 1,
-                                     1, mRoutePlanner->getNumberOfRoutes());
+                                     1, mRoutePlanner->getNumberOfRoutes(), 1, &ok);
 
-    if(index != mRoutePlanner->getCurrentRouteIndex()+1)    // ignore if trying to merge with itsef
+    if(ok && index != mRoutePlanner->getCurrentRouteIndex()+1)    // ignore if trying to merge with itsef
     {
         mRoutePlanner->appendToRoute(index-1);  // -1 to match QList indexes
 
