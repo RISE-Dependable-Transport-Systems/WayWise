@@ -62,7 +62,7 @@ private slots:
 
     void on_reverseButton_clicked();
 
-    void on_mergeButton_clicked();
+    void on_appendButton_clicked();
 
 private:
     Ui::PlanUI *ui;

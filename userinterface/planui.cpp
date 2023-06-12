@@ -235,15 +235,15 @@ void PlanUI::on_reverseButton_clicked()
     mRoutePlanner->reverseCurrentRoute();
 }
 
-void PlanUI::on_mergeButton_clicked()
+void PlanUI::on_appendButton_clicked()
 {
-    int index = QInputDialog::getInt(this, tr("Merge with..."),
-                                     tr("Select route to merge with:"), 1,
+    int index = QInputDialog::getInt(this, tr("Append to..."),
+                                     tr("Select route to append:"), 1,
                                      1, mRoutePlanner->getNumberOfRoutes());
 
     if(index != mRoutePlanner->getCurrentRouteIndex()+1)    // ignore if trying to merge with itsef
     {
-        mRoutePlanner->mergeWithCurrentRoute(index-1);  // -1 to match QList indexes
+        mRoutePlanner->appendToRoute(index-1);  // -1 to match QList indexes
 
         ui->currentRouteSpinBox->setValue(mRoutePlanner->getCurrentRouteIndex() + 1);
         ui->currentRouteSpinBox->setMaximum(mRoutePlanner->getNumberOfRoutes());

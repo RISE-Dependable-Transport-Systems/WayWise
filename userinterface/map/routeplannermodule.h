@@ -36,7 +36,7 @@ public:
     void setNewPointAttribute(uint32_t attribute);
     void setUpdatePointOnClick(bool update);
     void reverseCurrentRoute();
-    void mergeWithCurrentRoute(int index);
+    void appendToRoute(int index);
 
 private:
     typedef enum {

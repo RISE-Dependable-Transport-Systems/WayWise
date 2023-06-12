@@ -367,9 +367,11 @@ void RoutePlannerModule::reverseCurrentRoute()
     emit requestRepaint();
 }
 
-void RoutePlannerModule::mergeWithCurrentRoute(int index)
+void RoutePlannerModule::appendToRoute(int index)
 {
-    appendRouteToCurrentRoute(mRoutes[index]);
+    mRoutes[index].append(getCurrentRoute());
 
-    removeRoute(index);
+    removeRoute(mPlannerState.currentRouteIndex);
+
+    emit requestRepaint();
 }

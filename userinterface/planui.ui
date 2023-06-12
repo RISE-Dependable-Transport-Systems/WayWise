@@ -119,9 +119,9 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="mergeButton">
+       <widget class="QPushButton" name="appendButton">
         <property name="text">
-         <string>Merge with...</string>
+         <string>Append to...</string>
         </property>
        </widget>
       </item>
