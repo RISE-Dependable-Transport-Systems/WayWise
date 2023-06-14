@@ -375,3 +375,18 @@ void RoutePlannerModule::appendToRoute(int index)
 
     emit requestRepaint();
 }
+
+void RoutePlannerModule::splitCurrentRoute(int index)
+{
+    int size = mRoutes[mPlannerState.currentRouteIndex].size();
+
+    QList<PosPoint> newRoute;   // points at 'index' and onward becomes a new route
+
+    for(int i = index; i < size; i++)
+        newRoute.append(mRoutes[mPlannerState.currentRouteIndex].at(i));
+
+    for(int i = index; i < size; i++)
+        mRoutes[mPlannerState.currentRouteIndex].pop_back();
+
+    addRoute(newRoute);
+}

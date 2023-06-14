@@ -251,3 +251,33 @@ void PlanUI::on_appendButton_clicked()
         ui->currentRouteSpinBox->setSuffix(" / " + QString::number(mRoutePlanner->getNumberOfRoutes()));
     }
 }
+
+void PlanUI::on_splitButton_clicked()
+{
+    if(mRoutePlanner->getCurrentRoute().size() < 2)
+    {
+        QMessageBox::information(this, tr("Split failed"), tr("Route must contain at least two points to be split."));
+        return;
+    }
+
+    int size = mRoutePlanner->getCurrentRoute().size();
+    QList<QString> connections;
+
+    for(int i = 0; i < (size - 1); i++)
+        connections.append(QString::number(i) + " - " + QString::number(i+1));
+
+    bool ok;
+    QString connectionToSplit = QInputDialog::getItem(this, tr("Split Route"),
+                                                      tr("Select points to disconnect:"), connections,
+                                                      0, false, &ok);
+
+    if(ok)
+    {
+        int secondPointIndex = connectionToSplit.split(" ")[2].toInt();  // knowledge of only 1 point required
+        mRoutePlanner->splitCurrentRoute(secondPointIndex);
+    }
+
+    ui->currentRouteSpinBox->setValue(mRoutePlanner->getCurrentRouteIndex() + 1);
+    ui->currentRouteSpinBox->setMaximum(mRoutePlanner->getNumberOfRoutes());
+    ui->currentRouteSpinBox->setSuffix(" / " + QString::number(mRoutePlanner->getNumberOfRoutes()));
+}

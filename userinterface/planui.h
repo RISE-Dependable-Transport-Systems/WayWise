@@ -64,6 +64,8 @@ private slots:
 
     void on_appendButton_clicked();
 
+    void on_splitButton_clicked();
+
 private:
     Ui::PlanUI *ui;
     QSharedPointer<RoutePlannerModule> mRoutePlanner;

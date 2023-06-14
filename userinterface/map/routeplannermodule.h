@@ -37,6 +37,7 @@ public:
     void setUpdatePointOnClick(bool update);
     void reverseCurrentRoute();
     void appendToRoute(int index);
+    void splitCurrentRoute(int index);
 
 private:
     typedef enum {
