@@ -62,7 +62,7 @@ private:
     void drawCircleFast(QPainter &painter, QPointF center, double radius, int type);
 
     QList<QPixmap> mPixmaps;
-    QList<QList<PosPoint> > mRoutes;
+    QList<QList<PosPoint>> mRoutes;
     int getClosestPoint(PosPoint p, QList<PosPoint> points, double &dist);
 };
 

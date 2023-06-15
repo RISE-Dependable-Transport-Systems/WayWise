@@ -71,6 +71,7 @@ private:
     QSharedPointer<RoutePlannerModule> mRoutePlanner;
     QSharedPointer<RouteGeneratorUI> mRouteGeneratorUI;
     void xmlStreamWriteRoute(QXmlStreamWriter &xmlWriteStream, const QList<PosPoint> route);
+    void xmlStreamWriteEnuRef(QXmlStreamWriter &xmlWriteStream, const llh_t enuRef);
 };
 
 #endif // PLANUI_H
