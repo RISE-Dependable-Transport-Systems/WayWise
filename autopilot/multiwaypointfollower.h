@@ -34,6 +34,13 @@ public:
     virtual void stop() override;
     virtual void resetState() override;
 
+    // PurepursuitWaypointFollower parameters
+    double getPurePursuitRadius() const;
+    void setPurePursuitRadius(double value);
+    void setAdaptivePurePursuitRadiusActive(bool adaptive);
+    double getAdaptivePurePursuitRadiusCoefficient();
+    void setAdaptivePurePursuitRadiusCoefficient(double coefficient);
+
     int addWaypointFollower(QSharedPointer<WaypointFollower> waypointfollower);
     void setActiveWaypointFollower(int waypointfollowerID);
     QSharedPointer<WaypointFollower> getActiveWaypointFollower();
