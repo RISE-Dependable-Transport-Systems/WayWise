@@ -36,8 +36,8 @@ public:
     void setNewPointAttribute(uint32_t attribute);
     void setUpdatePointOnClick(bool update);
     void reverseCurrentRoute();
-    void appendToRoute(int index);
-    void splitCurrentRoute(int index);
+    void appendCurrentRouteTo(int routeIndex);
+    void splitCurrentRouteAt(int pointIndex);
 
 private:
     typedef enum {

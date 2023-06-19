@@ -135,16 +135,19 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="splitButton">
+          <widget class="QPushButton" name="appendButton">
            <property name="text">
-            <string>Split</string>
+            <string>Append to...</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="appendButton">
+          <widget class="QPushButton" name="splitButton">
+           <property name="toolTip">
+            <string>Route must contain at least two points to be split.</string>
+           </property>
            <property name="text">
-            <string>Append to...</string>
+            <string>Split</string>
            </property>
           </widget>
          </item>
