@@ -34,11 +34,15 @@ void RouteGeneratorUI::setEnuRef(const llh_t &llh)
     ui->previewMapWidget->setEnuRef(llh);
 }
 
+llh_t RouteGeneratorUI::getEnuRef()
+{
+    return ui->previewMapWidget->getEnuRef();
+}
+
 void RouteGeneratorUI::on_cancelButton_clicked()
 {
     hide();
 }
-
 
 void RouteGeneratorUI::on_useRouteButton_clicked()
 {

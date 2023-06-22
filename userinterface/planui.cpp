@@ -108,6 +108,15 @@ void PlanUI::xmlStreamWriteRoute(QXmlStreamWriter& xmlWriteStream, const QList<P
     xmlWriteStream.writeEndElement();
 }
 
+void PlanUI::xmlStreamWriteEnuRef(QXmlStreamWriter& xmlWriteStream, llh_t enuRef)
+{
+    xmlWriteStream.writeStartElement("enuref");
+    xmlWriteStream.writeTextElement("Latitude", QString::number(enuRef.latitude, 'g', 49)); // maximal precision seems to be 47 decimals (49 digits in total)
+    xmlWriteStream.writeTextElement("Longitude", QString::number(enuRef.longitude, 'g', 49));
+    xmlWriteStream.writeTextElement("Height", QString::number(enuRef.height, 'g', 49));
+    xmlWriteStream.writeEndElement();
+}
+
 void PlanUI::on_exportCurrentRouteButton_clicked()
 {
     QString filename = QFileDialog::getSaveFileName(this, tr("Export Current Route to File"), "", tr("XML Files (*.xml)"));
@@ -133,6 +142,8 @@ void PlanUI::on_exportCurrentRouteButton_clicked()
     stream.writeStartDocument();
 
     stream.writeStartElement("routes");
+
+    xmlStreamWriteEnuRef(stream, getRouteGeneratorUI()->getEnuRef());
 
     xmlStreamWriteRoute(stream, mRoutePlanner->getCurrentRoute());
 
@@ -166,6 +177,8 @@ void PlanUI::on_exportAllRoutesButton_clicked()
 
     xmlWriteStream.writeStartElement("routes");
 
+    xmlStreamWriteEnuRef(xmlWriteStream, getRouteGeneratorUI()->getEnuRef());
+
     for (int i = 0; i < mRoutePlanner->getNumberOfRoutes(); i++)
         xmlStreamWriteRoute(xmlWriteStream, mRoutePlanner->getRoute(i));
 
@@ -190,15 +203,35 @@ void PlanUI::on_importRouteButton_clicked()
 
     QXmlStreamReader stream(&file);
 
-    if (stream.readNextStartElement()) {
+    if (stream.readNextStartElement())
+    {
         if (stream.name() == "routes")
-            while(stream.readNextStartElement()) {
-                if (stream.name() == "route") {
+            while(stream.readNextStartElement())
+            {
+                llh_t importedEnuRef;
+                if(stream.name() == "enuref")
+                {
+                    while(stream.readNextStartElement())
+                    {
+                        if (stream.name() == "Latitude")
+                            importedEnuRef.latitude = stream.readElementText().toDouble();
+                        if (stream.name() == "Longitude")
+                            importedEnuRef.longitude = stream.readElementText().toDouble();
+                        if (stream.name() == "Height")
+                            importedEnuRef.height = stream.readElementText().toDouble();
+                    }
+                }
+                if (stream.name() == "route")
+                {
                     QList<PosPoint> importedRoute;
-                    while(stream.readNextStartElement()) {
-                        if (stream.name() == "point") {
+                    while(stream.readNextStartElement())
+                    {
+                        if (stream.name() == "point")
+                        {
                             PosPoint importedPoint;
-                            while(stream.readNextStartElement()) {
+
+                            while(stream.readNextStartElement())
+                            {
                                 if (stream.name() == "x")
                                     importedPoint.setX(stream.readElementText().toDouble());
                                 if (stream.name() == "y")
@@ -210,10 +243,19 @@ void PlanUI::on_importRouteButton_clicked()
                                 if (stream.name() == "attributes")
                                     importedPoint.setAttributes(stream.readElementText().toUInt());
                             }
+
+                            llh_t importedAbsPoint = coordinateTransforms::enuToLlh(importedEnuRef, {importedPoint.getX(), importedPoint.getY(), importedPoint.getHeight()});
+                            xyz_t importedEnuPoint = coordinateTransforms::llhToEnu(getRouteGeneratorUI()->getEnuRef(), importedAbsPoint);
+
+                            importedPoint.setX(importedEnuPoint.x);
+                            importedPoint.setY(importedEnuPoint.y);
+                            importedPoint.setHeight(importedEnuPoint.z);
+
                             importedRoute.append(importedPoint);
                         }
                     }
-                    if (!importedRoute.isEmpty()) {
+                    if (!importedRoute.isEmpty())
+                    {
                         if (mRoutePlanner->getCurrentRoute().isEmpty())
                             mRoutePlanner->appendRouteToCurrentRoute(importedRoute);
                         else

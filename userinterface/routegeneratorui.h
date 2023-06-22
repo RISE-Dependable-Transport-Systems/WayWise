@@ -27,6 +27,7 @@ public:
     ~RouteGeneratorUI();
 
     void setEnuRef(const llh_t &llh);
+    llh_t getEnuRef();
 
 signals:
     void routeDoneForUse(const QList<PosPoint>& route);
