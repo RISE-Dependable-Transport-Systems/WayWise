@@ -112,17 +112,46 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="Reverse">
-        <property name="text">
-         <string>Reverse Route</string>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="QPushButton" name="exportCurrentRouteButton">
         <property name="text">
          <string>Export to File...</string>
         </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="groupBox_4">
+        <property name="title">
+         <string>Modify</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_6">
+         <item>
+          <widget class="QPushButton" name="reverseButton">
+           <property name="text">
+            <string>Reverse</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="appendButton">
+           <property name="text">
+            <string>Append to...</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="splitButton">
+           <property name="toolTip">
+            <string>Route must contain at least two points to be split.</string>
+           </property>
+           <property name="text">
+            <string>Split</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </item>
      </layout>

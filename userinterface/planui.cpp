@@ -11,7 +11,6 @@ PlanUI::PlanUI(QWidget *parent) :
 {
     ui->setupUi(this);
 
-
     mRoutePlanner = QSharedPointer<RoutePlannerModule>::create();
     mRouteGeneratorUI = QSharedPointer<RouteGeneratorUI>::create(this);
     connect(mRouteGeneratorUI.get(), &RouteGeneratorUI::routeDoneForUse, [this](const QList<PosPoint>& route) {
@@ -24,7 +23,11 @@ PlanUI::PlanUI(QWidget *parent) :
                 ui->currentRouteSpinBox->setValue(mRoutePlanner->getCurrentRouteIndex() + 1);
                 ui->currentRouteSpinBox->setMaximum(mRoutePlanner->getNumberOfRoutes());
                 ui->currentRouteSpinBox->setSuffix(" / " + QString::number(mRoutePlanner->getNumberOfRoutes()));
+    });
 
+    ui->splitButton->setEnabled(false); // disable upon runtime initialisation
+    connect(mRoutePlanner.get(), &RoutePlannerModule::requestRepaint, [this]() {
+        ui->splitButton->setEnabled(mRoutePlanner->getCurrentRoute().size() > 1);
     });
 }
 
@@ -230,8 +233,48 @@ void PlanUI::on_generateRouteButton_clicked()
     mRouteGeneratorUI->show();
 }
 
-void PlanUI::on_Reverse_clicked()
+void PlanUI::on_reverseButton_clicked()
 {
     mRoutePlanner->reverseCurrentRoute();
 }
 
+void PlanUI::on_appendButton_clicked()
+{
+    bool userConfirmsAction;    // set to false if user presses Cancel (or "x")
+    int index = QInputDialog::getInt(this, tr("Append to..."),
+                                     tr("Select route to append:"), 1,
+                                     1, mRoutePlanner->getNumberOfRoutes(), 1, &userConfirmsAction);
+
+    if(userConfirmsAction && index != mRoutePlanner->getCurrentRouteIndex()+1)    // ignore if trying to merge with itsef
+    {
+        mRoutePlanner->appendCurrentRouteTo(index-1);  // -1 to match QList indexes
+
+        ui->currentRouteSpinBox->setValue(mRoutePlanner->getCurrentRouteIndex() + 1);
+        ui->currentRouteSpinBox->setMaximum(mRoutePlanner->getNumberOfRoutes());
+        ui->currentRouteSpinBox->setSuffix(" / " + QString::number(mRoutePlanner->getNumberOfRoutes()));
+    }
+}
+
+void PlanUI::on_splitButton_clicked()
+{
+    int size = mRoutePlanner->getCurrentRoute().size();
+    QList<QString> connections;
+
+    for(int i = 0; i < (size - 1); i++)
+        connections.append(QString::number(i) + " - " + QString::number(i+1));
+
+    bool userConfirmsAction;
+    QString connectionToSplit = QInputDialog::getItem(this, tr("Split Route"),
+                                                      tr("Select points to disconnect:"), connections,
+                                                      0, false, &userConfirmsAction);
+
+    if(userConfirmsAction)
+    {
+        int secondPointIndex = connectionToSplit.split(" ")[2].toInt();  // knowledge of only 1 point required
+        mRoutePlanner->splitCurrentRouteAt(secondPointIndex);
+    }
+
+    ui->currentRouteSpinBox->setValue(mRoutePlanner->getCurrentRouteIndex() + 1);
+    ui->currentRouteSpinBox->setMaximum(mRoutePlanner->getNumberOfRoutes());
+    ui->currentRouteSpinBox->setSuffix(" / " + QString::number(mRoutePlanner->getNumberOfRoutes()));
+}

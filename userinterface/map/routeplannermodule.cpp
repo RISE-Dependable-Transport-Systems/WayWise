@@ -366,3 +366,21 @@ void RoutePlannerModule::reverseCurrentRoute()
 
     emit requestRepaint();
 }
+
+void RoutePlannerModule::appendCurrentRouteTo(int routeIndex)
+{
+    mRoutes[routeIndex].append(getCurrentRoute());
+
+    removeRoute(mPlannerState.currentRouteIndex);
+
+    emit requestRepaint();
+}
+
+void RoutePlannerModule::splitCurrentRouteAt(int pointIndex)
+{
+    QList<PosPoint> newRoute = mRoutes[mPlannerState.currentRouteIndex].mid(pointIndex);
+
+    mRoutes[mPlannerState.currentRouteIndex] = mRoutes[mPlannerState.currentRouteIndex].mid(0, pointIndex);
+
+    addRoute(newRoute);
+}
