@@ -8,10 +8,19 @@
 CarMovementController::CarMovementController(QSharedPointer<CarState> vehicleState): MovementController(vehicleState)
 {
     mCarState = getVehicleState().dynamicCast<CarState>();
+    try {
+        mVehicleLighting.reset(new VehicleLighting);
+    }  catch (QString e) {
+        qDebug() << e;
+        mVehicleLighting = nullptr;
+    }
 }
 
 void CarMovementController::setDesiredSteering(double desiredSteering)
 {
+    if (mVehicleLighting)
+        mVehicleLighting->turnSignal(desiredSteering);
+
     if (abs(desiredSteering) > 1.0)
         desiredSteering = (desiredSteering > 0) ? 1.0 : -1.0;
 
@@ -32,6 +41,9 @@ void CarMovementController::setDesiredSteering(double desiredSteering)
 
 void CarMovementController::setDesiredSpeed(double desiredSpeed)
 {
+    if (mVehicleLighting)
+        mVehicleLighting->rearLights(desiredSpeed);
+
     MovementController::setDesiredSpeed(desiredSpeed);
     if (mMotorController)
         mMotorController->requestRPM(desiredSpeed*getSpeedToRPMFactor());
