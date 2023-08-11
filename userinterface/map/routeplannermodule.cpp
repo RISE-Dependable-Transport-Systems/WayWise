@@ -359,10 +359,10 @@ void RoutePlannerModule::drawRoute(QPainter& painter, QTransform drawTrans, QTra
 
 void RoutePlannerModule::reverseCurrentRoute()
 {
-    int size = mRoutes[mPlannerState.currentRouteIndex].size(); // for readability
+    int size = mRoutes[mPlannerState.currentRouteIndex].size();
 
     for(int i = 0; i < size/2; i++)
-        mRoutes[mPlannerState.currentRouteIndex].swapItemsAt(i, size - (1+i));  // reverses QList
+        mRoutes[mPlannerState.currentRouteIndex].swapItemsAt(i, size - (1+i));
 
     emit requestRepaint();
 }

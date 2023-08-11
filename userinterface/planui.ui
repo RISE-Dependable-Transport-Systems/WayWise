@@ -147,7 +147,7 @@
             <string>Route must contain at least two points to be split.</string>
            </property>
            <property name="text">
-            <string>Split</string>
+            <string>Split...</string>
            </property>
           </widget>
          </item>

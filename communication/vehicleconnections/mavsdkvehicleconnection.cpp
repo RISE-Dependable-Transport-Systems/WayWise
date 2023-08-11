@@ -8,6 +8,8 @@
 #include <QDateTime>
 #include <variant>
 
+static QStringList messageChunks;
+
 MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System> system, MAV_TYPE vehicleType)
 {
     mSystem = system;
@@ -124,6 +126,45 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
         if (result == mavsdk::Telemetry::Result::Success){
             mGpsGlobalOrigin = {gpsGlobalOrigin.latitude_deg, gpsGlobalOrigin.longitude_deg, gpsGlobalOrigin.altitude_m};
             emit gotVehicleGpsOriginLlh(mGpsGlobalOrigin);
+        }
+    });
+
+    mMavlinkPassthrough->subscribe_message(MAVLINK_MSG_ID_STATUSTEXT, [this](const mavlink_message_t &message)
+    {
+        mavlink_statustext_t statusText;
+        mavlink_msg_statustext_decode(&message, &statusText);
+
+        if(statusText.id) {
+            if(!statusText.chunk_seq)   messageChunks.clear();
+
+            messageChunks.append(statusText.text);
+        }
+
+        if(!statusText.id || statusText.chunk_seq == 1) {
+
+            QString logMsg = "[RCCar] ";
+
+            if(!statusText.id)  logMsg.append(statusText.text);
+            else                logMsg.append(messageChunks.join(""));
+
+            switch (statusText.severity)
+            {
+                case MAV_SEVERITY_DEBUG:
+                    qDebug() << logMsg;
+                    break;
+                case MAV_SEVERITY_INFO:
+                    qInfo() << logMsg;
+                    break;
+                case MAV_SEVERITY_WARNING:
+                    qCritical() << logMsg;
+                    break;
+                case MAV_SEVERITY_CRITICAL:
+                    qCritical() << logMsg;
+                    break;
+                case MAV_SEVERITY_EMERGENCY:
+                    qFatal("%s", qPrintable(logMsg));
+                    break;
+            }
         }
     });
 

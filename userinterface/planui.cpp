@@ -282,14 +282,14 @@ void PlanUI::on_reverseButton_clicked()
 
 void PlanUI::on_appendButton_clicked()
 {
-    bool userConfirmsAction;    // set to false if user presses Cancel (or "x")
+    bool userConfirmsAction;
     int index = QInputDialog::getInt(this, tr("Append to..."),
                                      tr("Select route to append:"), 1,
                                      1, mRoutePlanner->getNumberOfRoutes(), 1, &userConfirmsAction);
 
-    if(userConfirmsAction && index != mRoutePlanner->getCurrentRouteIndex()+1)    // ignore if trying to merge with itsef
+    if(userConfirmsAction && index != mRoutePlanner->getCurrentRouteIndex()+1)
     {
-        mRoutePlanner->appendCurrentRouteTo(index-1);  // -1 to match QList indexes
+        mRoutePlanner->appendCurrentRouteTo(index-1);
 
         ui->currentRouteSpinBox->setValue(mRoutePlanner->getCurrentRouteIndex() + 1);
         ui->currentRouteSpinBox->setMaximum(mRoutePlanner->getNumberOfRoutes());
@@ -312,7 +312,7 @@ void PlanUI::on_splitButton_clicked()
 
     if(userConfirmsAction)
     {
-        int secondPointIndex = connectionToSplit.split(" ")[2].toInt();  // knowledge of only 1 point required
+        int secondPointIndex = connectionToSplit.split(" ")[2].toInt();
         mRoutePlanner->splitCurrentRouteAt(secondPointIndex);
     }
 
