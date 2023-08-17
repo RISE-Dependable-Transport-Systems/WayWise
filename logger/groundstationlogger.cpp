@@ -10,7 +10,6 @@
 
 QFile* GroundStationLogger::logFile = Q_NULLPTR;
 bool GroundStationLogger::isInit = false;
-static QStringList logQueue;
 
 GroundStationLogger::GroundStationLogger(QObject *parent) : QObject{parent}
 {
@@ -76,6 +75,8 @@ void GroundStationLogger::messageOutput(QtMsgType type, const QMessageLogContext
     }
 
     fprintf(stderr, "%s\n", qPrintable(log));
+
+    static QStringList logQueue;
 
     if(GroundStationLogSignalRelay::getInstance().isConnected()) {
         if(!logQueue.empty())

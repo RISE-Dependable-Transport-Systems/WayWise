@@ -7,8 +7,8 @@
 #include <QDebug>
 #include <QDateTime>
 #include <variant>
-
-static QStringList messageChunks;
+#include <QVector>
+#include <algorithm>
 
 MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System> system, MAV_TYPE vehicleType)
 {
@@ -131,40 +131,61 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
 
     mMavlinkPassthrough->subscribe_message(MAVLINK_MSG_ID_STATUSTEXT, [this](const mavlink_message_t &message)
     {
+        struct messageChunk {
+            QString text;
+            uint8_t chunk_seq;
+        };
+
+        static QVector<messageChunk> messageChunks;
+        static uint16_t current_id = 0;
+
         mavlink_statustext_t statusText;
         mavlink_msg_statustext_decode(&message, &statusText);
 
         if(statusText.id) {
-            if(!statusText.chunk_seq)   messageChunks.clear();
+            if(statusText.id != current_id) {
+                if(!messageChunks.isEmpty()) {
+                    std::sort(messageChunks.begin(), messageChunks.end(), [](const messageChunk &chunk1, const messageChunk &chunk2) {
+                        return chunk1.chunk_seq < chunk2.chunk_seq;
+                    });
 
-            messageChunks.append(statusText.text);
+                    QString logMsg = "[RCCar] ";
+
+                    for(const messageChunk &chunk : messageChunks)
+                        logMsg.append(chunk.text);
+
+                    outputLogMessage(logMsg, statusText.severity);
+
+                    messageChunks.clear();
+                }
+                current_id = statusText.id;
+            }
+
+            messageChunk chunk;
+
+            chunk.text = statusText.text;
+            chunk.chunk_seq = statusText.chunk_seq;
+
+            messageChunks.push_back(chunk);
         }
 
-        if(!statusText.id || statusText.chunk_seq == 1) {
-
+        if(!statusText.id || statusText.text[49] == '\0') {
             QString logMsg = "[RCCar] ";
 
-            if(!statusText.id)  logMsg.append(statusText.text);
-            else                logMsg.append(messageChunks.join(""));
+            if(!statusText.id)
+                logMsg.append(statusText.text);
+            else {
+                std::sort(messageChunks.begin(), messageChunks.end(), [](const messageChunk &chunk1, const messageChunk &chunk2) {
+                    return chunk1.chunk_seq < chunk2.chunk_seq;
+                });
 
-            switch (statusText.severity)
-            {
-                case MAV_SEVERITY_DEBUG:
-                    qDebug() << logMsg;
-                    break;
-                case MAV_SEVERITY_INFO:
-                    qInfo() << logMsg;
-                    break;
-                case MAV_SEVERITY_WARNING:
-                    qCritical() << logMsg;
-                    break;
-                case MAV_SEVERITY_CRITICAL:
-                    qCritical() << logMsg;
-                    break;
-                case MAV_SEVERITY_EMERGENCY:
-                    qFatal("%s", qPrintable(logMsg));
-                    break;
+                for(const messageChunk &chunk : messageChunks)
+                    logMsg.append(chunk.text);
+
+                messageChunks.clear();
             }
+
+            outputLogMessage(logMsg, statusText.severity);
         }
     });
 
@@ -661,6 +682,29 @@ bool MavsdkVehicleConnection::requestRebootOrShutdownOfSystemComponents(VehicleC
     }
     return true;
 }
+
+void MavsdkVehicleConnection::outputLogMessage(QString logMessage, uint8_t severity) const
+{
+    switch (severity)
+    {
+        case MAV_SEVERITY_DEBUG:
+            qDebug() << logMessage;
+            break;
+        case MAV_SEVERITY_INFO:
+            qInfo() << logMessage;
+            break;
+        case MAV_SEVERITY_WARNING:
+            qCritical() << logMessage;
+            break;
+        case MAV_SEVERITY_CRITICAL:
+            qCritical() << logMessage;
+            break;
+        case MAV_SEVERITY_EMERGENCY:
+            qFatal("%s", qPrintable(logMessage));
+            break;
+    }
+}
+
 
 VehicleConnection::Result MavsdkVehicleConnection::setIntParameterOnVehicle(std::string name, int32_t value)
 {
