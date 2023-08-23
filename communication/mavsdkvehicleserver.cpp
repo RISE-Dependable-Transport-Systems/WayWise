@@ -14,12 +14,12 @@
 #include <QFile>
 #include <QMetaType>
 #include <QVector>
-#include "WayWise/logger/vehiclelogsignalrelay.h"
+#include "WayWise/logger/logger.h"
 
 MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleState)
 {
     qRegisterMetaType<uint8_t>("uint8_t");
-    connect(&VehicleLogSignalRelay::getInstance(), &VehicleLogSignalRelay::logSent, this, &MavsdkVehicleServer::on_logSent);
+    connect(&Logger::getInstance(), &Logger::logSentVehicle, this, &MavsdkVehicleServer::on_logSent);
 
     mVehicleState = vehicleState;
 
