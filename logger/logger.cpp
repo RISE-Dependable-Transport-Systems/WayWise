@@ -45,7 +45,7 @@ void Logger::initGroundStation()
 
     logFile = new QFile;
 
-    QString fileName = QString("%1/Log %2.log").arg(folderPath).arg(QDateTime::currentDateTime().toString("dd-MM-yyyy hh:mm:ss"));
+    QString fileName = QString("%1/Log %2.log").arg(folderPath).arg(QDateTime::currentDateTime().toString("dd-MM-yyyy hh-mm-ss"));
 
     logFile->setFileName(fileName);
     logFile->open(QIODevice::Append | QIODevice::Text);
