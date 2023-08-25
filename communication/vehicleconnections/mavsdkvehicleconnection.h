@@ -89,6 +89,7 @@ private:
 
     mavsdk::MissionRaw::MissionItem convertPosPointToMissionItem(const PosPoint& posPoint, int sequenceId, bool current = false);
     VehicleConnection::Result convertResult(mavsdk::Param::Result result) const;
+    void outputLogMessage(QString logMessage, uint8_t severity) const;
 
     // VehicleConnection interface
 protected:
