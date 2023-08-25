@@ -34,6 +34,8 @@ public:
     void setManualControlMaxSpeed(double manualControlMaxSpeed_ms);
     void mavResult(const uint16_t command, MAV_RESULT result);
     void sendGpsOriginLlh(const llh_t &gpsOriginLlh);
+    void on_logSent(const QString& message, const uint8_t& severity);
+    void sendStatusText(const QString& message, const uint8_t& severity);
 
 signals:
     void startWaypointFollower(bool fromBeginning); // to enable starting from MAVSDK thread
