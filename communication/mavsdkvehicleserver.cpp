@@ -21,10 +21,11 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
     std::shared_ptr<mavsdk::ServerComponent> serverComponent = mMavsdk.server_component_by_type(mavsdk::Mavsdk::ServerComponentType::Autopilot);
 
     // Create server plugins
+    MavlinkParameterServer::initialize(serverComponent);
+    mParameterServer = MavlinkParameterServer::getInstance();
     mTelemetryServer.reset(new mavsdk::TelemetryServer(serverComponent));
     mActionServer.reset(new mavsdk::ActionServer(serverComponent));
     mMissionRawServer.reset(new mavsdk::MissionRawServer(serverComponent));
-    mParameterServer.reset(new MavlinkParameterServer(serverComponent));
 
     // Allow the vehicle to change to auto mode (manual is always allowed) and arm, disable takeoff (only rover support for now)
     mActionServer->set_allowable_flight_modes({true, false, false});
@@ -402,8 +403,3 @@ void MavsdkVehicleServer::sendGpsOriginLlh(const llh_t &gpsOriginLlh)
     if (mMavlinkPassthrough->send_message(mavGpsGlobalOriginMsg) != mavsdk::MavlinkPassthrough::Result::Success)
         qDebug() << "Warning: could not send GPS_GLOBAL_ORIGIN via MAVLINK.";
 };
-
-QSharedPointer<ParameterServer> MavsdkVehicleServer::getParameterServer()
-{
-    return mParameterServer;
-}

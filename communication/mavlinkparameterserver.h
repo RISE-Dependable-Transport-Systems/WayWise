@@ -1,3 +1,8 @@
+/*
+ *     Copyright 2023 Rickard Häll      rickard.hall@ri.se
+ *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
+ */
+
 #ifndef MAVLINKPARAMETERSERVER_H
 #define MAVLINKPARAMETERSERVER_H
 
@@ -10,9 +15,13 @@ class MavlinkParameterServer : public ParameterServer
 {
     Q_OBJECT
 public:
-    explicit MavlinkParameterServer(std::shared_ptr<mavsdk::ServerComponent> serverComponent);
+    static void initialize(std::shared_ptr<mavsdk::ServerComponent> serverComponent);
     virtual void provideParameter(std::string parameterName, std::function<void(float)> setClassParameterFunction, std::function<float(void)> getClassParameterFunction) override;
-    virtual void saveParametersToXmlFile() override;
+    virtual void saveParametersToXmlFile(QString filename) override;
+
+protected:
+    MavlinkParameterServer(std::shared_ptr<mavsdk::ServerComponent> serverComponent);
+    ~MavlinkParameterServer(){};
 
 private:
     mavsdk::ParamServer *mMavsdkParamServer;

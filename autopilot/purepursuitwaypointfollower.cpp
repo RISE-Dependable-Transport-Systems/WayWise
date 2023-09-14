@@ -3,15 +3,21 @@
  *               2021 Rickard Häll      rickard.hall@ri.se
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
  */
-#include "purepursuitwaypointfollower.h"
 #include <cmath>
 #include <QDebug>
 #include <QLineF>
+#include "purepursuitwaypointfollower.h"
+#include "WayWise/communication/parameterserver.h"
 
 PurepursuitWaypointFollower::PurepursuitWaypointFollower(QSharedPointer<MovementController> movementController)
 {
     mMovementController = movementController;
     connect(&mUpdateStateTimer, &QTimer::timeout, this, &PurepursuitWaypointFollower::updateState);
+
+    // Provide system parameters to ControlTower
+    ParameterServer::getInstance()->provideParameter("PPRadius", std::bind(&PurepursuitWaypointFollower::setPurePursuitRadius, this, std::placeholders::_1), std::bind(&PurepursuitWaypointFollower::getPurePursuitRadius, this));
+    ParameterServer::getInstance()->provideParameter("APPRC", std::bind(&PurepursuitWaypointFollower::setAdaptivePurePursuitRadiusCoefficient, this, std::placeholders::_1), std::bind(&PurepursuitWaypointFollower::getAdaptivePurePursuitRadiusCoefficient, this));
+
 
     // Follow point requires continuous updates of the point to follow
     mCurrentState.followPointTimedOut = true;
