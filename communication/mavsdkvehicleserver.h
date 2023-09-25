@@ -34,7 +34,6 @@ public:
     void setManualControlMaxSpeed(double manualControlMaxSpeed_ms);
     void mavResult(const uint16_t command, MAV_RESULT result);
     void sendGpsOriginLlh(const llh_t &gpsOriginLlh);
-    QSharedPointer<ParameterServer> getParameterServer();
 
 signals:
     void startWaypointFollower(bool fromBeginning); // to enable starting from MAVSDK thread
@@ -61,7 +60,7 @@ private:
     QSharedPointer<UbloxRover> mUbloxRover;
     QSharedPointer<WaypointFollower> mWaypointFollower;
     QSharedPointer<MovementController> mMovementController;
-    QSharedPointer<ParameterServer> mParameterServer;
+    ParameterServer *mParameterServer;
 
     bool mHeartbeat;
     QTimer mHeartbeatTimer;

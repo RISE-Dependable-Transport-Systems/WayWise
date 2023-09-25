@@ -1,3 +1,8 @@
+/*
+ *     Copyright 2023 Rickard Häll      rickard.hall@ri.se
+ *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
+ */
+
 #include "mavlinkparameterserver.h"
 #include <QXmlStreamWriter>
 #include <QFile>
@@ -15,16 +20,26 @@ MavlinkParameterServer::MavlinkParameterServer(std::shared_ptr<mavsdk::ServerCom
     mMavsdkParamServer->provide_param_int("MIS_TAKEOFF_ALT", 0);
 }
 
+void MavlinkParameterServer::initialize(std::shared_ptr<mavsdk::ServerComponent> serverComponent)
+{
+    if(mInstancePtr)
+        qDebug() << "Parameter server singleton already created";
+    else
+        mInstancePtr = new MavlinkParameterServer(serverComponent);
+}
+
 void MavlinkParameterServer::provideParameter(std::string parameterName, std::function<void(float)> setClassParameterFunction, std::function<float(void)> getClassParameterFunction)
 {
+    const std::lock_guard<std::mutex> lock(mMutex);
     mParameterToClassMapping.insert_or_assign(parameterName, std::make_pair(setClassParameterFunction, getClassParameterFunction));
     mMavsdkParamServer->provide_param_float(parameterName, getClassParameterFunction());
 };
 
-void MavlinkParameterServer::saveParametersToXmlFile()
+void MavlinkParameterServer::saveParametersToXmlFile(QString filename)
 {
+    const std::lock_guard<std::mutex> lock(mMutex);
     mavsdk::ParamServer::AllParams parameters = mMavsdkParamServer->retrieve_all_params();
-    QFile parameterFile("vehicle_parameters.xml");
+    QFile parameterFile(filename);
 
     if (!parameterFile.open(QIODevice::WriteOnly))
         qDebug() << "Could not save parameters";
