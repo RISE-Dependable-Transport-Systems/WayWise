@@ -9,6 +9,7 @@ WayWise does not target production readiness but exploring specific use cases by
 Main authors are (firstname.lastname@ri.se):
 - Marvin Damschen
 - Rickard Häll
+- Aria Mirzai
 
 ## How to use it and what to expect
 This "library" is meant to be used as a git submodule, as we do not do releases (for the time being) and do not promise a stable API.
