@@ -4,6 +4,7 @@
  */
 
 #include "multiwaypointfollower.h"
+#include "WayWise/communication/parameterserver.h"
 
 MultiWaypointFollower::MultiWaypointFollower(QSharedPointer<WaypointFollower> waypointfollower)
 {
@@ -106,6 +107,12 @@ void MultiWaypointFollower::setAdaptivePurePursuitRadiusCoefficient(double coeff
 int MultiWaypointFollower::addWaypointFollower(QSharedPointer<WaypointFollower> waypointfollower)
 {
     mWayPointFollowerList.append(waypointfollower);
+
+    // Provide system parameters to ControlTower
+    ParameterServer::getInstance()->provideParameter("PPRadius", std::bind(&MultiWaypointFollower::setPurePursuitRadius, this, std::placeholders::_1),
+                                                     std::bind(&MultiWaypointFollower::getPurePursuitRadius, this));
+    ParameterServer::getInstance()->provideParameter("APPRC", std::bind(&MultiWaypointFollower::setAdaptivePurePursuitRadiusCoefficient, this, std::placeholders::_1),
+                                                     std::bind(&MultiWaypointFollower::getAdaptivePurePursuitRadiusCoefficient, this));
 
     return (getNumberOfWaypointFollowers() - 1) ;
 }
