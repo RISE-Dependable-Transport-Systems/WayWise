@@ -12,29 +12,15 @@
 class Logger : public QObject {
     Q_OBJECT
 public:
-    static Logger& getInstance()
-    {
-        static Logger instance;
-        return instance;
-    }
+    static Logger& getInstance();
 
-    bool isConnectedGroundStation() {
-        static const QMetaMethod logSentSignal = QMetaMethod::fromSignal(&Logger::logSentGroundStation);
-        return isSignalConnected(logSentSignal);
-    }
-
-    bool isConnectedVehicle() {
-        static const QMetaMethod logSentSignal = QMetaMethod::fromSignal(&Logger::logSentVehicle);
-        return isSignalConnected(logSentSignal);
-    }
+    bool isConnected();
 
     static void initGroundStation();
 
     static void initVehicle();
 
-    static void messageOutputGroundStation(QtMsgType type, const QMessageLogContext& context, const QString& msg);
-
-    static void messageOutputVehicle(QtMsgType type, const QMessageLogContext& context, const QString& msg);
+    static void messageOutput(QtMsgType type, const QMessageLogContext& context, const QString& msg);
 
 private:
     explicit Logger(QObject *parent = nullptr);
@@ -46,9 +32,7 @@ private:
     static bool isInit;
 
 signals:
-    void logSentGroundStation(const QString& message);
-
-    void logSentVehicle(const QString& message, const uint8_t& severity);
+    void logSent(const QString& message, const quint8& severity);
 };
 
 #endif // LOGGER_H

@@ -15,8 +15,7 @@
 
 MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleState)
 {
-    qRegisterMetaType<uint8_t>("uint8_t");
-    connect(&Logger::getInstance(), &Logger::logSentVehicle, this, &MavsdkVehicleServer::on_logSent);
+    connect(&Logger::getInstance(), &Logger::logSent, this, &MavsdkVehicleServer::on_logSent);
 
     mVehicleState = vehicleState;
 
@@ -409,77 +408,69 @@ void MavsdkVehicleServer::sendGpsOriginLlh(const llh_t &gpsOriginLlh)
         qDebug() << "Warning: could not send GPS_GLOBAL_ORIGIN via MAVLINK.";
 };
 
-void MavsdkVehicleServer::on_logSent(const QString& message, const uint8_t& severity)
+void MavsdkVehicleServer::on_logSent(const QString& message, const quint8& severity)
 {
     struct logQueueItem {
         QString log;
-        uint16_t id;
-        uint8_t severity;
+        quint16 id;
+        quint8 severity;
     };
 
     static QVector<logQueueItem> logQueue;
 
-    if (mMavlinkPassthrough == nullptr) {
-        logQueueItem item;
+    logQueueItem item;
 
-        item.log = message;
-        item.severity = severity;
+    item.log = message;
+    item.severity = severity;
 
-        logQueue.push_back(item);
+    logQueue.push_back(item);
 
+    if(!mMavlinkPassthrough)
         return;
-    }
 
-    if(!logQueue.isEmpty()) {
-        for(const logQueueItem &item : logQueue)
-            sendStatusText(item.log, item.severity);
+    for(const logQueueItem &item : logQueue) {
 
-        logQueue.clear();
-    }
+        static quint16 idCounter = 1;
 
-    sendStatusText(message, severity);
-}
+        const int chunkSize = MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN - 8; // STATUSTEXT supports up to char[50], -8 adjustment to fit MAVLink header
+        int numChunks = (item.log.length() + chunkSize - 1) / chunkSize;
 
-void MavsdkVehicleServer::sendStatusText(const QString& message, const uint8_t& severity) {
+        if(item.log.length() % 42 == 0)  // need extra message for null terminator, so to not overwrite any message character
+            numChunks++;
 
-    static uint16_t idCounter = 1;
+        for(int chunkIndex = 0; chunkIndex < numChunks; chunkIndex++) {
+            QString chunk = item.log.mid(chunkIndex * chunkSize, chunkSize);
+            QByteArray chunkBytes = chunk.toUtf8();
 
-    const int chunkSize = MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN - 8; // STATUSTEXT supports up to char[50], -8 adjustment to fit MAVLink header
-    int numChunks = (message.length() + chunkSize - 1) / chunkSize;
+            mavlink_statustext_t statusText;    // send text messages to ground-station or other MAVLink-enabled systems
+            memset(&statusText, 1, sizeof(statusText));
 
-    if(message.length() % 42 == 0)  // need extra message for null terminator, so to not overwrite any message character
-        numChunks++;
+            statusText.severity = item.severity;
 
-    for(int chunkIndex = 0; chunkIndex < numChunks; chunkIndex++) {
-        QString chunk = message.mid(chunkIndex * chunkSize, chunkSize);
-        QByteArray chunkBytes = chunk.toUtf8();
+            qstrcpy(statusText.text, chunkBytes.constData());
 
-        mavlink_statustext_t statusText;    // send text messages to ground-station or other MAVLink-enabled systems
-        memset(&statusText, 1, sizeof(statusText));
+            if(chunkIndex == numChunks - 1)
+                statusText.text[49] = '\0'; // ensure null terminated
 
-        statusText.severity = severity;
+            if(numChunks > 1)
+                statusText.id = idCounter;
+            else
+                statusText.id = 0;  // message can be omitted directly
 
-        qstrcpy(statusText.text, chunkBytes.constData());
+            statusText.chunk_seq = chunkIndex;
 
-        if(chunkIndex == numChunks - 1)
-            statusText.text[49] = '\0'; // ensure null terminated
+            mavlink_message_t mavLogMsg;
+            mavlink_msg_statustext_encode(mMavlinkPassthrough->get_our_sysid(), mMavlinkPassthrough->get_our_compid(), &mavLogMsg, &statusText);
 
-        if(numChunks > 1)
-            statusText.id = idCounter;
+            if (mMavlinkPassthrough->send_message(mavLogMsg) != mavsdk::MavlinkPassthrough::Result::Success)
+                qWarning() << "Could not send log output via MAVLINK.";
+        }
+
+        if(idCounter == 65535)  // overflow avoidance
+            idCounter = 1;
         else
-            statusText.id = 0;  // message can be omitted directly
-
-        statusText.chunk_seq = chunkIndex;
-
-        mavlink_message_t mavLogMsg;
-        mavlink_msg_statustext_encode(mMavlinkPassthrough->get_our_sysid(), mMavlinkPassthrough->get_our_compid(), &mavLogMsg, &statusText);
-
-        if (mMavlinkPassthrough->send_message(mavLogMsg) != mavsdk::MavlinkPassthrough::Result::Success)
-            qWarning() << "Could not send log output via MAVLINK.";
+            idCounter++;
     }
 
-    if(idCounter == 65535)  // overflow avoidance
-        idCounter = 1;
-    else
-        idCounter++;
+    logQueue.clear();
 }

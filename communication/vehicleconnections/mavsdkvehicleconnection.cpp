@@ -131,59 +131,91 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
     {
         struct messageChunk {
             QString text;
-            uint8_t chunk_seq;
+            quint8 chunk_seq;
         };
 
         static QVector<messageChunk> messageChunks;
-        static uint16_t current_id = 0;
+        static quint16 currentID = 0;
 
         mavlink_statustext_t statusText;
         mavlink_msg_statustext_decode(&message, &statusText);
 
         if(statusText.id) {
-            if(statusText.id != current_id) {
+            if(statusText.id != currentID) {
                 if(!messageChunks.isEmpty()) {
                     std::sort(messageChunks.begin(), messageChunks.end(), [](const messageChunk &chunk1, const messageChunk &chunk2) {
                         return chunk1.chunk_seq < chunk2.chunk_seq;
                     });
 
-                    QString logMsg = "[RCCar] ";
+                    QString messageOutput = "[RCCar] ";
 
                     for(const messageChunk &chunk : messageChunks)
-                        logMsg.append(chunk.text);
+                        messageOutput.append(chunk.text);
 
-                    outputLogMessage(logMsg, statusText.severity);
+                    switch (statusText.severity)
+                    {
+                    case MAV_SEVERITY_DEBUG:
+                        qDebug() << messageOutput;
+                        break;
+                    case MAV_SEVERITY_INFO:
+                        qInfo() << messageOutput;
+                        break;
+                    case MAV_SEVERITY_WARNING:
+                        qCritical() << messageOutput;
+                        break;
+                    case MAV_SEVERITY_CRITICAL:
+                        qCritical() << messageOutput;
+                        break;
+                    case MAV_SEVERITY_EMERGENCY:
+                        qFatal("%s", qPrintable(messageOutput));
+                        break;
+                    }
 
                     messageChunks.clear();
                 }
-                current_id = statusText.id;
+                currentID = statusText.id;
             }
 
             messageChunk chunk;
-
             chunk.text = statusText.text;
             chunk.chunk_seq = statusText.chunk_seq;
-
             messageChunks.push_back(chunk);
         }
 
         if(!statusText.id || statusText.text[49] == '\0') {
-            QString logMsg = "[RCCar] ";
+            QString messageOutput = "[RCCar] ";
 
             if(!statusText.id)
-                logMsg.append(statusText.text);
+                messageOutput.append(statusText.text);
             else {
                 std::sort(messageChunks.begin(), messageChunks.end(), [](const messageChunk &chunk1, const messageChunk &chunk2) {
                     return chunk1.chunk_seq < chunk2.chunk_seq;
                 });
 
                 for(const messageChunk &chunk : messageChunks)
-                    logMsg.append(chunk.text);
+                    messageOutput.append(chunk.text);
 
                 messageChunks.clear();
             }
 
-            outputLogMessage(logMsg, statusText.severity);
+            switch (statusText.severity)
+            {
+            case MAV_SEVERITY_DEBUG:
+                qDebug() << messageOutput;
+                break;
+            case MAV_SEVERITY_INFO:
+                qInfo() << messageOutput;
+                break;
+            case MAV_SEVERITY_WARNING:
+                qCritical() << messageOutput;
+                break;
+            case MAV_SEVERITY_CRITICAL:
+                qCritical() << messageOutput;
+                break;
+            case MAV_SEVERITY_EMERGENCY:
+                qFatal("%s", qPrintable(messageOutput));
+                break;
+            }
         }
     });
 
@@ -679,28 +711,6 @@ bool MavsdkVehicleConnection::requestRebootOrShutdownOfSystemComponents(VehicleC
         return false;
     }
     return true;
-}
-
-void MavsdkVehicleConnection::outputLogMessage(QString logMessage, uint8_t severity) const
-{
-    switch (severity)
-    {
-    case MAV_SEVERITY_DEBUG:
-        qDebug() << logMessage;
-        break;
-    case MAV_SEVERITY_INFO:
-        qInfo() << logMessage;
-        break;
-    case MAV_SEVERITY_WARNING:
-        qCritical() << logMessage;
-        break;
-    case MAV_SEVERITY_CRITICAL:
-        qCritical() << logMessage;
-        break;
-    case MAV_SEVERITY_EMERGENCY:
-        qFatal("%s", qPrintable(logMessage));
-        break;
-    }
 }
 
 VehicleConnection::Result MavsdkVehicleConnection::setIntParameterOnVehicle(std::string name, int32_t value)

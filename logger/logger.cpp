@@ -9,7 +9,7 @@
 #include <QStandardPaths>
 #include "logger.h"
 
-QFile* Logger::logFile = Q_NULLPTR;
+QFile* Logger::logFile = nullptr;
 bool Logger::isInit = false;
 
 Logger::Logger(QObject *parent)
@@ -20,12 +20,24 @@ Logger::Logger(QObject *parent)
 
 Logger::~Logger()
 {
-    if(logFile != Q_NULLPTR) {
+    if(logFile) {
         logFile->close();
         delete logFile;
     }
 
     qInstallMessageHandler(0);  // detach qInstallMessageHandler
+}
+
+Logger& Logger::getInstance()
+{
+    static Logger instance;
+    return instance;
+}
+
+bool Logger::isConnected()
+{
+    static const QMetaMethod logSentSignal = QMetaMethod::fromSignal(&Logger::logSent);
+    return isSignalConnected(logSentSignal);
 }
 
 void Logger::initGroundStation()
@@ -50,7 +62,7 @@ void Logger::initGroundStation()
     logFile->setFileName(fileName);
     logFile->open(QIODevice::Append | QIODevice::Text);
 
-    qInstallMessageHandler(Logger::messageOutputGroundStation);
+    qInstallMessageHandler(Logger::messageOutput);
 
     Logger::isInit = true;
 }
@@ -59,101 +71,61 @@ void Logger::initVehicle()
 {
     if(isInit)  return;
 
-    qInstallMessageHandler(Logger::messageOutputVehicle);
+    qInstallMessageHandler(Logger::messageOutput);
 
     Logger::isInit = true;
 }
 
-void Logger::messageOutputGroundStation(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+void Logger::messageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
-    QString log;
-
-    switch (type) {
-    case QtDebugMsg:
-        log = QObject::tr("%1 | Debug: %3").arg(QDateTime::currentDateTime().toString("dd-MM-yyyy hh:mm:ss")).arg(qPrintable(msg));
-        break;
-    case QtInfoMsg:
-        log = QObject::tr("%1 | Info: %3").arg(QDateTime::currentDateTime().toString("dd-MM-yyyy hh:mm:ss")).arg(qPrintable(msg));
-        break;
-    case QtWarningMsg:
-        log = QObject::tr("%1 | Warning: %3").arg(QDateTime::currentDateTime().toString("dd-MM-yyyy hh:mm:ss")).arg(qPrintable(msg));
-        break;
-    case QtCriticalMsg:
-        log = QObject::tr("%1 | Critical: %3").arg(QDateTime::currentDateTime().toString("dd-MM-yyyy hh:mm:ss")).arg(qPrintable(msg));
-        break;
-    case QtFatalMsg:
-        log = QObject::tr("%1 | Fatal: %3").arg(QDateTime::currentDateTime().toString("dd-MM-yyyy hh:mm:ss")).arg(qPrintable(msg));
-        break;
-    }
-
-    fprintf(stderr, "%s\n", qPrintable(log));
-
-    static QStringList logQueue;
-
-    if(Logger::getInstance().isConnectedGroundStation()) {
-        if(!logQueue.empty())
-            for(const QString &log : logQueue)
-                Logger::getInstance().emit logSentGroundStation(log);
-
-        logQueue.clear();
-
-        Logger::getInstance().emit logSentGroundStation(log);
-    } else
-        logQueue.append(log);
-
-    log.append("\n");
-    logFile->write(log.toLocal8Bit());
-    logFile->flush();
-}
-
-void Logger::messageOutputVehicle(QtMsgType type, const QMessageLogContext &context, const QString &msg)
-{
-    uint8_t msgSeverity;
-
-    switch (type) {
-    case QtDebugMsg:
-        msgSeverity = MAV_SEVERITY_DEBUG;
-        fprintf(stderr, "Debug: %s\n", qPrintable(msg));
-        break;
-    case QtInfoMsg:
-        msgSeverity = MAV_SEVERITY_INFO;
-        fprintf(stderr, "Info: %s\n", qPrintable(msg));
-        break;
-    case QtWarningMsg:
-        msgSeverity = MAV_SEVERITY_WARNING;
-        fprintf(stderr, "Warning: %s\n", qPrintable(msg));
-        break;
-    case QtCriticalMsg:
-        msgSeverity = MAV_SEVERITY_CRITICAL;
-        fprintf(stderr, "Critical: %s\n", qPrintable(msg));
-        break;
-    case QtFatalMsg:
-        msgSeverity = MAV_SEVERITY_EMERGENCY;
-        fprintf(stderr, "Fatal: %s\n", qPrintable(msg));
-        break;
-    }
-
-    struct logQueueItem {
+    struct logItem {
         QString log;
-        uint8_t severity;
+        quint8 severity;
     };
 
-    static QVector<logQueueItem> logQueue;
+    logItem newItem;
 
-    if(Logger::getInstance().isConnectedVehicle()) {
+    switch (type) {
+    case QtDebugMsg:
+        newItem.log = QObject::tr("%1 | Debug: %2").arg(QDateTime::currentDateTime().toString("dd-MM-yyyy hh:mm:ss")).arg(qPrintable(msg));
+        newItem.severity = MAV_SEVERITY_DEBUG;
+        break;
+    case QtInfoMsg:
+        newItem.log = QObject::tr("%1 | Info: %2").arg(QDateTime::currentDateTime().toString("dd-MM-yyyy hh:mm:ss")).arg(qPrintable(msg));
+        newItem.severity = MAV_SEVERITY_INFO;
+        break;
+    case QtWarningMsg:
+        newItem.log = QObject::tr("%1 | Warning: %2").arg(QDateTime::currentDateTime().toString("dd-MM-yyyy hh:mm:ss")).arg(qPrintable(msg));
+        newItem.severity = MAV_SEVERITY_WARNING;
+        break;
+    case QtCriticalMsg:
+        newItem.log = QObject::tr("%1 | Critical: %2").arg(QDateTime::currentDateTime().toString("dd-MM-yyyy hh:mm:ss")).arg(qPrintable(msg));
+        newItem.severity = MAV_SEVERITY_CRITICAL;
+        break;
+    case QtFatalMsg:
+        newItem.log = QObject::tr("%1 | Fatal: %2").arg(QDateTime::currentDateTime().toString("dd-MM-yyyy hh:mm:ss")).arg(qPrintable(msg));
+        newItem.severity = MAV_SEVERITY_EMERGENCY;
+        break;
+    }
+
+    fprintf(stderr, "%s\n", qPrintable(newItem.log));
+
+    static QVector<logItem> logQueue;
+
+    if(Logger::getInstance().isConnected()) {
         if(!logQueue.isEmpty())
-            for(const logQueueItem &item : logQueue)
-                Logger::getInstance().emit logSentVehicle(item.log, item.severity);
+            for(const logItem &item : logQueue)
+                Logger::getInstance().emit logSent(item.log, item.severity);
 
         logQueue.clear();
 
-        Logger::getInstance().emit logSentVehicle(msg, msgSeverity);
-    } else {
-        logQueueItem item;
+        Logger::getInstance().emit logSent(newItem.log, newItem.severity);
+    } else
+        logQueue.push_back(newItem);
 
-        item.log = msg;
-        item.severity = msgSeverity;
-
-        logQueue.push_back(item);
+    if(logFile) {
+        newItem.log.append("\n");
+        logFile->write(newItem.log.toLocal8Bit());
+        logFile->flush();
     }
 }
