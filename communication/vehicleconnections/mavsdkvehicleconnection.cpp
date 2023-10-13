@@ -140,14 +140,14 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
         mavlink_statustext_t statusText;
         mavlink_msg_statustext_decode(&message, &statusText);
 
-        if(statusText.id) {
+        if(statusText.id != 0) {    // non-zero id -> statusText is a sequence of chunks that need to be assembled
             if(statusText.id != currentID) {
                 if(!messageChunks.isEmpty()) {
                     std::sort(messageChunks.begin(), messageChunks.end(), [](const messageChunk &chunk1, const messageChunk &chunk2) {
                         return chunk1.chunk_seq < chunk2.chunk_seq;
                     });
 
-                    QString messageOutput = "[RCCar] ";
+                    QString messageOutput = "[Vehicle] ";
 
                     for(const messageChunk &chunk : messageChunks)
                         messageOutput.append(chunk.text);
@@ -182,10 +182,10 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
             messageChunks.push_back(chunk);
         }
 
-        if(!statusText.id || statusText.text[49] == '\0') {
-            QString messageOutput = "[RCCar] ";
+        if(statusText.id == 0 || statusText.text[MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN - 1] == '\0') {  // we have received the complete statusText
+            QString messageOutput = "[Vehicle] ";
 
-            if(!statusText.id)
+            if(statusText.id == 0)  // id being zero indicates there is only one chunk
                 messageOutput.append(statusText.text);
             else {
                 std::sort(messageChunks.begin(), messageChunks.end(), [](const messageChunk &chunk1, const messageChunk &chunk2) {
@@ -591,7 +591,7 @@ bool MavsdkVehicleConnection::isAutopilotActiveOnVehicle()
 }
 
 void MavsdkVehicleConnection::restartAutopilotOnVehicle()
-{ 
+{
     if (!mMissionRaw)
         mMissionRaw.reset(new mavsdk::MissionRaw(mSystem));
 

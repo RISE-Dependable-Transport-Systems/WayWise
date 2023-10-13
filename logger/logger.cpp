@@ -51,7 +51,7 @@ void Logger::initGroundStation()
 
     if (!documentsDirectory.exists(folderPath))
     {
-        if (documentsDirectory.mkdir(folderPath))   qDebug() << "Logs folder created";
+        if (documentsDirectory.mkpath(folderPath))   qDebug() << "Logs folder created";
         else                                        qDebug() << "Failed to create Logs folder.";
     }
 
