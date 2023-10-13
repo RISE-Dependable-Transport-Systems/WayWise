@@ -435,7 +435,7 @@ void MavsdkVehicleServer::on_logSent(const QString& message, const quint8& sever
         const int chunkSize = MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN - 8; // STATUSTEXT supports up to char[50], -8 adjustment to fit MAVLink header
         int numChunks = (item.log.length() + chunkSize - 1) / chunkSize;
 
-        if(item.log.length() % 42 == 0)  // need extra message for null terminator, so to not overwrite any message character
+        if(item.log.length() % chunkSize == 0)  // need extra message for null terminator, so to not overwrite any message character
             numChunks++;
 
         for(int chunkIndex = 0; chunkIndex < numChunks; chunkIndex++) {
@@ -450,7 +450,7 @@ void MavsdkVehicleServer::on_logSent(const QString& message, const quint8& sever
             qstrcpy(statusText.text, chunkBytes.constData());
 
             if(chunkIndex == numChunks - 1)
-                statusText.text[49] = '\0'; // ensure null terminated
+                statusText.text[MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN - 1] = '\0'; // ensure null terminated
 
             if(numChunks > 1)
                 statusText.id = idCounter;
@@ -466,7 +466,7 @@ void MavsdkVehicleServer::on_logSent(const QString& message, const quint8& sever
                 qWarning() << "Could not send log output via MAVLINK.";
         }
 
-        if(idCounter == 65535)  // overflow avoidance
+        if(idCounter == std::numeric_limits<typeof idCounter>::max())  // overflow avoidance
             idCounter = 1;
         else
             idCounter++;
