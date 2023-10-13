@@ -10,7 +10,6 @@
 #include <QMetaMethod>
 #include <algorithm>
 #include <chrono>
-#include <QMetaType>
 #include "WayWise/logger/logger.h"
 
 MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleState)
