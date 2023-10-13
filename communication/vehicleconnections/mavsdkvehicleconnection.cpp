@@ -127,6 +127,98 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
         }
     });
 
+    mMavlinkPassthrough->subscribe_message(MAVLINK_MSG_ID_STATUSTEXT, [this](const mavlink_message_t &message)
+    {
+        struct messageChunk {
+            QString text;
+            quint8 chunk_seq;
+        };
+
+        static QVector<messageChunk> messageChunks;
+        static quint16 currentID = 0;
+
+        mavlink_statustext_t statusText;
+        mavlink_msg_statustext_decode(&message, &statusText);
+
+        if(statusText.id != 0) {    // non-zero id -> statusText is a sequence of chunks that need to be assembled
+            if(statusText.id != currentID) {
+                if(!messageChunks.isEmpty()) {
+                    std::sort(messageChunks.begin(), messageChunks.end(), [](const messageChunk &chunk1, const messageChunk &chunk2) {
+                        return chunk1.chunk_seq < chunk2.chunk_seq;
+                    });
+
+                    QString messageOutput = "[Vehicle] ";
+
+                    for(const messageChunk &chunk : messageChunks)
+                        messageOutput.append(chunk.text);
+
+                    switch (statusText.severity)
+                    {
+                    case MAV_SEVERITY_DEBUG:
+                        qDebug() << messageOutput;
+                        break;
+                    case MAV_SEVERITY_INFO:
+                        qInfo() << messageOutput;
+                        break;
+                    case MAV_SEVERITY_WARNING:
+                        qCritical() << messageOutput;
+                        break;
+                    case MAV_SEVERITY_CRITICAL:
+                        qCritical() << messageOutput;
+                        break;
+                    case MAV_SEVERITY_EMERGENCY:
+                        qFatal("%s", qPrintable(messageOutput));
+                        break;
+                    }
+
+                    messageChunks.clear();
+                }
+                currentID = statusText.id;
+            }
+
+            messageChunk chunk;
+            chunk.text = statusText.text;
+            chunk.chunk_seq = statusText.chunk_seq;
+            messageChunks.push_back(chunk);
+        }
+
+        if(statusText.id == 0 || statusText.text[MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN - 1] == '\0') {  // we have received the complete statusText
+            QString messageOutput = "[Vehicle] ";
+
+            if(statusText.id == 0)  // id being zero indicates there is only one chunk
+                messageOutput.append(statusText.text);
+            else {
+                std::sort(messageChunks.begin(), messageChunks.end(), [](const messageChunk &chunk1, const messageChunk &chunk2) {
+                    return chunk1.chunk_seq < chunk2.chunk_seq;
+                });
+
+                for(const messageChunk &chunk : messageChunks)
+                    messageOutput.append(chunk.text);
+
+                messageChunks.clear();
+            }
+
+            switch (statusText.severity)
+            {
+            case MAV_SEVERITY_DEBUG:
+                qDebug() << messageOutput;
+                break;
+            case MAV_SEVERITY_INFO:
+                qInfo() << messageOutput;
+                break;
+            case MAV_SEVERITY_WARNING:
+                qCritical() << messageOutput;
+                break;
+            case MAV_SEVERITY_CRITICAL:
+                qCritical() << messageOutput;
+                break;
+            case MAV_SEVERITY_EMERGENCY:
+                qFatal("%s", qPrintable(messageOutput));
+                break;
+            }
+        }
+    });
+
     // Adaptive pure pursuit radius
     mMavlinkPassthrough->subscribe_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, [this](const mavlink_message_t &message) {
         mavlink_named_value_float_t mavMsg;
@@ -499,7 +591,7 @@ bool MavsdkVehicleConnection::isAutopilotActiveOnVehicle()
 }
 
 void MavsdkVehicleConnection::restartAutopilotOnVehicle()
-{ 
+{
     if (!mMissionRaw)
         mMissionRaw.reset(new mavsdk::MissionRaw(mSystem));
 
