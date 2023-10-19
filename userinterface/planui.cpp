@@ -69,7 +69,8 @@ void PlanUI::on_currentRouteSpinBox_valueChanged(int value)
 
 void PlanUI::on_sendToAutopilotButton_clicked()
 {
-    emit routeDoneForUse(mRoutePlanner->getCurrentRoute());
+    if(!mRoutePlanner->getCurrentRoute().isEmpty())
+        emit routeDoneForUse(mRoutePlanner->getCurrentRoute());
 }
 
 void PlanUI::on_heightSpinBox_valueChanged(double arg1)
