@@ -8,6 +8,9 @@
 
 MavsdkStation::MavsdkStation(QObject *parent) : QObject(parent)
 {
+    connect(&mHeartbeatTimer, &QTimer::timeout, this, &MavsdkStation::on_timeout);
+    mHeartbeatTimer.start(1000);
+
     mMavsdk.subscribe_on_new_system([this](){
         for (const auto &system : mMavsdk.systems()) {
             if (!mVehicleConnectionMap.contains(system->get_system_id())) {
@@ -28,6 +31,10 @@ MavsdkStation::MavsdkStation(QObject *parent) : QObject(parent)
 
                         // move to same QThread MavsdkStation lives in
                         vehicleConnection->moveToThread(thread());
+
+                        connect(vehicleConnection.get(), &MavsdkVehicleConnection::gotHeartbeat, this, &MavsdkStation::on_gotHeartbeat);
+
+                        mVehicleTimers.append(qMakePair(system->get_system_id(), 0));    // Timer initialised to zero
 
                         emit gotNewVehicleConnection(vehicleConnection);
                     });
@@ -79,4 +86,25 @@ void MavsdkStation::setEnuReference(const llh_t &enuReference)
 QList<QSharedPointer<MavsdkVehicleConnection>> MavsdkStation::getVehicleConnectionList() const
 {
     return mVehicleConnectionMap.values();
+}
+
+void MavsdkStation::on_timeout()
+{
+    for(auto& vehicleTimer : mVehicleTimers) {
+        vehicleTimer.second++;
+
+        if(vehicleTimer.second == 5) {    // disconnect criteria: 5 heartbeats missed
+            mVehicleConnectionMap.remove(vehicleTimer.first);
+            mVehicleTimers.removeOne(vehicleTimer);
+
+            qDebug() << "System " << vehicleTimer.first << " disconnected.";
+        }
+    }
+}
+
+void MavsdkStation::on_gotHeartbeat(const quint8 systemId)
+{
+    for(auto& vehicleTimer : mVehicleTimers)
+        if(vehicleTimer.first == systemId)
+            vehicleTimer.second = 0;
 }
