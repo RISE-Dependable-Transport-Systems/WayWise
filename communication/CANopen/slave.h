@@ -25,7 +25,7 @@ public slots:
     void statusReceived(const quint8& status);
     void commandAttributesReceived(const quint32& attributes);
     void GNSSDataToCANReceived(const QVariant& gnssData);
-    void rxDistOfRouteLeft(double dist);
+    void receiveDistanceOfRouteLeft(double dist);
 
 signals:
     void sendActualSpeed(double speed);

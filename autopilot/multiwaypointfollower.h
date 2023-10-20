@@ -47,10 +47,10 @@ public:
     int getNumberOfWaypointFollowers();
 
 public slots:
-    void rxDistOfRouteLeft(double meters);
+    void receiveDistanceOfRouteLeft(double meters);
 
 signals:
-    void txDistOfRouteLeft(double meters);
+    void distanceOfRouteLeft(double meters);
 
 private:
     QList<QSharedPointer<WaypointFollower>> mWaypointFollowerList;

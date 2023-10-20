@@ -67,7 +67,7 @@ void MySlave::GNSSDataToCANReceived(const QVariant& gnssData) {
 }
 
 // Distance of route left to be sent with TPDO
-void MySlave::rxDistOfRouteLeft(double dist) {
+void MySlave::receiveDistanceOfRouteLeft(double dist) {
      (*this)[0x2002][5] = (uint8_t)std::round(dist); // [m]
 }
 

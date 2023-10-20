@@ -96,7 +96,6 @@ void PurepursuitWaypointFollower::stop()
     mUpdateStateTimer.stop();
     (isOnVehicle() ? mMovementController->getVehicleState() : mVehicleConnection->getVehicleState())->setAutopilotRadius(0);
     holdPosition();
-    emit txDistOfRouteLeft(0);
     emit deactivateEmergencyBrake();
 }
 
@@ -121,10 +120,8 @@ void PurepursuitWaypointFollower::startFollowPoint()
 void PurepursuitWaypointFollower::resetState()
 {
     mUpdateStateTimer.stop();
-
     mCurrentState.stmState = WayPointFollowerSTMstates::NONE;
     mCurrentState.currentWaypointIndex = mWaypointList.size();
-    emit txDistOfRouteLeft(0);
 }
 
 double PurepursuitWaypointFollower::getCurvatureToPointInENU(QSharedPointer<VehicleState> vehicleState, const QPointF &point, PosType vehiclePosType)
@@ -503,7 +500,7 @@ void PurepursuitWaypointFollower::calculateDistanceOfRouteLeft()
     for (int index = mCurrentState.currentWaypointIndex; index < mWaypointList.size()-1; index++) {
         distance += QLineF(mWaypointList.at(index).getPoint(), mWaypointList.at(index+1).getPoint()).length();
     }
-    emit txDistOfRouteLeft(distance);
+    emit distanceOfRouteLeft(distance);
 }
 
 double PurepursuitWaypointFollower::purePursuitRadius()

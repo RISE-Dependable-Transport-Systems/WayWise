@@ -64,8 +64,8 @@ void CANopenControllerInterface::GNSSDataToCANReceived(const QVariant& gnssData)
     emit sendGNSSDataToCAN(gnssData);
 }
 
-void CANopenControllerInterface::rxDistOfRouteLeft(double dist) {
-    emit txDistOfRouteLeft(dist);
+void CANopenControllerInterface::receiveDistanceOfRouteLeft(double dist) {
+    emit distanceOfRouteLeft(dist);
 }
 
 void CANopenControllerInterface::finishEventLoop() {
@@ -110,7 +110,7 @@ void CANopenControllerInterface::startDevice() {
         QObject::connect(this, &CANopenControllerInterface::sendActualStatus, &mSlave, &MySlave::statusReceived);
         QObject::connect(this, &CANopenControllerInterface::sendCommandAttributes, &mSlave, &MySlave::commandAttributesReceived);
         QObject::connect(this, &CANopenControllerInterface::sendGNSSDataToCAN, &mSlave, &MySlave::GNSSDataToCANReceived);
-        QObject::connect(this, &CANopenControllerInterface::txDistOfRouteLeft, &mSlave, &MySlave::rxDistOfRouteLeft);
+        QObject::connect(this, &CANopenControllerInterface::distanceOfRouteLeft, &mSlave, &MySlave::receiveDistanceOfRouteLeft);
 
         // Create a signal handler.
         io::SignalSet sigset(poll, exec);

@@ -9,7 +9,7 @@
 MultiWaypointFollower::MultiWaypointFollower(QSharedPointer<WaypointFollower> waypointFollower)
 {
     if(qSharedPointerDynamicCast<PurepursuitWaypointFollower>(waypointFollower))
-        QObject::connect(qSharedPointerCast<PurepursuitWaypointFollower>(waypointFollower).get(), &PurepursuitWaypointFollower::txDistOfRouteLeft, this, &MultiWaypointFollower::rxDistOfRouteLeft);
+        QObject::connect(qSharedPointerCast<PurepursuitWaypointFollower>(waypointFollower).get(), &PurepursuitWaypointFollower::distanceOfRouteLeft, this, &MultiWaypointFollower::receiveDistanceOfRouteLeft);
 
     mWaypointFollowerList.append(waypointFollower);
 }
@@ -110,7 +110,7 @@ void MultiWaypointFollower::setAdaptivePurePursuitRadiusCoefficient(double coeff
 int MultiWaypointFollower::addWaypointFollower(QSharedPointer<WaypointFollower> waypointFollower)
 {
     if(qSharedPointerDynamicCast<PurepursuitWaypointFollower>(waypointFollower))
-        QObject::connect(qSharedPointerCast<PurepursuitWaypointFollower>(waypointFollower).get(), &PurepursuitWaypointFollower::txDistOfRouteLeft, this, &MultiWaypointFollower::rxDistOfRouteLeft);
+        QObject::connect(qSharedPointerCast<PurepursuitWaypointFollower>(waypointFollower).get(), &PurepursuitWaypointFollower::distanceOfRouteLeft, this, &MultiWaypointFollower::receiveDistanceOfRouteLeft);
 
     mWaypointFollowerList.append(waypointFollower);
 
@@ -138,7 +138,7 @@ int MultiWaypointFollower::getNumberOfWaypointFollowers()
     return mWaypointFollowerList.size();
 }
 
-void MultiWaypointFollower::rxDistOfRouteLeft(double meters)
+void MultiWaypointFollower::receiveDistanceOfRouteLeft(double meters)
 {
-    emit txDistOfRouteLeft(meters);
+    emit distanceOfRouteLeft(meters);
 }
