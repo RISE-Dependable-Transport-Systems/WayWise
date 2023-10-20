@@ -81,7 +81,10 @@ bool MapWidget::removeObjectState(int objectID)
 {
     QObject::disconnect(mObjectStateMap.value(objectID).get(), &ObjectState::positionUpdated, this, &MapWidget::triggerUpdate);
 
-    return mObjectStateMap.remove(objectID);
+    bool removedAnElement = mObjectStateMap.remove(objectID);
+    update();
+
+    return removedAnElement;
 }
 
 void MapWidget::clearObjectStates()
