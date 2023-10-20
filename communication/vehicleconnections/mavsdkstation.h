@@ -39,13 +39,15 @@ private slots:
 
 signals:
     void gotNewVehicleConnection(QSharedPointer<MavsdkVehicleConnection> vehicleConnection);
+    void disconnectOfVehicleConnection(int vehicleID);
 
 private:
     mavsdk::Mavsdk mMavsdk;
     QMap<int, QSharedPointer<MavsdkVehicleConnection>> mVehicleConnectionMap;
 
     QTimer mHeartbeatTimer;
-    QVector<QPair<quint8, int>> mVehicleTimers;
+    const int HEARTBEATTIMER_TIMEOUT_SECONDS = 5;
+    QVector<QPair<quint8, int>> mVehicleHeartbeatTimeoutCounters;
 };
 
 #endif // MAVSDKSTATION_H
