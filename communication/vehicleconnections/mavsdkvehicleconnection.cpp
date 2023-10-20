@@ -127,6 +127,10 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
         }
     });
 
+    mMavlinkPassthrough->subscribe_message(MAVLINK_MSG_ID_HEARTBEAT, [this](const mavlink_message_t &message) {
+        emit gotHeartbeat(mSystem->get_system_id());
+    });
+
     mMavlinkPassthrough->subscribe_message(MAVLINK_MSG_ID_STATUSTEXT, [this](const mavlink_message_t &message)
     {
         struct messageChunk {

@@ -12,6 +12,9 @@
 #include <QMap>
 #include <QSharedPointer>
 #include <QSerialPortInfo>
+#include <QTimer>
+#include <QVector>
+#include <QPair>
 #include <mavsdk/mavsdk.h>
 #include <mavsdk/plugins/mavlink_passthrough/mavlink_passthrough.h>
 #include "mavsdkvehicleconnection.h"
@@ -30,12 +33,21 @@ public:
 
     QList<QSharedPointer<MavsdkVehicleConnection>> getVehicleConnectionList() const;
 
+private slots:
+    void on_gotHeartbeat(quint8 systemId);
+    void on_timeout();
+
 signals:
     void gotNewVehicleConnection(QSharedPointer<MavsdkVehicleConnection> vehicleConnection);
+    void disconnectOfVehicleConnection(int vehicleID);
 
 private:
     mavsdk::Mavsdk mMavsdk;
     QMap<int, QSharedPointer<MavsdkVehicleConnection>> mVehicleConnectionMap;
+
+    QTimer mHeartbeatTimer;
+    const int HEARTBEATTIMER_TIMEOUT_SECONDS = 5;
+    QVector<QPair<quint8, int>> mVehicleHeartbeatTimeoutCounters;
 };
 
 #endif // MAVSDKSTATION_H
