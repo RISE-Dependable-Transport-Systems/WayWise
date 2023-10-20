@@ -45,7 +45,7 @@ signals:
     void sendCommandAttributes(const quint32& attributes);
     void sendActualStatus(const quint8& status);
     void sendGNSSDataToCAN(const QVariant&);
-    void txDistOfRouteLeft(double dist);
+    void distanceOfRouteLeft(double dist);
 
     void CANOpenAutopilotControlStateChanged(CANOpenAutopilotControlState controlState);
 
@@ -58,7 +58,7 @@ private slots:
 
 public slots:
     void rxNavPvt(const ubx_nav_pvt &pvt);
-    void rxDistOfRouteLeft(double dist);
+    void receiveDistanceOfRouteLeft(double dist);
 
 private:
     bool mSimulateMovement = false;

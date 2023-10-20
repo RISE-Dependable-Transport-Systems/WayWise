@@ -4,123 +4,141 @@
  */
 
 #include "multiwaypointfollower.h"
+#include "WayWise/communication/parameterserver.h"
 
-MultiWaypointFollower::MultiWaypointFollower(QSharedPointer<WaypointFollower> waypointfollower)
+MultiWaypointFollower::MultiWaypointFollower(QSharedPointer<WaypointFollower> waypointFollower)
 {
-    mWayPointFollowerList.append(waypointfollower);
+    if(qSharedPointerDynamicCast<PurepursuitWaypointFollower>(waypointFollower))
+        QObject::connect(qSharedPointerCast<PurepursuitWaypointFollower>(waypointFollower).get(), &PurepursuitWaypointFollower::distanceOfRouteLeft, this, &MultiWaypointFollower::receiveDistanceOfRouteLeft);
+
+    mWaypointFollowerList.append(waypointFollower);
 }
 
 bool MultiWaypointFollower::getRepeatRoute() const
 {
-    return mWayPointFollowerList[mWaypointFollowerID]->getRepeatRoute();
+    return mWaypointFollowerList[mActiveWaypointFollowerID]->getRepeatRoute();
 }
 
 void MultiWaypointFollower::setRepeatRoute(bool value)
 {
-    mWayPointFollowerList[mWaypointFollowerID]->setRepeatRoute(value);
+    mWaypointFollowerList[mActiveWaypointFollowerID]->setRepeatRoute(value);
 }
 
 const PosPoint MultiWaypointFollower::getCurrentGoal()
 {
-    return mWayPointFollowerList[mWaypointFollowerID]->getCurrentGoal();
+    return mWaypointFollowerList[mActiveWaypointFollowerID]->getCurrentGoal();
 }
 
 void MultiWaypointFollower::clearRoute()
 {
-    mWayPointFollowerList[mWaypointFollowerID]->clearRoute();
+    mWaypointFollowerList[mActiveWaypointFollowerID]->clearRoute();
 }
 
 void MultiWaypointFollower::addWaypoint(const PosPoint &point)
 {
-    mWayPointFollowerList[mWaypointFollowerID]->addWaypoint(point);
+    mWaypointFollowerList[mActiveWaypointFollowerID]->addWaypoint(point);
 }
 
 void MultiWaypointFollower::addRoute(const QList<PosPoint> &route)
 {
-    mWayPointFollowerList[mWaypointFollowerID]->addRoute(route);
+    mWaypointFollowerList[mActiveWaypointFollowerID]->addRoute(route);
 }
 
 void MultiWaypointFollower::startFollowingRoute(bool fromBeginning)
 {
-    mWayPointFollowerList[mWaypointFollowerID]->startFollowingRoute(fromBeginning);
+    mWaypointFollowerList[mActiveWaypointFollowerID]->startFollowingRoute(fromBeginning);
 }
 
 bool MultiWaypointFollower::isActive()
 {
-    return mWayPointFollowerList[mWaypointFollowerID]->isActive();
+    return mWaypointFollowerList[mActiveWaypointFollowerID]->isActive();
 }
 
 void MultiWaypointFollower::stop()
 {
-    mWayPointFollowerList[mWaypointFollowerID]->stop();
+    mWaypointFollowerList[mActiveWaypointFollowerID]->stop();
 }
 
 void MultiWaypointFollower::resetState()
 {
-    mWayPointFollowerList[mWaypointFollowerID]->resetState();
+    mWaypointFollowerList[mActiveWaypointFollowerID]->resetState();
 }
 
 double MultiWaypointFollower::getPurePursuitRadius() const
 {
-    if (qSharedPointerDynamicCast<PurepursuitWaypointFollower>(mWayPointFollowerList[mWaypointFollowerID]).get())
-        return qSharedPointerCast<PurepursuitWaypointFollower>(mWayPointFollowerList[mWaypointFollowerID])->getPurePursuitRadius();
+    if (qSharedPointerDynamicCast<PurepursuitWaypointFollower>(mWaypointFollowerList[mActiveWaypointFollowerID]).get())
+        return qSharedPointerCast<PurepursuitWaypointFollower>(mWaypointFollowerList[mActiveWaypointFollowerID])->getPurePursuitRadius();
     else
         return 0;
 }
 
 void MultiWaypointFollower::setPurePursuitRadius(double value)
 {
-    for (const auto &wayPointFollower : mWayPointFollowerList)
-        if(qSharedPointerDynamicCast<PurepursuitWaypointFollower>(wayPointFollower))
-            qSharedPointerCast<PurepursuitWaypointFollower>(wayPointFollower)->setPurePursuitRadius(value);
+    for (const auto &waypointFollower : mWaypointFollowerList)
+        if(qSharedPointerDynamicCast<PurepursuitWaypointFollower>(waypointFollower))
+            qSharedPointerCast<PurepursuitWaypointFollower>(waypointFollower)->setPurePursuitRadius(value);
         else
             qDebug() << "WaypointFollower has no function named setPurePursuitRadius";
 }
 
 void MultiWaypointFollower::setAdaptivePurePursuitRadiusActive(bool adaptive)
 {
-    for (const auto &wayPointFollower : mWayPointFollowerList)
-        if(qSharedPointerDynamicCast<PurepursuitWaypointFollower>(wayPointFollower))
-            qSharedPointerCast<PurepursuitWaypointFollower>(wayPointFollower)->setAdaptivePurePursuitRadiusActive(adaptive);
+    for (const auto &waypointFollower : mWaypointFollowerList)
+        if(qSharedPointerDynamicCast<PurepursuitWaypointFollower>(waypointFollower))
+            qSharedPointerCast<PurepursuitWaypointFollower>(waypointFollower)->setAdaptivePurePursuitRadiusActive(adaptive);
         else
             qDebug() << "WaypointFollower has no function named setAdaptivePurePursuitRadiusActive";
 }
 
 double MultiWaypointFollower::getAdaptivePurePursuitRadiusCoefficient()
 {
-    if (qSharedPointerDynamicCast<PurepursuitWaypointFollower>(mWayPointFollowerList[mWaypointFollowerID]).get())
-        return qSharedPointerCast<PurepursuitWaypointFollower>(mWayPointFollowerList[mWaypointFollowerID])->getAdaptivePurePursuitRadiusCoefficient();
+    if (qSharedPointerDynamicCast<PurepursuitWaypointFollower>(mWaypointFollowerList[mActiveWaypointFollowerID]).get())
+        return qSharedPointerCast<PurepursuitWaypointFollower>(mWaypointFollowerList[mActiveWaypointFollowerID])->getAdaptivePurePursuitRadiusCoefficient();
     else
         return 0;
 }
 
 void MultiWaypointFollower::setAdaptivePurePursuitRadiusCoefficient(double coefficient)
 {
-    for (const auto &wayPointFollower : mWayPointFollowerList)
-        if(qSharedPointerDynamicCast<PurepursuitWaypointFollower>(wayPointFollower))
-            qSharedPointerCast<PurepursuitWaypointFollower>(wayPointFollower)->setAdaptivePurePursuitRadiusCoefficient(coefficient);
+    for (const auto &waypointFollower : mWaypointFollowerList)
+        if(qSharedPointerDynamicCast<PurepursuitWaypointFollower>(waypointFollower))
+            qSharedPointerCast<PurepursuitWaypointFollower>(waypointFollower)->setAdaptivePurePursuitRadiusCoefficient(coefficient);
         else
             qDebug() << "WaypointFollower has no function named setAdaptivePurePursuitRadiusCoefficient";
 }
 
-int MultiWaypointFollower::addWaypointFollower(QSharedPointer<WaypointFollower> waypointfollower)
+int MultiWaypointFollower::addWaypointFollower(QSharedPointer<WaypointFollower> waypointFollower)
 {
-    mWayPointFollowerList.append(waypointfollower);
+    if(qSharedPointerDynamicCast<PurepursuitWaypointFollower>(waypointFollower))
+        QObject::connect(qSharedPointerCast<PurepursuitWaypointFollower>(waypointFollower).get(), &PurepursuitWaypointFollower::distanceOfRouteLeft, this, &MultiWaypointFollower::receiveDistanceOfRouteLeft);
+
+    mWaypointFollowerList.append(waypointFollower);
+
+    // Provide system parameters to ControlTower
+    ParameterServer::getInstance()->provideParameter("PPRadius", std::bind(&MultiWaypointFollower::setPurePursuitRadius, this, std::placeholders::_1),
+                                                     std::bind(&MultiWaypointFollower::getPurePursuitRadius, this));
+    ParameterServer::getInstance()->provideParameter("APPRC", std::bind(&MultiWaypointFollower::setAdaptivePurePursuitRadiusCoefficient, this, std::placeholders::_1),
+                                                     std::bind(&MultiWaypointFollower::getAdaptivePurePursuitRadiusCoefficient, this));
 
     return (getNumberOfWaypointFollowers() - 1) ;
 }
 
 void MultiWaypointFollower::setActiveWaypointFollower(int waypointfollowerID)
 {
-    mWaypointFollowerID = waypointfollowerID;
+    mActiveWaypointFollowerID = waypointfollowerID;
 }
 
 QSharedPointer<WaypointFollower> MultiWaypointFollower::getActiveWaypointFollower()
 {
-    return mWayPointFollowerList[mWaypointFollowerID];
+    return mWaypointFollowerList[mActiveWaypointFollowerID];
 }
 
 int MultiWaypointFollower::getNumberOfWaypointFollowers()
 {
-    return mWayPointFollowerList.size();
+    return mWaypointFollowerList.size();
+}
+
+void MultiWaypointFollower::receiveDistanceOfRouteLeft(double meters)
+{
+    emit distanceOfRouteLeft(meters);
 }

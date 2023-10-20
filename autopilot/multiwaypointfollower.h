@@ -46,13 +46,16 @@ public:
     QSharedPointer<WaypointFollower> getActiveWaypointFollower();
     int getNumberOfWaypointFollowers();
 
-private:
-    QList<QSharedPointer<WaypointFollower>> mWayPointFollowerList;
-
-    int mWaypointFollowerID = 0;
+public slots:
+    void receiveDistanceOfRouteLeft(double meters);
 
 signals:
+    void distanceOfRouteLeft(double meters);
 
+private:
+    QList<QSharedPointer<WaypointFollower>> mWaypointFollowerList;
+
+    int mActiveWaypointFollowerID = 0;
 };
 
 #endif // MULTIWAYPOINTFOLLOWER_H

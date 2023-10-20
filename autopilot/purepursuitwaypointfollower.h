@@ -84,7 +84,7 @@ public:
     void setPosTypeUsed(const PosType &posTypeUsed);
 
 signals:
-    void txDistOfRouteLeft(double meters);
+    void distanceOfRouteLeft(double meters);
 
 public slots:
     void updateFollowPointInVehicleFrame(const PosPoint &point);
