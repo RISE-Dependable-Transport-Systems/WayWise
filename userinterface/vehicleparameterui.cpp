@@ -26,8 +26,10 @@ void VehicleParameterUI::setCurrentVehicleConnection(const QSharedPointer<Vehicl
 
 void VehicleParameterUI::on_getAllParametersFromVehicleButton_clicked()
 {
-    mVehicleParameters = mCurrentVehicleConnection->getAllParametersFromVehicle();
-    populateTableWithParameters();
+    if (mCurrentVehicleConnection) {
+        mVehicleParameters = mCurrentVehicleConnection->getAllParametersFromVehicle();
+        populateTableWithParameters();
+    }
 }
 
 void VehicleParameterUI::populateTableWithParameters()
@@ -81,38 +83,41 @@ void VehicleParameterUI::on_setNewParametersOnVehicleButton_clicked()
 
 bool VehicleParameterUI::sendChangedParametersToVehicle()
 {
-    int row = 0;
-    int column = 1;
-    bool hasParamChanged = false;
+    if (mCurrentVehicleConnection) {
+        int row = 0;
+        int column = 1;
+        bool hasParamChanged = false;
 
-    for (const auto& vehicleIntParameter : mVehicleParameters.intParameters) {
-        int32_t tableWidgetParameterValue = ui->tableWidget->item(row, column)->text().toInt();
-        if (tableWidgetParameterValue != vehicleIntParameter.value) {
-            hasParamChanged = true;
-            if (mCurrentVehicleConnection->setIntParameterOnVehicle(vehicleIntParameter.name.c_str(), tableWidgetParameterValue) != VehicleConnection::Result::Success)
-                return false;
+        for (const auto& vehicleIntParameter : mVehicleParameters.intParameters) {
+            int32_t tableWidgetParameterValue = ui->tableWidget->item(row, column)->text().toInt();
+            if (tableWidgetParameterValue != vehicleIntParameter.value) {
+                hasParamChanged = true;
+                if (mCurrentVehicleConnection->setIntParameterOnVehicle(vehicleIntParameter.name.c_str(), tableWidgetParameterValue) != VehicleConnection::Result::Success)
+                    return false;
+            }
+            row++;
         }
-        row++;
-    }
 
-    for (const auto& vehicleFloatParameter : mVehicleParameters.floatParameters) {
-        float tableWidgetParameterValue = ui->tableWidget->item(row, column)->text().toFloat();
-        if (tableWidgetParameterValue != vehicleFloatParameter.value) {
-            hasParamChanged = true;
-            if (mCurrentVehicleConnection->setFloatParameterOnVehicle(vehicleFloatParameter.name.c_str(), tableWidgetParameterValue) != VehicleConnection::Result::Success)
-                 return false;
+        for (const auto& vehicleFloatParameter : mVehicleParameters.floatParameters) {
+            float tableWidgetParameterValue = ui->tableWidget->item(row, column)->text().toFloat();
+            if (tableWidgetParameterValue != vehicleFloatParameter.value) {
+                hasParamChanged = true;
+                if (mCurrentVehicleConnection->setFloatParameterOnVehicle(vehicleFloatParameter.name.c_str(), tableWidgetParameterValue) != VehicleConnection::Result::Success)
+                     return false;
+            }
+            row++;
         }
-        row++;
-    }
 
-    for (const auto& vehicleCustomParameter : mVehicleParameters.customParameters) {
-        std::string tableWidgetParameterValue = ui->tableWidget->item(row, column)->text().toStdString();
-        if (tableWidgetParameterValue != vehicleCustomParameter.value) {
-            hasParamChanged = true;
-            if (mCurrentVehicleConnection->setCustomParameterOnVehicle(vehicleCustomParameter.name.c_str(), tableWidgetParameterValue) != VehicleConnection::Result::Success)
-                 return false;
+        for (const auto& vehicleCustomParameter : mVehicleParameters.customParameters) {
+            std::string tableWidgetParameterValue = ui->tableWidget->item(row, column)->text().toStdString();
+            if (tableWidgetParameterValue != vehicleCustomParameter.value) {
+                hasParamChanged = true;
+                if (mCurrentVehicleConnection->setCustomParameterOnVehicle(vehicleCustomParameter.name.c_str(), tableWidgetParameterValue) != VehicleConnection::Result::Success)
+                     return false;
+            }
+            row++;
         }
-        row++;
-    }
-    return hasParamChanged;
+        return hasParamChanged;
+    } else
+        return false;
 }
