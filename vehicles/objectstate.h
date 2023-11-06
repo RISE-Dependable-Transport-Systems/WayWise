@@ -27,8 +27,8 @@ class ObjectState : public QObject
     Q_OBJECT
 public:
     typedef int ObjectID_t;
-    typedef struct {double x, y, z;} Velocity;
-    typedef struct {double x, y, z;} Acceleration;
+    typedef xyz_t Velocity;
+    typedef xyz_t Acceleration;
     ObjectState(ObjectID_t id = 0, Qt::GlobalColor color = Qt::red);
 #ifdef QT_GUI_LIB
     virtual void draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected = true) = 0;

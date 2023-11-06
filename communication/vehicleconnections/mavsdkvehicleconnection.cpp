@@ -96,8 +96,8 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
     });
 
     mTelemetry->subscribe_velocity_ned([this](mavsdk::Telemetry::VelocityNed velocity) {
-        VehicleState::Velocity velocityCopter {velocity.east_m_s, velocity.north_m_s, -velocity.down_m_s};
-        mVehicleState->setVelocity(velocityCopter);
+        xyz_t velocityCopter {velocity.east_m_s, velocity.north_m_s, -velocity.down_m_s};
+        mVehicleState->setVelocity(coordinateTransforms::nedToENU(velocityCopter));
     });
 
     if (mVehicleType == MAV_TYPE::MAV_TYPE_QUADROTOR) {
