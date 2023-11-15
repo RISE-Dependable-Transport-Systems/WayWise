@@ -78,6 +78,8 @@ void Logger::initVehicle()
 
 void Logger::messageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
+    Q_UNUSED(context)
+
     struct logItem {
         QString log;
         quint8 severity;
