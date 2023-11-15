@@ -320,18 +320,16 @@ void RoutePlannerModule::drawRoute(QPainter& painter, QTransform drawTrans, QTra
         }
 
         // Draw text only for selected route
+        pointLabel = "";
+        QTextStream pointLabelStream(&pointLabel);
+        pointLabelStream.setRealNumberPrecision(2);
         if (isSelected && drawAnnotations) {
             //QTime t = route[i].getTime();
-            pointLabel.sprintf("P: %d %s\n"
-                               "(%.2f, %.2f, %.2f)\n"
-                               "%.1f km/h\n"
-                               //"%02d:%02d:%02d:%03d\n"
-                               "A: %08X",
-                               i, ((i == 0) ? "- start" : ((i == route.size()-1) ? "- end" : "")),
-                               route[i].getX(), route[i].getY(), route[i].getHeight(),
-                               route[i].getSpeed() * 3.6,
-                               //t.hour(), t.minute(), t.second(), t.msec(),
-                               route[i].getAttributes());
+            pointLabelStream << "P: " << i << ((i == 0) ? "- start" : ((i == route.size()-1) ? "- end" : "")) << Qt::endl
+                             << "(" << route[i].getX() <<  ", " << route[i].getY() << ", " << route[i].getHeight() << ")" << Qt::endl;
+            pointLabelStream.setRealNumberPrecision(1);
+            pointLabelStream << route[i].getSpeed() * 3.6 << " km/h" << Qt::endl
+                             << "A: " << QString("%1").arg(route[i].getAttributes(), 8, 16, QLatin1Char('0'));
 
             pointLabelPos.setX(p.x() + 10 / scaleFactor);
             pointLabelPos.setY(p.y());
@@ -343,7 +341,7 @@ void RoutePlannerModule::drawRoute(QPainter& painter, QTransform drawTrans, QTra
                                           pointLabelPos.x() + 500, pointLabelPos.y() + 100);
             painter.drawText(pointLabelRectangle, pointLabel);
         } else {
-            pointLabel.sprintf("%d", routeID);
+            pointLabelStream << routeID;
             pointLabelPos.setX(p.x());
             pointLabelPos.setY(p.y());
             painter.setTransform(txtTrans);
