@@ -8,6 +8,7 @@
 #include "copterstate.h"
 #include <QTime>
 #include <QPalette>
+#include <QTextStream>
 
 CopterState::CopterState(int id, Qt::GlobalColor color) : VehicleState(id, color)
 {
@@ -83,7 +84,7 @@ void CopterState::draw(QPainter &painter, const QTransform &drawTrans, const QTr
 
     scaleIndependentSize = 30/scale;
     if (tooSmallForDetails) {
-        pen.setColor(QPalette::Foreground);
+        pen.setColor(QPalette::WindowText);
         pen.setWidthF(2/scale);
         painter.setPen(pen);
         painter.setBrush(getColor());
@@ -156,22 +157,20 @@ void CopterState::draw(QPainter &painter, const QTransform &drawTrans, const QTr
         case FlightMode::Rattitude: flightModeStr = "rattitude"; break;
     }
 
-    txt.sprintf("%s\n"
-                "(%.3f, %.3f, %.3f, %.0f)\n"
-                "State: %s, %s\n"
-                "Mode: %s\n",
-                getName().toLocal8Bit().data(),
-                pos.getX(), pos.getY(), pos.getHeight(), pos.getYaw(),
-                (getIsArmed() ? "armed" : "disarmed"),
-                landedStateStr.toLocal8Bit().data(),
-                flightModeStr.toLocal8Bit().data());
+    QTextStream txtStream(&txt);
+    txtStream.setRealNumberPrecision(3);
+    txtStream << getName() << Qt::endl
+              << "(" << pos.getX() << ", " << pos.getY() << ", " << pos.getHeight() << ", " << (int)pos.getYaw() << ")" << Qt::endl
+              << "State: " << (getIsArmed() ? "armed, " : "disarmed, ") << landedStateStr << Qt::endl
+              << flightModeStr;
+
     pt_txt.setX(x + ((scale < 0.05) ? scaleIndependentSize : (getWidth() + getLength())/2));
     pt_txt.setY(y);
     painter.setTransform(txtTrans);
     pt_txt = drawTrans.map(pt_txt);
     rect_txt.setCoords(pt_txt.x(), pt_txt.y() - 40,
                        pt_txt.x() + 400, pt_txt.y() + 65);
-    painter.setPen(QPen(QPalette::Foreground));
+    painter.setPen(QPen(QPalette::WindowText));
     painter.drawText(rect_txt, txt);
 
     // Restore transform

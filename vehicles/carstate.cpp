@@ -145,14 +145,13 @@ void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTrans
             case FlightMode::Rattitude: flightModeStr = "rattitude"; break;
         }
 
-        txt.sprintf("%s\n"
-                    "(%.3f, %.3f, %.3f, %.0f)\n"
-                    "State: %s\n"
-                    "Mode: %s\n",
-                    getName().toLocal8Bit().data(),
-                    pos.getX(), pos.getY(), pos.getHeight(), pos.getYaw(),
-                    (getIsArmed() ? "armed" : "disarmed"),
-                    flightModeStr.toLocal8Bit().data());
+        QTextStream txtStream(&txt);
+        txtStream.setRealNumberPrecision(3);
+        txtStream << getName() << Qt::endl
+                  << "(" << pos.getX() << ", " << pos.getY() << ", " << pos.getHeight() << ", " << (int)pos.getYaw() << ")" << Qt::endl
+                  << "State: " << (getIsArmed() ? "armed" : "disarmed") << Qt::endl
+                  << flightModeStr;
+
         pt_txt.setX(x + car_w + car_len * ((cos(getPosition().getYaw() * (M_PI/180.0)) + 1) / 3));
         pt_txt.setY(y);
         painter.setTransform(txtTrans);
