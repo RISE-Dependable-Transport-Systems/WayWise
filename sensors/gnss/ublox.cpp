@@ -649,11 +649,12 @@ bool Ublox::ubloxCfgTp5(ubx_cfg_tp5 *cfg)
 
 bool Ublox::ubloxCfgGnss(ubx_cfg_gnss *gnss)
 {
-    if (gnss->num_blocks > 10) {
+    const int max_num_blocks = 10;
+    if (gnss->num_blocks > max_num_blocks) {
         return false;
     }
 
-    uint8_t buffer[4 + 8 * gnss->num_blocks];
+    uint8_t buffer[4 + 8 * max_num_blocks];
     int ind = 0;
 
     ubx_put_U1(buffer, &ind, 0);
@@ -1236,8 +1237,8 @@ QByteArray Ublox::ubx_encode(uint8_t msg_class, uint8_t id, const QByteArray &da
     uint8_t ck_a = 0;
     uint8_t ck_b = 0;
 
-    ubx.append(0xB5);
-    ubx.append(0x62);
+    ubx.append(char(0xB5));
+    ubx.append(char(0x62));
 
     ubx.append(msg_class);
     ck_a += ubx.at(ubx.size() - 1);
