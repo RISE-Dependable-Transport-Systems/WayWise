@@ -51,7 +51,7 @@ RtcmClient::RtcmClient(QObject *parent) : QObject(parent)
             if (mCurrentNtripConnectionInfo.user.size() > 0 || mCurrentNtripConnectionInfo.password.size() > 0) {
                 QString authStr = mCurrentNtripConnectionInfo.user + ":" + mCurrentNtripConnectionInfo.password;
                 QByteArray auth;
-                auth.append(authStr);
+                auth.append(authStr.toLocal8Bit());
                 msg += "Authorization: Basic " + auth.toBase64() + "\r\n";
             }
 
