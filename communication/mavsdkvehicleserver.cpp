@@ -222,10 +222,12 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
         connect(&mPublishMavlinkTimer, &QTimer::timeout, [this](){
             mavlink_message_t mavAutopilotRadiusmMsg;
             mavlink_named_value_float_t autopilotRadius;
+
             memset(&autopilotRadius, 0, sizeof(mavlink_named_value_float_t));
-            std::chrono::milliseconds counter;
-            autopilotRadius.time_boot_ms = counter.count();
+
+            autopilotRadius.time_boot_ms = QDateTime::currentMSecsSinceEpoch() - mMavsdkVehicleServerCreationTime.toMSecsSinceEpoch();
             autopilotRadius.value = mVehicleState->getAutopilotRadius();
+
             strcpy(autopilotRadius.name, "AR");
             mavlink_msg_named_value_float_encode(mMavlinkPassthrough->get_our_sysid(), mMavlinkPassthrough->get_our_compid(), &mavAutopilotRadiusmMsg, &autopilotRadius);
             if (mMavlinkPassthrough->send_message(mavAutopilotRadiusmMsg) != mavsdk::MavlinkPassthrough::Result::Success)
