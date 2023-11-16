@@ -7,6 +7,7 @@
 
 #include "objectstate.h"
 #include <QDebug>
+#include <QTextStream>
 
 ObjectState::ObjectState(ObjectID_t id, Qt::GlobalColor color)
 {
@@ -19,7 +20,7 @@ void ObjectState::setId(int id, bool changeName)
     mId = id;
     if (changeName) {
         mName = "";
-        mName.sprintf("Vehicle %d", mId);
+        QTextStream(&mName) << "Vehicle " << mId;
     }
 }
 

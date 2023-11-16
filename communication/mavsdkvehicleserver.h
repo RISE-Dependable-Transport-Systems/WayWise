@@ -10,6 +10,7 @@
 #include <QObject>
 #include <QSharedPointer>
 #include <QTimer>
+#include <QDateTime>
 #include <mavsdk/mavsdk.h>
 #include <mavsdk/plugins/action_server/action_server.h>
 #include <mavsdk/plugins/mavlink_passthrough/mavlink_passthrough.h>
@@ -57,6 +58,7 @@ private:
     std::shared_ptr<mavsdk::MavlinkPassthrough> mMavlinkPassthrough;
     QTimer mPublishMavlinkTimer;
 
+    QDateTime mMavsdkVehicleServerCreationTime = QDateTime::currentDateTime();
     QSharedPointer<VehicleState> mVehicleState;
     QSharedPointer<UbloxRover> mUbloxRover;
     QSharedPointer<WaypointFollower> mWaypointFollower;

@@ -22,6 +22,7 @@
 #include <QPrinter>
 #include <QPrintEngine>
 #include <QTime>
+#include <QTextStream>
 
 #include "mapwidget.h"
 
@@ -364,24 +365,28 @@ bool MapWidget::event(QEvent *event)
             return true;
         }
     } else if (event->type() == QEvent::KeyPress) {
-        // Generate scroll events from up and down arrow keys
+        // Generate scroll events from up / + and down / - arrow keys
         QKeyEvent *ke = static_cast<QKeyEvent*>(event);
-        if (ke->key() == Qt::Key_Up) {
+        if (ke->key() == Qt::Key_Up || ke->key() == Qt::Key_Plus) {
             QWheelEvent we(QPointF(0, 0),
                            QPointF(0, 0),
                            QPoint(0, 0),
                            QPoint(0, 120),
-                           0, Qt::Vertical, 0,
-                           ke->modifiers());
+                           Qt::MouseButton::NoButton,
+                           ke->modifiers(),
+                           Qt::ScrollPhase::ScrollBegin,
+                           false);
             wheelEvent(&we);
             return true;
-        } else if (ke->key() == Qt::Key_Down) {
+        } else if (ke->key() == Qt::Key_Down || ke->key() == Qt::Key_Minus) {
             QWheelEvent we(QPointF(0, 0),
                            QPointF(0, 0),
                            QPoint(0, 0),
                            QPoint(0, -120),
-                           0, Qt::Vertical, 0,
-                           ke->modifiers());
+                           Qt::MouseButton::NoButton,
+                           ke->modifiers(),
+                           Qt::ScrollPhase::ScrollBegin,
+                           false);
             wheelEvent(&we);
             return true;
         }
@@ -436,7 +441,7 @@ void MapWidget::printPdf(QString path, int width, int height)
     printer.setOutputFormat(QPrinter::PdfFormat);
     printer.setColorMode(QPrinter::Color);
 
-    printer.printEngine()->setProperty(QPrintEngine::PPK_Creator, "RControlStation");
+    printer.printEngine()->setProperty(QPrintEngine::PPK_Creator, "ControlTower");
     printer.printEngine()->setProperty(QPrintEngine::PPK_DocumentName, "Map");
 
     QPageLayout pageLayout;
@@ -449,7 +454,7 @@ void MapWidget::printPdf(QString path, int width, int height)
     printer.setPageLayout(pageLayout);
 
     QPainter painter(&printer);
-    paint(painter, printer.pageRect().width(), printer.pageRect().height(), true);
+    paint(painter, printer.pageLayout().paintRectPixels(printer.resolution()).width(), printer.pageLayout().paintRectPixels(printer.resolution()).height(), true);
 }
 
 void MapWidget::printPng(QString path, int width, int height)
@@ -556,7 +561,7 @@ double MapWidget::drawGrid(QPainter& painter, QTransform drawTrans, QTransform t
     const QColor zeroAxisColor = Qt::red;
     const QColor firstAxisColor = Qt::gray;
     const QColor secondAxisColor = Qt::blue;
-    const QColor textColor = QPalette::Foreground;
+    const QColor textColor = QPalette::WindowText;
 
     // Grid boundries in mm
     const double xStart = -ceil(gridWidth / stepGrid / mScaleFactor) * stepGrid - ceil(mXOffset / stepGrid / mScaleFactor) * stepGrid;
@@ -575,7 +580,10 @@ double MapWidget::drawGrid(QPainter& painter, QTransform drawTrans, QTransform t
             pen.setColor(firstAxisColor);
             painter.setPen(pen);
         } else {
-            gridLabel.sprintf("%.2f m", i / 1000.0);
+            gridLabel = "";
+            QTextStream gridLabelStream(&gridLabel);
+            gridLabelStream.setRealNumberPrecision(2);
+            gridLabelStream << i / 1000.0 << " m";
 
             gridLabelPos.setX(i);
             gridLabelPos.setY(0);
@@ -617,7 +625,11 @@ double MapWidget::drawGrid(QPainter& painter, QTransform drawTrans, QTransform t
             pen.setColor(firstAxisColor);
             painter.setPen(pen);
         } else {
-            gridLabel.sprintf("%.2f m", i / 1000.0);
+            gridLabel = "";
+            QTextStream gridLabelStream(&gridLabel);
+            gridLabelStream.setRealNumberPrecision(2);
+            gridLabelStream << i / 1000.0 << " m";
+
             gridLabelPos.setY(i);
 
             gridLabelPos = drawTrans.map(gridLabelPos);
@@ -811,7 +823,7 @@ void MapWidget::paint(QPainter &painter, int width, int height, bool highQuality
 
     // Map module painting
     painter.save();
-    painter.setPen(QPen(QPalette::Foreground));
+    painter.setPen(QPen(QPalette::WindowText));
     for (const auto& m: mMapModules) {
         m->processPaint(painter, width, height, highQuality,
                         drawTrans, txtTrans, mScaleFactor);
@@ -819,11 +831,11 @@ void MapWidget::paint(QPainter &painter, int width, int height, bool highQuality
     painter.restore();
 
     // Draw vehicles
-    painter.setPen(QPen(QPalette::Foreground));
+    painter.setPen(QPen(QPalette::WindowText));
     for(const auto& obj : mObjectStateMap)
         obj->draw(painter, drawTrans, txtTrans, obj->getId() == mSelectedObject);
 
-    painter.setPen(QPen(QPalette::Foreground));
+    painter.setPen(QPen(QPalette::WindowText));
 
     painter.end();
 }

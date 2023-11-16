@@ -7,7 +7,7 @@
 JsonStreamParserTcp::JsonStreamParserTcp(QObject *parent) : QObject(parent)
 {
     connect(&mTcpSocket, &QTcpSocket::readyRead, this, &JsonStreamParserTcp::parseJson);
-    connect(&mTcpSocket, QOverload<QTcpSocket::SocketError>::of(&QTcpSocket::error), this, &JsonStreamParserTcp::tcpError);
+    connect(&mTcpSocket, QOverload<QTcpSocket::SocketError>::of(&QTcpSocket::errorOccurred), this, &JsonStreamParserTcp::tcpError);
 }
 
 void JsonStreamParserTcp::connectToHost(QHostAddress address, qint16 port)
