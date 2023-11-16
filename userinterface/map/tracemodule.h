@@ -18,7 +18,6 @@ public:
 
     // MapModule interface
     virtual void processPaint(QPainter &painter, int width, int height, bool highQuality, QTransform drawTrans, QTransform txtTrans, double scale) override;
-    virtual bool processMouse(bool isPress, bool isRelease, bool isMove, bool isWheel, QPoint widgetPos, PosPoint mapPos, double wheelAngleDelta, Qt::KeyboardModifiers keyboardModifiers, Qt::MouseButtons mouseButtons, double scale) override;
 
     void setTraceActiveForPosType(PosType type, bool active);
     void setTraceColorForPosType(PosType type, QColor color);
