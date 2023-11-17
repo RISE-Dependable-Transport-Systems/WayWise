@@ -11,6 +11,7 @@
 #include <QSharedPointer>
 #include <QTimer>
 #include <QDateTime>
+#include <QHostAddress>
 #include <mavsdk/mavsdk.h>
 #include <mavsdk/plugins/action_server/action_server.h>
 #include <mavsdk/plugins/mavlink_passthrough/mavlink_passthrough.h>
@@ -28,7 +29,7 @@ class MavsdkVehicleServer : public QObject
 {
     Q_OBJECT
 public:
-    explicit MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleState);
+    explicit MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleState, QHostAddress controlTowerAddress = QHostAddress("127.0.0.1"));
     void setUbloxRover(QSharedPointer<UbloxRover> ubloxRover);
     void setWaypointFollower(QSharedPointer<WaypointFollower> waypointFollower);
     void setMovementController(QSharedPointer<MovementController> movementController);

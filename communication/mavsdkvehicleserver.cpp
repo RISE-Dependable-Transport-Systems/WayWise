@@ -6,13 +6,14 @@
 
 #include "mavsdkvehicleserver.h"
 #include <QDebug>
-#include <future>
 #include <QMetaMethod>
+#include <QTextStream>
+#include <future>
 #include <algorithm>
 #include <chrono>
 #include "WayWise/logger/logger.h"
 
-MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleState)
+MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleState, QHostAddress controlTowerAddress)
 {
     connect(&Logger::getInstance(), &Logger::logSent, this, &MavsdkVehicleServer::on_logSent);
 
@@ -268,9 +269,10 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
     // Start publishing status on MAVLink (TODO: rate?)
     mPublishMavlinkTimer.start(100);
 
-    mavsdk::ConnectionResult result = mMavsdk.add_any_connection("udp://127.0.0.1:14540");
+    const unsigned controlTowerPort = 14540;
+    mavsdk::ConnectionResult result = mMavsdk.add_any_connection("udp://" + controlTowerAddress.toString().toStdString() + ":" + std::to_string(controlTowerPort));
     if (result == mavsdk::ConnectionResult::Success)
-        qDebug() << "MavsdkVehicleServer is listening...";
+        qDebug() << "MavsdkVehicleServer is listening on" << controlTowerAddress.toString() << "with port" << controlTowerPort;
 }
 
 void MavsdkVehicleServer::heartbeatTimeout() {
