@@ -817,9 +817,8 @@ void MapWidget::paint(QPainter &painter, int width, int height, bool highQuality
     drawOSMTiles(painter, drawTrans, viewWidth, viewHeight, viewCenter, highQuality);
     painter.restore();
 
-    double gridResolution;
     if (mDrawGrid)
-        gridResolution = drawGrid(painter, drawTrans, txtTrans, width, height);
+        drawGrid(painter, drawTrans, txtTrans, width, height);
 
     // Map module painting
     painter.save();

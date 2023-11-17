@@ -38,6 +38,8 @@ TraceModule::TraceModule()
 
 void TraceModule::processPaint(QPainter &painter, int width, int height, bool highQuality, QTransform drawTrans, QTransform txtTrans, double scale)
 {
+    Q_UNUSED(width) Q_UNUSED(height) Q_UNUSED(highQuality) Q_UNUSED(txtTrans)
+
     QPen pen;
     pen.setWidthF(7.5/scale);
     painter.setTransform(drawTrans);
@@ -57,11 +59,6 @@ void TraceModule::processPaint(QPainter &painter, int width, int height, bool hi
             }
         }
     }
-}
-
-bool TraceModule::processMouse(bool isPress, bool isRelease, bool isMove, bool isWheel, QPoint widgetPos, PosPoint mapPos, double wheelAngleDelta, Qt::KeyboardModifiers keyboardModifiers, Qt::MouseButtons mouseButtons, double scale)
-{
-    return false;
 }
 
 void TraceModule::setTraceActiveForPosType(PosType type, bool active)

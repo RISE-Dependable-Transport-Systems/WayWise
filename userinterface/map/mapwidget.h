@@ -47,12 +47,15 @@ class MapModule : public QObject
     Q_OBJECT
 public:
     virtual void processPaint(QPainter &painter, int width, int height, bool highQuality,
-                              QTransform drawTrans, QTransform txtTrans, double scale) { };
+                              QTransform drawTrans, QTransform txtTrans, double scale) {Q_UNUSED(painter) Q_UNUSED(width) Q_UNUSED(height) Q_UNUSED(highQuality) Q_UNUSED(drawTrans) Q_UNUSED(txtTrans) Q_UNUSED(scale)};
     virtual bool processMouse(bool isPress, bool isRelease, bool isMove, bool isWheel,
                               QPoint widgetPos, PosPoint mapPos, double wheelAngleDelta,
                               Qt::KeyboardModifiers keyboardModifiers,
-                              Qt::MouseButtons mouseButtons, double scale) { return false; };
-    virtual QSharedPointer<QMenu> populateContextMenu(const xyz_t& mapPos, const llh_t& enuReference) { return nullptr; };
+                              Qt::MouseButtons mouseButtons, double scale) {Q_UNUSED(isPress) Q_UNUSED(isRelease) Q_UNUSED(isMove) Q_UNUSED(isWheel) Q_UNUSED(widgetPos) Q_UNUSED(mapPos)
+                                                                            Q_UNUSED(wheelAngleDelta) Q_UNUSED(keyboardModifiers) Q_UNUSED(mouseButtons) Q_UNUSED(scale)
+                                                                            return false; };
+    virtual QSharedPointer<QMenu> populateContextMenu(const xyz_t& mapPos, const llh_t& enuReference) { Q_UNUSED(mapPos) Q_UNUSED(enuReference)
+                                                                                                        return nullptr;};
 
 signals:
     void requestRepaint();

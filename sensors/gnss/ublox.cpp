@@ -727,7 +727,12 @@ bool Ublox::ubloxCfgNmea(ubx_cfg_nmea *nmea)
 bool Ublox::ubloxCfgValset(unsigned char *values, int len,
                            bool ram, bool bbr, bool flash)
 {
-    uint8_t buffer[len + 4];
+    const size_t buffersize = 4096;
+    assert(((unsigned)len < buffersize) && "Ublox::ubloxCfgValset: message size exceeded");
+
+    uint8_t buffer[buffersize];
+    memset(&buffer, 0, buffersize);
+
     int ind = 0;
 
     ubx_put_U1(buffer, &ind, 0);
@@ -779,7 +784,12 @@ bool Ublox::ubloxCfgValset(unsigned char *values, int len,
  */
 bool Ublox::ubloxCfgValget(unsigned char *keys, int len, uint8_t layer, uint16_t position)
 {
-    uint8_t buffer[len + 4];
+    const size_t buffersize = 4096;
+    assert(((unsigned)len < buffersize) && "Ublox::ubloxCfgValset: message size exceeded");
+
+    uint8_t buffer[buffersize];
+    memset(&buffer, 0, buffersize);
+
     int ind = 0;
 
     ubx_put_U1(buffer, &ind, 0);
