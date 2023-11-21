@@ -41,7 +41,6 @@ ControlTower communicates to vehicles via MAVLINK, which enables support for dro
   - MultiWaypointFollower, is a container that allows switching between multiple instances of WaypointFollower (e.g., if you want to switch between different routes and save state inbetween)
 - **userinterface**: UI building blocks to create desktop applications. Functional but still a lot of work-in-progress (see also [ControlTower](https://github.com/RISE-Dependable-Transport-Systems/ControlTower))
 - **external**: code from external projects
-- **legacy**: code to support funtionality from "SDVP times", e.g., to communicate with RControlStation. Not to be used in future projects as it will be removed sooner or later...
 
 ## Use cases
 ![image](https://user-images.githubusercontent.com/2404625/165902491-023a640b-947a-4a76-aea6-6219e5f8ca76.png)
