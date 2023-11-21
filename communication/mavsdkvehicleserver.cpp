@@ -6,13 +6,13 @@
 
 #include "mavsdkvehicleserver.h"
 #include <QDebug>
-#include <future>
 #include <QMetaMethod>
+#include <future>
 #include <algorithm>
 #include <chrono>
 #include "WayWise/logger/logger.h"
 
-MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleState)
+MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleState, const QHostAddress controlTowerAddress, const unsigned controlTowerPort, const QAbstractSocket::SocketType controlTowerSocketType)
 {
     connect(&Logger::getInstance(), &Logger::logSent, this, &MavsdkVehicleServer::on_logSent);
 
@@ -268,9 +268,19 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
     // Start publishing status on MAVLink (TODO: rate?)
     mPublishMavlinkTimer.start(100);
 
-    mavsdk::ConnectionResult result = mMavsdk.add_any_connection("udp://127.0.0.1:14540");
+    mavsdk::ConnectionResult result;
+    switch (controlTowerSocketType) {
+    case QAbstractSocket::UdpSocket:
+        result = mMavsdk.setup_udp_remote(controlTowerAddress.toString().toStdString(), controlTowerPort);
+        break;
+    default:
+        qDebug() << "MavsdkVehicleServer initialized for unsupported controlTowerSocketType. Not connecting.";
+        result = mavsdk::ConnectionResult::SocketError;
+        break;
+    }
+
     if (result == mavsdk::ConnectionResult::Success)
-        qDebug() << "MavsdkVehicleServer is listening...";
+        qDebug() << "MavsdkVehicleServer is listening on" << controlTowerAddress.toString() << "with port" << controlTowerPort;
 }
 
 void MavsdkVehicleServer::heartbeatTimeout() {
