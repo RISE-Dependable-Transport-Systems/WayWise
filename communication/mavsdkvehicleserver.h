@@ -29,7 +29,8 @@ class MavsdkVehicleServer : public QObject
 {
     Q_OBJECT
 public:
-    explicit MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleState, QHostAddress controlTowerAddress = QHostAddress("127.0.0.1"));
+    explicit MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleState, const QHostAddress controlTowerAddress = QHostAddress("127.0.0.1"),
+                                 const unsigned controlTowerPort = 14540, const QAbstractSocket::SocketType controlTowerSocketType = QAbstractSocket::UdpSocket); // NOTE: currently, only UDP supported in mavsdk on vehicle side
     void setUbloxRover(QSharedPointer<UbloxRover> ubloxRover);
     void setWaypointFollower(QSharedPointer<WaypointFollower> waypointFollower);
     void setMovementController(QSharedPointer<MovementController> movementController);
