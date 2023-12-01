@@ -60,6 +60,7 @@ public:
         ParamValueTooLong,
     };
 
+    virtual QList<PosPoint> requestCurrentRouteFromVehicle() = 0;
     virtual void requestGotoENU(const xyz_t &xyz, bool changeAutopilotMode = false) = 0;
     virtual void requestVelocityAndYaw(const xyz_t &velocityENU, const double &yawDeg) = 0;
     virtual void requestArm() = 0;

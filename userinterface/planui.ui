@@ -50,16 +50,17 @@
       </item>
       <item>
        <layout class="QGridLayout" name="gridLayout">
-        <item row="0" column="0">
-         <widget class="QPushButton" name="addRouteButton">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-            <horstretch>5</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
+        <item row="1" column="0">
+         <widget class="QPushButton" name="importRouteButton">
           <property name="text">
-           <string>Add Route</string>
+           <string>Import...</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QPushButton" name="exportAllRoutesButton">
+          <property name="text">
+           <string>Export All...</string>
           </property>
          </widget>
         </item>
@@ -76,21 +77,27 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="0">
-         <widget class="QPushButton" name="importRouteButton">
-          <property name="text">
-           <string>Import...</string>
+        <item row="0" column="0">
+         <widget class="QPushButton" name="addRouteButton">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+            <horstretch>5</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
           </property>
-         </widget>
-        </item>
-        <item row="1" column="1">
-         <widget class="QPushButton" name="exportAllRoutesButton">
           <property name="text">
-           <string>Export All...</string>
+           <string>Add Route</string>
           </property>
          </widget>
         </item>
        </layout>
+      </item>
+      <item>
+       <widget class="QPushButton" name="downloadCurrentRouteFromVehicleButton">
+        <property name="text">
+         <string>Download Route from Vehicle</string>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>
