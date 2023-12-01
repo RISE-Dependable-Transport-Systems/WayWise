@@ -61,13 +61,14 @@ public:
     virtual std::pair<VehicleConnection::Result, float> getFloatParameterFromVehicle(std::string name) const override;
     virtual std::pair<VehicleConnection::Result, std::string> getCustomParameterFromVehicle(std::string name) const override;
     virtual VehicleConnection::AllParameters getAllParametersFromVehicle() override;
+    virtual void pollCurrentENUreference() override;
 
     void setConvertLocalPositionsToGlobalBeforeSending(bool convertLocalPositionsToGlobalBeforeSending);
 
     MAV_TYPE getVehicleType() const;
 
 signals:
-    void gotVehicleGpsOriginLlh(const llh_t &gpsOriginLlh);
+    void gotVehicleENUreferenceLlh(const llh_t &enuReferenceLlh);
     void gotVehicleHomeLlh(const llh_t &homePositionLlh);
     void stopWaypointFollowerSignal(); // Used internally from MAVSDK callbacks (that live in other threads)
     void gotHeartbeat(const quint8 systemId);

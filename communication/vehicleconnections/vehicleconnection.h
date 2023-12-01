@@ -80,6 +80,7 @@ public:
     virtual std::pair<Result, float> getFloatParameterFromVehicle(std::string name) const = 0;
     virtual std::pair<Result, std::string> getCustomParameterFromVehicle(std::string name) const = 0;
     virtual AllParameters getAllParametersFromVehicle() = 0;
+    virtual void pollCurrentENUreference() = 0;
 
     void setWaypointFollowerConnectionLocal(const QSharedPointer<WaypointFollower> &waypointFollower);
     bool hasWaypointFollowerConnectionLocal();
