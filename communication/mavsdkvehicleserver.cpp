@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <chrono>
 #include "WayWise/logger/logger.h"
+#include <mavsdk/plugins/mission/mission.h>
 
 MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleState, const QHostAddress controlTowerAddress, const unsigned controlTowerPort, const QAbstractSocket::SocketType controlTowerSocketType)
 {
@@ -142,16 +143,133 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
 
 //        qDebug() << "in:" << message.msgid << message.sysid << message.compid;
 
-        switch (message.msgid) {
-        case MAVLINK_MSG_ID_MANUAL_CONTROL:
-            mavlink_manual_control_t manual_control;
-            mavlink_msg_manual_control_decode(&message, &manual_control);
+        static QList<PosPoint> currentRoute;
 
-            if (mVehicleState->getFlightMode() == VehicleState::FlightMode::Manual)
-                handleManualControlMessage(manual_control);
-            break;
-        default:
-            ;
+        switch (message.msgid) {
+            case MAVLINK_MSG_ID_MANUAL_CONTROL:
+                mavlink_manual_control_t manual_control;
+                mavlink_msg_manual_control_decode(&message, &manual_control);
+
+                if (mVehicleState->getFlightMode() == VehicleState::FlightMode::Manual)
+                    handleManualControlMessage(manual_control);
+                break;
+            // Handle mission download requests
+            case MAVLINK_MSG_ID_MISSION_REQUEST_LIST:
+
+            mavlink_mission_request_list_t missionRequestList;
+                    mavlink_msg_mission_request_list_decode(&message, &missionRequestList);
+
+                    if(missionRequestList.mission_type != MAV_MISSION_TYPE_MISSION) {
+                        sendMissionAck(MAV_MISSION_ERROR);
+                        break;
+                    }
+
+                    currentRoute = mWaypointFollower->getRoute();
+
+                    mavlink_mission_count_t missionCount;
+                    memset(&missionCount, 0, sizeof(missionCount));
+
+                    missionCount.target_system = mMavlinkPassthrough->get_target_sysid();
+                    missionCount.target_component = mMavlinkPassthrough->get_target_compid();
+                    missionCount.count = currentRoute.size();
+                    missionCount.mission_type = MAV_MISSION_TYPE_MISSION;
+
+                    mavlink_message_t mavMissionCountMsg;
+                    mavlink_msg_mission_count_encode(mMavlinkPassthrough->get_our_sysid(), mMavlinkPassthrough->get_our_compid(), &mavMissionCountMsg, &missionCount);
+
+                    if (mMavlinkPassthrough->send_message(mavMissionCountMsg) != mavsdk::MavlinkPassthrough::Result::Success)
+                        qWarning() << "Could not send MISSION_COUNT via MAVLINK.";
+                    break;
+            case MAVLINK_MSG_ID_MISSION_REQUEST_INT:
+                {
+                    mavlink_mission_request_int_t missionRequestInt;
+                    mavlink_msg_mission_request_int_decode(&message, &missionRequestInt);
+
+                    if(missionRequestInt.mission_type != MAV_MISSION_TYPE_MISSION) {
+                        sendMissionAck(MAV_MISSION_ERROR);
+                        break;
+                    }
+
+                    PosPoint posPoint = currentRoute.at(missionRequestInt.seq);
+
+                    mavlink_mission_item_int_t missionItemInt;
+                    memset(&missionItemInt, 0, sizeof(missionItemInt));
+
+                    // fråga: använd convertPosPointToMissionItem(...) från mavsdkvehicleconnection istället?
+
+                    missionItemInt.seq = missionRequestInt.seq;
+                    missionItemInt.frame = MAV_FRAME_LOCAL_ENU;
+                    missionItemInt.command = MAV_CMD_NAV_WAYPOINT;
+                    missionItemInt.current = false;
+                    missionItemInt.autocontinue = true;
+                    missionItemInt.param1 = posPoint.getSpeed();
+                    missionItemInt.param2 = posPoint.getAttributes();
+                    missionItemInt.param4 = NAN;    // yaw
+                    missionItemInt.x = (int)(posPoint.getX() * 10e4);
+                    missionItemInt.y = (int)(posPoint.getY() * 10e4);
+                    missionItemInt.z = (float)posPoint.getHeight();
+                    missionItemInt.mission_type = MAV_MISSION_TYPE_MISSION;
+
+                    mavlink_message_t mavmissionItemIntMsg;
+                    mavlink_msg_mission_item_int_encode(mMavlinkPassthrough->get_our_sysid(), mMavlinkPassthrough->get_our_compid(), &mavmissionItemIntMsg, &missionItemInt);
+
+                    if (mMavlinkPassthrough->send_message(mavmissionItemIntMsg) != mavsdk::MavlinkPassthrough::Result::Success)
+                        qWarning() << "Could not send MISSION_ITEM_INT via MAVLINK.";
+                    break;
+                }
+            case MAVLINK_MSG_ID_MISSION_REQUEST:
+                {
+                    mavlink_mission_request_t missionRequest;
+                    mavlink_msg_mission_request_decode(&message, &missionRequest);
+
+                    if(missionRequest.mission_type != MAV_MISSION_TYPE_MISSION) {
+                        sendMissionAck(MAV_MISSION_ERROR);
+                        break;
+                    }
+
+                    PosPoint posPoint = currentRoute.at(missionRequest.seq);
+
+                    mavlink_mission_item_t missionItem;
+                    memset(&missionItem, 0, sizeof(missionItem));
+
+                    // fråga: använd convertPosPointToMissionItem(...) från mavsdkvehicleconnection istället?
+
+                    missionItem.seq = missionRequest.seq;
+                    missionItem.frame = MAV_FRAME_LOCAL_ENU;
+                    missionItem.command = MAV_CMD_NAV_WAYPOINT;
+                    missionItem.current = false;
+                    missionItem.autocontinue = true;
+                    missionItem.param1 = posPoint.getSpeed();
+                    missionItem.param2 = posPoint.getAttributes();
+                    missionItem.param4 = NAN;    // yaw
+                    missionItem.x = (int)(posPoint.getX() * 10e4);
+                    missionItem.y = (int)(posPoint.getY() * 10e4);
+                    missionItem.z = (float)posPoint.getHeight();
+                    missionItem.mission_type = MAV_MISSION_TYPE_MISSION;
+
+                    mavlink_message_t mavmissionItemMsg;
+                    mavlink_msg_mission_item_encode(mMavlinkPassthrough->get_our_sysid(), mMavlinkPassthrough->get_our_compid(), &mavmissionItemMsg, &missionItem);
+
+                    if (mMavlinkPassthrough->send_message(mavmissionItemMsg) != mavsdk::MavlinkPassthrough::Result::Success)
+                        qWarning() << "Could not send MISSION_ITEM via MAVLINK.";
+                    break;
+                }
+            case MAVLINK_MSG_ID_MISSION_ACK:
+                {
+                    mavlink_mission_ack_t missionAck;
+                    mavlink_msg_mission_ack_decode(&message, &missionAck);
+
+                    if(missionAck.mission_type == MAV_MISSION_TYPE_MISSION)
+                    {
+                        if(missionAck.type == MAV_MISSION_ACCEPTED)
+                            qInfo() << "Received mission accepted acknowledgement";
+                        else
+                            sendMissionAck(MAV_MISSION_OPERATION_CANCELLED);
+                    }
+                    break;
+                }
+            default:
+                ;
         }
 
         return true;
@@ -484,4 +602,20 @@ void MavsdkVehicleServer::on_logSent(const QString& message, const quint8& sever
     }
 
     logQueue.clear();
+}
+
+void MavsdkVehicleServer::sendMissionAck(quint8 type)
+{
+    mavlink_mission_ack_t missionAck;
+
+    missionAck.target_system = mMavlinkPassthrough->get_target_sysid();
+    missionAck.target_component = mMavlinkPassthrough->get_target_compid();
+    missionAck.type = type;
+    missionAck.mission_type = MAV_MISSION_TYPE_MISSION;
+
+    mavlink_message_t mavMissionAckMsg;
+    mavlink_msg_mission_ack_encode(mMavlinkPassthrough->get_our_sysid(), mMavlinkPassthrough->get_our_compid(), &mavMissionAckMsg, &missionAck);
+
+    if (mMavlinkPassthrough->send_message(mavMissionAckMsg) != mavsdk::MavlinkPassthrough::Result::Success)
+        qWarning() << "Could not send MISSION_ACK via MAVLINK.";
 }
