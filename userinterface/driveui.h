@@ -46,6 +46,8 @@ private slots:
 
     void on_requestShutdownButton_clicked();
 
+    void on_pollENUrefButton_clicked();
+
 private:
     Ui::DriveUI *ui;
 
