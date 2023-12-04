@@ -120,12 +120,8 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
     });
 
     // poll update of GpsGlobalOrigin once
-    mTelemetry->get_gps_global_origin_async([this](mavsdk::Telemetry::Result result, mavsdk::Telemetry::GpsGlobalOrigin gpsGlobalOrigin){
-        if (result == mavsdk::Telemetry::Result::Success){
-            mGpsGlobalOrigin = {gpsGlobalOrigin.latitude_deg, gpsGlobalOrigin.longitude_deg, gpsGlobalOrigin.altitude_m};
-            emit gotVehicleGpsOriginLlh(mGpsGlobalOrigin);
-        }
-    });
+    MavsdkVehicleConnection::pollCurrentENUreference();
+
 
     mMavlinkPassthrough->subscribe_message(MAVLINK_MSG_ID_HEARTBEAT, [this](const mavlink_message_t &message) {
         Q_UNUSED(message)
@@ -779,6 +775,16 @@ VehicleConnection::AllParameters MavsdkVehicleConnection::getAllParametersFromVe
     }
 
     return allParameters;
+}
+
+void MavsdkVehicleConnection::pollCurrentENUreference()
+{
+    mTelemetry->get_gps_global_origin_async([this](mavsdk::Telemetry::Result result, mavsdk::Telemetry::GpsGlobalOrigin gpsGlobalOrigin){
+        if (result == mavsdk::Telemetry::Result::Success){
+            mGpsGlobalOrigin = {gpsGlobalOrigin.latitude_deg, gpsGlobalOrigin.longitude_deg, gpsGlobalOrigin.altitude_m};
+            emit gotVehicleENUreferenceLlh(mGpsGlobalOrigin);
+        }
+    });
 }
 
 VehicleConnection::Result MavsdkVehicleConnection::convertParamResult(mavsdk::Param::Result result) const
