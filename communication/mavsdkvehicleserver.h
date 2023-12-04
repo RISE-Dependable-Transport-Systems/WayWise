@@ -24,6 +24,7 @@
 #include "vehicles/vehiclestate.h"
 #include "waywise.h"
 #include "communication/mavlinkparameterserver.h"
+#include <mavsdk/plugins/mission_raw/mission_raw.h>
 
 class MavsdkVehicleServer : public QObject
 {

@@ -30,7 +30,7 @@ public:
     virtual void stop() = 0;
     virtual void resetState() = 0;
 
-    virtual QList<PosPoint> getRoute() = 0;
+    virtual QList<PosPoint> getCurrentRoute() = 0;
 
     // TODO: refactor FollowPoint from WaypointFollower to separate class
     virtual void startFollowPoint() {throw std::logic_error("WaypointFollower::startFollowPoint() not implemented.");};

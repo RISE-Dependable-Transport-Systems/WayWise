@@ -72,7 +72,7 @@ public:
     virtual void stop() override;
     virtual void resetState() override;
 
-    virtual QList<PosPoint> getRoute() override;
+    virtual QList<PosPoint> getCurrentRoute() override;
 
     void startFollowPoint();
 

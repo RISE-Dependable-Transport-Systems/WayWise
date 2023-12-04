@@ -170,3 +170,8 @@ void GotoWaypointFollower::updateState()
         break;
     }
 }
+
+QList<PosPoint> GotoWaypointFollower::getCurrentRoute()
+{
+    return mWaypointList;
+}
