@@ -329,6 +329,11 @@ void PlanUI::setCurrentVehicleConnection(const QSharedPointer<VehicleConnection>
 
 void PlanUI::on_downloadCurrentRouteFromVehicleButton_clicked()
 {
+    if(mCurrentVehicleConnection.isNull()) {
+        qInfo() << "Ground rover not connected.";
+        return;
+    }
+
     QList<PosPoint> currentRouteOnVehicle = mCurrentVehicleConnection->requestCurrentRouteFromVehicle();
 
     if(currentRouteOnVehicle.size()) {

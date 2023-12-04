@@ -833,14 +833,15 @@ QString MavsdkVehicleConnection::convertMissionRawResult(mavsdk::MissionRaw::Res
         case mavsdk::MissionRaw::Result::NoSystem:
             return "No system connected.";
         default:
-            ;
-
+            return "Unknown result.";
     }
 }
 
 QList<PosPoint> MavsdkVehicleConnection::requestCurrentRouteFromVehicle()
 {    
     auto mission = mavsdk::MissionRaw{mSystem};
+    if (!mMissionRaw)
+        mMissionRaw.reset(new mavsdk::MissionRaw(mSystem));
 
     std::pair<mavsdk::MissionRaw::Result, std::vector<mavsdk::MissionRaw::MissionItem>> result = mission.download_mission();
 
@@ -853,11 +854,9 @@ QList<PosPoint> MavsdkVehicleConnection::requestCurrentRouteFromVehicle()
 
     qInfo() << "Mission downloaded, number of items: " << result.second.size();
 
-    PosPoint routePoint;
-
-    // fråga: använd convertMissionItemToPosPoint(...) från mavsdkvehicleserver.cpp istället?
-
     for(int i = 0; i < result.second.size(); i++) {
+        PosPoint routePoint;
+
         routePoint.setX(result.second.at(i).x / 10e4);
         routePoint.setY(result.second.at(i).y / 10e4);
         routePoint.setHeight(result.second.at(i).z);
