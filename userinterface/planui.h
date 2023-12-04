@@ -16,6 +16,7 @@
 #include <QInputDialog>
 #include "userinterface/map/routeplannermodule.h"
 #include "userinterface/routegeneratorui.h"
+#include "communication/vehicleconnections/vehicleconnection.h"
 
 namespace Ui {
 class PlanUI;
@@ -28,6 +29,8 @@ class PlanUI : public QWidget
 public:
     explicit PlanUI(QWidget *parent = nullptr);
     ~PlanUI();
+
+    void setCurrentVehicleConnection(const QSharedPointer<VehicleConnection> &currentVehicleConnection);
 
     QSharedPointer<RoutePlannerModule> getRoutePlannerModule() const;
     QSharedPointer<RouteGeneratorUI> getRouteGeneratorUI() const;
@@ -66,12 +69,15 @@ private slots:
 
     void on_splitButton_clicked();
 
+    void on_downloadCurrentRouteFromVehicleButton_clicked();
+
 private:
     Ui::PlanUI *ui;
     QSharedPointer<RoutePlannerModule> mRoutePlanner;
     QSharedPointer<RouteGeneratorUI> mRouteGeneratorUI;
     void xmlStreamWriteRoute(QXmlStreamWriter &xmlWriteStream, const QList<PosPoint> route);
     void xmlStreamWriteEnuRef(QXmlStreamWriter &xmlWriteStream, const llh_t enuRef);
+    QSharedPointer<VehicleConnection> mCurrentVehicleConnection;
 };
 
 #endif // PLANUI_H

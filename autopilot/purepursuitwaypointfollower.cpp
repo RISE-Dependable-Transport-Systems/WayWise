@@ -524,3 +524,8 @@ void PurepursuitWaypointFollower::setAdaptivePurePursuitRadiusActive(bool adapti
 {
     mCurrentState.adaptivePurePursuitRadius = adaptive;
 }
+
+QList<PosPoint> PurepursuitWaypointFollower::getCurrentRoute()
+{
+    return mWaypointList;
+}

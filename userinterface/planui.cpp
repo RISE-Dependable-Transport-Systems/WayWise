@@ -321,3 +321,25 @@ void PlanUI::on_splitButton_clicked()
     ui->currentRouteSpinBox->setMaximum(mRoutePlanner->getNumberOfRoutes());
     ui->currentRouteSpinBox->setSuffix(" / " + QString::number(mRoutePlanner->getNumberOfRoutes()));
 }
+
+void PlanUI::setCurrentVehicleConnection(const QSharedPointer<VehicleConnection> &currentVehicleConnection)
+{
+    mCurrentVehicleConnection = currentVehicleConnection;
+
+    if(!mCurrentVehicleConnection.isNull())
+        ui->downloadCurrentRouteFromVehicleButton->setEnabled(true);
+}
+
+void PlanUI::on_downloadCurrentRouteFromVehicleButton_clicked()
+{
+    QList<PosPoint> currentRouteOnVehicle = mCurrentVehicleConnection->requestCurrentRouteFromVehicle();
+
+    if(currentRouteOnVehicle.size()) {
+        mRoutePlanner->addRoute(currentRouteOnVehicle);
+
+        ui->currentRouteSpinBox->setValue(mRoutePlanner->getCurrentRouteIndex() + 1);
+        ui->currentRouteSpinBox->setMaximum(mRoutePlanner->getNumberOfRoutes());
+        ui->currentRouteSpinBox->setSuffix(" / " + QString::number(mRoutePlanner->getNumberOfRoutes()));
+    }
+}
+

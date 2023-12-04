@@ -28,6 +28,7 @@ public:
     virtual void clearRoute() override;
     virtual void addWaypoint(const PosPoint &point) override;
     virtual void addRoute(const QList<PosPoint>& route) override;
+    virtual QList<PosPoint> getCurrentRoute() override;
 
     virtual void startFollowingRoute(bool fromBeginning) override;
     virtual bool isActive() override;

@@ -20,6 +20,7 @@
 #include <mavsdk/plugins/telemetry_server/telemetry_server.h>
 #include <mavsdk/server_component.h>
 #include "communication/mavlinkparameterserver.h"
+#include <mavsdk/plugins/mission_raw/mission_raw.h>
 
 class MavsdkVehicleServer : public VehicleServer
 {
@@ -55,6 +56,7 @@ private:
     void heartbeatReset() override;
     PosPoint convertMissionItemToPosPoint(const mavsdk::MissionRawServer::MissionItem &item);
     void handleManualControlMessage(mavlink_manual_control_t manualControl);
+    void sendMissionAck(quint8 type);
     double mManualControlMaxSpeed = 2.0; // [m/s]
 };
 

@@ -36,6 +36,7 @@ public:
     explicit MavsdkVehicleConnection(std::shared_ptr<mavsdk::System> system, MAV_TYPE vehicleType);
     void setEnuReference(const llh_t &enuReference);
     void setHomeLlh(const llh_t &homeLlh);
+    virtual QList<PosPoint> requestCurrentRouteFromVehicle() override;
     virtual void requestArm() override;
     virtual void requestDisarm() override;
     virtual void requestTakeoff() override;
@@ -89,7 +90,8 @@ private:
     QSharedPointer<QTimer> mPosTimer;
 
     mavsdk::MissionRaw::MissionItem convertPosPointToMissionItem(const PosPoint& posPoint, int sequenceId, bool current = false);
-    VehicleConnection::Result convertResult(mavsdk::Param::Result result) const;
+    VehicleConnection::Result convertParamResult(mavsdk::Param::Result result) const;
+    QString convertMissionRawResult(mavsdk::MissionRaw::Result result) const;
 
     // VehicleConnection interface
 protected:
