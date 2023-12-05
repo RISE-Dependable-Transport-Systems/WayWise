@@ -16,6 +16,9 @@ CameraGimbalUI::CameraGimbalUI(QWidget *parent) :
     ui->videoWidget->installEventFilter(mVideoWidgetEventFilter.get());
 
     mSetRoiByClickOnMapModule = QSharedPointer<SetRoiByClickOnMapModule>::create(this);
+
+    // Ensure user interaction is performed in Qt thread
+    connect(this, &CameraGimbalUI::gotGimbal, this, &CameraGimbalUI::onGimbalReceived, Qt::ConnectionType::QueuedConnection);
 }
 
 CameraGimbalUI::~CameraGimbalUI()
@@ -26,84 +29,8 @@ CameraGimbalUI::~CameraGimbalUI()
 void CameraGimbalUI::setGimbal(const QSharedPointer<Gimbal> gimbal)
 {
     mGimbal = gimbal;
-    if (!gimbal.isNull()) {
-        ui->gimbalStatusLabel->setText("Gimbal found.");
-        ui->gimbalControlGroup->setEnabled(true);
-        ui->cameraControlGroup->setEnabled(true);
 
-        if (!QGamepadManager::instance()->connectedGamepads().isEmpty()) {
-            // Ask user whether gamepad should be used using Yes/No messagebox
-            askUseGamepadMessageBox.reset(new QMessageBox());
-            askUseGamepadMessageBox->setModal(false);
-
-            askUseGamepadMessageBox->setText("CameraGimbalUI: Gamepad detected");
-            askUseGamepadMessageBox->setInformativeText("A gamepad was detected: " + mGamepad->name() + ".\nShould it be used for controlling the vehicle's gimbal?");
-            askUseGamepadMessageBox->setIcon(QMessageBox::Information);
-
-            // We do not have any ownership over yesButton -> raw pointer
-            QPushButton* yesButton = askUseGamepadMessageBox->addButton(QMessageBox::Yes);
-            askUseGamepadMessageBox->addButton(QMessageBox::No);
-            askUseGamepadMessageBox->setDefaultButton(QMessageBox::No);
-
-            QObject::connect(askUseGamepadMessageBox.get(), &QMessageBox::buttonClicked, [this, yesButton](QAbstractButton *button) {
-                if (button == yesButton) {
-                    mGamepad = QSharedPointer<QGamepad>::create(QGamepadManager::instance()->connectedGamepads().first(), this);
-
-                    connect(&mGamepadTimer, &QTimer::timeout, [this]{
-                        double movePitchDeg = -4 * mGamepad->axisLeftY();
-                        double moveYawDeg = 4 * mGamepad->axisRightX();
-
-                        if (fabs(movePitchDeg) > 0.05 || fabs(moveYawDeg) > 0.05)
-                            moveGimbal(movePitchDeg, moveYawDeg);
-                    });
-                    mGamepadTimer.start(150);
-
-                    connect(mGamepad.get(), &QGamepad::buttonL1Changed, [this](bool value) {
-                        static bool valueWas = false;
-                        if (value && !valueWas)
-                            mVehicleConnection->setActuatorOutput(1, 0.0f);
-                        valueWas = value;
-                    });
-                    connect(mGamepad.get(), &QGamepad::buttonL2Changed, [this](bool value) {
-                        static bool valueWas = false;
-                        if (value && !valueWas)
-                            mVehicleConnection->setActuatorOutput(1, 1.0f);
-                        valueWas = value;
-                    });
-                    connect(mGamepad.get(), &QGamepad::buttonL3Changed, [this](bool value) {
-                        static bool valueWas = false;
-                        if (value && !valueWas)
-                            mVehicleConnection->setActuatorOutput(1, -1.0f);
-                        valueWas = value;
-                    });
-
-                    connect(mGamepad.get(), &QGamepad::buttonR1Changed, [this](bool value) {
-                        static bool valueWas = false;
-                        if (value && !valueWas)
-                            mVehicleConnection->setActuatorOutput(2, 0.0f);
-                        valueWas = value;
-                    });
-                    connect(mGamepad.get(), &QGamepad::buttonR2Changed, [this](bool value) {
-                        static bool valueWas = false;
-                        if (value && !valueWas)
-                            mVehicleConnection->setActuatorOutput(2, 1.0f);
-                        valueWas = value;
-                    });
-                    connect(mGamepad.get(), &QGamepad::buttonR3Changed, [this](bool value) {
-                        static bool valueWas = false;
-                        if (value && !valueWas)
-                            mVehicleConnection->setActuatorOutput(2, -1.0f);
-                        valueWas = value;
-                    });
-                    qDebug() << "CameraGimbalUI: gamepad captured.";
-                }
-            });
-
-            askUseGamepadMessageBox->show();
-            askUseGamepadMessageBox->raise();
-        } else
-            qDebug() << "CameraGimbalUI: not using any gamepad.";
-    }
+    emit gotGimbal();
 }
 
 QSharedPointer<MapModule> CameraGimbalUI::getSetRoiByClickOnMapModule() const
@@ -316,4 +243,86 @@ void CameraGimbalUI::on_streamDisconnectButton_clicked()
     mMediaPlayer->stop();
     ui->videoWidget->setFullScreen(false);
     ui->videoWidget->hide();
+}
+
+void CameraGimbalUI::onGimbalReceived()
+{
+    if (!mGimbal.isNull()) {
+        ui->gimbalStatusLabel->setText("Gimbal found.");
+        ui->gimbalControlGroup->setEnabled(true);
+        ui->cameraControlGroup->setEnabled(true);
+
+        if (!QGamepadManager::instance()->connectedGamepads().isEmpty()) {
+            // Ask user whether gamepad should be used using Yes/No messagebox
+            askUseGamepadMessageBox.reset(new QMessageBox());
+            askUseGamepadMessageBox->setModal(false);
+
+            askUseGamepadMessageBox->setText("CameraGimbalUI: Gamepad detected");
+            askUseGamepadMessageBox->setInformativeText("A gamepad was detected: " + mGamepad->name() + ".\nShould it be used for controlling the vehicle's gimbal?");
+            askUseGamepadMessageBox->setIcon(QMessageBox::Information);
+
+            // We do not have any ownership over yesButton -> raw pointer
+            QPushButton* yesButton = askUseGamepadMessageBox->addButton(QMessageBox::Yes);
+            askUseGamepadMessageBox->addButton(QMessageBox::No);
+            askUseGamepadMessageBox->setDefaultButton(QMessageBox::No);
+
+            QObject::connect(askUseGamepadMessageBox.get(), &QMessageBox::buttonClicked, [this, yesButton](QAbstractButton *button) {
+                if (button == yesButton) {
+                    mGamepad = QSharedPointer<QGamepad>::create(QGamepadManager::instance()->connectedGamepads().first(), this);
+
+                    connect(&mGamepadTimer, &QTimer::timeout, [this]{
+                        double movePitchDeg = -4 * mGamepad->axisLeftY();
+                        double moveYawDeg = 4 * mGamepad->axisRightX();
+
+                        if (fabs(movePitchDeg) > 0.05 || fabs(moveYawDeg) > 0.05)
+                            moveGimbal(movePitchDeg, moveYawDeg);
+                    });
+                    mGamepadTimer.start(150);
+
+                    connect(mGamepad.get(), &QGamepad::buttonL1Changed, [this](bool value) {
+                        static bool valueWas = false;
+                        if (value && !valueWas)
+                            mVehicleConnection->setActuatorOutput(1, 0.0f);
+                        valueWas = value;
+                    });
+                    connect(mGamepad.get(), &QGamepad::buttonL2Changed, [this](bool value) {
+                        static bool valueWas = false;
+                        if (value && !valueWas)
+                            mVehicleConnection->setActuatorOutput(1, 1.0f);
+                        valueWas = value;
+                    });
+                    connect(mGamepad.get(), &QGamepad::buttonL3Changed, [this](bool value) {
+                        static bool valueWas = false;
+                        if (value && !valueWas)
+                            mVehicleConnection->setActuatorOutput(1, -1.0f);
+                        valueWas = value;
+                    });
+
+                    connect(mGamepad.get(), &QGamepad::buttonR1Changed, [this](bool value) {
+                        static bool valueWas = false;
+                        if (value && !valueWas)
+                            mVehicleConnection->setActuatorOutput(2, 0.0f);
+                        valueWas = value;
+                    });
+                    connect(mGamepad.get(), &QGamepad::buttonR2Changed, [this](bool value) {
+                        static bool valueWas = false;
+                        if (value && !valueWas)
+                            mVehicleConnection->setActuatorOutput(2, 1.0f);
+                        valueWas = value;
+                    });
+                    connect(mGamepad.get(), &QGamepad::buttonR3Changed, [this](bool value) {
+                        static bool valueWas = false;
+                        if (value && !valueWas)
+                            mVehicleConnection->setActuatorOutput(2, -1.0f);
+                        valueWas = value;
+                    });
+                    qDebug() << "CameraGimbalUI: gamepad captured.";
+                }
+            });
+
+            askUseGamepadMessageBox->show();
+            askUseGamepadMessageBox->raise();
+        } else
+            qDebug() << "CameraGimbalUI: not using any gamepad.";
+    }
 }

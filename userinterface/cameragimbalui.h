@@ -26,6 +26,9 @@ class CameraGimbalUI : public QWidget
 {
     Q_OBJECT
 
+signals:
+    void gotGimbal();
+
 public:
     explicit CameraGimbalUI(QWidget *parent = nullptr);
     ~CameraGimbalUI();
@@ -55,14 +58,11 @@ private slots:
     void on_tripleRightButton_clicked();
     void on_tripleDownButton_clicked();
     void on_trippleLeftButton_clicked();
-
     void on_yawFollowButton_clicked();
-
     void on_yawLockButton_clicked();
-
     void on_streamConnectButton_clicked();
-
     void on_streamDisconnectButton_clicked();
+    void onGimbalReceived();
 
 private:
     class SetRoiByClickOnMapModule : public MapModule {
