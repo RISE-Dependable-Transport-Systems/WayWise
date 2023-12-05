@@ -258,7 +258,8 @@ void CameraGimbalUI::onGimbalReceived()
             askUseGamepadMessageBox->setModal(false);
 
             askUseGamepadMessageBox->setText("CameraGimbalUI: Gamepad detected");
-            askUseGamepadMessageBox->setInformativeText("A gamepad was detected: " + mGamepad->name() + ".\nShould it be used for controlling the vehicle's gimbal?");
+            askUseGamepadMessageBox->setInformativeText("A gamepad was detected: " + QGamepadManager::instance()->gamepadName(QGamepadManager::instance()->connectedGamepads().first())
+                                                        + ".\nShould it be used for controlling the vehicle's gimbal?");
             askUseGamepadMessageBox->setIcon(QMessageBox::Information);
 
             // We do not have any ownership over yesButton -> raw pointer
