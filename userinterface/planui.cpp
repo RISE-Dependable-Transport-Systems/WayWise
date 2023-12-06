@@ -326,8 +326,7 @@ void PlanUI::setCurrentVehicleConnection(const QSharedPointer<VehicleConnection>
 {
     mCurrentVehicleConnection = currentVehicleConnection;
 
-    if(!mCurrentVehicleConnection.isNull())
-        ui->downloadCurrentRouteFromVehicleButton->setEnabled(true);
+    ui->downloadCurrentRouteFromVehicleButton->setEnabled(!mCurrentVehicleConnection.isNull());
 }
 
 void PlanUI::on_downloadCurrentRouteFromVehicleButton_clicked()

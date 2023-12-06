@@ -839,11 +839,10 @@ QString MavsdkVehicleConnection::convertMissionRawResult(mavsdk::MissionRaw::Res
 
 QList<PosPoint> MavsdkVehicleConnection::requestCurrentRouteFromVehicle()
 {    
-    auto mission = mavsdk::MissionRaw{mSystem};
     if (!mMissionRaw)
         mMissionRaw.reset(new mavsdk::MissionRaw(mSystem));
 
-    std::pair<mavsdk::MissionRaw::Result, std::vector<mavsdk::MissionRaw::MissionItem>> result = mission.download_mission();
+    std::pair<mavsdk::MissionRaw::Result, std::vector<mavsdk::MissionRaw::MissionItem>> result = mMissionRaw->download_mission();
 
     QList<PosPoint> currentRouteOnVehicle;
 
