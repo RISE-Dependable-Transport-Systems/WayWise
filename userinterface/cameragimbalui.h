@@ -12,6 +12,7 @@
 #include "sensors/camera/gimbal.h"
 #include "userinterface/map/mapwidget.h"
 #include <QGamepad>
+#include <QMessageBox>
 
 // TODO: VehicleConnection is used in case camera modes can be changed via AUX PWM outputs
 //       This is quite specific to FLIR Pro Duo R and should be generalized (as soon as we have more cameras...)
@@ -25,10 +26,14 @@ class CameraGimbalUI : public QWidget
 {
     Q_OBJECT
 
+signals:
+    void gotGimbal();
+
 public:
     explicit CameraGimbalUI(QWidget *parent = nullptr);
     ~CameraGimbalUI();
     void setGimbal(const QSharedPointer<Gimbal> gimbal);
+    QSharedPointer<QMessageBox> askUseGamepadMessageBox;
     QSharedPointer<MapModule> getSetRoiByClickOnMapModule() const;
 
     void setVehicleConnection(const QSharedPointer<VehicleConnection> &vehicleConnection);
@@ -53,14 +58,11 @@ private slots:
     void on_tripleRightButton_clicked();
     void on_tripleDownButton_clicked();
     void on_trippleLeftButton_clicked();
-
     void on_yawFollowButton_clicked();
-
     void on_yawLockButton_clicked();
-
     void on_streamConnectButton_clicked();
-
     void on_streamDisconnectButton_clicked();
+    void onGimbalReceived();
 
 private:
     class SetRoiByClickOnMapModule : public MapModule {
