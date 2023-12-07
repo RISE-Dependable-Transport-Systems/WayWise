@@ -166,7 +166,7 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
                         qInfo() << messageOutput;
                         break;
                     case MAV_SEVERITY_WARNING:
-                        qCritical() << messageOutput;
+                        qWarning() << messageOutput;
                         break;
                     case MAV_SEVERITY_CRITICAL:
                         qCritical() << messageOutput;
@@ -212,7 +212,7 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
                 qInfo() << messageOutput;
                 break;
             case MAV_SEVERITY_WARNING:
-                qCritical() << messageOutput;
+                qWarning() << messageOutput;
                 break;
             case MAV_SEVERITY_CRITICAL:
                 qCritical() << messageOutput;
@@ -720,38 +720,38 @@ bool MavsdkVehicleConnection::requestRebootOrShutdownOfSystemComponents(VehicleC
 
 VehicleConnection::Result MavsdkVehicleConnection::setIntParameterOnVehicle(std::string name, int32_t value)
 {
-    return convertResult(mParam->set_param_int(name, value));
+    return convertParamResult(mParam->set_param_int(name, value));
 }
 
 VehicleConnection::Result MavsdkVehicleConnection::setFloatParameterOnVehicle(std::string name, float value)
 {
-    return convertResult(mParam->set_param_float(name, value));
+    return convertParamResult(mParam->set_param_float(name, value));
 }
 
 VehicleConnection::Result MavsdkVehicleConnection::setCustomParameterOnVehicle(std::string name, std::string value)
 {
-    return convertResult(mParam->set_param_custom(name, value));
+    return convertParamResult(mParam->set_param_custom(name, value));
 }
 
 std::pair<VehicleConnection::Result, int32_t> MavsdkVehicleConnection::getIntParameterFromVehicle(std::string name) const
 {
     auto intParameter =  mParam->get_param_int(name);
 
-    return std::make_pair(convertResult(intParameter.first), intParameter.second);
+    return std::make_pair(convertParamResult(intParameter.first), intParameter.second);
 };
 
 std::pair<VehicleConnection::Result, float> MavsdkVehicleConnection::getFloatParameterFromVehicle(std::string name) const
 {
     auto intParameter =  mParam->get_param_float(name);
 
-    return std::make_pair(convertResult(intParameter.first), intParameter.second);
+    return std::make_pair(convertParamResult(intParameter.first), intParameter.second);
 };
 
 std::pair<VehicleConnection::Result, std::string> MavsdkVehicleConnection::getCustomParameterFromVehicle(std::string name) const
 {
     auto intParameter =  mParam->get_param_custom(name);
 
-    return std::make_pair(convertResult(intParameter.first), intParameter.second);
+    return std::make_pair(convertParamResult(intParameter.first), intParameter.second);
 };
 
 VehicleConnection::AllParameters MavsdkVehicleConnection::getAllParametersFromVehicle()
@@ -781,7 +781,7 @@ VehicleConnection::AllParameters MavsdkVehicleConnection::getAllParametersFromVe
     return allParameters;
 }
 
-VehicleConnection::Result MavsdkVehicleConnection::convertResult(mavsdk::Param::Result result) const
+VehicleConnection::Result MavsdkVehicleConnection::convertParamResult(mavsdk::Param::Result result) const
 {
     switch (result) {
     case mavsdk::Param::Result::Success:
@@ -803,4 +803,67 @@ VehicleConnection::Result MavsdkVehicleConnection::convertResult(mavsdk::Param::
     default:
         return VehicleConnection::Result::Unknown;
     }
+}
+
+QString MavsdkVehicleConnection::convertMissionRawResult(mavsdk::MissionRaw::Result result) const
+{
+    switch (result) {
+        case mavsdk::MissionRaw::Result::Unknown:
+            return "Unknown result.";
+        case mavsdk::MissionRaw::Result::Error:
+            return "Error.";
+        case mavsdk::MissionRaw::Result::TooManyMissionItems:
+            return "Too many mission items in the mission.";
+        case mavsdk::MissionRaw::Result::Busy:
+            return "Vehicle is busy.";
+        case mavsdk::MissionRaw::Result::Timeout:
+            return "Request timed out.";
+        case mavsdk::MissionRaw::Result::InvalidArgument:
+            return "Invalid argument.";
+        case mavsdk::MissionRaw::Result::Unsupported:
+            return "Mission downloaded from the system is not supported.";
+        case mavsdk::MissionRaw::Result::NoMissionAvailable:
+            return "No mission available on the system.";
+        case mavsdk::MissionRaw::Result::TransferCancelled:
+            return "Mission transfer (upload or download) has been cancelled.";
+        case mavsdk::MissionRaw::Result::FailedToOpenQgcPlan:
+            return "Failed to open the QGroundControl plan.";
+        case mavsdk::MissionRaw::Result::FailedToParseQgcPlan:
+            return "Failed to parse the QGroundControl plan.";
+        case mavsdk::MissionRaw::Result::NoSystem:
+            return "No system connected.";
+        default:
+            return "Unknown result.";
+    }
+}
+
+QList<PosPoint> MavsdkVehicleConnection::requestCurrentRouteFromVehicle()
+{    
+    if (!mMissionRaw)
+        mMissionRaw.reset(new mavsdk::MissionRaw(mSystem));
+
+    std::pair<mavsdk::MissionRaw::Result, std::vector<mavsdk::MissionRaw::MissionItem>> result = mMissionRaw->download_mission();
+
+    QList<PosPoint> currentRouteOnVehicle;
+
+    if (result.first != mavsdk::MissionRaw::Result::Success) {
+        qWarning() << "Mission download failed (" << convertMissionRawResult(result.first) << "), exiting.";
+        return currentRouteOnVehicle;
+    }
+
+    qInfo() << "Mission downloaded, number of items: " << result.second.size();
+
+    for(unsigned i = 0; i < result.second.size(); i++) {
+        PosPoint routePoint;
+
+        routePoint.setX(result.second.at(i).x / 10e4);
+        routePoint.setY(result.second.at(i).y / 10e4);
+        routePoint.setHeight(result.second.at(i).z);
+        routePoint.setSpeed(result.second.at(i).param1);
+        routePoint.setAttributes(result.second.at(i).param2);
+
+        currentRouteOnVehicle.append(routePoint);
+    }
+
+    return currentRouteOnVehicle;
 }

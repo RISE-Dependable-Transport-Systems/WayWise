@@ -142,3 +142,8 @@ void MultiWaypointFollower::receiveDistanceOfRouteLeft(double meters)
 {
     emit distanceOfRouteLeft(meters);
 }
+
+QList<PosPoint> MultiWaypointFollower::getCurrentRoute()
+{
+    return mWaypointFollowerList[mActiveWaypointFollowerID]->getCurrentRoute();
+}

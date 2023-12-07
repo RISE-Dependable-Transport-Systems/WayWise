@@ -24,6 +24,7 @@
 #include "vehicles/vehiclestate.h"
 #include "waywise.h"
 #include "communication/mavlinkparameterserver.h"
+#include <mavsdk/plugins/mission_raw/mission_raw.h>
 
 class MavsdkVehicleServer : public QObject
 {
@@ -76,6 +77,7 @@ private:
     void heartbeatReset();
     PosPoint convertMissionItemToPosPoint(const mavsdk::MissionRawServer::MissionItem &item);
     void handleManualControlMessage(mavlink_manual_control_t manualControl);
+    void sendMissionAck(quint8 type);
     double mManualControlMaxSpeed = 2.0; // [m/s]
 };
 
