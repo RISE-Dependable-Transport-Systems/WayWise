@@ -853,7 +853,7 @@ QList<PosPoint> MavsdkVehicleConnection::requestCurrentRouteFromVehicle()
 
     qInfo() << "Mission downloaded, number of items: " << result.second.size();
 
-    for(int i = 0; i < result.second.size(); i++) {
+    for(unsigned i = 0; i < result.second.size(); i++) {
         PosPoint routePoint;
 
         routePoint.setX(result.second.at(i).x / 10e4);
