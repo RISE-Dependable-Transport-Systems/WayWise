@@ -198,3 +198,10 @@ void DriveUI::on_requestShutdownButton_clicked()
         mCurrentVehicleConnection->requestRebootOrShutdownOfSystemComponents(VehicleConnection::SystemComponent::OnboardComputer,VehicleConnection::ComponentAction::Shutdown);
 }
 
+
+void DriveUI::on_pollENUrefButton_clicked()
+{
+    if (mCurrentVehicleConnection)
+        mCurrentVehicleConnection->pollCurrentENUreference();
+}
+
