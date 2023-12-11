@@ -8,9 +8,10 @@
 
 #include "vehiclelighting.h"
 
-VehicleLighting::VehicleLighting(QObject *parent)
-    : QObject{parent}
+VehicleLighting::VehicleLighting(QSharedPointer<VehicleState> vehicleState)
 {
+    mVehicleState = vehicleState;
+
     // Open GPIO chip
     if (!(mChip = gpiod_chip_open_by_name(mChipName)))
         throw QString("Could not open gpio chip with name: ")+=QString::fromLocal8Bit(mChipName);
@@ -27,6 +28,9 @@ VehicleLighting::VehicleLighting(QObject *parent)
         gpiod_line_request_output(mRightTurnSignal, "lights", 0);
         gpiod_line_request_output(mLeftTurnSignal, "lights", 0);
     }
+
+    connect(&mUpdateStateTimer, &QTimer::timeout, this, &VehicleLighting::updateState);
+    mUpdateStateTimer.start(mUpdateStatePeriod_ms);
 }
 
 VehicleLighting::~VehicleLighting()
@@ -71,16 +75,12 @@ void VehicleLighting::stopSignaling()
 
 void VehicleLighting::turnSignalRelay(bool left)
 {
-    static int x, counter = 1;
-    if (counter == 10) {
-        x = 1 - x;
-        if (left)
-            gpiod_line_set_value(mLeftTurnSignal, x);
-        else
-            gpiod_line_set_value(mRightTurnSignal, x);
-        counter = 0;
-    }
-    counter++;
+    static int x = 1;
+    x = 1 - x;
+    if (left)
+        gpiod_line_set_value(mLeftTurnSignal, x);
+    else
+        gpiod_line_set_value(mRightTurnSignal, x);
 }
 
 void VehicleLighting::backupLight(bool On)
@@ -97,4 +97,10 @@ void VehicleLighting::brakeLight(bool On)
         gpiod_line_set_value(mBrakeLight, 1);
     else
         gpiod_line_set_value(mBrakeLight, 0);
+}
+
+void VehicleLighting::updateState()
+{
+    turnSignal(mVehicleState->getSteering());
+    rearLights(mVehicleState->getSpeed());
 }

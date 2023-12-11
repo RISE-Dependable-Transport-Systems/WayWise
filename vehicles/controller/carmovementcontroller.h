@@ -13,7 +13,6 @@
 #include "motorcontroller.h"
 #include "servocontroller.h"
 #include "vehicles/carstate.h"
-#include "vehicles/vehiclelighting.h"
 #include <QObject>
 #include <QSharedPointer>
 
@@ -40,7 +39,6 @@ private:
     QSharedPointer<MotorController> mMotorController;
     QSharedPointer<ServoController> mServoController;
     double mSpeedToRPMFactor = 4123.3; // default for Traxxas Slash VXL
-    QSharedPointer<VehicleLighting> mVehicleLighting;
 };
 
 #endif // CARMOVEMENTCONTROLLER_H

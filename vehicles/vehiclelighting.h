@@ -10,16 +10,18 @@
 #define VEHICLELIGHTING_H
 
 #include <QObject>
-#include <QTimer>
 #include <gpiod.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <QSharedPointer>
+#include <QTimer>
+#include "vehiclestate.h"
 
 class VehicleLighting : public QObject
 {
     Q_OBJECT
 public:
-    explicit VehicleLighting(QObject *parent = nullptr);
+    explicit VehicleLighting(QSharedPointer<VehicleState> vehicleState);
     ~VehicleLighting();
 
     void turnSignal(double steering);
@@ -28,12 +30,17 @@ public:
 signals:
 
 private:
+    QSharedPointer<VehicleState> mVehicleState;
+    QTimer mUpdateStateTimer;
+    unsigned mUpdateStatePeriod_ms = 1000;
+
     void leftTurnSignal();
     void rightTurnSignal();
     void stopSignaling();
     void turnSignalRelay(bool Left = true);
     void backupLight(bool On = false);
     void brakeLight(bool On = false);
+    void updateState();
 
     const char *mChipName = "gpiochip0";
     gpiod_chip *mChip;
