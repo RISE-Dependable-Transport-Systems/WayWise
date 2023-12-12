@@ -32,7 +32,7 @@ void CarMovementController::setDesiredSteering(double desiredSteering)
 
 void CarMovementController::setDesiredSpeed(double desiredSpeed)
 {
-   MovementController::setDesiredSpeed(desiredSpeed);
+    MovementController::setDesiredSpeed(desiredSpeed);
     if (mMotorController)
         mMotorController->requestRPM(desiredSpeed*getSpeedToRPMFactor());
     else {

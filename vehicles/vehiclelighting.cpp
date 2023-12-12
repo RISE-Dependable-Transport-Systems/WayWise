@@ -7,40 +7,43 @@
  */
 
 #include "vehiclelighting.h"
+#include <QDebug>
 
-VehicleLighting::VehicleLighting(QSharedPointer<VehicleState> vehicleState)
+VehicleLighting::VehicleLighting(QSharedPointer<VehicleState> vehicleState, QString chipName)
 {
     mVehicleState = vehicleState;
 
-    // Open GPIO chip
-    if (!(mChip = gpiod_chip_open_by_name(mChipName)))
-        throw QString("Could not open gpio chip with name: ")+=QString::fromLocal8Bit(mChipName);
-    else {
+    try {
+        // Open GPIO chip
+        mChip.open(chipName.toStdString(), 3);
+
         // Open GPIO lines
-        mBackupLight = gpiod_chip_get_line(mChip, 22);
-        mBrakeLight = gpiod_chip_get_line(mChip, 23);
-        mRightTurnSignal = gpiod_chip_get_line(mChip, 24);
-        mLeftTurnSignal = gpiod_chip_get_line(mChip, 25);
+        mBackupLight = mChip.get_line(22);
+        mBrakeLight = mChip.get_line(23);
+        mRightTurnSignal = mChip.get_line(24);
+        mLeftTurnSignal = mChip.get_line(25);
 
         // Open LED lines for output
-        gpiod_line_request_output(mBackupLight, "lights", 0);
-        gpiod_line_request_output(mBrakeLight, "lights", 0);
-        gpiod_line_request_output(mRightTurnSignal, "lights", 0);
-        gpiod_line_request_output(mLeftTurnSignal, "lights", 0);
-    }
+        mBackupLight.request({"lights", gpiod::line_request::DIRECTION_OUTPUT, 0});
+        mBrakeLight.request({"lights", gpiod::line_request::DIRECTION_OUTPUT, 0});
+        mRightTurnSignal.request({"lights", gpiod::line_request::DIRECTION_OUTPUT, 0});
+        mLeftTurnSignal.request({"lights", gpiod::line_request::DIRECTION_OUTPUT, 0});
 
-    connect(&mUpdateStateTimer, &QTimer::timeout, this, &VehicleLighting::updateState);
-    mUpdateStateTimer.start(mUpdateStatePeriod_ms);
+        connect(&mUpdateStateTimer, &QTimer::timeout, this, &VehicleLighting::updateState);
+        mUpdateStateTimer.start(mUpdateStatePeriod_ms);
+    
+    } catch (const std::exception &e) {
+        qDebug() << "Error: " << e.what();
+    }
 }
 
 VehicleLighting::~VehicleLighting()
 {
-    // Release lines and chip
-    gpiod_line_release(mBackupLight);
-    gpiod_line_release(mBrakeLight);
-    gpiod_line_release(mRightTurnSignal);
-    gpiod_line_release(mLeftTurnSignal);
-    gpiod_chip_close(mChip);
+    // Release lines
+    mBackupLight.release();
+    mBrakeLight.release();
+    mRightTurnSignal.release();
+    mLeftTurnSignal.release();
 }
 
 void VehicleLighting::turnSignal(double steering)
@@ -69,8 +72,8 @@ void VehicleLighting::rearLights(double speed)
 
 void VehicleLighting::stopSignaling()
 {
-    gpiod_line_set_value(mLeftTurnSignal, 0);
-    gpiod_line_set_value(mRightTurnSignal, 0);
+    mLeftTurnSignal.set_value(0);
+    mRightTurnSignal.set_value(0);
 }
 
 void VehicleLighting::turnSignalRelay(bool left)
@@ -78,25 +81,25 @@ void VehicleLighting::turnSignalRelay(bool left)
     static int x = 1;
     x = 1 - x;
     if (left)
-        gpiod_line_set_value(mLeftTurnSignal, x);
+        mLeftTurnSignal.set_value(x);
     else
-        gpiod_line_set_value(mRightTurnSignal, x);
+        mRightTurnSignal.set_value(x);
 }
 
 void VehicleLighting::backupLight(bool On)
 {
     if (On)
-        gpiod_line_set_value(mBackupLight, 1);
+        mBackupLight.set_value(1);
     else
-        gpiod_line_set_value(mBackupLight, 0);
+        mBackupLight.set_value(0);
 }
 
 void VehicleLighting::brakeLight(bool On)
 {
     if (On)
-        gpiod_line_set_value(mBrakeLight, 1);
+        mBrakeLight.set_value(1);
     else
-        gpiod_line_set_value(mBrakeLight, 0);
+        mBrakeLight.set_value(0);
 }
 
 void VehicleLighting::updateState()
