@@ -39,7 +39,6 @@ private:
     QSharedPointer<MotorController> mMotorController;
     QSharedPointer<ServoController> mServoController;
     double mSpeedToRPMFactor = 4123.3; // default for Traxxas Slash VXL
-
 };
 
 #endif // CARMOVEMENTCONTROLLER_H
