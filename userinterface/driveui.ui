@@ -158,13 +158,6 @@
        </layout>
       </item>
       <item>
-       <widget class="QLabel" name="label_3">
-        <property name="text">
-         <string>TODO: set max speed via param</string>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="QGroupBox" name="autopilotGroupBox">
         <property name="title">
          <string>Autopilot</string>

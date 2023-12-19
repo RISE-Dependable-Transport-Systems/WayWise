@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <chrono>
 #include "WayWise/logger/logger.h"
+#include "WayWise/communication/parameterserver.h"
 
 MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleState, const QHostAddress controlTowerAddress, const unsigned controlTowerPort, const QAbstractSocket::SocketType controlTowerSocketType)
 {
@@ -393,6 +394,8 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
 
     if (result == mavsdk::ConnectionResult::Success)
         qDebug() << "MavsdkVehicleServer is listening on" << controlTowerAddress.toString() << "with port" << controlTowerPort;
+
+    ParameterServer::getInstance()->provideParameter("MaxSpeed_ms", std::bind(&MavsdkVehicleServer::setManualControlMaxSpeed, this, std::placeholders::_1), std::bind(&MavsdkVehicleServer::getManualControlMaxSpeed, this));
 }
 
 void MavsdkVehicleServer::heartbeatTimeout() {
@@ -504,6 +507,11 @@ void MavsdkVehicleServer::handleManualControlMessage(mavlink_manual_control_t ma
 void MavsdkVehicleServer::setManualControlMaxSpeed(double manualControlMaxSpeed_ms)
 {
     mManualControlMaxSpeed = manualControlMaxSpeed_ms;
+}
+
+double MavsdkVehicleServer::getManualControlMaxSpeed() const
+{
+    return mManualControlMaxSpeed;
 }
 
 void MavsdkVehicleServer::mavResult(const uint16_t command, MAV_RESULT result)
