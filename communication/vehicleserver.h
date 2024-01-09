@@ -25,7 +25,7 @@ public:
     virtual void setWaypointFollower(QSharedPointer<WaypointFollower> waypointFollower) = 0;
     virtual void setMovementController(QSharedPointer<MovementController> movementController) = 0;
     virtual void setManualControlMaxSpeed(double manualControlMaxSpeed_ms) = 0;
-    virtual void getManualControlMaxSpeed() = 0;
+    virtual double getManualControlMaxSpeed() const = 0;
     virtual void sendGpsOriginLlh(const llh_t &gpsOriginLlh) = 0;
 
 signals:

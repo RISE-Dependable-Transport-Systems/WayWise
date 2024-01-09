@@ -32,7 +32,7 @@ public:
     void setWaypointFollower(QSharedPointer<WaypointFollower> waypointFollower) override;
     void setMovementController(QSharedPointer<MovementController> movementController) override;
     void setManualControlMaxSpeed(double manualControlMaxSpeed_ms) override;
-    double getManualControlMaxSpeed() override;
+    double getManualControlMaxSpeed() const override;
     void sendGpsOriginLlh(const llh_t &gpsOriginLlh) override;
     void mavResult(const uint16_t command, MAV_RESULT result);
     void on_logSent(const QString& message, const quint8& severity);
