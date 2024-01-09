@@ -38,7 +38,7 @@ public:
     void on_logSent(const QString& message, const quint8& severity);
 
 private:
-    mavsdk::Mavsdk mMavsdk;
+    mavsdk::Mavsdk mMavsdk{mavsdk::Mavsdk::Configuration{mavsdk::Mavsdk::ComponentType::Autopilot}};
     std::shared_ptr<mavsdk::TelemetryServer> mTelemetryServer;
     mavsdk::TelemetryServer::RawGps mRawGps;
     mavsdk::TelemetryServer::GpsInfo mGpsInfo {0, mavsdk::TelemetryServer::FixType::NoGps};
