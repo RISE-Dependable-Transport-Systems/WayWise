@@ -1,4 +1,7 @@
 # Simplified scripts to create *.deb files for MAVSDK
+
+**NOTE:** It is not necessary to build MAVSDK yourself anymore to build WayWise since [MAVSDK 2.0 was released](https://github.com/mavlink/MAVSDK/releases). You can just install the provided packages.
+
 All scripts are based on info from [MAVSDK](https://github.com/mavlink/MAVSDK/blob/main/.github/workflows/main.yml).
 create_amd64-deb.sh runs on your local machine, which means that the build dependencies for MAVSDK need to be installed including [fpm](https://fpm.readthedocs.io/en/stable/installation.html) (see [lines 13 to 44 here](https://github.com/mavlink/MAVSDK/blob/main/docker/Dockerfile-Ubuntu-22.04#L13)).
 All other scripts (dock*) require only [docker to be installed](https://docs.docker.com/engine/install/ubuntu/).

@@ -20,10 +20,7 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
 
     mVehicleState = vehicleState;
 
-    mavsdk::Mavsdk::Configuration configuration(mavsdk::Mavsdk::Configuration::UsageType::Autopilot);
-    mMavsdk.set_configuration(configuration);
-
-    std::shared_ptr<mavsdk::ServerComponent> serverComponent = mMavsdk.server_component_by_type(mavsdk::Mavsdk::ServerComponentType::Autopilot);
+    std::shared_ptr<mavsdk::ServerComponent> serverComponent = mMavsdk.server_component();
 
     // Create server plugins
     MavlinkParameterServer::initialize(serverComponent);

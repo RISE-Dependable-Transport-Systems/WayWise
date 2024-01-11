@@ -42,7 +42,7 @@ signals:
     void disconnectOfVehicleConnection(int vehicleID);
 
 private:
-    mavsdk::Mavsdk mMavsdk;
+    mavsdk::Mavsdk mMavsdk{mavsdk::Mavsdk::Configuration{mavsdk::Mavsdk::ComponentType::GroundStation}};
     QMap<int, QSharedPointer<MavsdkVehicleConnection>> mVehicleConnectionMap;
 
     QTimer mHeartbeatTimer;
