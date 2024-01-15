@@ -16,7 +16,7 @@ jobs:
 
     steps:
     - name: Install apt dependencies
-      run: sudo apt update && sudo apt install -y git build-essential cmake libqt5serialport5-dev
+      run: sudo apt update && sudo apt install -y git build-essential cmake libqt5serialport5-dev libgpiod-dev
 
     - name: Install MAVSDK
       run: wget https://github.com/mavlink/MAVSDK/releases/download/v2.0.1/libmavsdk-dev_2.0.1_ubuntu22.04_amd64.deb && sudo dpkg --install libmavsdk-dev_2.0.1_ubuntu22.04_amd64.deb
