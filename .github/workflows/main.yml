@@ -1,4 +1,4 @@
-name: Build RCCar and ControlTower using CMake on a single platform
+name: Build RCCar & ControlTower
 
 on:
   push:
