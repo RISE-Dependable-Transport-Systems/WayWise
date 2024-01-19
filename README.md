@@ -45,3 +45,7 @@ ControlTower communicates to vehicles via MAVLINK, which enables support for dro
 ## Use cases
 ![image](https://user-images.githubusercontent.com/2404625/165902491-023a640b-947a-4a76-aea6-6219e5f8ca76.png)
 
+## Funded by
+<img src="https://user-images.githubusercontent.com/2404625/202213271-a4006999-49d5-4e61-9f3d-867a469238d1.png" width="120" height="81" align="left" alt="EU logo" />
+This project has received funding from the European Union’s Horizon 2020 and Horizon Europe research and innovation programmes, and the Digital Europe programme under grant agreement nº 814975, nº 101095835, 101069573 and nº 101100622. The results reflect only the authors' view and the Agency is not responsible
+for any use that may be made of the information it contains.
