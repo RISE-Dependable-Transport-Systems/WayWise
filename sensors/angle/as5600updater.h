@@ -9,6 +9,8 @@
 #define AS5600UPDATER_H
 
 #include "sensors/angle/anglesensorupdater.h"
+#include "vehicles/truckstate.h"
+
 extern "C" {
 #include "external/pi-as5600/driver_as5600_basic.h"
 }
@@ -18,7 +20,7 @@ extern "C" {
 class AS5600Updater : public AngleSensorUpdater
 {
 public:
-    AS5600Updater(QSharedPointer<VehicleState> vehicleState);
+    AS5600Updater(QSharedPointer<TruckState> truckState);
     void printSensorInfo();
     virtual bool setUpdateIntervall(int pollIntervall_ms) override;
 

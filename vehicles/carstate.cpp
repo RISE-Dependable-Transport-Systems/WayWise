@@ -22,7 +22,7 @@ void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTrans
     PosPoint pos = getPosition();
     //        LocPoint pos_gps = VehicleState->getLocationGps();
 
-    const double car_len = getLength() * 1000.0;
+    const double car_len = getLength() * 10000.0;
     const double car_w = getWidth() * 1000.0;
     const double car_corner = 0.02 * 1000.0;
 
