@@ -5,7 +5,7 @@
 #include "as5600updater.h"
 #include <QDebug>
 
-AS5600Updater::AS5600Updater(QSharedPointer<TruckState> truckState) : AngleSensorUpdater(truckState)
+AS5600Updater::AS5600Updater(QSharedPointer<VehicleState> vehicleState) : AngleSensorUpdater(vehicleState)
 {
    int res{};
 
@@ -15,7 +15,7 @@ AS5600Updater::AS5600Updater(QSharedPointer<TruckState> truckState) : AngleSenso
    if (res == 0)
    {
 
-      connect(&mPollTimer, &QTimer::timeout, [this]()
+      connect(&mPollTimer, &QTimer::timeout, [this, vehicleState]()
               {
                uint16_t angle_raw{};    
                uint16_t scaled_angle{};    
@@ -24,11 +24,15 @@ AS5600Updater::AS5600Updater(QSharedPointer<TruckState> truckState) : AngleSenso
                /* read data */
                res = as5600_basic_read(&deg, &angle_raw, &scaled_angle);
                if (res == 0){
-                  QSharedPointer<VehicleState> vehicleState = getVehicleState();
+                  // QSharedPointer<VehicleState> vehicleState = getVehicleState();
                   QSharedPointer<TruckState> truckState = qSharedPointerDynamicCast<TruckState>(vehicleState);
-
-                  truckState->setTrailerAngle(deg);
-                  qDebug() << "as5600: scaled angle: " << scaled_angle << "| raw angle: " << angle_raw <<"| in degrees: " << deg ; 
+                  if (truckState) {
+                        truckState->setTrailerAngle(scaled_angle);
+                        //qDebug() << "as5600: scaled angle: " << scaled_angle << "| raw angle: " << angle_raw <<"| in degrees: " << deg ;
+                  } else {
+                        qDebug() << "Error: Failed to cast VehicleState to TruckState.";
+                  }
+               
                }
                else {
                   qDebug() << "ERROR: as5600 Read failed";

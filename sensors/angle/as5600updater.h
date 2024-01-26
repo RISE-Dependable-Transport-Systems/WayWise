@@ -20,12 +20,12 @@ extern "C" {
 class AS5600Updater : public AngleSensorUpdater
 {
 public:
-    AS5600Updater(QSharedPointer<TruckState> truckState);
+    AS5600Updater(QSharedPointer<VehicleState> vehicleState);
     void printSensorInfo();
     virtual bool setUpdateIntervall(int pollIntervall_ms) override;
 
 private:
-    int mPollIntervall_ms = 1000; // interval in ms to read from AS5600,
+    int mPollIntervall_ms = 100; // interval in ms to read from AS5600,
     QTimer mPollTimer;
 };
 
