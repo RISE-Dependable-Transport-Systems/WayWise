@@ -761,16 +761,19 @@ VehicleConnection::AllParameters MavsdkVehicleConnection::getAllParametersFromVe
     for (const auto& vehicleParameter : mavsdkVehicleParameters.int_params) {
         intParameter.name = vehicleParameter.name;
         intParameter.value = vehicleParameter.value;
+        intParameter.value = mParam->get_param_int(intParameter.name).second; //Remove this line when issue #72 is closed
         allParameters.intParameters.push_back(intParameter);
     }
     for (const auto& vehicleParameter : mavsdkVehicleParameters.float_params) {
         floatParameter.name = vehicleParameter.name;
         floatParameter.value = vehicleParameter.value;
+        floatParameter.value = mParam->get_param_float(floatParameter.name).second; //Remove this line when issue #72 is closed
         allParameters.floatParameters.push_back(floatParameter);
     }
     for (const auto& vehicleParameter : mavsdkVehicleParameters.custom_params) {
         customParameter.name = vehicleParameter.name;
         customParameter.value = vehicleParameter.value;
+        customParameter.value = mParam->get_param_custom(customParameter.name).second; //Remove this line when issue #72 is closed
         allParameters.customParameters.push_back(customParameter);
     }
 
