@@ -16,7 +16,7 @@ extern "C" {
 }
 #include <QTimer>
 
-// connects to AS5600 via i2c bus and polls orientation data (euler angles) periodically
+// connects to AS5600 via i2c bus and polls orientation data (euler angle) periodically
 class AS5600Updater : public AngleSensorUpdater
 {
 public:
@@ -25,7 +25,7 @@ public:
     virtual bool setUpdateIntervall(int pollIntervall_ms) override;
 
 private:
-    int mPollIntervall_ms = 100; // interval in ms to read from AS5600,
+    int mPollIntervall_ms = 100; // interval (ms) to read from AS5600,
     QTimer mPollTimer;
 };
 

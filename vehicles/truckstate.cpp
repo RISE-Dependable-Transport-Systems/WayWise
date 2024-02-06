@@ -20,15 +20,21 @@ void TruckState::updateOdomPositionAndYaw(double drivenDistance, PosType usePosT
     // Call the base class implementation first
     CarState::updateOdomPositionAndYaw(drivenDistance, usePosType);
 
-    //uint16_t TrailerAngle = getTrailerAngle();
-    //qDebug() << "Trailer angle " << TrailerAngle;
+    // uint16_t TrailerAngleRAW = getTrailerAngleRaw();
+    // qDebug() << "Trailer angle " << TrailerAngleRAW;
+    
+    // double TrailerAngle = getTrailerAngleRadians();
+    // qDebug() << "Trailer angle radians " << TrailerAngle;
+
+
+    // TODO Based on angle update the trailer state
 
 }
 
 #ifdef QT_GUI_LIB
 void TruckState::draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected)
 {
-    qDebug() << "Draw Trailer "    
+
     PosPoint pos = getPosition();
     //        LocPoint pos_gps = VehicleState->getLocationGps();
 
@@ -136,13 +142,4 @@ void TruckState::draw(QPainter &painter, const QTransform &drawTrans, const QTra
     }
 }
 
-QPainterPath TruckState::getBoundingBox() const
-{
-    QPainterPath carBoundingBox;
-
-    carBoundingBox.addRect(-mRearOverhang, -getWidth()/2, getLength(), getWidth());
-    carBoundingBox.closeSubpath();
-
-    return carBoundingBox;
-}
 #endif

@@ -352,6 +352,7 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
             mavlink_heartbeat_t heartbeat;
             mavlink_msg_heartbeat_decode(&message, &heartbeat);
             heartbeat.type = MAV_TYPE_GROUND_ROVER;
+            heartbeat.custom_mode = VEHICLE_TYPE_TRUCK;
             heartbeat.autopilot = WAYWISE_MAVLINK_AUTOPILOT_ID;
             heartbeat.base_mode |= MAV_MODE_FLAG_SAFETY_ARMED | MAV_MODE_FLAG_CUSTOM_MODE_ENABLED; // Note: behave like PX4...
             mavlink_msg_heartbeat_encode(message.sysid, message.compid, &message, &heartbeat);
