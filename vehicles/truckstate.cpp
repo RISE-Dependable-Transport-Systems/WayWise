@@ -140,6 +140,14 @@ void TruckState::draw(QPainter &painter, const QTransform &drawTrans, const QTra
                            pt_txt.x() + 400, pt_txt.y() + 65);
         painter.drawText(rect_txt, txt);
     }
+    if (!mTrailerState.isNull()) {
+        // double trailer_len = 300.0; // Example length of the trailer (adjust as needed)
+        double trailer_dist = 100.0; // Example distance between car and trailer (adjust as needed)
+        mTrailerState->drawTrailer(painter, pos, car_len,trailer_dist);
+    } else {
+        // mTrailerState is empty
+        // qDebug() << "Trailer is empty";
+    }
 }
 
 #endif

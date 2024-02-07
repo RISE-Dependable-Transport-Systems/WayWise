@@ -6,7 +6,8 @@
 #ifndef TRUCKSTATE_H
 #define TRUCKSTATE_H
 
-#include "carstate.h" // Include the base class
+#include "carstate.h"
+#include "trailerstate.h"
 
 
 class TruckState : public CarState
@@ -26,15 +27,21 @@ public:
     // Override the updateOdomPositionAndYaw function
     virtual void updateOdomPositionAndYaw(double drivenDistance, PosType usePosType = PosType::odom) override;
 
+
+    QSharedPointer<TrailerState> getTrailerState() const { return mTrailerState; }
+    QSharedPointer<TrailerState> setTrailerState(QSharedPointer<TrailerState> newTrailerState) { mTrailerState=newTrailerState; }
+
+
 #ifdef QT_GUI_LIB
-    // Override or add drawing functions if needed (to draw a truck trailer)
+    // Override or add drawing functions if needed (to draw a truck)
     virtual void draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected = true) override;
 #endif
 
 private:
     uint16_t mTrailerRawAngle; // Raw angle value from sensor
     double mTrailerAngleRadians; // Agnle in Radians
-
+    QSharedPointer<TrailerState> mTrailerState; // we assume the trailer happens dynamically, 
+    //trailer can change during run time , also the trailer can exist if truck dies :)
 };
 
 #endif // TRUCKSTATE_H

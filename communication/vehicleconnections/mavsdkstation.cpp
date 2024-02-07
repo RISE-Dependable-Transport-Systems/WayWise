@@ -26,7 +26,7 @@ MavsdkStation::MavsdkStation(QObject *parent) : QObject(parent)
                         mavlink_heartbeat_t heartbeat;
                         mavlink_msg_heartbeat_decode(&message, &heartbeat);
 
-                        QSharedPointer<MavsdkVehicleConnection> vehicleConnection = QSharedPointer<MavsdkVehicleConnection>::create(system, (MAV_TYPE) heartbeat.type);
+                        QSharedPointer<MavsdkVehicleConnection> vehicleConnection = QSharedPointer<MavsdkVehicleConnection>::create(system, heartbeat);
                         mVehicleConnectionMap.insert(system->get_system_id(), vehicleConnection);
 
                         // move to same QThread MavsdkStation lives in

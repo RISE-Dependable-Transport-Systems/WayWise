@@ -19,6 +19,7 @@
 //#include "autopilot/purepursuitwaypointfollower.h"
 #include "vehicles/copterstate.h"
 #include "vehicles/carstate.h"
+#include "vehicles/truckstate.h"
 #include "sensors/camera/mavsdkgimbal.h"
 #include <mavsdk/mavsdk.h>
 #include <mavsdk/plugins/telemetry/telemetry.h>
@@ -33,7 +34,7 @@ class MavsdkVehicleConnection : public VehicleConnection
 {
     Q_OBJECT
 public:
-    explicit MavsdkVehicleConnection(std::shared_ptr<mavsdk::System> system, MAV_TYPE vehicleType);
+    explicit MavsdkVehicleConnection(std::shared_ptr<mavsdk::System> system, mavlink_heartbeat_t& heartbeat);
     void setEnuReference(const llh_t &enuReference);
     void setHomeLlh(const llh_t &homeLlh);
     virtual QList<PosPoint> requestCurrentRouteFromVehicle() override;

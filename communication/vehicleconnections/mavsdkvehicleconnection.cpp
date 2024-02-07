@@ -8,8 +8,10 @@
 #include <QDateTime>
 #include <variant>
 
-MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System> system, MAV_TYPE vehicleType)
+MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System> system, mavlink_heartbeat_t& heartbeat)
 {
+    MAV_TYPE vehicleType = (MAV_TYPE) heartbeat.type;
+    WAYWISE_VEHICLE_TYPE vehicleState = (WAYWISE_VEHICLE_TYPE) heartbeat.custom_mode;
     mSystem = system;
     mVehicleType = vehicleType;
     mMavlinkPassthrough.reset(new mavsdk::MavlinkPassthrough(system));
@@ -33,8 +35,21 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
     case MAV_TYPE_GROUND_ROVER:
         qDebug() << "MavsdkVehicleConnection: we are talking to a MAV_TYPE_GROUND_ROVER / WayWise.";
         // TODO: detect different rover types...
-        mVehicleState = QSharedPointer<CarState>::create(mSystem->get_system_id());
-        mVehicleState->setName("Car " + QString::number(mSystem->get_system_id()));
+            switch (vehicleState)
+            {
+            case   VEHICLE_TYPE_ROVER:
+                mVehicleState = QSharedPointer<CarState>::create(mSystem->get_system_id());
+                mVehicleState->setName("Car " + QString::number(mSystem->get_system_id()));
+                break;
+            case   VEHICLE_TYPE_TRUCK:
+                mVehicleState = QSharedPointer<TruckState>::create(mSystem->get_system_id());
+                mVehicleState->setName("Truck " + QString::number(mSystem->get_system_id()));
+                break;
+            default:
+                qDebug() << "FATAL ERROR! Not a correct way wise vehicle state";
+                exit(-1);
+                break;
+            }
         break;
     default:
         qDebug() << "MavsdkVehicleConnection: unknown / unsupported vehicle type.";
