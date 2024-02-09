@@ -33,21 +33,29 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
         mVehicleState->setName("Copter " + QString::number(mSystem->get_system_id()));
         break;
     case MAV_TYPE_GROUND_ROVER:
-        qDebug() << "MavsdkVehicleConnection: we are talking to a MAV_TYPE_GROUND_ROVER / WayWise.";
         // TODO: detect different rover types...
             switch (vehicleState)
             {
             case   VEHICLE_TYPE_ROVER:
+            qDebug() << "MavsdkVehicleConnection: we are talking to a MAV_TYPE_GROUND_ROVER / Car WayWise.";
                 mVehicleState = QSharedPointer<CarState>::create(mSystem->get_system_id());
                 mVehicleState->setName("Car " + QString::number(mSystem->get_system_id()));
                 break;
             case   VEHICLE_TYPE_TRUCK:
+            qDebug() << "MavsdkVehicleConnection: we are talking to a MAV_TYPE_GROUND_ROVER / Truck WayWise.";
                 mVehicleState = QSharedPointer<TruckState>::create(mSystem->get_system_id());
                 mVehicleState->setName("Truck " + QString::number(mSystem->get_system_id()));
+                if (auto truckState = qSharedPointerDynamicCast<TruckState>(mVehicleState)) {
+                     // Create and set the trailer state
+                    //  QSharedPointer<TrailerState>::create();
+                    truckState->setTrailerState( QSharedPointer<TrailerState>::create());
+                }
                 break;
             default:
-                qDebug() << "FATAL ERROR! Not a correct way wise vehicle state";
-                exit(-1);
+                qDebug() << "Not a correct way wise vehicle state";
+                // For the moment I default to carstate for backwards compatibility 
+                mVehicleState = QSharedPointer<CarState>::create(mSystem->get_system_id());
+                mVehicleState->setName("Car " + QString::number(mSystem->get_system_id()));
                 break;
             }
         break;

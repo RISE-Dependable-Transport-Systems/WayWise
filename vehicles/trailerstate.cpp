@@ -5,47 +5,70 @@
  */
 
 #include "trailerstate.h"
-
+#include <QDebug>
 
 TrailerState::TrailerState(ObjectState::ObjectID_t id, Qt::GlobalColor color) : ObjectState (id, color)
 {    
 
-    mLength = 1;
-    mWidth = 0.3;
+    mLength = 1.8;
+    mWidth = 0.4;
     
 }
 
 #ifdef QT_GUI_LIB
-void TrailerState::drawTrailer(QPainter &painter, const PosPoint &carPos, double car_len, double trailer_dist)
+void TrailerState::drawTrailer(QPainter &painter, const QTransform &drawTrans, const PosPoint &carPos, double angle)
 {
-    double trailer_len = getLength() * 1000.0; // convert from m to mm (on the map objects are in mm)
-    double x = carPos.getX() * 1000.0;
-    double y = carPos.getY() * 1000.0;
-    double trailer_x = x + car_len + trailer_dist;
-    double trailer_y = y;
+
+    // qDebug() << "TrailerState::draw";
+    // PosPoint pos = getPosition();
+
+    //double trailer_len = getLength() * 500.0; // convert from m to mm (on the map objects are in mm)
+    //qDebug() << "angle is " << angle;
+    
+    double trailerDistance= 100.0;
+    double x = carPos.getX() * 1000.0  ;   // convert from m to mm (on the map objects are in mm)
+    double y = carPos.getY() * 1000.0  ; 
+
+
+   // Convert steering angle from degrees to radians
+    double delta = 45 * M_PI / 180.0;
+
+    // Calculate the angle of the trailer relative to the truck using the formula
+    double trailerAngle = atan(10 / 4.5 * tan(delta));
+
+    // Convert the angle from radians to degrees
+    double sensorAngle = trailerAngle * (180.0 / M_PI);
+
+
+
+    // x *= cos(sensorAngle);
+    // y *= sin(-sensorAngle);
+    double car_len = getLength() * 1000.0;
+    const double car_w = getWidth() * 1000.0;
+    const double car_corner = 0.02 * 1000.0;
+    painter.setTransform(drawTrans);
+    painter.translate(x, y);
+    painter.rotate(carPos.getYaw() + sensorAngle + 180);
+
+    // Wheels
+    painter.setBrush(QBrush(Qt::darkGray));
+    painter.drawRoundedRect(car_len - car_len / 2.5,-(car_w / 2), car_len / 9.0, car_w, car_corner / 3, car_corner / 3);
     
     // Draw trailer
     // simple draw a rectangle representing the trailer
-    painter.setBrush(QBrush(Qt::white)); 
-    painter.drawRect(trailer_x, trailer_y - trailer_len / 2, trailer_len, trailer_len);
+    painter.setBrush(getColor());
+    painter.drawRoundedRect(-car_len / 6.0, -((car_w - car_len / 20.0) / 2.0), car_len - (car_len / 20.0), car_w - car_len / 20.0, car_corner, car_corner);
+
+    // QPen pen(Qt::black, 10);
+    // painter.setPen(pen); // Set the pen color for drawing the axis
+    // painter.drawLine(0, 0, -car_len / 12.0, 0);
+
 }
 
 
 void TrailerState::draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected){
     // draw a trailer
-    PosPoint pos = getPosition();
-
-    double trailer_len = getLength() * 1000.0; // convert from m to mm (on the map objects are in mm)
-    double x = pos.getX() * 1000.0;
-    double y = pos.getY() * 1000.0;
-    double trailer_x = x + 100 + 10;
-    double trailer_y = y;
-    
-    // Draw trailer
-    // simple draw a rectangle representing the trailer
-    painter.setBrush(QBrush(Qt::white)); 
-    painter.drawRect(trailer_x, trailer_y - trailer_len / 2, trailer_len, trailer_len);
-
+    qDebug() << "TrailerState::draw";
 
 }
 #endif

@@ -30,13 +30,15 @@ public:
 
 #ifdef QT_GUI_LIB
     // drawing functions for trailer (to draw a trailer)
-    void drawTrailer(QPainter &painter, const PosPoint &carPos, double car_len, double trailer_dist); // this would called from truck
+    void drawTrailer(QPainter &painter,const QTransform &drawTrans, const PosPoint &carPos, double angle); // this would called from truck
     virtual void draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected = true) override;// if trailer is stand alone (not attached to truck)
 #endif
+    double mAngle;
 
 private:
     double mLength; // [m]
     double mWidth; // [m]
+
 
 };
 

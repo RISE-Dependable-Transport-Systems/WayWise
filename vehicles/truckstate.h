@@ -19,9 +19,11 @@ public:
     // Additional set/get state for angle sensor
     uint16_t getTrailerAngleRaw() const { return mTrailerRawAngle; }
     double getTrailerAngleRadians() const { return mTrailerAngleRadians; }
-    void setTrailerAngle(uint16_t raw_angle , double angle_in_radians) { 
+    double getTrailerAngleDegrees() const { return mTrailerAngleDegress; }
+    void setTrailerAngle(uint16_t raw_angle , double angle_in_radians, double agnle_in_degrees) { 
         mTrailerRawAngle = raw_angle;
-        mTrailerAngleRadians= angle_in_radians;
+        mTrailerAngleRadians = angle_in_radians;
+        mTrailerAngleDegress = agnle_in_degrees;
     }
 
     // Override the updateOdomPositionAndYaw function
@@ -39,7 +41,8 @@ public:
 
 private:
     uint16_t mTrailerRawAngle; // Raw angle value from sensor
-    double mTrailerAngleRadians; // Agnle in Radians
+    double mTrailerAngleRadians; // Angle in Radians
+    double mTrailerAngleDegress; // Angle in Degrees
     QSharedPointer<TrailerState> mTrailerState; // we assume the trailer happens dynamically, 
     //trailer can change during run time , also the trailer can exist if truck dies :)
 };

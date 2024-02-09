@@ -26,7 +26,7 @@ AS5600Updater::AS5600Updater(QSharedPointer<VehicleState> vehicleState) : AngleS
             // only TruckState has a trailer angle
             QSharedPointer<TruckState> truckState = qSharedPointerDynamicCast<TruckState>(vehicleState);
             if (truckState) {
-                  truckState->setTrailerAngle(scaled_angle, angleRadians);
+                  truckState->setTrailerAngle(scaled_angle, angleRadians, deg);
             } else {
                   qDebug() << "Error: Failed to cast VehicleState to TruckState.";
             }
