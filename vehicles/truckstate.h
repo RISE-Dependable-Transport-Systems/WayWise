@@ -1,6 +1,7 @@
 /*
  *     Copyright 2024 RISE Sweden
- * Specific implementation of VehicleState for car-type (ackermann) vehicles, storing all (dynamic and static) state
+ *
+ *   Specific implementation of VehicleState for car-type (ackermann) vehicles, storing all (dynamic and static) state
  */
 
 #ifndef TRUCKSTATE_H
@@ -26,9 +27,8 @@ public:
         mTrailerAngleDegress = agnle_in_degrees;
     }
 
-    // Override the updateOdomPositionAndYaw function
+    // Override the updateOdomPositionAndYaw function to consider the angle of the trailer
     virtual void updateOdomPositionAndYaw(double drivenDistance, PosType usePosType = PosType::odom) override;
-
 
     QSharedPointer<TrailerState> getTrailerState() const { return mTrailerState; }
     QSharedPointer<TrailerState> setTrailerState(QSharedPointer<TrailerState> newTrailerState) { mTrailerState=newTrailerState; }
@@ -44,7 +44,7 @@ private:
     double mTrailerAngleRadians; // Angle in Radians
     double mTrailerAngleDegress; // Angle in Degrees
     QSharedPointer<TrailerState> mTrailerState; // we assume the trailer happens dynamically, 
-    //trailer can change during run time , also the trailer can exist if truck dies :)
+    //trailer can change during run time , also the trailer can exist if truck dies
 };
 
 #endif // TRUCKSTATE_H

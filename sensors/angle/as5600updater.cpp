@@ -31,14 +31,13 @@ AS5600Updater::AS5600Updater(QSharedPointer<VehicleState> vehicleState) : AngleS
             if (truckState) {
                   truckState->setTrailerAngle(scaled_angle, angleRadians, angleInDegrees);
             } else {
-                  qDebug() << "Error: Failed to cast VehicleState to TruckState.";
+               qDebug() << "Error: Failed to cast VehicleState to TruckState.";
             }
          } else {
             qDebug() << "ERROR: as5600 Read failed";
          }
-      });
-               
-      mPollTimer.start(mPollIntervall_ms);
+      });   
+      mPollTimer.start(mPollIntervall_ms); // call back (poll) every 50 ms
    } else {
       qDebug() << "ERROR: Unable to open i2c bus to AS5600";
    }
