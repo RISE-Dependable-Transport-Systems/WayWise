@@ -140,12 +140,9 @@ void TruckState::draw(QPainter &painter, const QTransform &drawTrans, const QTra
     }
     if (!mTrailerState.isNull()) {
 
-        // double trailer_len = 300.0; // Example length of the trailer (adjust as needed)
-        double trailer_dist = 1.0; // Example distance between car and trailer (adjust as needed)
-        // double deg = getTrailerAngleDegrees();
-        double deg = getSteering();
+        double angleInDegrees = getTrailerAngleDegrees();
         //qDebug() << "angle is " << getTrailerAngleRaw();
-        mTrailerState->drawTrailer(painter,drawTrans, pos, deg);
+        mTrailerState->drawTrailer(painter,drawTrans, pos, angleInDegrees);
     } else {
         // mTrailerState is empty
         //qDebug() << "Trailer is empty";
