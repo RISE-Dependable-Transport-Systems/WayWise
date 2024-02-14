@@ -8,6 +8,7 @@
 #include <QLineF>
 #include "purepursuitwaypointfollower.h"
 #include "WayWise/communication/parameterserver.h"
+#include "WayWise/vehicles/truckstate.h"
 
 PurepursuitWaypointFollower::PurepursuitWaypointFollower(QSharedPointer<MovementController> movementController)
 {
@@ -136,12 +137,27 @@ double PurepursuitWaypointFollower::getCurvatureToPointInENU(QSharedPointer<Vehi
     pointInVehicleFrame.setY(point.y()-vehiclePos.getY());
     // rotate
     double currYaw_rad = vehiclePos.getYaw() * M_PI / 180.0;
+
     const double newX = cos(-currYaw_rad)*pointInVehicleFrame.x() - sin(-currYaw_rad)*pointInVehicleFrame.y();
     const double newY = sin(-currYaw_rad)*pointInVehicleFrame.x() + cos(-currYaw_rad)*pointInVehicleFrame.y();
     pointInVehicleFrame.setX(newX);
     pointInVehicleFrame.setY(newY);
 
-    return getCurvatureToPointInVehicleFrame(pointInVehicleFrame);
+// qDebug() << "///// vehiclePos.getYaw : " <<  vehiclePos.getYaw() ;
+
+// ---------------------
+if (auto truckState = qSharedPointerDynamicCast<TruckState>(vehicleState)) {
+    double trailerAngle = truckState->getTrailerAngleRadians();
+    const double trailerRotatedX = cos(trailerAngle) * pointInVehicleFrame.x() - sin(trailerAngle) * pointInVehicleFrame.y();
+    const double trailerRotatedY = sin(trailerAngle) * pointInVehicleFrame.x() + cos(trailerAngle) * pointInVehicleFrame.y();
+    
+    pointInVehicleFrame.setX(trailerRotatedX);
+    pointInVehicleFrame.setY(trailerRotatedY);
+}
+
+  return getCurvatureToPointInVehicleFrame(pointInVehicleFrame);
+
+  
 }
 
 double PurepursuitWaypointFollower::getCurvatureToPointInENU(const QPointF &point)

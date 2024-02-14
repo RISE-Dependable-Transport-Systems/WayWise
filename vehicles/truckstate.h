@@ -8,7 +8,7 @@
 
 #include "carstate.h"
 #include "trailerstate.h"
-
+#include <QSharedPointer>
 
 class TruckState : public CarState
 {
