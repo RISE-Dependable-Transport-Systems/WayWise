@@ -27,7 +27,7 @@ void TrailerState::drawTrailer(QPainter &painter, const QTransform &drawTrans, c
 
     painter.setTransform(drawTrans);
     painter.translate(x, y);
-    painter.rotate(carPos.getYaw() + angle + 180);
+    painter.rotate(carPos.getYaw() - angle + 180);
 
     // Wheels
     painter.setBrush(QBrush(Qt::darkGray));

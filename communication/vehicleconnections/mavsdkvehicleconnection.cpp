@@ -54,8 +54,16 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
             default:
                 qDebug() << "Not a correct way wise vehicle state";
                 // For the moment I default to carstate for backwards compatibility 
-                mVehicleState = QSharedPointer<CarState>::create(mSystem->get_system_id());
-                mVehicleState->setName("Car " + QString::number(mSystem->get_system_id()));
+                // mVehicleState = QSharedPointer<CarState>::create(mSystem->get_system_id());
+                // mVehicleState->setName("Car " + QString::number(mSystem->get_system_id()));
+                                //TO REMOVE
+                mVehicleState = QSharedPointer<TruckState>::create(mSystem->get_system_id());
+                mVehicleState->setName("Truck " + QString::number(mSystem->get_system_id()));
+                if (auto truckState = qSharedPointerDynamicCast<TruckState>(mVehicleState)) {
+                     // Create and set the trailer state
+                    //  QSharedPointer<TrailerState>::create();
+                    truckState->setTrailerState( QSharedPointer<TrailerState>::create());
+                }//TO REMOVE
                 break;
             }
         break;
@@ -251,6 +259,16 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
             mavlink_msg_named_value_float_decode(&message, &mavMsg);
             mVehicleState->setAutopilotRadius(mavMsg.value);
         }
+    });
+
+    //Use the Debug vector for angle sensor, x-> raw angel, y-> angle in radians, z-> angle in degress 
+    mMavlinkPassthrough->subscribe_message(MAVLINK_MSG_ID_DEBUG_VECT , [this](const mavlink_message_t &message) {
+        mavlink_debug_vect_t debugVectMessage;
+        mavlink_msg_debug_vect_decode(&message, &debugVectMessage);
+        if (auto truckState = qSharedPointerDynamicCast<TruckState>(mVehicleState)) {
+            truckState->setTrailerAngle (debugVectMessage.x,debugVectMessage.y,debugVectMessage.z);
+        }
+
     });
 
     // Set up action plugin
