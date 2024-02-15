@@ -2,7 +2,7 @@
  *     Copyright 2024 RISE Sweden
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
  * 
- * Implementation of angle sensor for AS5600
+ * Implementation of angle sensor specific for AS5600
  */
 
 #ifndef AS5600UPDATER_H
@@ -16,17 +16,18 @@ extern "C" {
 }
 #include <QTimer>
 
-// connects to AS5600 via i2c bus and polls orientation data (euler angle) periodically
+// connects to AS5600 via i2c bus and polls orientation data (angle) periodically
 class AS5600Updater : public AngleSensorUpdater
 {
 public:
-    AS5600Updater(QSharedPointer<VehicleState> vehicleState);
+    AS5600Updater(QSharedPointer<VehicleState> vehicleState, double angleOffset=0);
     void printSensorInfo();
     virtual bool setUpdateIntervall(int pollIntervall_ms) override;
 
 private:
     int mPollIntervall_ms = 50; // interval (ms) to read from AS5600,
     QTimer mPollTimer;
+    double angleOffset; // offset if the start angle is not zero
 };
 
 #endif // AS5600UPDATER_H

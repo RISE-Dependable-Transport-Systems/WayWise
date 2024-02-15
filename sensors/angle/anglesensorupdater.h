@@ -2,7 +2,7 @@
  *     Copyright 2024 RISE Sweden
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
  * 
- * Abstract interface for receiving angle (position) from magnetic rotary position sensor 
+ * Abstract interface for receiving angle values e.g., magnetic rotary position sensor 
  */
 
 #ifndef ANGLESENSORUPDATER_H

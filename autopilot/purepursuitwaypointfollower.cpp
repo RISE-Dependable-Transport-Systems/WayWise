@@ -143,17 +143,24 @@ double PurepursuitWaypointFollower::getCurvatureToPointInENU(QSharedPointer<Vehi
     pointInVehicleFrame.setX(newX);
     pointInVehicleFrame.setY(newY);
 
-// qDebug() << "///// vehiclePos.getYaw : " <<  vehiclePos.getYaw() ;
 
-// ---------------------
-if (auto truckState = qSharedPointerDynamicCast<TruckState>(vehicleState)) {
-    double trailerAngle = truckState->getTrailerAngleRadians();
-    const double trailerRotatedX = cos(trailerAngle) * pointInVehicleFrame.x() - sin(trailerAngle) * pointInVehicleFrame.y();
-    const double trailerRotatedY = sin(trailerAngle) * pointInVehicleFrame.x() + cos(trailerAngle) * pointInVehicleFrame.y();
-    
-    pointInVehicleFrame.setX(trailerRotatedX);
-    pointInVehicleFrame.setY(trailerRotatedY);
-}
+    // ---------------------
+    if (auto truckState = qSharedPointerDynamicCast<TruckState>(vehicleState)) {
+        double trailerAngle = truckState->getTrailerAngleRadians();
+
+        // // Limit the trailer angle to avoid jackknifing
+        // if (std::abs(trailerAngle) > MAX_TRAILER_ANGLE * M_PI / 180.0) {
+        //     // Adjust trailer angle to the maximum allowable value
+        //     trailerAngle = (trailerAngle > 0) ? MAX_TRAILER_ANGLE * M_PI / 180.0 : -MAX_TRAILER_ANGLE * M_PI / 180.0;
+        // }
+
+        const double trailerRotatedX = cos(trailerAngle) * pointInVehicleFrame.x() - sin(trailerAngle) * pointInVehicleFrame.y();
+        const double trailerRotatedY = sin(trailerAngle) * pointInVehicleFrame.x() + cos(trailerAngle) * pointInVehicleFrame.y();
+        
+        pointInVehicleFrame.setX(trailerRotatedX);
+        pointInVehicleFrame.setY(trailerRotatedY);
+    }
+    // ---------------------
 
   return getCurvatureToPointInVehicleFrame(pointInVehicleFrame);
 

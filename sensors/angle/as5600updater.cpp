@@ -6,7 +6,7 @@
 #include <cmath>
 #include <QDebug>
 
-AS5600Updater::AS5600Updater(QSharedPointer<VehicleState> vehicleState) : AngleSensorUpdater(vehicleState)
+AS5600Updater::AS5600Updater(QSharedPointer<VehicleState> vehicleState, double angleOffset) : AngleSensorUpdater(vehicleState), angleOffset(angleOffset)
 {
    int res{};
    res = as5600_basic_init(); // basic init for reading angle using i2c
@@ -22,11 +22,9 @@ AS5600Updater::AS5600Updater(QSharedPointer<VehicleState> vehicleState) : AngleS
          res = as5600_basic_read(&angleInDegrees, &angle_raw, &scaled_angle);
          if (res == 0) {
             //qDebug() << "as5600: scaled angle: " << scaled_angle << "| in Radians : "  <<"| in degrees: " << deg ;
-            angleInDegrees = angleInDegrees -94.043;
-            scaled_angle = scaled_angle - 1070;
-             double angleRadians = angleInDegrees * (M_PI / 180.0);
-            
-            // only TruckState has a trailer angle
+            angleInDegrees = angleInDegrees - this->angleOffset;
+            ddouble angleRadians = angleInDegrees * (M_PI / 180.0);
+            // for the moment only a truck has an angle sensor
             QSharedPointer<TruckState> truckState = qSharedPointerDynamicCast<TruckState>(vehicleState);
             if (truckState) {
                   truckState->setTrailerAngle(scaled_angle, angleRadians, angleInDegrees);
@@ -37,7 +35,7 @@ AS5600Updater::AS5600Updater(QSharedPointer<VehicleState> vehicleState) : AngleS
             qDebug() << "ERROR: as5600 Read failed";
          }
       });   
-      mPollTimer.start(mPollIntervall_ms); // call back (poll) every 50 ms
+      mPollTimer.start(mPollIntervall_ms); // call back (poll) every mPollIntervall_ms e.g., 50 ms
    } else {
       qDebug() << "ERROR: Unable to open i2c bus to AS5600";
    }
@@ -62,13 +60,13 @@ void AS5600Updater::printSensorInfo()
    }
    else {
       // print chip information 
-      qDebug() << "as5600: chip is " << info.chip_name;
-      qDebug() << "as5600: manufacturer is " << info.manufacturer_name;
-      qDebug() << "as5600: interface is " << info.interface;
-      qDebug() << "as5600: min supply voltage is " << info.supply_voltage_min_v;
-      qDebug() << "as5600: max supply voltage is " << info.supply_voltage_max_v;
-      qDebug() << "as5600: max current is " << info.max_current_ma;
-      qDebug() << "as5600: max temperature is " << info.temperature_max;
-      qDebug() << "as5600: min temperature is " << info.temperature_min;
+      qDebug() << "Angle Sensor: Connected";
+      qDebug() << "Angle Sensor: Chip is " << info.chip_name;
+      qDebug() << "Angle Sensor: interface is " << info.interface;
+      qDebug() << "Angle Sensor: min supply voltage is " << info.supply_voltage_min_v;
+      qDebug() << "Angle Sensor: max supply voltage is " << info.supply_voltage_max_v;
+      // qDebug() << "Angle Sensor: max current is " << info.max_current_max;
+      // qDebug() << "Angle Sensor: max temperature is " << info.temperature_max;
+      // qDebug() << "Angle Sensor: min temperature is " << info.temperature_min;
    }
 }
