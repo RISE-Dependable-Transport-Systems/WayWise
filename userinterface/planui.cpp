@@ -209,7 +209,7 @@ void PlanUI::on_importRouteButton_clicked()
         if (stream.name() == "routes")
             while(stream.readNextStartElement())
             {
-                llh_t importedEnuRef;
+                llh_t importedEnuRef = {0.0, 0.0, 0.0};
                 if(stream.name() == "enuref")
                 {
                     while(stream.readNextStartElement())
