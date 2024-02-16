@@ -206,10 +206,10 @@ void PlanUI::on_importRouteButton_clicked()
 
     if (stream.readNextStartElement())
     {
-        if (stream.name() == "routes")
+        if (stream.name() == "routes") {
+            llh_t importedEnuRef{0.0, 0.0, 0.0};
             while(stream.readNextStartElement())
             {
-                llh_t importedEnuRef = {0.0, 0.0, 0.0};
                 if(stream.name() == "enuref")
                 {
                     while(stream.readNextStartElement())
@@ -264,6 +264,7 @@ void PlanUI::on_importRouteButton_clicked()
                     }
                 }
             }
+        }
     }
 
     ui->currentRouteSpinBox->setValue(mRoutePlanner->getCurrentRouteIndex() + 1);
