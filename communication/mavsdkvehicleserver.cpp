@@ -351,18 +351,37 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
         // ONLY FOR GRYFFIN Publish debug message use for the angle sensor
         connect(&mPublishMavlinkTimer, &QTimer::timeout, [this](){
             if (auto truckState = qSharedPointerDynamicCast<TruckState>(mVehicleState)) {
-                mavlink_message_t msg;
-                mavlink_debug_vect_t debug_vect; // debug vect offers three values x, y and z
+
+
+                if (  mMavlinkPassthrough->queue_message([&](MavlinkAddress mavlink_address, uint8_t channel) {
+                        mavlink_message_t msg;
+                        mavlink_debug_vect_t debug_vect; // debug vect offers three values x, y and z
+            
+                        debug_vect.time_usec = QDateTime::currentMSecsSinceEpoch() - mMavsdkVehicleServerCreationTime.toMSecsSinceEpoch();
+                        debug_vect.x =  truckState->getTrailerAngleRaw(); // this is arbitrary
+                        debug_vect.y =  truckState->getTrailerAngleRadians();
+                        debug_vect.z =  truckState->getTrailerAngleDegrees();
+
+                        mavlink_msg_debug_vect_encode_chan(mavlink_address.system_id, mavlink_address.component_id, channel, &msg, &debug_vect);
+                        return msg;
+                      }) != mavsdk::MavlinkPassthrough::Result::Success
+                    ){  
+                    qDebug() << "Warning: could not send Angle sensor using mavlink_debug_vect via MAVLINK."; 
+                }
+
+
+                // mavlink_message_t msg;
+                // mavlink_debug_vect_t debug_vect; // debug vect offers three values x, y and z
     
-                debug_vect.time_usec = QDateTime::currentMSecsSinceEpoch() - mMavsdkVehicleServerCreationTime.toMSecsSinceEpoch();
-                debug_vect.x =  truckState->getTrailerAngleRaw(); // this is arbitrary
-                debug_vect.y =  truckState->getTrailerAngleRadians();
-                debug_vect.z =  truckState->getTrailerAngleDegrees();
-                strcpy(debug_vect.name ,"ANLE");
-                // Pack the message
-                mavlink_msg_debug_vect_encode_chan(mMavlinkPassthrough->get_our_sysid(),  mMavlinkPassthrough->get_our_compid(), MAVLINK_COMM_0, &msg, &debug_vect);
-                if (mMavlinkPassthrough->send_message(msg) != mavsdk::MavlinkPassthrough::Result::Success)
-                    qDebug() << "Warning: could not send autopilot radius via MAVLINK.";
+                // debug_vect.time_usec = QDateTime::currentMSecsSinceEpoch() - mMavsdkVehicleServerCreationTime.toMSecsSinceEpoch();
+                // debug_vect.x =  truckState->getTrailerAngleRaw(); // this is arbitrary
+                // debug_vect.y =  truckState->getTrailerAngleRadians();
+                // debug_vect.z =  truckState->getTrailerAngleDegrees();
+                // strcpy(debug_vect.name ,"ANLE");
+                // // Pack the message
+                // mavlink_msg_debug_vect_encode_chan(mMavlinkPassthrough->get_our_sysid(),  mMavlinkPassthrough->get_our_compid(), MAVLINK_COMM_0, &msg, &debug_vect);
+                // if (mMavlinkPassthrough->send_message(msg) != mavsdk::MavlinkPassthrough::Result::Success)
+                //     qDebug() << "Warning: could not send autopilot radius via MAVLINK.";
             
             }
         });

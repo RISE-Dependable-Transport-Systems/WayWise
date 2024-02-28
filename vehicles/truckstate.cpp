@@ -26,6 +26,11 @@ void TruckState::updateOdomPositionAndYaw(double drivenDistance, PosType usePosT
     // double TrailerAngle = getTrailerAngleRadians();
     // qDebug() << "Trailer angle radians " << TrailerAngle;
 
+    // double steeringAngle = getSteering();
+    // qDebug() << "steeringAngle angle radians " << steeringAngle;
+
+    
+
     // TODO Based on angle update the trailer state
 
 }

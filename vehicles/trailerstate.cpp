@@ -10,8 +10,8 @@
 TrailerState::TrailerState(ObjectState::ObjectID_t id, Qt::GlobalColor color) : ObjectState (id, color)
 {    
 
-    mLength = 1.8;
-    mWidth = 0.4;
+    mLength = 0.96;
+    mWidth = 0.185;
     
 }
 
