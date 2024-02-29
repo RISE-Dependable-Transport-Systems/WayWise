@@ -140,7 +140,7 @@ double PurepursuitWaypointFollower::getCurvatureToPointInENU(QSharedPointer<Vehi
     auto truckState = qSharedPointerDynamicCast<TruckState>(vehicleState);
     double trailerAngle = truckState->getTrailerAngleRadians();
 
-    
+    qDebug()<<"point " <<point;
     if (vehicleState->getSpeed()>0 ){
 
         currYaw_rad +=trailerAngle ;
@@ -150,13 +150,14 @@ double PurepursuitWaypointFollower::getCurvatureToPointInENU(QSharedPointer<Vehi
             currYaw_rad += 2 * M_PI;
         }
 
-
+ qDebug()<<"pointInVehicleFrame " <<pointInVehicleFrame;
 
         const double newX = cos(-currYaw_rad)*pointInVehicleFrame.x() - sin(-currYaw_rad)*pointInVehicleFrame.y();
         const double newY = sin(-currYaw_rad)*pointInVehicleFrame.x() + cos(-currYaw_rad)*pointInVehicleFrame.y();
         pointInVehicleFrame.setX(newX);
         pointInVehicleFrame.setY(newY);
 
+ qDebug()<<"pointInVehicleFrame " <<pointInVehicleFrame;
         double gama = getCurvatureToPointInVehicleFrame(pointInVehicleFrame);
         return gama;
     } else {
@@ -178,36 +179,46 @@ double PurepursuitWaypointFollower::getCurvatureToPointInENU(QSharedPointer<Vehi
 
 
 
-        double dx_t = l2 * cos(trailerAngle);
-        double dy_t = l2 * sin(trailerAngle);
+        double dx_t = (l2) * cos( trailerAngle);
+        double dy_t = (l2) * sin( -trailerAngle);
         double trailerPositionx = vehiclePos.getX() - dx_t;
         double trailerPositiony = vehiclePos.getY() - dy_t;
+        qDebug()<<"x , y  " <<trailerPositionx << " , "<< trailerPositiony;
+
         QPointF pointInTrailerFrame;
         // // translate
         pointInTrailerFrame.setX(point.x()-trailerPositionx);
         pointInTrailerFrame.setY(point.y()-trailerPositiony);
 
-        const double newX = cos(-trailerYaw)*pointInTrailerFrame.x() - sin(-trailerYaw)*pointInTrailerFrame.y();
-        const double newY = sin(-trailerYaw)*pointInTrailerFrame.x() + cos(-trailerYaw)*pointInTrailerFrame.y();
-        pointInTrailerFrame.setX(newX);
-        pointInTrailerFrame.setY(newY);
-
-        qDebug()<<"pointInTrailerFrame " <<pointInTrailerFrame;
-
-        double theta_err =  atan2(pointInTrailerFrame.x(), pointInTrailerFrame.y());
-        qDebug()<<"theta_err " << theta_err;
+        qDebug()<<"point " <<point;
+        // qDebug()<<"pointInTrailerFrame1 " <<pointInTrailerFrame;
 
 
+        // const double newX = cos(-trailerYaw)*pointInTrailerFrame.x() - sin(-trailerYaw)*pointInTrailerFrame.y();
+        // const double newY = sin(-trailerYaw)*pointInTrailerFrame.x() + cos(-trailerYaw)*pointInTrailerFrame.y();
+        // pointInTrailerFrame.setX(newX);
+        // pointInTrailerFrame.setY(newY);
 
-        double gama = atan ( (2* l1* sin(theta_err)) / 1.5);
-        qDebug()<<"beta " << gama;
+        qDebug()<<"pointInTrailerFrame2 " <<pointInTrailerFrame;
 
-        // double beta_ref = beta + 0.1 *( beta - trailerAngle);
+        double theta_err =  atan2(pointInTrailerFrame.y(), pointInTrailerFrame.x()) - trailerYaw;
+        // double theta_err =  getCurvatureToPointInVehicleFrame(pointInTrailerFrame);
+        qDebug()<<"speed " << truckState->getSpeed();
 
-        double alpha = atan ( (l1 * sin (gama)) / (l2 - 0.01 * sin(gama) ) );
-         qDebug()<<"alpha " << alpha;
 
-        return 1.2* alpha;
+        double up = -1 * trailerYaw * (l2 ) - sin (theta_err);
+        double down = cos(theta_err) * (l2/l1);
+        return atan(up/down);
+//         double gama = atan ( ( 2* l1* sin(theta_err)) / 1.0);
+//         qDebug()<<"beta " << gama;
+
+//         // gama = gama + ( -1 * (gama -trailerYaw ) );
+//         // double beta_ref = beta + 0.1 *( beta - trailerAngle);
+
+//         double alpha = atan ( (l1 * sin (gama)) / (l2  ) );
+//          qDebug()<<"alpha " << alpha;
+// qDebug()<<"alpha * cos(abs(1.4*trailerAngle) " << alpha * cos(abs(trailerAngle));
+//         return  alpha * cos(abs(1.4*trailerAngle) );
 
         
         // currYaw_rad +=trailerAngle ;
@@ -304,6 +315,22 @@ QVector<QPointF> findIntersectionsBetweenCircleAndLine(QPair<QPointF,double> cir
 void PurepursuitWaypointFollower::updateState()
 {
     QPointF currentVehiclePositionXY = getCurrentVehiclePosition().getPoint();
+// qDebug()<< "start1 " << currentVehiclePositionXY; 
+
+        if(mMovementController->getVehicleState()->getSpeed() < 0){
+            auto truckState = qSharedPointerDynamicCast<TruckState>(mMovementController->getVehicleState());
+            double trailerAngle = truckState->getTrailerAngleRadians();
+            
+
+            double trailerAxis = 0.715;
+            double dx_t = trailerAxis * cos(trailerAngle);
+            double dy_t = trailerAxis * sin(-trailerAngle);
+            currentVehiclePositionXY.setX( currentVehiclePositionXY.x() - dx_t );
+            currentVehiclePositionXY.setY( currentVehiclePositionXY.y() - dy_t );
+
+            // qDebug()<<"trailer "<< currentVehiclePositionXY;
+
+        }
 
     switch (mCurrentState.stmState) {
     case WayPointFollowerSTMstates::NONE:
@@ -378,7 +405,7 @@ void PurepursuitWaypointFollower::updateState()
     case WayPointFollowerSTMstates::FOLLOW_ROUTE_FOLLOWING: {
         calculateDistanceOfRouteLeft();
         currentVehiclePositionXY = getCurrentVehiclePosition().getPoint();
-        qDebug()<< currentVehiclePositionXY;
+        
 
         if(mMovementController->getVehicleState()->getSpeed() < 0){
             auto truckState = qSharedPointerDynamicCast<TruckState>(mMovementController->getVehicleState());
@@ -386,8 +413,8 @@ void PurepursuitWaypointFollower::updateState()
             
 
             double trailerAxis = 0.715;
-            double dx_t = trailerAxis * cos(trailerAngle);
-            double dy_t = trailerAxis * sin(trailerAngle);
+            double dx_t = (trailerAxis/2) * cos(trailerAngle);
+            double dy_t = (trailerAxis/2) * sin(-trailerAngle);
             currentVehiclePositionXY.setX( currentVehiclePositionXY.x() - dx_t );
             currentVehiclePositionXY.setY( currentVehiclePositionXY.y() - dy_t );
 
@@ -499,7 +526,7 @@ void PurepursuitWaypointFollower::updateControl(const PosPoint &goal)
 /// ----- Adaptive speed based on the angle of the trailer
         auto truckState = qSharedPointerDynamicCast<TruckState>(mMovementController->getVehicleState());
         double trailerAngle = truckState->getTrailerAngleRadians();
-        double ad_speed = goal.getSpeed() * cos(abs(0.9*trailerAngle)) ;
+        double ad_speed = goal.getSpeed() * cos(abs(1.1*trailerAngle)) ;
         mMovementController->setDesiredSpeed(ad_speed);
 /// ----- 
 
