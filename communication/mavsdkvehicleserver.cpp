@@ -19,8 +19,10 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
     connect(&Logger::getInstance(), &Logger::logSent, this, &MavsdkVehicleServer::on_logSent);
 
     mVehicleState = vehicleState;
+    mSystemId = mVehicleState->getId();
 
-    std::shared_ptr<mavsdk::ServerComponent> serverComponent = mMavsdk.server_component();
+    mMavsdk.reset(new mavsdk::Mavsdk{mavsdk::Mavsdk::Configuration{mSystemId, 1, true}});
+    std::shared_ptr<mavsdk::ServerComponent> serverComponent = mMavsdk->server_component();
 
     // Create server plugins
     MavlinkParameterServer::initialize(serverComponent);
@@ -130,7 +132,7 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
     connect(&mHeartbeatTimer, &QTimer::timeout, this, &MavsdkVehicleServer::heartbeatTimeout);
     connect(this, &MavsdkVehicleServer::resetHeartbeat, this, &MavsdkVehicleServer::heartbeatReset);
 
-    mMavsdk.intercept_incoming_messages_async([this](mavlink_message_t &message){
+    mMavsdk->intercept_incoming_messages_async([this](mavlink_message_t &message){
         if (message.msgid == MAVLINK_MSG_ID_HEARTBEAT) { // TODO: make sure this is actually for us
             if (!mHeartbeat) {
                 qDebug() << "MavsdkVehicleServer: got heartbeat, timeout was reset.";
@@ -272,8 +274,8 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
 
     // --- Things that we should implement/fix in MAVSDK follow from here :-)
     // Create mavlinkpassthrough plugin (TODO: should not be used on vehicle side...)
-    mMavsdk.subscribe_on_new_system([this](){
-        mMavlinkPassthrough.reset(new mavsdk::MavlinkPassthrough(mMavsdk.systems().at(0)));
+    mMavsdk->subscribe_on_new_system([this](){
+        mMavlinkPassthrough.reset(new mavsdk::MavlinkPassthrough(mMavsdk->systems().at(0)));
 
         mMavlinkPassthrough->subscribe_message(MAVLINK_MSG_ID_COMMAND_LONG, [this](const mavlink_message_t &message) {
             switch (mavlink_msg_command_long_get_command(&message)) {
@@ -351,7 +353,7 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
         });
     });
 
-    mMavsdk.intercept_outgoing_messages_async([this](mavlink_message_t &message){
+    mMavsdk->intercept_outgoing_messages_async([this](mavlink_message_t &message){
         switch (message.msgid) {
         case MAVLINK_MSG_ID_HEARTBEAT: // Fix some info in heartbeat s.th. MAVSDK / ControlTower detects vehicle correctly
             mavlink_heartbeat_t heartbeat;
@@ -387,7 +389,7 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
     mavsdk::ConnectionResult result;
     switch (controlTowerSocketType) {
     case QAbstractSocket::UdpSocket:
-        result = mMavsdk.setup_udp_remote(controlTowerAddress.toString().toStdString(), controlTowerPort);
+        result = mMavsdk->setup_udp_remote(controlTowerAddress.toString().toStdString(), controlTowerPort);
         break;
     default:
         qDebug() << "MavsdkVehicleServer initialized for unsupported controlTowerSocketType. Not connecting.";
