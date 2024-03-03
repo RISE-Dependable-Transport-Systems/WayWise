@@ -179,8 +179,8 @@ double PurepursuitWaypointFollower::getCurvatureToPointInENU(QSharedPointer<Vehi
 
 
 
-        double dx_t = (l2) * cos( trailerAngle);
-        double dy_t = (l2) * sin( -trailerAngle);
+        double dx_t = (l2) * cos( currYaw_rad - trailerAngle );
+        double dy_t = (l2) * sin( currYaw_rad - trailerAngle );
         double trailerPositionx = vehiclePos.getX() - dx_t;
         double trailerPositiony = vehiclePos.getY() - dy_t;
         qDebug()<<"x , y  " <<trailerPositionx << " , "<< trailerPositiony;
@@ -320,15 +320,14 @@ void PurepursuitWaypointFollower::updateState()
         if(mMovementController->getVehicleState()->getSpeed() < 0){
             auto truckState = qSharedPointerDynamicCast<TruckState>(mMovementController->getVehicleState());
             double trailerAngle = truckState->getTrailerAngleRadians();
-            
+            double currYaw_rad = getCurrentVehiclePosition().getYaw() * M_PI / 180.0;
 
             double trailerAxis = 0.715;
-            double dx_t = trailerAxis * cos(trailerAngle);
-            double dy_t = trailerAxis * sin(-trailerAngle);
+            double dx_t = trailerAxis * cos(currYaw_rad- trailerAngle);
+            double dy_t = trailerAxis * sin(currYaw_rad - trailerAngle);
             currentVehiclePositionXY.setX( currentVehiclePositionXY.x() - dx_t );
             currentVehiclePositionXY.setY( currentVehiclePositionXY.y() - dy_t );
 
-            // qDebug()<<"trailer "<< currentVehiclePositionXY;
 
         }
 
@@ -410,13 +409,14 @@ void PurepursuitWaypointFollower::updateState()
         if(mMovementController->getVehicleState()->getSpeed() < 0){
             auto truckState = qSharedPointerDynamicCast<TruckState>(mMovementController->getVehicleState());
             double trailerAngle = truckState->getTrailerAngleRadians();
-            
+            double currYaw_rad = getCurrentVehiclePosition().getYaw() * M_PI / 180.0;
 
             double trailerAxis = 0.715;
-            double dx_t = (trailerAxis/2) * cos(trailerAngle);
-            double dy_t = (trailerAxis/2) * sin(-trailerAngle);
+            double dx_t = trailerAxis * cos(currYaw_rad- trailerAngle);
+            double dy_t = trailerAxis * sin(currYaw_rad - trailerAngle);
             currentVehiclePositionXY.setX( currentVehiclePositionXY.x() - dx_t );
             currentVehiclePositionXY.setY( currentVehiclePositionXY.y() - dy_t );
+
 
             qDebug()<<"trailer "<< currentVehiclePositionXY;
 
