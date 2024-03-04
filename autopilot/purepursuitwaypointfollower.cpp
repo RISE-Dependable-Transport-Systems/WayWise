@@ -130,18 +130,20 @@ double PurepursuitWaypointFollower::getCurvatureToPointInENU(QSharedPointer<Vehi
     // vehicleState and point assumed in ENU frame
     const PosPoint vehiclePos = vehicleState->getPosition(vehiclePosType);
 
-    // 1. transform point to vehicle frame, TODO: general transform in vehicleState?
-    QPointF pointInVehicleFrame;
-    // translate
-    pointInVehicleFrame.setX(point.x()-vehiclePos.getX());
-    pointInVehicleFrame.setY(point.y()-vehiclePos.getY());
+
     // rotate
     double currYaw_rad = vehiclePos.getYaw() * M_PI / 180.0;
     auto truckState = qSharedPointerDynamicCast<TruckState>(vehicleState);
     double trailerAngle = truckState->getTrailerAngleRadians();
 
-    qDebug()<<"point " <<point;
+    qDebug()<<"Target point " <<point;
+
     if (vehicleState->getSpeed()>0 ){
+        // 1. transform point to vehicle frame, TODO: general transform in vehicleState?
+        QPointF pointInVehicleFrame;
+        // translate
+        pointInVehicleFrame.setX(point.x()-vehiclePos.getX());
+        pointInVehicleFrame.setY(point.y()-vehiclePos.getY());
 
         currYaw_rad +=trailerAngle ;
 
@@ -150,40 +152,37 @@ double PurepursuitWaypointFollower::getCurvatureToPointInENU(QSharedPointer<Vehi
             currYaw_rad += 2 * M_PI;
         }
 
- qDebug()<<"pointInVehicleFrame " <<pointInVehicleFrame;
 
         const double newX = cos(-currYaw_rad)*pointInVehicleFrame.x() - sin(-currYaw_rad)*pointInVehicleFrame.y();
         const double newY = sin(-currYaw_rad)*pointInVehicleFrame.x() + cos(-currYaw_rad)*pointInVehicleFrame.y();
         pointInVehicleFrame.setX(newX);
         pointInVehicleFrame.setY(newY);
 
- qDebug()<<"pointInVehicleFrame " <<pointInVehicleFrame;
+        // qDebug()<<"pointInVehicleFrame " <<pointInVehicleFrame;
         double gama = getCurvatureToPointInVehicleFrame(pointInVehicleFrame);
+        // qDebug()<<"gama " <<gma;
         return gama;
+
     } else {
-        
-        
-        double l1=truckState->getAxisDistance(); // meters - tailer distance join to rear axle of trailer
+
+        double l1=truckState->getAxisDistance(); // in meters - tailer distance join to rear axle of trailer
         double l2 = 0.715;
        
-
         double trailerYaw = currYaw_rad + trailerAngle ;
-
         // trailerYaw = fmod(trailerYaw, 2* M_PI);
         // if ( trailerYaw < 0){
         //     trailerYaw += 2 * M_PI;
         // } 
         
         qDebug()<<"currYaw_rad" << currYaw_rad;
-        qDebug()<<"trailerYaw" <<trailerYaw;
-
 
 
         double dx_t = (l2) * cos( currYaw_rad - trailerAngle );
         double dy_t = (l2) * sin( currYaw_rad - trailerAngle );
         double trailerPositionx = vehiclePos.getX() - dx_t;
         double trailerPositiony = vehiclePos.getY() - dy_t;
-        qDebug()<<"x , y  " <<trailerPositionx << " , "<< trailerPositiony;
+
+        qDebug()<<"x , y, yaw_d  " <<trailerPositionx << " , "<< trailerPositiony << ", " << trailerYaw;
 
         QPointF pointInTrailerFrame;
         // // translate
@@ -191,24 +190,17 @@ double PurepursuitWaypointFollower::getCurvatureToPointInENU(QSharedPointer<Vehi
         pointInTrailerFrame.setY(point.y()-trailerPositiony);
 
         qDebug()<<"point " <<point;
-        // qDebug()<<"pointInTrailerFrame1 " <<pointInTrailerFrame;
+        qDebug()<<"pointInTrailerFrame " <<pointInTrailerFrame;
 
+        double theta_err =  atan2(pointInTrailerFrame.y(), pointInTrailerFrame.x()) - trailerYaw; // the Theta between the target point and curect position 
+        int sign = (point.x() * point.y() >= 0) ? 1 : -1 ; // sign -> which x,y quadrants we point
+        int gain = sign *2.5; // gain -> by try and error
+        double dividend = gain * trailerYaw * (l2 ) - sin (theta_err);
+        double divisor = cos(theta_err) * (l2/l1);
+        qDebug()<< "Delta " << atan(dividend/divisor);
 
-        // const double newX = cos(-trailerYaw)*pointInTrailerFrame.x() - sin(-trailerYaw)*pointInTrailerFrame.y();
-        // const double newY = sin(-trailerYaw)*pointInTrailerFrame.x() + cos(-trailerYaw)*pointInTrailerFrame.y();
-        // pointInTrailerFrame.setX(newX);
-        // pointInTrailerFrame.setY(newY);
+        return atan(dividend/divisor);
 
-        qDebug()<<"pointInTrailerFrame2 " <<pointInTrailerFrame;
-
-        double theta_err =  atan2(pointInTrailerFrame.y(), pointInTrailerFrame.x()) - trailerYaw;
-        // double theta_err =  getCurvatureToPointInVehicleFrame(pointInTrailerFrame);
-        qDebug()<<"speed " << truckState->getSpeed();
-
-
-        double up = -1 * trailerYaw * (l2 ) - sin (theta_err);
-        double down = cos(theta_err) * (l2/l1);
-        return atan(up/down);
 //         double gama = atan ( ( 2* l1* sin(theta_err)) / 1.0);
 //         qDebug()<<"beta " << gama;
 
@@ -231,13 +223,8 @@ double PurepursuitWaypointFollower::getCurvatureToPointInENU(QSharedPointer<Vehi
         // double beta = -atan(2* l2 * sin(theta));
 
         // return beta;
-        
-
-        
-
     }
 
-// return getCurvatureToPointInVehicleFrame(pointInVehicleFrame);
 
 }
 
@@ -526,7 +513,7 @@ void PurepursuitWaypointFollower::updateControl(const PosPoint &goal)
 /// ----- Adaptive speed based on the angle of the trailer
         auto truckState = qSharedPointerDynamicCast<TruckState>(mMovementController->getVehicleState());
         double trailerAngle = truckState->getTrailerAngleRadians();
-        double ad_speed = goal.getSpeed() * cos(abs(1.1*trailerAngle)) ;
+        double ad_speed = goal.getSpeed() * cos(abs(0.9*trailerAngle)) ;
         mMovementController->setDesiredSpeed(ad_speed);
 /// ----- 
 
