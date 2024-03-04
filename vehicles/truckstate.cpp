@@ -20,19 +20,6 @@ void TruckState::updateOdomPositionAndYaw(double drivenDistance, PosType usePosT
     // Call the base class implementation first
     CarState::updateOdomPositionAndYaw(drivenDistance, usePosType);
 
-    // uint16_t TrailerAngleRAW = getTrailerAngleRaw();
-    // qDebug() << "Trailer angle " << TrailerAngleRAW;
-    
-    // double TrailerAngle = getTrailerAngleRadians();
-    // qDebug() << "Trailer angle radians " << TrailerAngle;
-
-    // double steeringAngle = getSteering();
-    // qDebug() << "steeringAngle angle radians " << steeringAngle;
-
-    
-
-    // TODO Based on angle update the trailer state
-
 }
 
 #ifdef QT_GUI_LIB
@@ -48,8 +35,6 @@ void TruckState::draw(QPainter &painter, const QTransform &drawTrans, const QTra
 
     double x = pos.getX() * 1000.0;
     double y = pos.getY() * 1000.0;
-    //        double x_gps = pos_gps.getX() * 1000.0;
-    //        double y_gps = pos_gps.getY() * 1000.0;
     painter.setTransform(drawTrans);
 
     QColor col_wheels;
@@ -58,7 +43,6 @@ void TruckState::draw(QPainter &painter, const QTransform &drawTrans, const QTra
     QColor col_sigma = Qt::red;
     QColor col_hull = getColor();
     QColor col_center = Qt::blue;
-    //        QColor col_gps = Qt::magenta;
 
     if (isSelected) {
         col_wheels = Qt::black;
@@ -92,16 +76,72 @@ void TruckState::draw(QPainter &painter, const QTransform &drawTrans, const QTra
     // Hull
     painter.setBrush(col_hull);
     painter.drawRoundedRect(-car_len / 6.0, -((car_w - car_len / 20.0) / 2.0), car_len - (car_len / 20.0), car_w - car_len / 20.0, car_corner, car_corner);
-    painter.restore();
+    
     // Center
+    if (!mTrailerState.isNull()) {
+
+        double angleInDegrees = getTrailerAngleDegrees();
+        //qDebug() << "angle is " << getTrailerAngleRaw();
+        mTrailerState->drawTrailer(painter,drawTrans, pos, angleInDegrees);
+    } else {
+        // mTrailerState is empty
+        qDebug() << "WARN: Trailer is empty";
+    }
+
+    painter.restore();
+    
     painter.setBrush(col_center);
     painter.drawEllipse(QPointF(x, y), car_w / 15.0, car_w / 15.0);
 
-    // Turning radius
-    painter.setPen(QPen(Qt::red, 40));
+        // Turning radius
+    painter.setPen(QPen(Qt::blue, 30));
     painter.setBrush(Qt::transparent);
+    
     painter.drawEllipse(QPointF(x, y), getAutopilotRadius()*1000.0, getAutopilotRadius()*1000.0);
     painter.setPen(Qt::black);
+
+
+
+    double trailerAngle  = getTrailerAngleRadians();
+    double currYaw_rad = getPosition().getYaw() * (M_PI/180.0);
+    double trailerYaw = currYaw_rad- trailerAngle;
+    double trailerAxis = 0.715;
+    double dx = trailerAxis * cos(trailerYaw);
+    double dy = trailerAxis * sin(trailerYaw);
+    double newX = (pos.getX() - dx) *1000.0;
+    double newY = ( pos.getY() - dy) *1000.0;
+
+    painter.setBrush(Qt::darkMagenta);
+    painter.drawEllipse(QPointF(newX, newY), car_w / 15.0, car_w / 15.0);
+     // Turning radius
+    painter.setPen(QPen(Qt::darkMagenta, 20));
+    painter.setBrush(Qt::transparent);
+    painter.drawEllipse(QPointF(newX, newY), getAutopilotRadius()*1000.0, getAutopilotRadius()*1000.0);
+    painter.setPen(Qt::black);
+
+
+    QString txt;
+    QPointF pt_txt;
+    QRectF rect_txt;
+
+    QTextStream txtStream(&txt);
+    txtStream.setRealNumberPrecision(3);
+    txtStream << "Trailer: " << Qt::endl
+                  << "(" << pos.getX()- dx << ", " << pos.getY()- dy << ", " << trailerYaw / (M_PI/180.0)<< ")" << Qt::endl;
+
+    pt_txt.setX(newX + car_w + car_len * ((cos(trailerYaw) - 1) / 3));
+    pt_txt.setY(newY);
+    painter.setTransform(txtTrans);
+    pt_txt = drawTrans.map(pt_txt);
+    rect_txt.setCoords(pt_txt.x(), pt_txt.y() - 40,
+                           pt_txt.x() + 400, pt_txt.y() + 65);
+    painter.drawText(rect_txt, txt);
+
+
+
+
+
+    
 
     if (getDrawStatusText()) {
         // Print data
@@ -143,15 +183,13 @@ void TruckState::draw(QPainter &painter, const QTransform &drawTrans, const QTra
                            pt_txt.x() + 400, pt_txt.y() + 65);
         painter.drawText(rect_txt, txt);
     }
-    if (!mTrailerState.isNull()) {
+    
 
-        double angleInDegrees = getTrailerAngleDegrees();
-        //qDebug() << "angle is " << getTrailerAngleRaw();
-        mTrailerState->drawTrailer(painter,drawTrans, pos, angleInDegrees);
-    } else {
-        // mTrailerState is empty
-        //qDebug() << "Trailer is empty";
-    }
+
+
+
+
+
 }
 
 #endif

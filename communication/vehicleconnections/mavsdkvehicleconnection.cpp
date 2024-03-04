@@ -10,12 +10,20 @@
 
 MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System> system, mavlink_heartbeat_t& heartbeat)
 {
-    MAV_TYPE vehicleType = (MAV_TYPE) heartbeat.type;
-    WAYWISE_VEHICLE_TYPE vehicleState = (WAYWISE_VEHICLE_TYPE) heartbeat.custom_mode;
-    mSystem = system;
+    MAV_TYPE vehicleType = static_cast<MAV_TYPE>(heartbeat.type);
+    WAYWISE_VEHICLE_TYPE vehicleState = static_cast<WAYWISE_VEHICLE_TYPE>(heartbeat.custom_mode);
+    if(system){
+        mSystem = system;
+    }
+    else{
+        qDebug() << "System does not exist";
+        exit(-1);
+    }
+    
     mVehicleType = vehicleType;
     mMavlinkPassthrough.reset(new mavsdk::MavlinkPassthrough(system));
 
+// TODO share pointer for the trailer a permanent list of trailers and later just send the share pointer
     // Setup gimbal
     mSystem->subscribe_component_discovered([this](mavsdk::System::ComponentType){
         if (mSystem->has_gimbal() && mGimbal.isNull()) {
@@ -43,6 +51,7 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
                 break;
             case   VEHICLE_TYPE_TRUCK:
             qDebug() << "MavsdkVehicleConnection: we are talking to a MAV_TYPE_GROUND_ROVER / Truck WayWise.";
+             
                 mVehicleState = QSharedPointer<TruckState>::create(mSystem->get_system_id());
                 mVehicleState->setName("Truck " + QString::number(mSystem->get_system_id()));
                 if (auto truckState = qSharedPointerDynamicCast<TruckState>(mVehicleState)) {
@@ -74,6 +83,7 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
 
     // Set up telemetry plugin
     mTelemetry.reset(new mavsdk::Telemetry(mSystem));
+
 
     mTelemetry->subscribe_battery([this](mavsdk::Telemetry::Battery battery) {
        emit updatedBatteryState(battery.voltage_v, battery.remaining_percent);
@@ -281,9 +291,9 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
 //    // Precision Landing: set required target tracking accuracy for starting approach
 //    if (mParam->set_param_float("PLD_HACC_RAD", 5.0) != mavsdk::Param::Result::Success)
 //        qDebug() << "Warning: failed to set PLD_HACC_RAD";
-
     // Necessary such that MAVSDK callbacks (from other threads) can stop WaypointFollower (QTimer)
     connect(this, &MavsdkVehicleConnection::stopWaypointFollowerSignal, this, &MavsdkVehicleConnection::stopAutopilot);
+
 }
 
 void MavsdkVehicleConnection::setEnuReference(const llh_t &enuReference)

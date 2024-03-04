@@ -12,7 +12,7 @@ VehicleState::VehicleState(ObjectState::ObjectID_t id, Qt::GlobalColor color)
     : ObjectState (id, color)
 {
     mTime = QTime();
-    mLength = 0.8;
+    mLength = 0.5;
     mWidth = 0.335;
 
     for (int i = 0; i < (int)PosType::_LAST_; i++)
