@@ -168,7 +168,7 @@ double PurepursuitWaypointFollower::getCurvatureToPointInENU(QSharedPointer<Vehi
         double l1=truckState->getAxisDistance(); // in meters - tailer distance join to rear axle of trailer
         double l2 = 0.7;
        
-        double trailerYaw = currYaw_rad + trailerAngle ;
+        double trailerYaw = currYaw_rad - trailerAngle ;
         // trailerYaw = fmod(trailerYaw, 2* M_PI);
         // if ( trailerYaw < 0){
         //     trailerYaw += 2 * M_PI;
