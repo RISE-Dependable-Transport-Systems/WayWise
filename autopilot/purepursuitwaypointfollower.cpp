@@ -147,6 +147,7 @@ double PurepursuitWaypointFollower::getCurvatureToPointInENU(QSharedPointer<Vehi
 
         double l1=truckState->getAxisDistance(); // in meters - tailer distance join to rear axle of trailer
         double l2 = 0.7;
+        double l2 = 0.7;
        
         double theta_err =  atan2(pointInVehicleFrame.y(), pointInVehicleFrame.x()) - currYaw_rad; // the Theta between the target point and curect position 
         double alpha = atan(2*l2*sin(theta_err)); // desired trailer/hitch angle
@@ -383,7 +384,7 @@ void PurepursuitWaypointFollower::updateState()
             currentVehiclePositionXY.setY( currentVehiclePositionXY.y() - dy_t );
 
 
-            qDebug()<<"trailer "<< currentVehiclePositionXY;
+            // qDebug()<<"trailer "<< currentVehiclePositionXY;
 
         }
 
@@ -487,11 +488,11 @@ void PurepursuitWaypointFollower::updateControl(const PosPoint &goal)
 {
     if (isOnVehicle()) {
         mMovementController->setDesiredSteeringCurvature(getCurvatureToPointInENU(goal.getPoint()));
-    //    qDebug()<<"turn "<< mMovementController->getDesiredSteering();
+        // qDebug()<<"turn "<< mMovementController->getDesiredSteering();
 /// ----- Adaptive speed based on the angle of the trailer
         auto truckState = qSharedPointerDynamicCast<TruckState>(mMovementController->getVehicleState());
         double trailerAngle = truckState->getTrailerAngleRadians();
-        double ad_speed = goal.getSpeed() * cos(abs(0.9*trailerAngle)) ;
+        double ad_speed = goal.getSpeed() * cos(abs(0.1*trailerAngle)) ;
         mMovementController->setDesiredSpeed(ad_speed);
 /// ----- 
 
