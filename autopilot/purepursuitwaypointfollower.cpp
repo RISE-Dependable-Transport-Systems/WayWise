@@ -137,92 +137,70 @@ double PurepursuitWaypointFollower::getCurvatureToPointInENU(QSharedPointer<Vehi
     double trailerAngle = truckState->getTrailerAngleRadians();
 
     qDebug()<<"Target point " <<point;
-
-    if (vehicleState->getSpeed()>0 ){
+    
+    if (vehicleState->getSpeed()> 0 ){
         // 1. transform point to vehicle frame, TODO: general transform in vehicleState?
         QPointF pointInVehicleFrame;
-        // translate
+        // // translate
         pointInVehicleFrame.setX(point.x()-vehiclePos.getX());
         pointInVehicleFrame.setY(point.y()-vehiclePos.getY());
 
-        currYaw_rad +=trailerAngle ;
+        double l1=truckState->getAxisDistance(); // in meters - tailer distance join to rear axle of trailer
+        double l2 = 0.7;
+       
+        double theta_err =  atan2(pointInVehicleFrame.y(), pointInVehicleFrame.x()) - currYaw_rad; // the Theta between the target point and curect position 
+        double alpha = atan(2*l2*sin(theta_err)); // desired trailer/hitch angle
+        // qDebug()<< "alpha " << alpha;
+        double fi = atan( l1* ( 1* ( trailerAngle + alpha ) ) - (sin(trailerAngle)/l2)  );
+        // qDebug()<< "fi " << fi;
+        return fi;
 
-        currYaw_rad = fmod(currYaw_rad, 2* M_PI);
-        if ( currYaw_rad < 0){
-            currYaw_rad += 2 * M_PI;
-        }
-
-
-        const double newX = cos(-currYaw_rad)*pointInVehicleFrame.x() - sin(-currYaw_rad)*pointInVehicleFrame.y();
-        const double newY = sin(-currYaw_rad)*pointInVehicleFrame.x() + cos(-currYaw_rad)*pointInVehicleFrame.y();
-        pointInVehicleFrame.setX(newX);
-        pointInVehicleFrame.setY(newY);
-
-        // qDebug()<<"pointInVehicleFrame " <<pointInVehicleFrame;
-        double gama = getCurvatureToPointInVehicleFrame(pointInVehicleFrame);
-        // qDebug()<<"gama " <<gma;
-        return gama;
 
     } else {
 
-        double l1=truckState->getAxisDistance(); // in meters - tailer distance join to rear axle of trailer
-        double l2 = 0.715;
+        double l1=truckState->getAxisDistance(); // truck wheelbase in meters 
+        double l2 = 0.7; // trailer wheelbase in meters (from middle point of trucks's wheel/ also happens to be the joint)
+        double trailerYaw = currYaw_rad - trailerAngle ; // in radians θ = θvehicle - θe (hitch-angle)
+
+        double dx_t = (l2) * cos( trailerYaw); // trailer x deltra from x of the truck wheelbase
+        double dy_t = (l2) * sin( trailerYaw); // railer y deltra from y of the truck wheelbase
+        double trailerPositionx = vehiclePos.getX() - dx_t; // trailer x (already rotated with yaw from above)
+        double trailerPositiony = vehiclePos.getY() - dy_t; // trailer y (already rotated with yaw from above)
+        
+        // qDebug()<<"x , y, yaw_d  " <<trailerPositionx << " , "<< trailerPositiony << ", " << trailerYaw;
+        
+        QPointF pointInTrailerFrame; // sometimes called virtual vehicle in pure pursuit
+        pointInTrailerFrame.setX(point.x()-trailerPositionx); // deltra from trailer x and target point
+        pointInTrailerFrame.setY(point.y()-trailerPositiony); // deltra from trailer y and target point
+
+        // step 1, found the angle to reach the virtual vehicle(trailer) base on PurePursuit using trailer x,y as reference 
+        double theta_err =  atan2(pointInTrailerFrame.y(), pointInTrailerFrame.x()) - trailerYaw;
+        
+        // qDebug()<< "Theta " << theta_err;
+      
+        // step 2, based on x,y of trailer and target point find α from desired hitch-angle
+        // Idealy a controller stabilizes the hitch angle (trailerAngle) around the desired value
+        double alpha = atan(2*l2*sin(theta_err)); //<-- desired trailerAngle
+        // qDebug()<< "alpha " << alpha;
+
+        
+        // a general steering angle formula φ = arctan (l1 (Gain * ( α − α') - sina/l2 ))
+        // where l1 truck wheel base, l2 trailer wheel base
+
+        // step 3, (!)WARNING(!) we assume a Linear Trailer Controller for simplicity 
+        // A stabilizing controller is needed especially for moderate/high speeds(!)
+        double fi = atan( l1* ( 2* ( trailerAngle + alpha ) ) - (sin(trailerAngle)/l2)  );
+        // qDebug()<< "fi " << fi;
+        return fi;
+
+        //int sign = (point.x() * point.y() >= 0) ? 1 : -1 ; // sign -> which x,y quadrants we point
+        // int gain = 0.1* trailerAngle ; // gain -> by try and error
        
-        double trailerYaw = currYaw_rad + trailerAngle ;
-        // trailerYaw = fmod(trailerYaw, 2* M_PI);
-        // if ( trailerYaw < 0){
-        //     trailerYaw += 2 * M_PI;
-        // } 
-        
-        qDebug()<<"currYaw_rad" << currYaw_rad;
-
-
-        double dx_t = (l2) * cos( currYaw_rad - trailerAngle );
-        double dy_t = (l2) * sin( currYaw_rad - trailerAngle );
-        double trailerPositionx = vehiclePos.getX() - dx_t;
-        double trailerPositiony = vehiclePos.getY() - dy_t;
-
-        qDebug()<<"x , y, yaw_d  " <<trailerPositionx << " , "<< trailerPositiony << ", " << trailerYaw;
-
-        QPointF pointInTrailerFrame;
-        // // translate
-        pointInTrailerFrame.setX(point.x()-trailerPositionx);
-        pointInTrailerFrame.setY(point.y()-trailerPositiony);
-
-        qDebug()<<"point " <<point;
-        qDebug()<<"pointInTrailerFrame " <<pointInTrailerFrame;
-
-        double theta_err =  atan2(pointInTrailerFrame.y(), pointInTrailerFrame.x()) - trailerYaw; // the Theta between the target point and curect position 
-        int sign = (point.x() * point.y() >= 0) ? 1 : -1 ; // sign -> which x,y quadrants we point
-        int gain = sign *2.5; // gain -> by try and error
-        double dividend = gain * trailerYaw * (l2 ) - sin (theta_err);
-        double divisor = cos(theta_err) * (l2/l1);
-        qDebug()<< "Delta " << atan(dividend/divisor);
-
-        return atan(dividend/divisor);
-
-//         double gama = atan ( ( 2* l1* sin(theta_err)) / 1.0);
-//         qDebug()<<"beta " << gama;
-
-//         // gama = gama + ( -1 * (gama -trailerYaw ) );
-//         // double beta_ref = beta + 0.1 *( beta - trailerAngle);
-
-//         double alpha = atan ( (l1 * sin (gama)) / (l2  ) );
-//          qDebug()<<"alpha " << alpha;
-// qDebug()<<"alpha * cos(abs(1.4*trailerAngle) " << alpha * cos(abs(trailerAngle));
-//         return  alpha * cos(abs(1.4*trailerAngle) );
-
-        
-        // currYaw_rad +=trailerAngle ;
-        // currYaw_rad = fmod(currYaw_rad, 2* M_PI);
-        // if ( currYaw_rad < 0){
-        //     currYaw_rad += 2 * M_PI;
-        // }
-
-        // double theta = atan2(pointInTrailerFrame.x(), pointInTrailerFrame.y()) - currYaw_rad;
-        // double beta = -atan(2* l2 * sin(theta));
-
-        // return beta;
+        // double dividend = gain * ( 0.1 * trailerYaw) * (l2 ) - sin (theta_err);  
+        // double divisor = cos(theta_err) * (l2/l1);
+        // qDebug()<< "Delta " << atan(dividend/divisor);
+    
+        // return atan(dividend/divisor);
     }
 
 
