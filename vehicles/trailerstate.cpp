@@ -10,13 +10,8 @@
 TrailerState::TrailerState(ObjectState::ObjectID_t id, Qt::GlobalColor color) : ObjectState (id, color)
 {    
 
-<<<<<<< HEAD
     mLength = 0.96;
     mWidth = 0.21;
-=======
-    mLength = 1.0;
-    mWidth = 0.185;
->>>>>>> origin/experimental/griffin
     
 }
 
