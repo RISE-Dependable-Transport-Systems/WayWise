@@ -36,7 +36,7 @@ MavsdkStation::MavsdkStation(QObject *parent) : QObject(parent)
 
                         mVehicleHeartbeatTimeoutCounters.append(qMakePair(system->get_system_id(), 0));    // Timer initialised to zero
 
-                        emit gotNewVehicleConnection(vehicleConnection);
+                        emit gotNewVehicleConnection(system->get_system_id());
                     });
                 } else
                     qDebug() << "Note: MavsdkStation ignored system" << system->get_system_id();
@@ -108,4 +108,9 @@ void MavsdkStation::on_gotHeartbeat(const quint8 systemId)
     for(auto& vehicleTimeoutCounter : mVehicleHeartbeatTimeoutCounters)
         if(vehicleTimeoutCounter.first == systemId)
             vehicleTimeoutCounter.second = 0;
+}
+
+QSharedPointer<MavsdkVehicleConnection> MavsdkStation::getVehicleConnection(const quint8 systemId) const
+{
+    return mVehicleConnectionMap.find(systemId).value();
 }

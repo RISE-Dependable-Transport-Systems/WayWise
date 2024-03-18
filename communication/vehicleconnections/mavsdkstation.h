@@ -32,14 +32,15 @@ public:
     void setEnuReference(const llh_t &enuReference);
 
     QList<QSharedPointer<MavsdkVehicleConnection>> getVehicleConnectionList() const;
+    QSharedPointer<MavsdkVehicleConnection> getVehicleConnection(const quint8 systemId) const;
 
 private slots:
     void on_gotHeartbeat(quint8 systemId);
     void on_timeout();
 
 signals:
-    void gotNewVehicleConnection(QSharedPointer<MavsdkVehicleConnection> vehicleConnection);
-    void disconnectOfVehicleConnection(int vehicleID);
+    void gotNewVehicleConnection(const quint8 systemId);
+    void disconnectOfVehicleConnection(int systemId);
 
 private:
     mavsdk::Mavsdk mMavsdk{mavsdk::Mavsdk::Configuration{mavsdk::Mavsdk::ComponentType::GroundStation}};
