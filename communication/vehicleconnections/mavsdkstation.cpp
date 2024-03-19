@@ -1,5 +1,6 @@
 /*
  *     Copyright 2022 Marvin Damschen   marvin.damschen@ri.se
+ *     Copyright 2024 Rickard Häll      rickard.hall@ri.se
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
  */
 #include "mavsdkstation.h"
@@ -19,27 +20,31 @@ MavsdkStation::MavsdkStation(QObject *parent) : QObject(parent)
 
                     // Wait for heartbeat using passthrough to instantiate vehicleConnection (mainly needed to get MAV_TYPE)
                     auto mavlinkPassthrough = new mavsdk::MavlinkPassthrough(system);
-                    mavlinkPassthrough->subscribe_message(MAVLINK_MSG_ID_HEARTBEAT, [this, system, mavlinkPassthrough](const mavlink_message_t &message){
-                        // unsubscribe from further heartbeats by deleting passthrough
-                        delete mavlinkPassthrough;
-
+                    mavlinkPassthrough->subscribe_message(MAVLINK_MSG_ID_HEARTBEAT, [this, system, mavlinkPassthrough](const mavlink_message_t &message) mutable {
                         mavlink_heartbeat_t heartbeat;
                         mavlink_msg_heartbeat_decode(&message, &heartbeat);
 
-                        QSharedPointer<MavsdkVehicleConnection> vehicleConnection = QSharedPointer<MavsdkVehicleConnection>::create(system, (MAV_TYPE) heartbeat.type);
-                        mVehicleConnectionMap.insert(system->get_system_id(), vehicleConnection);
+                        // Only use heartbeat from autopilot component to instantiate vehicleConnection once
+                        if ((MAV_AUTOPILOT)heartbeat.autopilot != MAV_AUTOPILOT_INVALID && mavlinkPassthrough) {
+                            // unsubscribe from further heartbeats by deleting passthrough
+                            delete mavlinkPassthrough;
+                            mavlinkPassthrough = nullptr;
 
-                        // move to same QThread MavsdkStation lives in
-                        vehicleConnection->moveToThread(thread());
+                            QSharedPointer<MavsdkVehicleConnection> vehicleConnection = QSharedPointer<MavsdkVehicleConnection>::create(system, (MAV_TYPE) heartbeat.type);
+                            mVehicleConnectionMap.insert(system->get_system_id(), vehicleConnection);
 
-                        connect(vehicleConnection.get(), &MavsdkVehicleConnection::gotHeartbeat, this, &MavsdkStation::on_gotHeartbeat);
+                            // move to same QThread MavsdkStation lives in
+                            vehicleConnection->moveToThread(thread());
 
-                        mVehicleHeartbeatTimeoutCounters.append(qMakePair(system->get_system_id(), 0));    // Timer initialised to zero
+                            connect(vehicleConnection.get(), &MavsdkVehicleConnection::gotHeartbeat, this, &MavsdkStation::on_gotHeartbeat);
 
-                        emit gotNewVehicleConnection(system->get_system_id());
+                            mVehicleHeartbeatTimeoutCounters.append(qMakePair(system->get_system_id(), 0));    // Timer initialised to zero
+
+                            emit gotNewVehicleConnection(system->get_system_id());
+                        }
                     });
                 } else
-                    qDebug() << "Note: MavsdkStation ignored system" << system->get_system_id();
+                    qDebug() << "Note: MavsdkStation ignored system" << system->get_system_id(); // ToDo: create connection to systems that doesn't have an autopilot
             }
         }
     });

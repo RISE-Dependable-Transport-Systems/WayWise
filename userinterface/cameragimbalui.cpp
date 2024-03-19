@@ -240,7 +240,8 @@ void CameraGimbalUI::on_streamConnectButton_clicked()
 
 void CameraGimbalUI::on_streamDisconnectButton_clicked()
 {
-    mMediaPlayer->stop();
+    if (mMediaPlayer.isNull())
+        mMediaPlayer->stop();
     ui->videoWidget->setFullScreen(false);
     ui->videoWidget->hide();
 }
