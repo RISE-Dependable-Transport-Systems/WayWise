@@ -185,7 +185,7 @@ bool UbloxRover::configureUblox()
 
     unsigned char buffer[512];
     int ind = 0;
-    mUblox.ubloxCfgAppendMntalg(buffer, &ind, true); // enable auto mount alignment
+    // mUblox.ubloxCfgAppendMntalg(buffer, &ind, true); // enable auto mount alignment
     mUblox.ubloxCfgAppendRate(buffer, &ind, 100, 1, 0, 30); // nav prio mode
     if (!mUblox.ubloxCfgValset(buffer, ind, true, true, true)) { // try valset
         // setting auto mount alignment and nav prio failed -> this is F9P)
