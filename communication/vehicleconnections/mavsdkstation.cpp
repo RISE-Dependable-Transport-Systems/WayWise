@@ -13,9 +13,11 @@ MavsdkStation::MavsdkStation(QObject *parent) : QObject(parent)
     mHeartbeatTimer.start(1000);
 
     mMavsdk.subscribe_on_new_system([this](){
+        static bool temporaryFixToStopOuterCallbackFromBeingCalledAgainBeforeTheInnerCallbackHasFinished = true;
         for (const auto &system : mMavsdk.systems()) {
-            if (!mVehicleConnectionMap.contains(system->get_system_id())) {
+            if (!mVehicleConnectionMap.contains(system->get_system_id()) && temporaryFixToStopOuterCallbackFromBeingCalledAgainBeforeTheInnerCallbackHasFinished) {
                 if (system->has_autopilot()) {
+                    temporaryFixToStopOuterCallbackFromBeingCalledAgainBeforeTheInnerCallbackHasFinished = false;
                     qDebug() << "MavsdkStation: detected system" << system->get_system_id() << "waiting for another heartbeat for initializing MavsdkVehicleConnection...";
 
                     // Wait for heartbeat using passthrough to instantiate vehicleConnection (mainly needed to get MAV_TYPE)
@@ -41,6 +43,7 @@ MavsdkStation::MavsdkStation(QObject *parent) : QObject(parent)
                             mVehicleHeartbeatTimeoutCounters.append(qMakePair(system->get_system_id(), 0));    // Timer initialised to zero
 
                             emit gotNewVehicleConnection(system->get_system_id());
+                            temporaryFixToStopOuterCallbackFromBeingCalledAgainBeforeTheInnerCallbackHasFinished = true;
                         }
                     });
                 } else
