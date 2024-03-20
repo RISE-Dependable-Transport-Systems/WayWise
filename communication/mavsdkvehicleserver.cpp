@@ -21,8 +21,18 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
     mVehicleState = vehicleState;
     mSystemId = mVehicleState->getId();
 
-    mMavsdk.reset(new mavsdk::Mavsdk{mavsdk::Mavsdk::Configuration{mSystemId, 1, true}});
-    std::shared_ptr<mavsdk::ServerComponent> serverComponent = mMavsdk->server_component();
+    mavsdk::Mavsdk::Configuration config = mavsdk::Mavsdk::Configuration{mavsdk::Mavsdk::ComponentType::Autopilot};
+    config.set_always_send_heartbeats(true);
+    config.set_system_id(mVehicleState->getId());
+    mMavsdk.reset(new mavsdk::Mavsdk{config});
+
+//    mavsdk::Mavsdk::Configuration customConfig = mavsdk::Mavsdk::Configuration{mavsdk::Mavsdk::ComponentType::Custom};
+//    customConfig.set_system_id(mVehicleState->getId());
+//    customConfig.set_always_send_heartbeats(true);
+//    customConfig.set_component_id(100); // Should be 100 for camera
+//    mMavsdk->set_configuration(customConfig);
+
+    std::shared_ptr<mavsdk::ServerComponent> serverComponent = mMavsdk->server_component_by_type(mavsdk::Mavsdk::ComponentType::Autopilot);
 
     // Create server plugins
     MavlinkParameterServer::initialize(serverComponent);
@@ -369,11 +379,20 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
         case MAVLINK_MSG_ID_HEARTBEAT: // Fix some info in heartbeat s.th. MAVSDK / ControlTower detects vehicle correctly
             mavlink_heartbeat_t heartbeat;
             mavlink_msg_heartbeat_decode(&message, &heartbeat);
-            heartbeat.type = MAV_TYPE_GROUND_ROVER;
-            heartbeat.autopilot = WAYWISE_MAVLINK_AUTOPILOT_ID;
-            heartbeat.base_mode |= MAV_MODE_FLAG_SAFETY_ARMED | MAV_MODE_FLAG_CUSTOM_MODE_ENABLED; // Note: behave like PX4...
+            switch (message.compid) {
+            case MAV_COMP_ID_AUTOPILOT1:
+                heartbeat.type = MAV_TYPE_GROUND_ROVER;
+                heartbeat.autopilot = WAYWISE_MAVLINK_AUTOPILOT_ID;
+                heartbeat.base_mode |= MAV_MODE_FLAG_SAFETY_ARMED | MAV_MODE_FLAG_CUSTOM_MODE_ENABLED; // Note: behave like PX4...
+                break;
+            case MAV_COMP_ID_CAMERA:
+                heartbeat.type = MAV_TYPE_CAMERA;
+                heartbeat.autopilot = MAV_AUTOPILOT_INVALID;
+                break;
+            default:
+                qDebug() << "MavsdkVehicleServer: unsupported MAV_COMPONENT heartbeat: " << message.compid;
+            }
             mavlink_msg_heartbeat_encode(message.sysid, message.compid, &message, &heartbeat);
-//            qDebug() << "MAVLINK_MSG_ID_HEARTBEAT:" << heartbeat.type << heartbeat.autopilot << heartbeat.base_mode << heartbeat.custom_mode << heartbeat.system_status << heartbeat.mavlink_version;
             break;
 //        case MAVLINK_MSG_ID_AUTOPILOT_VERSION:
 //            mavlink_autopilot_version_t autopilot_version;
