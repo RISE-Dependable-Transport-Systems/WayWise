@@ -175,6 +175,9 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
                 missionCount.count = currentRoute.size();
                 missionCount.mission_type = MAV_MISSION_TYPE_MISSION;
 
+                mavlink_address.system_id = mSystemId;
+                mavlink_address.component_id = MAV_COMP_ID_AUTOPILOT1;
+
                 mavlink_message_t mavMissionCountMsg;
                 mavlink_msg_mission_count_encode_chan(mavlink_address.system_id, mavlink_address.component_id, channel, &mavMissionCountMsg, &missionCount);
 
@@ -212,6 +215,9 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
                 missionItemInt.z = (float)posPoint.getHeight();
                 missionItemInt.mission_type = MAV_MISSION_TYPE_MISSION;
 
+                mavlink_address.system_id = mSystemId;
+                mavlink_address.component_id = MAV_COMP_ID_AUTOPILOT1;
+
                 mavlink_message_t mavmissionItemIntMsg;
                 mavlink_msg_mission_item_int_encode_chan(mavlink_address.system_id, mavlink_address.component_id, channel, &mavmissionItemIntMsg, &missionItemInt);
 
@@ -247,6 +253,9 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
                 missionItem.y = (int)(posPoint.getY() * 10e4);
                 missionItem.z = (float)posPoint.getHeight();
                 missionItem.mission_type = MAV_MISSION_TYPE_MISSION;
+
+                mavlink_address.system_id = mSystemId;
+                mavlink_address.component_id = MAV_COMP_ID_AUTOPILOT1;
 
                 mavlink_message_t mavmissionItemMsg;
                 mavlink_msg_mission_item_encode_chan(mavlink_address.system_id, mavlink_address.component_id, channel, &mavmissionItemMsg, &missionItem);
@@ -289,13 +298,13 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
             case MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN:
                 auto param2Value = mavlink_msg_command_long_get_param2(&message);
                 if (param2Value == 1) {
-                    mavResult(MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, MAV_RESULT_ACCEPTED);
+                    mavResult(MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, MAV_RESULT_ACCEPTED, MAV_COMP_ID_AUTOPILOT1);
                     emit shutdownOrRebootOnboardComputer(false);
                 } else if (param2Value == 2) {
-                    mavResult(MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, MAV_RESULT_ACCEPTED);
+                    mavResult(MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, MAV_RESULT_ACCEPTED, MAV_COMP_ID_AUTOPILOT1);
                     emit shutdownOrRebootOnboardComputer(true);
                 } else
-                    mavResult(MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, MAV_RESULT_DENIED);
+                    mavResult(MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, MAV_RESULT_DENIED, MAV_COMP_ID_AUTOPILOT1);
                 break;
             }
         });
@@ -343,6 +352,8 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
 
                 autopilotRadius.time_boot_ms = QDateTime::currentMSecsSinceEpoch() - mMavsdkVehicleServerCreationTime.toMSecsSinceEpoch();
                 autopilotRadius.value = mVehicleState->getAutopilotRadius();
+                mavlink_address.system_id = mSystemId;
+                mavlink_address.component_id = MAV_COMP_ID_AUTOPILOT1;
 
                 strcpy(autopilotRadius.name, "AR");
                 mavlink_msg_named_value_float_encode_chan(mavlink_address.system_id, mavlink_address.component_id, channel, &mavAutopilotRadiusmMsg, &autopilotRadius);
@@ -519,7 +530,7 @@ double MavsdkVehicleServer::getManualControlMaxSpeed() const
     return mManualControlMaxSpeed;
 }
 
-void MavsdkVehicleServer::mavResult(const uint16_t command, MAV_RESULT result)
+void MavsdkVehicleServer::mavResult(const uint16_t command, MAV_RESULT result, MAV_COMPONENT compId)
 {
     if (mMavlinkPassthrough->queue_message([&](MavlinkAddress mavlink_address, uint8_t channel) {
         mavlink_message_t ackMsg;
@@ -532,6 +543,8 @@ void MavsdkVehicleServer::mavResult(const uint16_t command, MAV_RESULT result)
         commandAck.target_system = mMavlinkPassthrough->get_target_sysid();
         commandAck.target_component = mMavlinkPassthrough->get_target_compid();
 
+        mavlink_address.system_id = mSystemId;
+        mavlink_address.component_id = compId;
 
         mavlink_msg_command_ack_encode_chan(mavlink_address.system_id, mavlink_address.component_id, channel, &ackMsg, &commandAck);
         return ackMsg;
@@ -552,6 +565,9 @@ void MavsdkVehicleServer::sendGpsOriginLlh(const llh_t &gpsOriginLlh)
         mavGpsGlobalOrigin.latitude = (int) (gpsOriginLlh.latitude * 1e7);
         mavGpsGlobalOrigin.longitude = (int) (gpsOriginLlh.longitude * 1e7);
         mavGpsGlobalOrigin.altitude = (int) (gpsOriginLlh.height * 1e3);
+
+        mavlink_address.system_id = mSystemId;
+        mavlink_address.component_id = MAV_COMP_ID_AUTOPILOT1;
 
         mavlink_msg_gps_global_origin_encode_chan(mavlink_address.system_id, mavlink_address.component_id, channel, &mavGpsGlobalOriginMsg, &mavGpsGlobalOrigin);
         return mavGpsGlobalOriginMsg;
@@ -611,6 +627,8 @@ void MavsdkVehicleServer::on_logSent(const QString& message, const quint8& sever
             statusText.chunk_seq = chunkIndex;
             if (mMavlinkPassthrough->queue_message([&](MavlinkAddress mavlink_address, uint8_t channel) {
                 mavlink_message_t mavLogMsg;
+                mavlink_address.system_id = mSystemId;
+                mavlink_address.component_id = MAV_COMP_ID_AUTOPILOT1;
                 mavlink_msg_statustext_encode_chan(mavlink_address.system_id, mavlink_address.component_id, channel, &mavLogMsg, &statusText);
 
                 return mavLogMsg;
@@ -631,13 +649,15 @@ void MavsdkVehicleServer::sendMissionAck(quint8 type)
 {
     if (mMavlinkPassthrough->queue_message([&](MavlinkAddress mavlink_address, uint8_t channel) {
         mavlink_mission_ack_t missionAck;
+        mavlink_message_t mavMissionAckMsg;
 
         missionAck.target_system = mMavlinkPassthrough->get_target_sysid();
         missionAck.target_component = mMavlinkPassthrough->get_target_compid();
         missionAck.type = type;
         missionAck.mission_type = MAV_MISSION_TYPE_MISSION;
 
-        mavlink_message_t mavMissionAckMsg;
+        mavlink_address.system_id = mSystemId;
+        mavlink_address.component_id = MAV_COMP_ID_AUTOPILOT1;
         mavlink_msg_mission_ack_encode_chan(mavlink_address.system_id, mavlink_address.component_id, channel, &mavMissionAckMsg, &missionAck);
 
         return mavMissionAckMsg;
