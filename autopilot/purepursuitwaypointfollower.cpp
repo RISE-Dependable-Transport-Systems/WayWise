@@ -134,7 +134,7 @@ double PurepursuitWaypointFollower::getCurvatureToPointInENU(QSharedPointer<Vehi
     // rotate
     double currYaw_rad = vehiclePos.getYaw() * M_PI / 180.0;
     auto truckState = qSharedPointerDynamicCast<TruckState>(vehicleState);
-    double trailerAngle = truckState->getTrailerAngleRadians();
+    double trailerAngle = truckState->getTrailerAngleRadians() ;
 
     // qDebug()<<"Target point " <<point;
     
@@ -151,13 +151,13 @@ double PurepursuitWaypointFollower::getCurvatureToPointInENU(QSharedPointer<Vehi
         double theta_err =  atan2(pointInVehicleFrame.y(), pointInVehicleFrame.x()) - currYaw_rad; // the Theta between the target point and curect position 
         double alpha = atan(2*l2*sin(theta_err)); // desired trailer/hitch angle
         // qDebug()<< "alpha " << alpha;
-        double fi = atan( l1* ( 1* ( trailerAngle + alpha ) ) - (sin(trailerAngle)/l2)  );
+        double fi = atan( l1* ( 4* ( trailerAngle + alpha ) ) - (sin(trailerAngle)/l2)  );
         // qDebug()<< "fi " << fi;
         return fi;
 
 
     } else {
-
+        // qDebug()<<"angle " << trailerAngle;
         double l1=truckState->getAxisDistance(); // truck wheelbase in meters 
         double l2 = 0.7; // trailer wheelbase in meters (from middle point of trucks's wheel/ also happens to be the joint)
         double trailerYaw = currYaw_rad - trailerAngle ; // in radians θ = θvehicle - θe (hitch-angle)
@@ -182,7 +182,7 @@ double PurepursuitWaypointFollower::getCurvatureToPointInENU(QSharedPointer<Vehi
         // Idealy a controller stabilizes the hitch angle (trailerAngle) around the desired value
         double alpha = -atan(2*l2*sin(theta_err) / truckState->getAutopilotRadius() ); //<-- desired trailerAngle
         // qDebug()<< "alpha " << alpha;
-        qDebug()<< "purePursuitRadius " << truckState->getAutopilotRadius();
+        // qDebug()<< "purePursuitRadius " << truckState->getAutopilotRadius();
 
         
         // a general steering angle formula φ = arctan (l1 (Gain * ( α − α') - sina/l2 ))
@@ -190,9 +190,15 @@ double PurepursuitWaypointFollower::getCurvatureToPointInENU(QSharedPointer<Vehi
 
         // step 3, (!)WARNING(!) we assume a Linear Trailer Controller for simplicity 
         // A stabilizing controller is needed especially for moderate/high speeds(!)
-        double epsilon = 0.2;
-        double fi = atan( l1* ( 2* ( trailerAngle - alpha ) ) - (sin(trailerAngle)/ (l2+epsilon) )  );
-        // qDebug()<< "fi " << fi;
+        // double epsilon = 0.1;
+        // static double trailerAngleDELTA = (trailerAngle - trailerAngleDELTA) ;
+        // double K_1 = 6;
+        double K_1 = 9 - 8 / (1 + exp(-20*(abs(trailerAngle) - 0.5)));
+        double K_2 = 10 * (15 / (1 + exp(-10*(abs(trailerAngle) - 0.5))) / 15);
+        
+
+        double fi = atan( l1* ( K_1* ( trailerAngle - alpha ) ) -  K_2* (sin(trailerAngle)/ (l2) )  );
+        qDebug()<< "trailerAngle " << trailerAngle;
         return fi;
 
         //int sign = (point.x() * point.y() >= 0) ? 1 : -1 ; // sign -> which x,y quadrants we point
