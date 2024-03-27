@@ -5,6 +5,8 @@
 #include "mavsdkstation.h"
 #include <QtDebug>
 #include <QThread>
+#include <QHostAddress>
+#include <QNetworkInterface>
 
 MavsdkStation::MavsdkStation(QObject *parent) : QObject(parent)
 {
@@ -50,6 +52,11 @@ bool MavsdkStation::startListeningUDP(uint16_t port)
     QString connection_url = "udp://:" + QString::number(port);
     mavsdk::ConnectionResult connection_result = mMavsdk.add_any_connection(connection_url.toStdString());
     if (connection_result == mavsdk::ConnectionResult::Success) {
+        const QHostAddress &localhost = QHostAddress(QHostAddress::LocalHost);
+        for (const QHostAddress &address: QNetworkInterface::allAddresses()) {
+            if (address.protocol() == QAbstractSocket::IPv4Protocol && address != localhost)
+                qDebug() << "MavsdkStation listening on localhost and external IP address: " + address.toString();;
+        }
         qDebug() << "MavsdkStation: Waiting to discover vehicles on " + connection_url + "...";
         return true;
     } else {
