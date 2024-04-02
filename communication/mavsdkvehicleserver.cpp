@@ -13,7 +13,7 @@
 #include "WayWise/logger/logger.h"
 #include "WayWise/communication/parameterserver.h"
 
-MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleState, const QHostAddress controlTowerAddress, const unsigned controlTowerPort, const QAbstractSocket::SocketType controlTowerSocketType) :
+MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleState, QHostAddress controlTowerAddress, unsigned controlTowerPort, const QAbstractSocket::SocketType controlTowerSocketType) :
     VehicleServer(vehicleState)
 {
     connect(&Logger::getInstance(), &Logger::logSent, this, &MavsdkVehicleServer::on_logSent);
