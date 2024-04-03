@@ -11,6 +11,7 @@
 
 QFile* Logger::logFile = nullptr;
 bool Logger::isInit = false;
+bool Logger::verbose = false;
 
 Logger::Logger(QObject *parent)
     : QObject{parent}
@@ -38,6 +39,16 @@ bool Logger::isConnected()
 {
     static const QMetaMethod logSentSignal = QMetaMethod::fromSignal(&Logger::logSent);
     return isSignalConnected(logSentSignal);
+}
+
+void Logger::setVerbose(bool v)
+{
+    verbose = v;
+}
+
+bool Logger::getVerbose()
+{
+    return verbose;
 }
 
 void Logger::initGroundStation()
@@ -80,6 +91,18 @@ void Logger::messageOutput(QtMsgType type, const QMessageLogContext &context, co
 {
     Q_UNUSED(context)
 
+    QString out_msg;
+
+    if(msg.split(" ").at(0) == "verbose") {
+        if(!verbose) {
+            return;
+        } else {
+            out_msg = msg.mid(8);
+        }
+    } else {
+        out_msg = msg;
+    }
+
     struct logItem {
         QString log;
         quint8 severity;
@@ -89,23 +112,23 @@ void Logger::messageOutput(QtMsgType type, const QMessageLogContext &context, co
 
     switch (type) {
     case QtDebugMsg:
-        newItem.log = QObject::tr("%1 | Debug: %2").arg(QDateTime::currentDateTime().toString("dd-MM-yyyy hh:mm:ss")).arg(qPrintable(msg));
+        newItem.log = QObject::tr("%1 | Debug: %2").arg(QDateTime::currentDateTime().toString("dd-MM-yyyy hh:mm:ss")).arg(qPrintable(out_msg));
         newItem.severity = MAV_SEVERITY_DEBUG;
         break;
     case QtInfoMsg:
-        newItem.log = QObject::tr("%1 | Info: %2").arg(QDateTime::currentDateTime().toString("dd-MM-yyyy hh:mm:ss")).arg(qPrintable(msg));
+        newItem.log = QObject::tr("%1 | Info: %2").arg(QDateTime::currentDateTime().toString("dd-MM-yyyy hh:mm:ss")).arg(qPrintable(out_msg));
         newItem.severity = MAV_SEVERITY_INFO;
         break;
     case QtWarningMsg:
-        newItem.log = QObject::tr("%1 | Warning: %2").arg(QDateTime::currentDateTime().toString("dd-MM-yyyy hh:mm:ss")).arg(qPrintable(msg));
+        newItem.log = QObject::tr("%1 | Warning: %2").arg(QDateTime::currentDateTime().toString("dd-MM-yyyy hh:mm:ss")).arg(qPrintable(out_msg));
         newItem.severity = MAV_SEVERITY_WARNING;
         break;
     case QtCriticalMsg:
-        newItem.log = QObject::tr("%1 | Critical: %2").arg(QDateTime::currentDateTime().toString("dd-MM-yyyy hh:mm:ss")).arg(qPrintable(msg));
+        newItem.log = QObject::tr("%1 | Critical: %2").arg(QDateTime::currentDateTime().toString("dd-MM-yyyy hh:mm:ss")).arg(qPrintable(out_msg));
         newItem.severity = MAV_SEVERITY_CRITICAL;
         break;
     case QtFatalMsg:
-        newItem.log = QObject::tr("%1 | Fatal: %2").arg(QDateTime::currentDateTime().toString("dd-MM-yyyy hh:mm:ss")).arg(qPrintable(msg));
+        newItem.log = QObject::tr("%1 | Fatal: %2").arg(QDateTime::currentDateTime().toString("dd-MM-yyyy hh:mm:ss")).arg(qPrintable(out_msg));
         newItem.severity = MAV_SEVERITY_EMERGENCY;
         break;
     }

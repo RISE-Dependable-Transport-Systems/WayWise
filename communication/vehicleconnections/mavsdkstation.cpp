@@ -99,6 +99,7 @@ void MavsdkStation::on_timeout()
 {
     for(auto& vehicleTimeoutConter : mVehicleHeartbeatTimeoutCounters) {
         vehicleTimeoutConter.second++;
+        qDebug() << "verbose " << "Heartbeat timeout count: " << vehicleTimeoutConter.second;
 
         if(vehicleTimeoutConter.second == HEARTBEATTIMER_TIMEOUT_SECONDS) {    // disconnect criteria: 5 heartbeats missed
             mVehicleConnectionMap.remove(vehicleTimeoutConter.first);
@@ -112,6 +113,7 @@ void MavsdkStation::on_timeout()
 
 void MavsdkStation::on_gotHeartbeat(const quint8 systemId)
 {
+    qDebug() << "verbose " << "Got heartbeat with systemId: " << systemId;
     for(auto& vehicleTimeoutCounter : mVehicleHeartbeatTimeoutCounters)
         if(vehicleTimeoutCounter.first == systemId)
             vehicleTimeoutCounter.second = 0;

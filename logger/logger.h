@@ -16,6 +16,10 @@ public:
 
     bool isConnected();
 
+    static void setVerbose(bool v);
+
+    static bool getVerbose();
+
     static void initGroundStation();
 
     static void initVehicle();
@@ -30,6 +34,8 @@ private:
     static QFile* logFile;
 
     static bool isInit;
+
+    static bool verbose;
 
 signals:
     void logSent(const QString& message, const quint8& severity);
