@@ -45,19 +45,23 @@ bool MavsdkStation::startListeningSerial(const QSerialPortInfo &portInfo, int ba
 void MavsdkStation::forwardRtcmData(const QByteArray &data, const int &type)
 {
     Q_UNUSED(type)
-    for (const auto &vehicleConnection : mVehicleConnectionMap)
+    for (const auto &vehicleConnection : getVehicleConnectionList())
         vehicleConnection->inputRtcmData(data);
 }
 
 void MavsdkStation::setEnuReference(const llh_t &enuReference)
 {
-    for (const auto &vehicleConnection : mVehicleConnectionMap)
+    for (const auto &vehicleConnection : getVehicleConnectionList())
         vehicleConnection->setEnuReference(enuReference);
 }
 
 QList<QSharedPointer<MavsdkVehicleConnection>> MavsdkStation::getVehicleConnectionList() const
 {
-    return mVehicleConnectionMap.values();
+    QList<QSharedPointer<MavsdkVehicleConnection>> vehicleConnectionList = mVehicleConnectionMap.values();
+
+    vehicleConnectionList.removeAll(nullptr);
+
+    return vehicleConnectionList;
 }
 
 void MavsdkStation::on_timeout()
@@ -93,7 +97,7 @@ void MavsdkStation::handleNewMavsdkSystem()
         if (!mVehicleConnectionMap.contains(system->get_system_id())) {
             if (system->has_autopilot()) {
                 qDebug() << "MavsdkStation: detected system" << system->get_system_id() << "waiting for another heartbeat for initializing MavsdkVehicleConnection...";
-                mVehicleConnectionMap.insert(system->get_system_id(), QSharedPointer<MavsdkVehicleConnection>::create(system, MAV_TYPE_QUADROTOR)); // TODO: workaround to use a vehicle connection as a placeholder -> future?
+                mVehicleConnectionMap.insert(system->get_system_id(), nullptr); // Register system_id, but wait for heartbeat to initialize VehicleConnection
 
                 // Wait for heartbeat using passthrough to instantiate vehicleConnection (mainly needed to get MAV_TYPE)
                 auto mavlinkPassthrough = new mavsdk::MavlinkPassthrough(system);
