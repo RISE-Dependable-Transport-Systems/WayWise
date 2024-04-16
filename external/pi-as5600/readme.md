@@ -40,33 +40,9 @@ There are four shell scripts to interact directely with the sensor.
 ### Read the scaled angle and raw values:
 
 ```
-#./ReadAngle.sh 
+./ReadAngle.sh 
 Scaled angle is  4095
 Raw angle is  0
-```
-
-### Set the start position using i2cset (ZPOS Register):
-```
-# ./SetStartPosition.sh 
-High byte set successfully
-Low byte set successfully.
-Start position set successfully.
-```
-
-
-### Set the stop position using i2cset (MPOS Register)
-```
-./SetStopPosition.sh 
-High byte set successfully.
-Low byte set successfully.
-Stop position set successfully.
-```
-
-
-### Read the start and stop Position:
-
-```
-# ./ReadStartStopPosition.sh 
 Start poistion is 0
 Stop poistion is 0
 ```
