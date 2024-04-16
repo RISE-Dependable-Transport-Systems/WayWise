@@ -101,7 +101,7 @@ void MavsdkStation::handleNewMavsdkSystem()
 
                 // Wait for heartbeat using passthrough to instantiate vehicleConnection (mainly needed to get MAV_TYPE)
                 auto mavlinkPassthrough = new mavsdk::MavlinkPassthrough(system);
-                mavlinkPassthrough->subscribe_message(MAVLINK_MSG_ID_HEARTBEAT, [this, system, mavlinkPassthrough](const mavlink_message_t &message) mutable {
+                mavlinkPassthrough->subscribe_message(MAVLINK_MSG_ID_HEARTBEAT, [this, system, mavlinkPassthrough](const mavlink_message_t &message) {
                     mavlink_heartbeat_t heartbeat;
                     mavlink_msg_heartbeat_decode(&message, &heartbeat);
 
