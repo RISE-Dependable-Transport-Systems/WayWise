@@ -41,6 +41,7 @@ private slots:
 
 signals:
     void gotNewVehicleConnection(const quint8 systemId);
+    void gotNewMavsdkSystem();
     void disconnectOfVehicleConnection(int systemId);
 
 private:
@@ -50,6 +51,7 @@ private:
     QTimer mHeartbeatTimer;
     const int HEARTBEATTIMER_TIMEOUT_SECONDS = 5;
     QVector<QPair<quint8, int>> mVehicleHeartbeatTimeoutCounters;
+    void handleNewMavsdkSystem();
 };
 
 #endif // MAVSDKSTATION_H
