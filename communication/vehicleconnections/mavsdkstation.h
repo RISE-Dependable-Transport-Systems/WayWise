@@ -40,7 +40,7 @@ private slots:
     void on_timeout();
 
 signals:
-    void gotNewVehicleConnection(const quint8 systemId);
+    void gotNewVehicleConnection(QSharedPointer<MavsdkVehicleConnection>);
     void gotNewMavsdkSystem();
     void disconnectOfVehicleConnection(int systemId);
 

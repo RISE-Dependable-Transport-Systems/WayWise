@@ -117,7 +117,7 @@ void MavsdkStation::handleNewMavsdkSystem()
 
                         mVehicleHeartbeatTimeoutCounters.append(qMakePair(system->get_system_id(), 0));    // Timer initialised to zero
 
-                        emit gotNewVehicleConnection(system->get_system_id());
+                        emit gotNewVehicleConnection(vehicleConnection);
                     }
                 });
             } else
