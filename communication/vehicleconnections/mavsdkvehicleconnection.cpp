@@ -15,7 +15,7 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
     mMavlinkPassthrough.reset(new mavsdk::MavlinkPassthrough(system));
 
     // Setup gimbal
-    mSystem->subscribe_component_discovered([this](mavsdk::System::ComponentType){
+    mComponentDiscoveredHandle = mSystem->subscribe_component_discovered([this](mavsdk::System::ComponentType){
         if (mSystem->has_gimbal() && mGimbal.isNull()) {
             mGimbal = QSharedPointer<MavsdkGimbal>::create(mSystem);
             emit detectedGimbal(mGimbal);
