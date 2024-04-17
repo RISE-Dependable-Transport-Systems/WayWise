@@ -22,7 +22,7 @@ sudo apt-get install -y i2c-tools libi2c-dev
 Now we can use the i2cdetect command to query the I2C bus.  Connecting the AS-5600 sensor to the Raspberry Pi I2C bus, the sensor responds with the slave address 0x36. The groove sensor responds by default under 0x36.
 
 ```
-# i2cdetect -y 1
+sudo i2cdetect -y 1
      0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
 00:                         -- -- -- -- -- -- -- -- 
 10: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
@@ -40,9 +40,33 @@ There are four shell scripts to interact directely with the sensor.
 ### Read the scaled angle and raw values:
 
 ```
-./ReadAngle.sh 
+./ReadAngle.sh
 Scaled angle is  4095
 Raw angle is  0
-Start poistion is 0
-Stop poistion is 0
+```
+
+### Set the start position using i2cset (ZPOS Register):
+```
+./SetStartPosition.sh
+High byte set successfully
+Low byte set successfully.
+Start position set successfully.
+```
+
+
+### Set the stop position using i2cset (MPOS Register)
+```
+./SetStopPosition.sh
+High byte set successfully.
+Low byte set successfully.
+Stop position set successfully.
+```
+
+
+### Read the start and stop Position:
+
+```
+./ReadStartStopPosition.sh
+Start position is 0
+Stop position is 0
 ```
