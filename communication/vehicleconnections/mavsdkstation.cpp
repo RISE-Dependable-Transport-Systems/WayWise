@@ -12,7 +12,11 @@ MavsdkStation::MavsdkStation(QObject *parent) : QObject(parent)
     connect(&mHeartbeatTimer, &QTimer::timeout, this, &MavsdkStation::on_timeout);
     mHeartbeatTimer.start(1000);
 
-    mMavsdk.subscribe_on_new_system([this](){ emit gotNewMavsdkSystem(); });
+    mavsdk::Mavsdk::Configuration config = mavsdk::Mavsdk::Configuration{mavsdk::Mavsdk::ComponentType::GroundStation};
+    config.set_always_send_heartbeats(true);
+    mMavsdk.reset(new mavsdk::Mavsdk{config});
+
+    mMavsdk->subscribe_on_new_system([this](){ emit gotNewMavsdkSystem(); });
 
     connect(this, &MavsdkStation::gotNewMavsdkSystem, this, &MavsdkStation::handleNewMavsdkSystem, Qt::QueuedConnection);
 }
@@ -20,7 +24,7 @@ MavsdkStation::MavsdkStation(QObject *parent) : QObject(parent)
 bool MavsdkStation::startListeningUDP(uint16_t port)
 {
     QString connection_url = "udp://:" + QString::number(port);
-    mavsdk::ConnectionResult connection_result = mMavsdk.add_any_connection(connection_url.toStdString());
+    mavsdk::ConnectionResult connection_result = mMavsdk->add_any_connection(connection_url.toStdString());
     if (connection_result == mavsdk::ConnectionResult::Success) {
         qDebug() << "MavsdkStation: Waiting to discover vehicles on " + connection_url + "...";
         return true;
@@ -32,7 +36,7 @@ bool MavsdkStation::startListeningUDP(uint16_t port)
 
 bool MavsdkStation::startListeningSerial(const QSerialPortInfo &portInfo, int baudrate)
 {
-    mavsdk::ConnectionResult connection_result = mMavsdk.add_serial_connection(portInfo.systemLocation().toStdString(), baudrate);
+    mavsdk::ConnectionResult connection_result = mMavsdk->add_serial_connection(portInfo.systemLocation().toStdString(), baudrate);
     if (connection_result == mavsdk::ConnectionResult::Success) {
         qDebug() << "MavsdkStation: Waiting to discover vehicles on " + portInfo.systemLocation() + "...";
         return true;
@@ -94,7 +98,7 @@ QSharedPointer<MavsdkVehicleConnection> MavsdkStation::getVehicleConnection(cons
 
 void MavsdkStation::handleNewMavsdkSystem()
 {
-    for (const auto &system : mMavsdk.systems()) {
+    for (const auto &system : mMavsdk->systems()) {
         if (!mVehicleConnectionMap.contains(system->get_system_id())) {
             if (system->has_autopilot()) {
                 qDebug() << "MavsdkStation: detected system" << system->get_system_id() << "waiting for another heartbeat for initializing MavsdkVehicleConnection...";

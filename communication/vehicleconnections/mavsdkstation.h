@@ -45,7 +45,7 @@ signals:
     void disconnectOfVehicleConnection(int systemId);
 
 private:
-    mavsdk::Mavsdk mMavsdk{mavsdk::Mavsdk::Configuration{mavsdk::Mavsdk::ComponentType::GroundStation}};
+    std::shared_ptr<mavsdk::Mavsdk> mMavsdk;
     QMap<int, QSharedPointer<MavsdkVehicleConnection>> mVehicleConnectionMap;
 
     QTimer mHeartbeatTimer;
