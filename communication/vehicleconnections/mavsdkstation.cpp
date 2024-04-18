@@ -66,15 +66,16 @@ QList<QSharedPointer<MavsdkVehicleConnection>> MavsdkStation::getVehicleConnecti
 
 void MavsdkStation::on_timeout()
 {
-    for(auto& vehicleTimeoutConter : mVehicleHeartbeatTimeoutCounters) {
-        vehicleTimeoutConter.second++;
+    for(auto& vehicleTimeoutCounter : mVehicleHeartbeatTimeoutCounters) {
+        vehicleTimeoutCounter.second++;
 
-        if(vehicleTimeoutConter.second == HEARTBEATTIMER_TIMEOUT_SECONDS) {    // disconnect criteria: 5 heartbeats missed
-            mVehicleConnectionMap.remove(vehicleTimeoutConter.first);
-            mVehicleHeartbeatTimeoutCounters.removeOne(vehicleTimeoutConter);
+        if(vehicleTimeoutCounter.second == HEARTBEATTIMER_TIMEOUT_SECONDS) {
+            mVehicleConnectionMap.remove(vehicleTimeoutCounter.first);
+            emit disconnectOfVehicleConnection(vehicleTimeoutCounter.first);
 
-            qDebug() << "System " << vehicleTimeoutConter.first << " disconnected. ";
-            emit disconnectOfVehicleConnection(vehicleTimeoutConter.first);
+            qDebug() << "System" << vehicleTimeoutCounter.first << "disconnected. ";
+
+            mVehicleHeartbeatTimeoutCounters.removeOne(vehicleTimeoutCounter);
         }
     }
 }
