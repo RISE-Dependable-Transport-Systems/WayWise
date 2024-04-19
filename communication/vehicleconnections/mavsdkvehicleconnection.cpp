@@ -15,7 +15,7 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
     mMavlinkPassthrough.reset(new mavsdk::MavlinkPassthrough(system));
 
     // Setup gimbal
-    mSystem->subscribe_component_discovered([this](mavsdk::System::ComponentType){
+    mComponentDiscoveredHandle = mSystem->subscribe_component_discovered([this](mavsdk::System::ComponentType){
         if (mSystem->has_gimbal() && mGimbal.isNull()) {
             mGimbal = QSharedPointer<MavsdkGimbal>::create(mSystem);
             emit detectedGimbal(mGimbal);
@@ -553,6 +553,7 @@ void MavsdkVehicleConnection::setActuatorOutput(int index, float value)
 void MavsdkVehicleConnection::setManualControl(double x, double y, double z, double r, uint16_t buttonStateMask)
 {
     mavlink_manual_control_t manual_control {};
+    manual_control.target = mSystem->get_system_id();
     manual_control.x = (uint16_t) (x * 1000.0);
     manual_control.y = (uint16_t) (y * 1000.0);
     manual_control.z = (uint16_t) (z * 1000.0);

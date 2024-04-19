@@ -34,6 +34,7 @@ class MavsdkVehicleConnection : public VehicleConnection
     Q_OBJECT
 public:
     explicit MavsdkVehicleConnection(std::shared_ptr<mavsdk::System> system, MAV_TYPE vehicleType);
+    ~MavsdkVehicleConnection() { mSystem->unsubscribe_component_discovered(mComponentDiscoveredHandle); };
     void setEnuReference(const llh_t &enuReference);
     void setHomeLlh(const llh_t &homeLlh);
     virtual QList<PosPoint> requestCurrentRouteFromVehicle() override;
@@ -82,6 +83,7 @@ private:
                             // Use mEnuReference instead.
     bool mConvertLocalPositionsToGlobalBeforeSending = false;
     std::shared_ptr<mavsdk::System> mSystem;
+    mavsdk::System::ComponentDiscoveredHandle mComponentDiscoveredHandle;
     std::shared_ptr<mavsdk::Telemetry> mTelemetry;
     std::shared_ptr<mavsdk::Action> mAction;
     std::shared_ptr<mavsdk::Param> mParam;
