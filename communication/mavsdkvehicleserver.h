@@ -34,11 +34,11 @@ public:
     void setManualControlMaxSpeed(double manualControlMaxSpeed_ms) override;
     double getManualControlMaxSpeed() const override;
     void sendGpsOriginLlh(const llh_t &gpsOriginLlh) override;
-    void mavResult(const uint16_t command, MAV_RESULT result);
+    void mavResult(const uint16_t command, MAV_RESULT result, MAV_COMPONENT compId);
     void on_logSent(const QString& message, const quint8& severity);
 
 private:
-    mavsdk::Mavsdk mMavsdk{mavsdk::Mavsdk::Configuration{mavsdk::Mavsdk::ComponentType::Autopilot}};
+    std::shared_ptr<mavsdk::Mavsdk> mMavsdk;
     std::shared_ptr<mavsdk::TelemetryServer> mTelemetryServer;
     mavsdk::TelemetryServer::RawGps mRawGps;
     mavsdk::TelemetryServer::GpsInfo mGpsInfo {0, mavsdk::TelemetryServer::FixType::NoGps};
@@ -59,6 +59,7 @@ private:
     void handleManualControlMessage(mavlink_manual_control_t manualControl);
     void sendMissionAck(quint8 type);
     double mManualControlMaxSpeed = 2.0; // [m/s]
+    quint8 mSystemId = 1;
 };
 
 #endif // MAVSDKVEHICLESERVER_H
