@@ -1,10 +1,10 @@
 #include <QCoreApplication>
-#include "../../core/simplewatchdog.h"
-#include "../../vehicles/carstate.h"
-#include "../../vehicles/controller/carmovementcontroller.h"
-#include "../../autopilot/purepursuitwaypointfollower.h"
-#include "../../communication/mavsdkvehicleserver.h"
-#include "../../logger/logger.h"
+#include "core/simplewatchdog.h"
+#include "vehicles/carstate.h"
+#include "vehicles/controller/carmovementcontroller.h"
+#include "autopilot/purepursuitwaypointfollower.h"
+#include "communication/mavsdkvehicleserver.h"
+#include "logger/logger.h"
 
 int main(int argc, char *argv[])
 {
