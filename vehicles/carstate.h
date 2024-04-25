@@ -58,7 +58,7 @@ public:
 private:
     double mRearOverhang = 0.0; //[m]
     double mFrontOverhang = 0.0; //[m]
-    double mAxisDistance; // [m]
+    double mAxisDistance = 0.0; // [m]
     double mMaxSteeringAngle = 0.0; // [rad]
     double mMinTurnRadiusRear = std::numeric_limits<double>::infinity(); // [m]
 
