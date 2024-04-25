@@ -17,16 +17,18 @@ jobs:
     steps:
     - name: Install dependencies for examples
       run: sudo apt update && sudo apt install -y git build-essential cmake qtbase5-dev libqt5serialport5-dev libboost-program-options-dev libboost-system-dev
+
+    - name: Install MAVSDK
+      run: wget https://github.com/mavlink/MAVSDK/releases/download/v2.9.1/libmavsdk-dev_2.9.1_ubuntu22.04_amd64.deb && sudo dpkg --install libmavsdk-*.deb
       
     - uses: actions/checkout@v4
+      with:
+        submodules: 'recursive'
 
     - name: Examples - configure CMake
-      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
-      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: cmake -S ${{github.workspace}}/examples -B ${{github.workspace}}/examples/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
     - name: Examples - build
-      # Build your program with the given configuration
       run: cmake --build ${{github.workspace}}/examples/build --config ${{env.BUILD_TYPE}}
 
   build_rccar:
@@ -37,7 +39,7 @@ jobs:
       run: sudo apt update && sudo apt install -y git build-essential cmake libqt5serialport5-dev libgpiod-dev
 
     - name: Install MAVSDK
-      run: wget https://github.com/mavlink/MAVSDK/releases/download/v2.2.0/libmavsdk-dev_2.2.0_ubuntu22.04_amd64.deb && sudo dpkg --install libmavsdk-*.deb
+      run: wget https://github.com/mavlink/MAVSDK/releases/download/v2.9.1/libmavsdk-dev_2.9.1_ubuntu22.04_amd64.deb && sudo dpkg --install libmavsdk-*.deb
 
     - name: RCCar - Checkout
       uses: actions/checkout@v4
@@ -64,7 +66,7 @@ jobs:
       run: sudo apt update && sudo apt install -y git build-essential cmake qtcreator qtbase5-dev libqt5serialport5-dev qtmultimedia5-dev libqt5gamepad5-dev
 
     - name: Install MAVSDK
-      run: wget https://github.com/mavlink/MAVSDK/releases/download/v2.2.0/libmavsdk-dev_2.2.0_ubuntu22.04_amd64.deb && sudo dpkg --install libmavsdk-*.deb
+      run: wget https://github.com/mavlink/MAVSDK/releases/download/v2.9.1/libmavsdk-dev_2.9.1_ubuntu22.04_amd64.deb && sudo dpkg --install libmavsdk-*.deb
 
     - name: ControlTower - Checkout
       uses: actions/checkout@v4
