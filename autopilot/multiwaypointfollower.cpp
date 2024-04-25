@@ -4,7 +4,7 @@
  */
 
 #include "multiwaypointfollower.h"
-#include "WayWise/communication/parameterserver.h"
+#include "communication/parameterserver.h"
 
 MultiWaypointFollower::MultiWaypointFollower(QSharedPointer<WaypointFollower> waypointFollower)
 {

@@ -7,7 +7,7 @@
 #include <QDebug>
 #include <QLineF>
 #include "purepursuitwaypointfollower.h"
-#include "WayWise/communication/parameterserver.h"
+#include "communication/parameterserver.h"
 
 PurepursuitWaypointFollower::PurepursuitWaypointFollower(QSharedPointer<MovementController> movementController)
 {
