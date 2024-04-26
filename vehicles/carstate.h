@@ -23,7 +23,7 @@ class CarState : public VehicleState
 {
     Q_OBJECT
 public:
-    CarState(int id = 0, Qt::GlobalColor color = Qt::red);
+    CarState(int id = 1, Qt::GlobalColor color = Qt::red);
 #ifdef QT_GUI_LIB
     virtual void draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected = true) override;
     virtual QPainterPath getBoundingBox() const override;
@@ -58,7 +58,7 @@ public:
 private:
     double mRearOverhang = 0.0; //[m]
     double mFrontOverhang = 0.0; //[m]
-    double mAxisDistance; // [m]
+    double mAxisDistance = 0.0; // [m]
     double mMaxSteeringAngle = 0.0; // [rad]
     double mMinTurnRadiusRear = std::numeric_limits<double>::infinity(); // [m]
 

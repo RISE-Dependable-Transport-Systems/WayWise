@@ -1,0 +1,3 @@
+[submodule "examples/RCCar_ISO22133_autopilot/isoObject"]
+	path = examples/RCCar_ISO22133_autopilot/isoObject
+	url = https://github.com/RI-SE/isoObject.git

@@ -1,5 +1,5 @@
 
-#include <WayWise/communication/vehicleserver.h>
+#include <communication/vehicleserver.h>
 #include <QObject>
 #include <QSharedPointer>
 #include <QTimer>

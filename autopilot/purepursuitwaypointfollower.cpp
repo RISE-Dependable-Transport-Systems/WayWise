@@ -7,7 +7,7 @@
 #include <QDebug>
 #include <QLineF>
 #include "purepursuitwaypointfollower.h"
-#include "WayWise/communication/parameterserver.h"
+#include "communication/parameterserver.h"
 
 PurepursuitWaypointFollower::PurepursuitWaypointFollower(QSharedPointer<MovementController> movementController)
 {
@@ -15,8 +15,10 @@ PurepursuitWaypointFollower::PurepursuitWaypointFollower(QSharedPointer<Movement
     connect(&mUpdateStateTimer, &QTimer::timeout, this, &PurepursuitWaypointFollower::updateState);
 
     // Provide system parameters to ControlTower
-    ParameterServer::getInstance()->provideParameter("PPRadius", std::bind(&PurepursuitWaypointFollower::setPurePursuitRadius, this, std::placeholders::_1), std::bind(&PurepursuitWaypointFollower::getPurePursuitRadius, this));
-    ParameterServer::getInstance()->provideParameter("APPRC", std::bind(&PurepursuitWaypointFollower::setAdaptivePurePursuitRadiusCoefficient, this, std::placeholders::_1), std::bind(&PurepursuitWaypointFollower::getAdaptivePurePursuitRadiusCoefficient, this));
+    if (ParameterServer::getInstance()) {
+        ParameterServer::getInstance()->provideParameter("PPRadius", std::bind(&PurepursuitWaypointFollower::setPurePursuitRadius, this, std::placeholders::_1), std::bind(&PurepursuitWaypointFollower::getPurePursuitRadius, this));
+        ParameterServer::getInstance()->provideParameter("APPRC", std::bind(&PurepursuitWaypointFollower::setAdaptivePurePursuitRadiusCoefficient, this, std::placeholders::_1), std::bind(&PurepursuitWaypointFollower::getAdaptivePurePursuitRadiusCoefficient, this));
+    }
 
 
     // Follow point requires continuous updates of the point to follow
