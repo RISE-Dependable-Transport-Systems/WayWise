@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
     QTimer mUpdateVehicleStateTimer;
 
     QSharedPointer<CarState> mCarState(new CarState);
-    iso22133VehicleServer iso22133VehicleServer(mCarState, "127.0.0.1");
+    iso22133VehicleServer iso22133VehicleServer(mCarState, "0.0.0.0");
 
     // --- Lower-level control setup ---
     QSharedPointer<CarMovementController> mCarMovementController(new CarMovementController(mCarState));
