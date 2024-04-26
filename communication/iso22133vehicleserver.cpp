@@ -157,7 +157,12 @@ void iso22133VehicleServer::onOSEM(ObjectSettingsType &osem) {
     qDebug() << "Object Settings Received";
     setObjectSettings(osem);
     const llh_t llh = {osem.coordinateSystemOrigin.latitude_deg, osem.coordinateSystemOrigin.longitude_deg, osem.coordinateSystemOrigin.altitude_m};
-    mUbloxRover->setEnuRef(llh);
+    if (!mUbloxRover.isNull())
+    {
+        mUbloxRover->setEnuRef(llh);
+    } else {
+        qWarning() << "No UbloxRover set to receive llh!!";
+    }
 }
 
 void iso22133VehicleServer::onTRAJ() {
