@@ -23,7 +23,7 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
 
     mavsdk::Mavsdk::Configuration config = mavsdk::Mavsdk::Configuration{mavsdk::Mavsdk::ComponentType::Autopilot};
     config.set_always_send_heartbeats(true);
-    config.set_system_id(mVehicleState->getId());
+    config.set_system_id(mSystemId);
     mMavsdk.reset(new mavsdk::Mavsdk{config});
 
 //    mavsdk::Mavsdk::Configuration customConfig = mavsdk::Mavsdk::Configuration{mavsdk::Mavsdk::ComponentType::Custom};

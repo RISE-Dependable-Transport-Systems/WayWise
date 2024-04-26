@@ -45,7 +45,7 @@ public:
         Rattitude
     };
 
-    VehicleState(ObjectID_t id = 0, Qt::GlobalColor color = Qt::red);
+    VehicleState(ObjectID_t id = 1, Qt::GlobalColor color = Qt::red);
 
     // Static state
     double getLength() const { return mLength; }
