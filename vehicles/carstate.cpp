@@ -11,7 +11,7 @@
 #include <QDebug>
 #include <QDateTime>
 
-CarState::CarState(int id, Qt::GlobalColor color) : VehicleState(id, color)
+CarState::CarState(ObjectID_t id, Qt::GlobalColor color) : VehicleState(id, color)
 {
 
 }

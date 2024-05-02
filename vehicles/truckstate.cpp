@@ -9,7 +9,7 @@
 #include <QDebug>
 #include <QDateTime>
 
-TruckState::TruckState(int id, Qt::GlobalColor color) : CarState(id, color)
+TruckState::TruckState(ObjectID_t id, Qt::GlobalColor color) : CarState(id, color)
 {
     // Additional initialization if needed for the TruckState
 }

@@ -32,7 +32,7 @@ public:
         Landing
     };
 
-    CopterState(int id = 0, Qt::GlobalColor color = Qt::red);
+    CopterState(ObjectID_t id = 1, Qt::GlobalColor color = Qt::red);
 
     virtual void draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected = true);
     virtual void updateOdomPositionAndYaw(double drivenDistance, PosType usePosType) override;

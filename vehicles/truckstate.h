@@ -15,7 +15,7 @@ class TruckState : public CarState
 {
     Q_OBJECT
 public:
-    TruckState(int id = 0, Qt::GlobalColor color = Qt::blue);
+    TruckState(ObjectID_t id = 1, Qt::GlobalColor color = Qt::blue);
 
     // Additional set/get state for angle sensor
     uint16_t getTrailerAngleRaw() const { return mTrailerRawAngle; }

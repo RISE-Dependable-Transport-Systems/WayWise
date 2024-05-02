@@ -10,7 +10,7 @@
 #include <QPalette>
 #include <QTextStream>
 
-CopterState::CopterState(int id, Qt::GlobalColor color) : VehicleState(id, color)
+CopterState::CopterState(ObjectID_t id, Qt::GlobalColor color) : VehicleState(id, color)
 {
     // Default values for Holybro S500/X500
     mFrameType = CopterFrameType::X;
