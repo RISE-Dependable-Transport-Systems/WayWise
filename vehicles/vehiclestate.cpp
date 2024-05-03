@@ -8,7 +8,7 @@
 #include "vehiclestate.h"
 #include <QDebug>
 
-VehicleState::VehicleState(ObjectState::ObjectID_t id, Qt::GlobalColor color)
+VehicleState::VehicleState(ObjectID_t id, Qt::GlobalColor color)
     : ObjectState (id, color)
 {
     mTime = QTime();

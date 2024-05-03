@@ -21,7 +21,7 @@ class TrailerState : public ObjectState
     Q_OBJECT
 public:
 
-    TrailerState(ObjectID_t id = 0, Qt::GlobalColor color = Qt::white);
+    TrailerState(ObjectID_t id = 25, Qt::GlobalColor color = Qt::white);
 
     double getLength() const { return mLength; }
     void setLength(double length) { mLength = length; }
