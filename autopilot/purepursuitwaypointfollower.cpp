@@ -154,7 +154,7 @@ double PurepursuitWaypointFollower::getCurvatureToPointInENU(QSharedPointer<Vehi
 
     } else {
         // double l1=truckState->getAxisDistance(); // truck wheelbase in meters 
-        double l2 = 0.7; // trailer wheelbase in meters (from middle point of trucks's wheel/ also happens to be the joint)
+        double l2 = 0.715; // trailer wheelbase in meters (from middle point of trucks's wheel/ also happens to be the joint)
 
         double trailerYaw = currYaw_rad - measuredTrailerAngle ; // in radians θ = θ_vehicle - θ_e (hitch-angle)
 
@@ -175,7 +175,7 @@ double PurepursuitWaypointFollower::getCurvatureToPointInENU(QSharedPointer<Vehi
         double desired_hitch_angle = atan(2*l2*sin(theta_err) / truckState->getAutopilotRadius() ); //<-- desired trailerAngle
 
         // step 3, return the curvature of measured vs desired trailer hitch angle -> which will be transle to steering angle 
-         double k=-1; // K is a try and error value, higher value -> more responsive controler 
+         double k=-2.5; // K is a try and error value, higher value -> more responsive controler 
         return  k*( measuredTrailerAngle - desired_hitch_angle ) - ( sin(measuredTrailerAngle)/ (l2)) ;
 
     }
@@ -198,7 +198,7 @@ double PurepursuitWaypointFollower::getCurvatureToPointInVehicleFrame(const QPoi
 }
 
 // TODO: utility function, move to a more central place
-QVector<QPointF> findIntersectionsBetweenCircleAndLine(QPair<QPointF,double> circle, QLineF line) {
+QVector<QPointF> PurepursuitWaypointFollower::findIntersectionsBetweenCircleAndLine(QPair<QPointF,double> circle, QLineF line) {
     QVector<QPointF> intersections;
 
     double maxX = line.x1();

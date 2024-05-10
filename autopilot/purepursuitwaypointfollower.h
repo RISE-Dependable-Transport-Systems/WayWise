@@ -91,7 +91,7 @@ signals:
 public slots:
     void updateFollowPointInVehicleFrame(const PosPoint &point);
 
-private:
+protected:
     const unsigned mFollowPointTimeout_ms = 1000;
     QTimer mFollowPointHeartbeatTimer;
 
@@ -110,6 +110,7 @@ private:
     void holdPosition();
     void calculateDistanceOfRouteLeft();
     double purePursuitRadius();
+    QVector<QPointF> findIntersectionsBetweenCircleAndLine(QPair<QPointF,double> circle, QLineF line);
 };
 
 #endif // PUREPURSUITWAYPOINTFOLLOWER_H
