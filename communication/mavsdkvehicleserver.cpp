@@ -144,6 +144,7 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
 
     mMavsdk->intercept_incoming_messages_async([this](mavlink_message_t &message){
         if (message.msgid == MAVLINK_MSG_ID_HEARTBEAT) { // TODO: make sure this is actually for us
+            qDebug() << "verbose" << "Got heartbeat";
             if (!mHeartbeat) {
                 qDebug() << "MavsdkVehicleServer: got heartbeat, timeout was reset.";
             }
