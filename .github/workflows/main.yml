@@ -12,14 +12,17 @@ env:
 
 jobs:
   build_examples:
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04]
 
     steps:
     - name: Install dependencies for examples
       run: sudo apt update && sudo apt install -y git build-essential cmake qtbase5-dev libqt5serialport5-dev libboost-program-options-dev libboost-system-dev
 
     - name: Install MAVSDK
-      run: wget https://github.com/mavlink/MAVSDK/releases/download/v2.9.1/libmavsdk-dev_2.9.1_ubuntu22.04_amd64.deb && sudo dpkg --install libmavsdk-*.deb
+      run: wget https://github.com/mavlink/MAVSDK/releases/download/v2.10.2/libmavsdk-dev_2.10.2_ubuntu22.04_amd64.deb && sudo dpkg --install libmavsdk-*.deb
       
     - uses: actions/checkout@v4
       with:
@@ -32,14 +35,17 @@ jobs:
       run: cmake --build ${{github.workspace}}/examples/build --config ${{env.BUILD_TYPE}}
 
   build_rccar:
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04]
 
     steps:
     - name: Install dependencies for RCCar
       run: sudo apt update && sudo apt install -y git build-essential cmake libqt5serialport5-dev libgpiod-dev
 
     - name: Install MAVSDK
-      run: wget https://github.com/mavlink/MAVSDK/releases/download/v2.9.1/libmavsdk-dev_2.9.1_ubuntu22.04_amd64.deb && sudo dpkg --install libmavsdk-*.deb
+      run: wget https://github.com/mavlink/MAVSDK/releases/download/v2.10.2/libmavsdk-dev_2.10.2_ubuntu22.04_amd64.deb && sudo dpkg --install libmavsdk-*.deb
 
     - name: RCCar - Checkout
       uses: actions/checkout@v4
@@ -59,14 +65,17 @@ jobs:
       run: cmake --build ${{github.workspace}}/RCCar/build --config ${{env.BUILD_TYPE}}
 
   build_controltower:
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04]
 
     steps:
     - name: Install dependencies for ControlTower
       run: sudo apt update && sudo apt install -y git build-essential cmake qtcreator qtbase5-dev libqt5serialport5-dev qtmultimedia5-dev libqt5gamepad5-dev
 
     - name: Install MAVSDK
-      run: wget https://github.com/mavlink/MAVSDK/releases/download/v2.9.1/libmavsdk-dev_2.9.1_ubuntu22.04_amd64.deb && sudo dpkg --install libmavsdk-*.deb
+      run: wget https://github.com/mavlink/MAVSDK/releases/download/v2.10.2/libmavsdk-dev_2.10.2_ubuntu22.04_amd64.deb && sudo dpkg --install libmavsdk-*.deb
 
     - name: ControlTower - Checkout
       uses: actions/checkout@v4
