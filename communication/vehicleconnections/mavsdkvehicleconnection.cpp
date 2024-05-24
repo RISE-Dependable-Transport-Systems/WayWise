@@ -325,8 +325,9 @@ void MavsdkVehicleConnection::requestPrecisionLanding()
     ComLong.param2 = 4; // PX4_CUSTOM_MAIN_MODE_AUTO
     ComLong.param3 = 9; // PX4_CUSTOM_SUB_MODE_AUTO_PRECLAND
 
-    if (mMavlinkPassthrough->send_command_long(ComLong) != mavsdk::MavlinkPassthrough::Result::Success)
-        qDebug() << "Warning: MavsdkVehicleConnection's precision land request failed.";
+    auto result = mMavlinkPassthrough->send_command_long(ComLong);
+    if (result != mavsdk::MavlinkPassthrough::Result::Success)
+        qDebug() << "Warning: MavsdkVehicleConnection's precision land request failed (" << convertMavlinkPassthroughResult(result) << ")";
 }
 
 void MavsdkVehicleConnection::requestReturnToHome()
@@ -350,8 +351,9 @@ void MavsdkVehicleConnection::requestManualControl()
     ComLong.param1 = MAV_MODE_FLAG_SAFETY_ARMED | MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
     ComLong.param2 = 1; // PX4_CUSTOM_MAIN_MODE_MANUAL
 
-    if (mMavlinkPassthrough->send_command_long(ComLong) != mavsdk::MavlinkPassthrough::Result::Success)
-        qDebug() << "Warning: MavsdkVehicleConnection's mode change request failed.";
+    auto result = mMavlinkPassthrough->send_command_long(ComLong);
+    if (result != mavsdk::MavlinkPassthrough::Result::Success)
+        qDebug() << "Warning: MavsdkVehicleConnection's mode change request failed (" << convertMavlinkPassthroughResult(result) << ")";
 }
 
 void MavsdkVehicleConnection::requestFollowPoint()
@@ -367,8 +369,9 @@ void MavsdkVehicleConnection::requestFollowPoint()
     ComLong.param1 = MAV_MODE_FLAG_SAFETY_ARMED | MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
     ComLong.param2 = 6; // PX4_CUSTOM_MAIN_MODE_OFFBOARD
 
-    if (mMavlinkPassthrough->send_command_long(ComLong) != mavsdk::MavlinkPassthrough::Result::Success)
-        qDebug() << "Warning: MavsdkVehicleConnection's follow point request failed.";
+    auto result = mMavlinkPassthrough->send_command_long(ComLong);
+    if (result != mavsdk::MavlinkPassthrough::Result::Success)
+        qDebug() << "Warning: MavsdkVehicleConnection's follow point request failed (" << convertMavlinkPassthroughResult(result) << ")";
 }
 
 void MavsdkVehicleConnection::requestGotoLlh(const llh_t &llh, bool changeFlightmodeToHold)
@@ -389,8 +392,9 @@ void MavsdkVehicleConnection::requestGotoLlh(const llh_t &llh, bool changeFlight
         ComInt.y = int32_t(std::round(llh.longitude * 1e7));
         ComInt.z = llh.height;
 
-        if (mMavlinkPassthrough->send_command_int(ComInt) != mavsdk::MavlinkPassthrough::Result::Success)
-            qDebug() << "Warning: MavsdkVehicleConnection's reposition request failed.";
+        auto result = mMavlinkPassthrough->send_command_int(ComInt);
+        if (result != mavsdk::MavlinkPassthrough::Result::Success)
+            qDebug() << "Warning: MavsdkVehicleConnection's reposition request failed (" << convertMavlinkPassthroughResult(result) << ")";
     }
 }
 
@@ -431,39 +435,41 @@ void MavsdkVehicleConnection::inputRtcmData(const QByteArray &rtcmData)
     static uint8_t sequenceId = 0;
 
     if (rtcmData.length() < MAVLINK_MSG_GPS_RTCM_DATA_FIELD_DATA_LEN) {
-        if (mMavlinkPassthrough->queue_message([&](MavlinkAddress mavlink_address, uint8_t channel) {
-            mavlink_message_t mavRtcmMsg;
-            mavlink_gps_rtcm_data_t mavRtcmData;
-            memset(&mavRtcmData, 0, sizeof(mavlink_gps_rtcm_data_t));
+        auto result = mMavlinkPassthrough->queue_message([&](MavlinkAddress mavlink_address, uint8_t channel) {
+                mavlink_message_t mavRtcmMsg;
+                mavlink_gps_rtcm_data_t mavRtcmData;
+                memset(&mavRtcmData, 0, sizeof(mavlink_gps_rtcm_data_t));
 
-            mavRtcmData.len = rtcmData.length();
-            mavRtcmData.flags = (sequenceId & 0x1F) << 3;
-            memcpy(mavRtcmData.data, rtcmData.data(), rtcmData.size());
+                mavRtcmData.len = rtcmData.length();
+                mavRtcmData.flags = (sequenceId & 0x1F) << 3;
+                memcpy(mavRtcmData.data, rtcmData.data(), rtcmData.size());
 
-            mavlink_msg_gps_rtcm_data_encode_chan(mavlink_address.system_id, mavlink_address.component_id, channel, &mavRtcmMsg, &mavRtcmData);
-            return mavRtcmMsg;
-        }) != mavsdk::MavlinkPassthrough::Result::Success)
-                qWarning() << "Could not send RTCM via MAVLINK.";
+                mavlink_msg_gps_rtcm_data_encode_chan(mavlink_address.system_id, mavlink_address.component_id, channel, &mavRtcmMsg, &mavRtcmData);
+                return mavRtcmMsg;
+            });
+        if (result != mavsdk::MavlinkPassthrough::Result::Success)
+            qWarning() << "Could not send RTCM via MAVLINK (" << convertMavlinkPassthroughResult(result) << ")";
     } else { // rtcm data needs to be fragmented into multiple messages
         uint8_t fragmentId = 0;
         int numBytesProcessed = 0;
         while (numBytesProcessed < rtcmData.size()) {
             int fragmentLength = std::min(rtcmData.size() - numBytesProcessed, MAVLINK_MSG_GPS_RTCM_DATA_FIELD_DATA_LEN);
-            if (mMavlinkPassthrough->queue_message([&](MavlinkAddress mavlink_address, uint8_t channel) {
-                mavlink_message_t mavRtcmMsg;
-                mavlink_gps_rtcm_data_t mavRtcmData;
-                memset(&mavRtcmData, 0, sizeof(mavlink_gps_rtcm_data_t));
+            auto result = mMavlinkPassthrough->queue_message([&](MavlinkAddress mavlink_address, uint8_t channel) {
+                    mavlink_message_t mavRtcmMsg;
+                    mavlink_gps_rtcm_data_t mavRtcmData;
+                    memset(&mavRtcmData, 0, sizeof(mavlink_gps_rtcm_data_t));
 
-                mavRtcmData.flags = 1;                          // LSB set indicates message is fragmented
-                mavRtcmData.flags |= fragmentId++ << 1;         // Next 2 bits are fragment id
-                mavRtcmData.flags |= (sequenceId & 0x1F) << 3;  // Next 5 bits are sequence id
-                mavRtcmData.len = fragmentLength;
-                memcpy(mavRtcmData.data, rtcmData.data() + numBytesProcessed, fragmentLength);
+                    mavRtcmData.flags = 1;                          // LSB set indicates message is fragmented
+                    mavRtcmData.flags |= fragmentId++ << 1;         // Next 2 bits are fragment id
+                    mavRtcmData.flags |= (sequenceId & 0x1F) << 3;  // Next 5 bits are sequence id
+                    mavRtcmData.len = fragmentLength;
+                    memcpy(mavRtcmData.data, rtcmData.data() + numBytesProcessed, fragmentLength);
 
-                mavlink_msg_gps_rtcm_data_encode_chan(mavlink_address.system_id, mavlink_address.component_id, channel, &mavRtcmMsg, &mavRtcmData);
-                return mavRtcmMsg;
-            }) != mavsdk::MavlinkPassthrough::Result::Success)
-                    qWarning() << "Could not send RTCM via MAVLINK.";
+                    mavlink_msg_gps_rtcm_data_encode_chan(mavlink_address.system_id, mavlink_address.component_id, channel, &mavRtcmMsg, &mavRtcmData);
+                    return mavRtcmMsg;
+                });
+            if (result != mavsdk::MavlinkPassthrough::Result::Success)
+                qWarning() << "Could not send RTCM via MAVLINK (" << convertMavlinkPassthroughResult(result) << ")";
             numBytesProcessed += fragmentLength;
         }
     }
@@ -488,25 +494,25 @@ void MavsdkVehicleConnection::sendLandingTargetLlh(const llh_t &landingTargetLlh
     xyz_t landingTargetENUgpsOrigin = coordinateTransforms::llhToEnu({mGpsGlobalOrigin.latitude, mGpsGlobalOrigin.longitude, mGpsGlobalOrigin.height}, landingTargetLlh);
 
     // Send landing target message (with NED frame)
-    if (mMavlinkPassthrough->queue_message([&](MavlinkAddress mavlink_address, uint8_t channel) {
-        mavlink_message_t mavLandingTargetMsg;
-        mavlink_landing_target_t mavLandingTargetNED;
-        memset(&mavLandingTargetNED, 0, sizeof(mavlink_landing_target_t));
+    auto result = mMavlinkPassthrough->queue_message([&](MavlinkAddress mavlink_address, uint8_t channel) {
+            mavlink_message_t mavLandingTargetMsg;
+            mavlink_landing_target_t mavLandingTargetNED;
+            memset(&mavLandingTargetNED, 0, sizeof(mavlink_landing_target_t));
 
-        mavLandingTargetNED.position_valid = 1;
-        mavLandingTargetNED.frame = MAV_FRAME_LOCAL_NED;
-        mavLandingTargetNED.time_usec = QDateTime::currentDateTimeUtc().toMSecsSinceEpoch();
+            mavLandingTargetNED.position_valid = 1;
+            mavLandingTargetNED.frame = MAV_FRAME_LOCAL_NED;
+            mavLandingTargetNED.time_usec = QDateTime::currentDateTimeUtc().toMSecsSinceEpoch();
 
-        xyz_t landingTargetNEDgpsOrigin = coordinateTransforms::enuToNED(landingTargetENUgpsOrigin);
-        mavLandingTargetNED.x = landingTargetNEDgpsOrigin.x;
-        mavLandingTargetNED.y = landingTargetNEDgpsOrigin.y;
-        mavLandingTargetNED.z = landingTargetNEDgpsOrigin.z;
+            xyz_t landingTargetNEDgpsOrigin = coordinateTransforms::enuToNED(landingTargetENUgpsOrigin);
+            mavLandingTargetNED.x = landingTargetNEDgpsOrigin.x;
+            mavLandingTargetNED.y = landingTargetNEDgpsOrigin.y;
+            mavLandingTargetNED.z = landingTargetNEDgpsOrigin.z;
 
-        mavlink_msg_landing_target_encode_chan(mavlink_address.system_id, mavlink_address.component_id, channel, &mavLandingTargetMsg, &mavLandingTargetNED);
-        return mavLandingTargetMsg;
-    }) != mavsdk::MavlinkPassthrough::Result::Success)
-            qWarning() << "Could not send LANDING_TARGET via MAVLINK.";
-
+            mavlink_msg_landing_target_encode_chan(mavlink_address.system_id, mavlink_address.component_id, channel, &mavLandingTargetMsg, &mavLandingTargetNED);
+            return mavLandingTargetMsg;
+        });
+    if (result != mavsdk::MavlinkPassthrough::Result::Success)
+        qWarning() << "Could not send LANDING_TARGET via MAVLINK (" << convertMavlinkPassthroughResult(result) << ")";
 }
 
 void MavsdkVehicleConnection::sendLandingTargetENU(const xyz_t &landingTargetENU)
@@ -523,22 +529,23 @@ void MavsdkVehicleConnection::sendSetGpsOriginLlh(const llh_t &gpsOriginLlh)
     if (mMavlinkPassthrough == nullptr)
         return;
 
-    if (mMavlinkPassthrough->queue_message([&](MavlinkAddress mavlink_address, uint8_t channel) {
-        mavlink_message_t mavGpsGlobalOriginMsg;
-        mavlink_set_gps_global_origin_t mavGpsGlobalOrigin;
-        memset(&mavGpsGlobalOrigin, 0, sizeof(mavlink_set_gps_global_origin_t));
+    auto result = mMavlinkPassthrough->queue_message([&](MavlinkAddress mavlink_address, uint8_t channel) {
+            mavlink_message_t mavGpsGlobalOriginMsg;
+            mavlink_set_gps_global_origin_t mavGpsGlobalOrigin;
+            memset(&mavGpsGlobalOrigin, 0, sizeof(mavlink_set_gps_global_origin_t));
 
-        mavGpsGlobalOrigin.latitude = (int) (gpsOriginLlh.latitude * 1e7);
-        mavGpsGlobalOrigin.longitude = (int) (gpsOriginLlh.longitude * 1e7);
-        mavGpsGlobalOrigin.altitude = (int) (gpsOriginLlh.height * 1e3);
-        mavGpsGlobalOrigin.target_system = mMavlinkPassthrough->get_target_sysid();
+            mavGpsGlobalOrigin.latitude = (int) (gpsOriginLlh.latitude * 1e7);
+            mavGpsGlobalOrigin.longitude = (int) (gpsOriginLlh.longitude * 1e7);
+            mavGpsGlobalOrigin.altitude = (int) (gpsOriginLlh.height * 1e3);
+            mavGpsGlobalOrigin.target_system = mMavlinkPassthrough->get_target_sysid();
 
-        mavlink_msg_set_gps_global_origin_encode_chan(mavlink_address.system_id, mavlink_address.component_id, channel, &mavGpsGlobalOriginMsg, &mavGpsGlobalOrigin);
-        return mavGpsGlobalOriginMsg;
-    }) != mavsdk::MavlinkPassthrough::Result::Success)
-            qDebug() << "Warning: could not send GPS_GLOBAL_ORIGIN via MAVLINK.";
-        else
-            qDebug() << "Sent GPS_GLOBAL_ORIGIN via MAVLINK:" << gpsOriginLlh.latitude << gpsOriginLlh.longitude;
+            mavlink_msg_set_gps_global_origin_encode_chan(mavlink_address.system_id, mavlink_address.component_id, channel, &mavGpsGlobalOriginMsg, &mavGpsGlobalOrigin);
+            return mavGpsGlobalOriginMsg;
+        });
+    if (result != mavsdk::MavlinkPassthrough::Result::Success)
+        qDebug() << "Warning: could not send GPS_GLOBAL_ORIGIN via MAVLINK (" << convertMavlinkPassthroughResult(result) << ")";
+    else
+        qDebug() << "Sent GPS_GLOBAL_ORIGIN via MAVLINK:" << gpsOriginLlh.latitude << gpsOriginLlh.longitude;
 }
 
 void MavsdkVehicleConnection::setActuatorOutput(int index, float value)
@@ -559,12 +566,13 @@ void MavsdkVehicleConnection::setManualControl(double x, double y, double z, dou
     manual_control.r = (uint16_t) (r * 1000.0);
     manual_control.buttons = buttonStateMask;
 
-    if (mMavlinkPassthrough->queue_message([&](MavlinkAddress mavlink_address, uint8_t channel) {
-        mavlink_message_t message;
-        mavlink_msg_manual_control_encode_chan(mavlink_address.system_id, mavlink_address.component_id, channel, &message, &manual_control);
-        return message;
-    }) != mavsdk::MavlinkPassthrough::Result::Success)
-            qDebug() << "Warning: could not send MANUAL_CONTROL via MAVLINK.";
+    auto result = mMavlinkPassthrough->queue_message([&](MavlinkAddress mavlink_address, uint8_t channel) {
+            mavlink_message_t message;
+            mavlink_msg_manual_control_encode_chan(mavlink_address.system_id, mavlink_address.component_id, channel, &message, &manual_control);
+            return message;
+        });
+    if (result != mavsdk::MavlinkPassthrough::Result::Success)
+        qDebug() << "Warning: could not send MANUAL_CONTROL via MAVLINK (" << convertMavlinkPassthroughResult(result) << ")";
 }
 
 void MavsdkVehicleConnection::setConvertLocalPositionsToGlobalBeforeSending(bool convertLocalPositionsToGlobalBeforeSending)
@@ -693,8 +701,9 @@ void MavsdkVehicleConnection::setActiveAutopilotIDOnVehicle(int id)
     ComLong.param2 = 0;
     ComLong.param3 = id; // Autopilot ID
 
-    if (mMavlinkPassthrough->send_command_long(ComLong) != mavsdk::MavlinkPassthrough::Result::Success)
-        qDebug() << "Warning: could not send MISSION_SET_CURRENT via MAVLINK.";
+    auto result = mMavlinkPassthrough->send_command_long(ComLong);
+    if (result != mavsdk::MavlinkPassthrough::Result::Success)
+        qDebug() << "Warning: could not send MISSION_SET_CURRENT via MAVLINK (" << convertMavlinkPassthroughResult(result) << ")";
 }
 
 bool MavsdkVehicleConnection::requestRebootOrShutdownOfSystemComponents(VehicleConnection::SystemComponent systemComponent, VehicleConnection::ComponentAction componentAction)
@@ -721,8 +730,9 @@ bool MavsdkVehicleConnection::requestRebootOrShutdownOfSystemComponents(VehicleC
         break;
     }
 
-    if (mMavlinkPassthrough->send_command_long(ComLong) != mavsdk::MavlinkPassthrough::Result::Success) {
-        qDebug() << "Warning: could not send request for reboot or shutdown via MAVLINK.";
+    auto result = mMavlinkPassthrough->send_command_long(ComLong);
+    if (result != mavsdk::MavlinkPassthrough::Result::Success) {
+        qDebug() << "Warning: could not send request for reboot or shutdown via MAVLINK (" << convertMavlinkPassthroughResult(result) << ")";
         return false;
     }
     return true;
@@ -858,6 +868,44 @@ QString MavsdkVehicleConnection::convertMissionRawResult(mavsdk::MissionRaw::Res
         default:
             return "Unknown result.";
     }
+}
+
+QString MavsdkVehicleConnection::convertMavlinkPassthroughResult(mavsdk::MavlinkPassthrough::Result result) const
+{
+    switch (result) {
+        case mavsdk::MavlinkPassthrough::Result::Unknown:
+            return "Unknown error.";
+        case mavsdk::MavlinkPassthrough::Result::Success:
+            return "Success.";
+        case mavsdk::MavlinkPassthrough::Result::ConnectionError:
+            return "Connection Error.";
+        case mavsdk::MavlinkPassthrough::Result::CommandNoSystem:
+            return "System not available.";
+        case mavsdk::MavlinkPassthrough::Result::CommandBusy:
+            return "System is busy.";
+        case mavsdk::MavlinkPassthrough::Result::CommandDenied:
+            return "Command has been denied.";
+        case mavsdk::MavlinkPassthrough::Result::CommandUnsupported:
+            return "Command is not supported.";
+        case mavsdk::MavlinkPassthrough::Result::CommandTimeout:
+            return "A timeout happened.";
+        case mavsdk::MavlinkPassthrough::Result::CommandTemporarilyRejected:
+            return "Command has been rejected for now.";
+        case mavsdk::MavlinkPassthrough::Result::CommandFailed:
+            return "Command has failed.";
+        case mavsdk::MavlinkPassthrough::Result::ParamWrongType:
+            return "Wrong type for requested param.";
+        case mavsdk::MavlinkPassthrough::Result::ParamNameTooLong:
+            return "Param name too long.";
+        case mavsdk::MavlinkPassthrough::Result::ParamValueTooLong:
+            return "Param value too long.";
+        case mavsdk::MavlinkPassthrough::Result::ParamNotFound:
+            return "Param not found.";
+        case mavsdk::MavlinkPassthrough::Result::ParamValueUnsupported:
+            return "Param value unsupported.";
+        default:
+            return "Unknown result.";
+    }  
 }
 
 QList<PosPoint> MavsdkVehicleConnection::requestCurrentRouteFromVehicle()
