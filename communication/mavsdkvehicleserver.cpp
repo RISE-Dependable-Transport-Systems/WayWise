@@ -42,7 +42,7 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
     mMissionRawServer.reset(new mavsdk::MissionRawServer(serverComponent));
 
     // Allow the vehicle to change to auto mode (manual is always allowed) and arm, disable takeoff (only rover support for now)
-    mActionServer->set_allowable_flight_modes({true, false, false});
+    mActionServer->set_allowable_flight_modes({true, true, false});
     mActionServer->set_armable(true, true);
     mActionServer->set_allow_takeoff(false);
 
@@ -79,7 +79,7 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
         mTelemetryServer->publish_home(homePositionLlh);
         mTelemetryServer->publish_position_velocity_ned(positionVelocityNed);
         mTelemetryServer->publish_raw_gps(mRawGps, mGpsInfo);
-    });    
+    });
 
     mActionServer->subscribe_flight_mode_change([this](mavsdk::ActionServer::Result res, mavsdk::ActionServer::FlightMode mode) {
         if  (res == mavsdk::ActionServer::Result::Success) {
@@ -150,8 +150,6 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
             emit resetHeartbeat();
         } else if (!mHeartbeat)
             return false; // Drop incoming messages until heartbeat restored
-
-//        qDebug() << "in:" << message.msgid << message.sysid << message.compid;
 
         static QList<PosPoint> currentRoute;
 
@@ -246,7 +244,7 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
                 break;
             }
 
-            PosPoint posPoint = currentRoute.at(missionRequest.seq);            
+            PosPoint posPoint = currentRoute.at(missionRequest.seq);
             if (mMavlinkPassthrough->queue_message([&](MavlinkAddress mavlink_address, uint8_t channel) {
                 mavlink_mission_item_t missionItem;
                 memset(&missionItem, 0, sizeof(missionItem));
@@ -406,6 +404,7 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
             mavlink_msg_param_value_decode(&message, &parameter);
             if (parameter.param_type == 9) // Float
                 mParameterServer->updateParameter(parameter.param_id, parameter.param_value);
+            break;
         default: ;
 //            qDebug() << "out:" << message.msgid;
         }
@@ -677,6 +676,7 @@ void MavsdkVehicleServer::sendMissionAck(quint8 type)
 
         mavlink_address.system_id = mSystemId;
         mavlink_address.component_id = MAV_COMP_ID_AUTOPILOT1;
+
         mavlink_msg_mission_ack_encode_chan(mavlink_address.system_id, mavlink_address.component_id, channel, &mavMissionAckMsg, &missionAck);
 
         return mavMissionAckMsg;
