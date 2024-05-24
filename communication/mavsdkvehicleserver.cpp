@@ -89,7 +89,7 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
             case mavsdk::ActionServer::FlightMode::Mission:
                 emit startWaypointFollower(false);
                 break;
-            case mavsdk::ActionServer::FlightMode::FollowMe:
+            case mavsdk::ActionServer::FlightMode::Offboard:
                 emit startFollowPoint();
                 break;
             default:
@@ -98,7 +98,7 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
         }
 
         if (mode != mavsdk::ActionServer::FlightMode::Mission &&
-                mode != mavsdk::ActionServer::FlightMode::FollowMe)
+                mode != mavsdk::ActionServer::FlightMode::Offboard)
             if (mWaypointFollower->isActive())
                 emit pauseWaypointFollower();
     });

@@ -365,8 +365,7 @@ void MavsdkVehicleConnection::requestFollowPoint()
     ComLong.target_sysid = mMavlinkPassthrough->get_target_sysid();
     ComLong.command = MAV_CMD_DO_SET_MODE;
     ComLong.param1 = MAV_MODE_FLAG_SAFETY_ARMED | MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
-    ComLong.param2 = 4; // PX4_CUSTOM_MAIN_MODE_AUTO
-    ComLong.param3 = 8; // PX4_CUSTOM_SUB_MODE_AUTO_FOLLOW_TARGET
+    ComLong.param2 = 6; // PX4_CUSTOM_MAIN_MODE_OFFBOARD
 
     if (mMavlinkPassthrough->send_command_long(ComLong) != mavsdk::MavlinkPassthrough::Result::Success)
         qDebug() << "Warning: MavsdkVehicleConnection's follow point request failed.";
