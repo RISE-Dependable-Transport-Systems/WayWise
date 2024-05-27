@@ -95,6 +95,7 @@ private:
     mavsdk::MissionRaw::MissionItem convertPosPointToMissionItem(const PosPoint& posPoint, int sequenceId, bool current = false);
     VehicleConnection::Result convertParamResult(mavsdk::Param::Result result) const;
     QString convertMissionRawResult(mavsdk::MissionRaw::Result result) const;
+    QString convertMavlinkPassthroughResult(mavsdk::MavlinkPassthrough::Result result) const;
 
     // VehicleConnection interface
 protected:
