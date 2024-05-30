@@ -129,22 +129,7 @@ void PurepursuitWaypointFollower::resetState()
 
 double PurepursuitWaypointFollower::getCurvatureToPointInENU(QSharedPointer<VehicleState> vehicleState, const QPointF &point, PosType vehiclePosType)
 {
-    // vehicleState and point assumed in ENU frame
-    const PosPoint vehiclePos = vehicleState->getPosition(vehiclePosType);
-
-    // 1. transform point to vehicle frame, TODO: general transform in vehicleState?
-    QPointF pointInVehicleFrame;
-    // translate
-    pointInVehicleFrame.setX(point.x()-vehiclePos.getX());
-    pointInVehicleFrame.setY(point.y()-vehiclePos.getY());
-    // rotate
-    double currYaw_rad = vehiclePos.getYaw() * M_PI / 180.0;
-    const double newX = cos(-currYaw_rad)*pointInVehicleFrame.x() - sin(-currYaw_rad)*pointInVehicleFrame.y();
-    const double newY = sin(-currYaw_rad)*pointInVehicleFrame.x() + cos(-currYaw_rad)*pointInVehicleFrame.y();
-    pointInVehicleFrame.setX(newX);
-    pointInVehicleFrame.setY(newY);
-
-    return getCurvatureToPointInVehicleFrame(pointInVehicleFrame);
+    return getCurvatureToPointInVehicleFrame(vehicleState->transformENUPointToVehicleFrame(point, vehiclePosType));
 }
 
 double PurepursuitWaypointFollower::getCurvatureToPointInENU(const QPointF &point)
