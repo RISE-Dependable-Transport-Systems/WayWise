@@ -8,6 +8,7 @@
 #include <QLineF>
 #include "purepursuitwaypointfollower.h"
 #include "communication/parameterserver.h"
+#include "core/geometry.h"
 
 PurepursuitWaypointFollower::PurepursuitWaypointFollower(QSharedPointer<MovementController> movementController)
 {
@@ -160,62 +161,6 @@ double PurepursuitWaypointFollower::getCurvatureToPointInVehicleFrame(const QPoi
     return -steeringAngleProportional;
 }
 
-// TODO: utility function, move to a more central place
-QVector<QPointF> findIntersectionsBetweenCircleAndLine(QPair<QPointF,double> circle, QLineF line) {
-    QVector<QPointF> intersections;
-
-    double maxX = line.x1();
-    double minX = line.x2();
-    double maxY = line.y1();
-    double minY = line.y2();
-    if (maxX < minX) {
-        maxX = line.x2();
-        minX = line.x1();
-    }
-    if (maxY < minY) {
-        maxY = line.y2();
-        minY = line.y1();
-    }
-
-    double a = line.dx() * line.dx() + line.dy() * line.dy();
-    double b = 2 * (line.dx() * (line.x1() - circle.first.x()) + line.dy() * (line.y1() - circle.first.y()));
-    double c = (line.x1() - circle.first.x()) * (line.x1() - circle.first.x()) + (line.y1() - circle.first.y()) * (line.y1() - circle.first.y()) - circle.second * circle.second;
-
-    double det = b * b - 4 * a * c;
-
-    if ((a <= 1e-6) || (det < 0.0)) {
-//         qDebug() << "No real solutions.";
-    } else if (det == 0) {
-//         qDebug() << "One solution.";
-        double t = -b / (2 * a);
-        double x = line.x1() + t * line.dx();
-        double y = line.y1() + t * line.dy();
-
-        if (x >= minX && x <= maxX &&
-                y >= minY && y <= maxY)
-            intersections.append(QPointF(x, y));
-    } else {
-//         qDebug() << "Two solutions.";
-        double t = (-b + sqrtf(det)) / (2 * a);
-        double x = line.x1() + t * line.dx();
-        double y = line.y1() + t * line.dy();
-
-        if (x >= minX && x <= maxX &&
-                y >= minY && y <= maxY)
-            intersections.append(QPointF(x, y));
-
-        t = (-b - sqrtf(det)) / (2 * a);
-        x = line.x1() + t * line.dx();
-        y = line.y1() + t * line.dy();
-
-        if (x >= minX && x <= maxX &&
-                y >= minY && y <= maxY)
-            intersections.append(QPointF(x, y));
-    }
-
-    return intersections;
-}
-
 void PurepursuitWaypointFollower::updateState()
 {
     QPointF currentVehiclePositionXY = getCurrentVehiclePosition().getPoint();
@@ -229,7 +174,7 @@ void PurepursuitWaypointFollower::updateState()
     case WayPointFollowerSTMstates::FOLLOW_POINT_FOLLOWING: {
         // draw straight line to follow point and apply purePursuitRadius to find intersection
         QLineF carToFollowPointLine(QPointF(0,0), mCurrentState.currentFollowPointInVehicleFrame.getPoint());
-        QVector<QPointF> intersections = findIntersectionsBetweenCircleAndLine(QPair<QPointF, double>(QPointF(0,0), purePursuitRadius()), carToFollowPointLine);
+        QVector<QPointF> intersections = geometry::findIntersectionsBetweenCircleAndLine(QPair<QPointF, double>(QPointF(0,0), purePursuitRadius()), carToFollowPointLine);
 
         if (intersections.size()) {
             // Translate to ENU for correct representation of currentGoal (when positioning is working), TODO: general transform in vehicleState?
@@ -280,7 +225,7 @@ void PurepursuitWaypointFollower::updateState()
 
         // draw straight line to first point and apply purePursuitRadius to find intersection
         QLineF carToStartLine(currentVehiclePositionXY, mWaypointList.at(0).getPoint());
-        QVector<QPointF> intersections = findIntersectionsBetweenCircleAndLine(QPair<QPointF, double>(currentVehiclePositionXY, purePursuitRadius()), carToStartLine);
+        QVector<QPointF> intersections = geometry::findIntersectionsBetweenCircleAndLine(QPair<QPointF, double>(currentVehiclePositionXY, purePursuitRadius()), carToStartLine);
 
         if (intersections.size()) {
             mCurrentState.currentGoal.setXY(intersections[0].x(), intersections[0].y());
@@ -321,7 +266,7 @@ void PurepursuitWaypointFollower::updateState()
                 QPointF iWaypoint = lookAheadWaypoints.at(i).getPoint();
                 QLineF iLineSegment(lookAheadWaypoints.at(i-1).getPoint(), iWaypoint);
 
-                intersections = findIntersectionsBetweenCircleAndLine(QPair<QPointF, double>(currentVehiclePositionXY, purePursuitRadius()), iLineSegment);
+                intersections = geometry::findIntersectionsBetweenCircleAndLine(QPair<QPointF, double>(currentVehiclePositionXY, purePursuitRadius()), iLineSegment);
                 if (intersections.size() > 0) {
                     mCurrentState.currentWaypointIndex = (i + mCurrentState.currentWaypointIndex - 1) % mWaypointList.size();
                     currentWaypointPoint = iWaypoint;
