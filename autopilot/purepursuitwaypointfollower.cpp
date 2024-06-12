@@ -127,14 +127,11 @@ void PurepursuitWaypointFollower::resetState()
     mCurrentState.currentWaypointIndex = mWaypointList.size();
 }
 
-double PurepursuitWaypointFollower::getCurvatureToPointInENU(QSharedPointer<VehicleState> vehicleState, const QPointF &point, PosType vehiclePosType)
-{
-    return getCurvatureToPointInVehicleFrame(vehicleState->transformENUPointToVehicleFrame(point, vehiclePosType));
-}
-
 double PurepursuitWaypointFollower::getCurvatureToPointInENU(const QPointF &point)
 {
-    return getCurvatureToPointInENU(isOnVehicle() ? mMovementController->getVehicleState() : mVehicleConnection->getVehicleState(), point, mPosTypeUsed);
+    QSharedPointer<VehicleState> vehicleState = isOnVehicle() ? mMovementController->getVehicleState() : mVehicleConnection->getVehicleState();
+
+    return getCurvatureToPointInVehicleFrame(vehicleState->transformENUPointToVehicleFrame(point, mPosTypeUsed));
 }
 
 double PurepursuitWaypointFollower::getCurvatureToPointInVehicleFrame(const QPointF &point)
