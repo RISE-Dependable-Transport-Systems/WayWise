@@ -76,9 +76,8 @@ public:
 
     void startFollowPoint();
 
-    static double getCurvatureToPointInENU(QSharedPointer<VehicleState> vehicleState, const QPointF& point, PosType vehiclePosType = PosType::simulated);
     double getCurvatureToPointInENU(const QPointF& point);
-    static double getCurvatureToPointInVehicleFrame(const QPointF& point);
+    double getCurvatureToPointInVehicleFrame(const QPointF& point);
 
     double getInterpolatedSpeed(const PosPoint &currentGoal, const PosPoint &lastWaypoint, const PosPoint &nextWaypoint);
 
