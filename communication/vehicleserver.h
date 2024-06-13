@@ -11,6 +11,7 @@
 #include <QSharedPointer>
 #include <QTimer>
 #include "autopilot/waypointfollower.h"
+#include "autopilot/followpoint.h"
 #include "sensors/gnss/ubloxrover.h"
 #include "vehicles/controller/movementcontroller.h"
 #include "vehicles/vehiclestate.h"
@@ -25,6 +26,7 @@ public:
     virtual void setWaypointFollower(QSharedPointer<WaypointFollower> waypointFollower) = 0;
     virtual void setMovementController(QSharedPointer<MovementController> movementController) = 0;
     virtual void setManualControlMaxSpeed(double manualControlMaxSpeed_ms) = 0;
+    virtual void setFollowPoint(QSharedPointer<FollowPoint> followPoint) = 0;
     virtual double getManualControlMaxSpeed() const = 0;
     virtual void sendGpsOriginLlh(const llh_t &gpsOriginLlh) = 0;
 
@@ -34,6 +36,7 @@ signals:
     void resetWaypointFollower();
     void clearRouteOnWaypointFollower();
     void startFollowPoint();
+    void stopFollowPoint();
     void resetHeartbeat();
     void switchAutopilotID(const float autopilotID);
     void rxRtcmData(const QByteArray rtcmData);
@@ -44,6 +47,7 @@ protected:
     QSharedPointer<UbloxRover> mUbloxRover;
     QSharedPointer<WaypointFollower> mWaypointFollower;
     QSharedPointer<MovementController> mMovementController;
+    QSharedPointer<FollowPoint> mFollowPoint;
 
     bool mHeartbeat;
     QTimer mHeartbeatTimer;

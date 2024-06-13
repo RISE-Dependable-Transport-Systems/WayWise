@@ -98,9 +98,12 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
         }
 
         if (mode != mavsdk::ActionServer::FlightMode::Mission &&
-                mode != mavsdk::ActionServer::FlightMode::Offboard)
+                mode != mavsdk::ActionServer::FlightMode::Offboard) {
             if (mWaypointFollower->isActive())
                 emit pauseWaypointFollower();
+            if (mFollowPoint->isActive())
+                emit stopFollowPoint();
+        }
     });
 
     mMissionRawServer->subscribe_incoming_mission([this](mavsdk::MissionRawServer::Result res, mavsdk::MissionRawServer::MissionPlan plan) {
@@ -498,12 +501,18 @@ void MavsdkVehicleServer::setWaypointFollower(QSharedPointer<WaypointFollower> w
     connect(this, &MavsdkVehicleServer::pauseWaypointFollower, mWaypointFollower.get(), &WaypointFollower::stop);
     connect(this, &MavsdkVehicleServer::resetWaypointFollower, mWaypointFollower.get(), &WaypointFollower::resetState);
     connect(this, &MavsdkVehicleServer::clearRouteOnWaypointFollower, mWaypointFollower.get(), &WaypointFollower::clearRoute);
-    connect(this, &MavsdkVehicleServer::startFollowPoint, mWaypointFollower.get(), &WaypointFollower::startFollowPoint);
 }
 
 void MavsdkVehicleServer::setMovementController(QSharedPointer<MovementController> movementController)
 {
     mMovementController = movementController;
+}
+
+void MavsdkVehicleServer::setFollowPoint(QSharedPointer<FollowPoint> followPoint)
+{
+    mFollowPoint = followPoint;
+    connect(this, &MavsdkVehicleServer::startFollowPoint, mFollowPoint.get(), &FollowPoint::startFollowPoint);
+    connect(this, &MavsdkVehicleServer::stopFollowPoint, mFollowPoint.get(), &FollowPoint::stopFollowPoint);
 }
 
 PosPoint MavsdkVehicleServer::convertMissionItemToPosPoint(const mavsdk::MissionRawServer::MissionItem &item)
