@@ -216,3 +216,8 @@ void iso22133VehicleServer::updateRawGpsAndGpsInfoFromUbx(
     const ubx_nav_pvt &pvt) {
     // Not implemented
 }
+
+void iso22133VehicleServer::setFollowPoint(
+    QSharedPointer<FollowPoint> followPoint) {
+    throw std::logic_error("iso22133VehicleServer::setFollowPoint(..) not implemented.");
+}
