@@ -97,13 +97,13 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
             }
         }
 
-        if (mode != mavsdk::ActionServer::FlightMode::Mission &&
-                mode != mavsdk::ActionServer::FlightMode::Offboard) {
-            if (mWaypointFollower->isActive())
+        if (mode != mavsdk::ActionServer::FlightMode::Mission)
+            if (!mWaypointFollower.isNull() && mWaypointFollower->isActive())
                 emit pauseWaypointFollower();
-            if (mFollowPoint->isActive())
+
+        if (mode != mavsdk::ActionServer::FlightMode::Offboard)
+            if (!mFollowPoint.isNull() && mFollowPoint->isActive())
                 emit stopFollowPoint();
-        }
     });
 
     mMissionRawServer->subscribe_incoming_mission([this](mavsdk::MissionRawServer::Result res, mavsdk::MissionRawServer::MissionPlan plan) {
