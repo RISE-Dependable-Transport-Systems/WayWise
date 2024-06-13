@@ -1,3 +1,10 @@
+/*
+ *     Copyright 2023 Rickard Häll   rickard.hall@ri.se
+ *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
+ *
+ * Uses sensor inputs to take emergency brake decision
+ */
+
 #ifndef EMERGENCYBRAKE_H
 #define EMERGENCYBRAKE_H
 
