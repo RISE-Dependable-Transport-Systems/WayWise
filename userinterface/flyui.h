@@ -14,6 +14,7 @@
 #include "autopilot/gotowaypointfollower.h"
 //#include "autopilot/purepursuitwaypointfollower.h"
 #include "userinterface/map/mapwidget.h"
+#include "userinterface/vehicleparameterui.h"
 
 namespace Ui {
 class FlyUI;
@@ -60,6 +61,8 @@ private slots:
 
     void on_precisionLandButton_clicked();
 
+    void on_vehicleParameterButton_clicked();
+
 private:
     class GotoClickOnMapModule : public MapModule {
         // MapModule interface
@@ -77,6 +80,7 @@ private:
     Ui::FlyUI *ui;
     QSharedPointer<GotoClickOnMapModule> mGotoClickOnMapModule;
     QSharedPointer<VehicleConnection> mCurrentVehicleConnection;
+    QSharedPointer<VehicleParameterUI> mVehicleParameterUI;
     unsigned mLineOfSightDistance = 200; // [m]
 
 };

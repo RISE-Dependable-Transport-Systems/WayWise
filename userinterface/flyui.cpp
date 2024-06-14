@@ -184,3 +184,13 @@ QSharedPointer<QMenu> FlyUI::GotoClickOnMapModule::populateContextMenu(const xyz
         return mGotoContextMenu;
     }
 }
+
+void FlyUI::on_vehicleParameterButton_clicked()
+{
+    if (mVehicleParameterUI.isNull())
+        mVehicleParameterUI = QSharedPointer<VehicleParameterUI>::create(this);
+    mVehicleParameterUI->setCurrentVehicleConnection(mCurrentVehicleConnection);
+    mVehicleParameterUI->show();
+    this->releaseKeyboard();
+}
+
