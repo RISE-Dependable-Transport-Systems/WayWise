@@ -39,6 +39,8 @@ void VehicleParameterUI::populateTableWithParameters()
     int row = 0;
     int column = 0;
 
+    ui->tableWidget->setRowCount(mVehicleParameters.floatParameters.size()+mVehicleParameters.intParameters.size()+mVehicleParameters.customParameters.size());
+
     for (const auto& vehicleIntParameter : mVehicleParameters.intParameters) {
         std::stringstream stream;
         stream << std::fixed << std::setprecision(0) << vehicleIntParameter.value;

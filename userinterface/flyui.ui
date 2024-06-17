@@ -33,6 +33,22 @@
     <number>0</number>
    </property>
    <item>
+    <widget class="QGroupBox" name="groupBox">
+     <property name="title">
+      <string>Flight Controller</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_3">
+      <item>
+       <widget class="QPushButton" name="vehicleParameterButton">
+        <property name="text">
+         <string>Vehicle Parameters</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
     <widget class="QPushButton" name="armButton">
      <property name="text">
       <string>Arm</string>
