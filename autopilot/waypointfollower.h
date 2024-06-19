@@ -32,9 +32,6 @@ public:
 
     virtual QList<PosPoint> getCurrentRoute() = 0;
 
-    // TODO: refactor FollowPoint from WaypointFollower to separate class
-    virtual void startFollowPoint() {throw std::logic_error("WaypointFollower::startFollowPoint() not implemented.");};
-
 signals:
     void deactivateEmergencyBrake();
     void activateEmergencyBrake();

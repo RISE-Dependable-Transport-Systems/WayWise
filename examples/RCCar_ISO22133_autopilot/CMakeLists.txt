@@ -45,6 +45,7 @@ add_executable(RCCar_ISO22133_autopilot
     ${WAYWISE_PATH}/communication/parameterserver.cpp
     ${WAYWISE_PATH}/autopilot/waypointfollower.h
     ${WAYWISE_PATH}/autopilot/purepursuitwaypointfollower.cpp
+    ${WAYWISE_PATH}/autopilot/followpoint.cpp
     ${WAYWISE_PATH}/communication/vehicleserver.h
     ${WAYWISE_PATH}/communication/iso22133vehicleserver.cpp
     ${WAYWISE_PATH}/logger/logger.cpp

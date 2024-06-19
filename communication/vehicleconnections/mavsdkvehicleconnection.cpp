@@ -368,6 +368,7 @@ void MavsdkVehicleConnection::requestFollowPoint()
     ComLong.command = MAV_CMD_DO_SET_MODE;
     ComLong.param1 = MAV_MODE_FLAG_SAFETY_ARMED | MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
     ComLong.param2 = 6; // PX4_CUSTOM_MAIN_MODE_OFFBOARD
+    ComLong.param3 = 8; // PX4_CUSTOM_SUB_MODE_AUTO_FOLLOW_TARGET
 
     auto result = mMavlinkPassthrough->send_command_long(ComLong);
     if (result != mavsdk::MavlinkPassthrough::Result::Success)

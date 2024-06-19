@@ -4,7 +4,6 @@
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
  *
  * Implementation of pure pursuit for following a list of waypoints ("Follow Route").
- * It can also follow a person or other vehicle when the point to follow is continously updated ("Follow Point").
  */
 
 #ifndef PUREPURSUITWAYPOINTFOLLOWER_H
@@ -19,7 +18,7 @@
 #include "communication/vehicleconnections/vehicleconnection.h"
 #include "autopilot/waypointfollower.h"
 
-enum class WayPointFollowerSTMstates {NONE, FOLLOW_POINT_FOLLOWING, FOLLOW_POINT_WAITING, FOLLOW_ROUTE_INIT, FOLLOW_ROUTE_GOTO_BEGIN, FOLLOW_ROUTE_FOLLOWING, FOLLOW_ROUTE_FINISHED};
+enum class WayPointFollowerSTMstates {NONE, FOLLOW_ROUTE_INIT, FOLLOW_ROUTE_GOTO_BEGIN, FOLLOW_ROUTE_FOLLOWING, FOLLOW_ROUTE_FINISHED};
 struct WayPointFollowerState {
     WayPointFollowerSTMstates stmState = WayPointFollowerSTMstates::NONE;
     PosPoint currentGoal;
@@ -32,11 +31,6 @@ struct WayPointFollowerState {
     bool repeatRoute = false;
     // -- for flying vehicles
     double overrideAltitude = 0.0;
-    // Follow Point
-    PosPoint currentFollowPointInVehicleFrame; // independent of positioning
-    double followPointSpeed = 1.0;
-    double followPointDistance = 3.0;
-    bool followPointTimedOut = true;
 };
 
 class PurepursuitWaypointFollower : public WaypointFollower
@@ -55,9 +49,6 @@ public:
     double getAdaptivePurePursuitRadiusCoefficient();
     void setAdaptivePurePursuitRadiusCoefficient(double coefficient);
 
-    virtual double getFollowPointSpeed() const;
-    virtual void setFollowPointSpeed(double value);
-
     virtual bool getRepeatRoute() const override;
     virtual void setRepeatRoute(bool value) override;
 
@@ -74,8 +65,6 @@ public:
 
     virtual QList<PosPoint> getCurrentRoute() override;
 
-    void startFollowPoint();
-
     double getCurvatureToPointInENU(const QPointF& point);
     double getCurvatureToPointInVehicleFrame(const QPointF& point);
 
@@ -87,12 +76,7 @@ public:
 signals:
     void distanceOfRouteLeft(double meters);
 
-public slots:
-    void updateFollowPointInVehicleFrame(const PosPoint &point);
-
 private:
-    const unsigned mFollowPointTimeout_ms = 1000;
-    QTimer mFollowPointHeartbeatTimer;
 
     PosPoint getCurrentVehiclePosition();
     void updateState();
