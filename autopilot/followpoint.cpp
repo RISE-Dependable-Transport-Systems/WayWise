@@ -11,6 +11,7 @@
 FollowPoint::FollowPoint(QSharedPointer<MovementController> movementController)
 {
     mMovementController = movementController;
+    mVehicleState = mMovementController->getVehicleState();
     connect(&mUpdateStateTimer, &QTimer::timeout, this, &FollowPoint::updateState);
 
     // ToDo: Provide system parameters to ControlTower
@@ -30,6 +31,7 @@ FollowPoint::FollowPoint(QSharedPointer<MovementController> movementController)
 FollowPoint::FollowPoint(QSharedPointer<VehicleConnection> vehicleConnection, PosType posTypeUsed)
 {
     mVehicleConnection = vehicleConnection;
+    mVehicleState = mVehicleConnection->getVehicleState();
     connect(&mUpdateStateTimer, &QTimer::timeout, this, &FollowPoint::updateState);
     setPosTypeUsed(posTypeUsed);
 
@@ -58,7 +60,7 @@ void FollowPoint::startFollowPoint()
 void FollowPoint::stopFollowPoint()
 {
     mUpdateStateTimer.stop();
-    (isOnVehicle() ? mMovementController->getVehicleState() : mVehicleConnection->getVehicleState())->setAutopilotRadius(0);
+    mVehicleState->setAutopilotRadius(0);
     holdPosition();
     mStmState = FollowPointSTMstates::NONE;
     emit activateEmergencyBrake();
@@ -70,7 +72,7 @@ void FollowPoint::holdPosition()
         mMovementController->setDesiredSteering(0.0);
         mMovementController->setDesiredSpeed(0.0);
     } else {
-        mVehicleConnection->requestVelocityAndYaw({}, mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getYaw());
+        mVehicleConnection->requestVelocityAndYaw({}, mVehicleState->getPosition(mPosTypeUsed).getYaw());
     }
 }
 
@@ -95,10 +97,7 @@ void FollowPoint::updatePointToFollowInVehicleFrame(const PosPoint &point)
 
 PosPoint FollowPoint::getCurrentVehiclePosition()
 {
-    if (isOnVehicle())
-        return mMovementController->getVehicleState()->getPosition(mPosTypeUsed);
-    else
-        return mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed);
+    return mVehicleState->getPosition(mPosTypeUsed);
 }
 
 void FollowPoint::updateState()
