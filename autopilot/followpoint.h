@@ -62,6 +62,7 @@ private:
 
     QSharedPointer<MovementController> mMovementController;
     QSharedPointer<VehicleConnection> mVehicleConnection;
+    QSharedPointer<VehicleState> mVehicleState;
 
     void updateState();
     void holdPosition();
