@@ -18,6 +18,8 @@
 
 enum class FollowPointSTMstates {NONE, FOLLOWING, WAITING};
 
+class VehicleConnection;
+
 class FollowPoint : public QObject
 {
     Q_OBJECT
@@ -33,14 +35,13 @@ public:
 
     bool isActive();
 
-    void setPosTypeUsed(const PosType &posTypeUsed);
-
 signals:
     void deactivateEmergencyBrake();
     void activateEmergencyBrake();
 
 public slots:
-    void updatePointToFollowInVehicleFrame(const PosPoint &point);
+    void pointToFollowInVehicleFrame(const PosPoint &point);
+    void pointToFollowInEnuFrame(const PosPoint &point);
 
 private:
     const unsigned mFollowPointTimeout_ms = 1000;
@@ -51,12 +52,16 @@ private:
     PosPoint mCurrentGoal;
     FollowPointSTMstates mStmState = FollowPointSTMstates::NONE;
 
-    PosPoint mCurrentFollowPointInVehicleFrame; // independent of positioning
+    PosPoint mCurrentPointToFollowInEnuFrame;
+    double mDistanceToPointIn2D;
+    QLineF mLineFromVehicleToPoint;
+    double mFollowPointHeight = 3.0;
     double mFollowPointSpeed = 1.0;
     double mFollowPointDistance = 1.0;
+    double mFollowPointAngleInDeg = 0;
     bool mFollowPointTimedOut = true;
     double mPurepursuitRadius = 1;
-    int mMaximumFollowPointDistance = 3;
+    int mMaximumFollowPointDistance = 100;
 
     PosType mPosTypeUsed = PosType::fused; // The type of position (Odom, GNSS, UWB, ...)
 
@@ -68,6 +73,8 @@ private:
     void holdPosition();
     PosPoint getCurrentVehiclePosition();
     double getCurvatureToPointInVehicleFrame(const QPointF &point);
+    bool pointIsNew(const PosPoint &point);
+    void initializeTimers();
 };
 
 #endif // FOLLOWPOINT_H
