@@ -1,6 +1,7 @@
 /*
  *     Copyright 2016 - 2017 Benjamin Vedder	benjamin@vedder.se
- *               2021        Marvin Damschen   marvin.damschen@ri.se
+ *               2021        Marvin Damschen    marvin.damschen@ri.se
+ *               2024        Rickard Häll       rickard.hall@ri.se
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
  *
  * Header-only coordinate transformations, mainly ENU <-> latitude, longitude, height
@@ -10,6 +11,7 @@
 #define COORDINATETRANSFORMS_H
 
 #include <cmath>
+#include <QPointF>
 
 struct llh_t {
     double latitude;
@@ -21,6 +23,7 @@ struct xyz_t {
     double x;
     double y;
     double z;
+    double yaw = NAN;
 };
 
 namespace coordinateTransforms {
@@ -166,6 +169,22 @@ inline double yawENUtoNED(double yaw_degENU) {
     return yaw_degNED;
 }
 
+inline QPointF ENUToVehicleFrame(const QPointF &point, const xyz_t &vehiclePosition)
+{
+    // 1. transform point to vehicle frame
+    QPointF pointInVehicleFrame;
+    // translate
+    pointInVehicleFrame.setX(point.x()-vehiclePosition.x);
+    pointInVehicleFrame.setY(point.y()-vehiclePosition.y);
+    // rotate
+    double currYaw_rad = vehiclePosition.yaw * M_PI / 180.0;
+    const double newX = cos(-currYaw_rad)*pointInVehicleFrame.x() - sin(-currYaw_rad)*pointInVehicleFrame.y();
+    const double newY = sin(-currYaw_rad)*pointInVehicleFrame.x() + cos(-currYaw_rad)*pointInVehicleFrame.y();
+    pointInVehicleFrame.setX(newX);
+    pointInVehicleFrame.setY(newY);
+
+    return pointInVehicleFrame;
+}
 } // coordinateTransforms
 
 #endif // COORDINATETRANSFORMS_H

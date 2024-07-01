@@ -9,6 +9,7 @@
 #include "purepursuitwaypointfollower.h"
 #include "communication/parameterserver.h"
 #include "core/geometry.h"
+#include "core/coordinatetransforms.h"
 
 PurepursuitWaypointFollower::PurepursuitWaypointFollower(QSharedPointer<MovementController> movementController)
 {
@@ -93,7 +94,7 @@ double PurepursuitWaypointFollower::getCurvatureToPointInENU(const QPointF &poin
 {
     QSharedPointer<VehicleState> vehicleState = isOnVehicle() ? mMovementController->getVehicleState() : mVehicleConnection->getVehicleState();
 
-    return getCurvatureToPointInVehicleFrame(vehicleState->transformENUPointToVehicleFrame(point, mPosTypeUsed));
+    return getCurvatureToPointInVehicleFrame(coordinateTransforms::ENUToVehicleFrame(point, vehicleState->getPosition(mPosTypeUsed).getXYZ()));
 }
 
 double PurepursuitWaypointFollower::getCurvatureToPointInVehicleFrame(const QPointF &point)
