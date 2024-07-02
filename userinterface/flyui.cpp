@@ -194,3 +194,9 @@ void FlyUI::on_vehicleParameterButton_clicked()
     this->releaseKeyboard();
 }
 
+void FlyUI::on_pollENUrefButton_clicked()
+{
+    if (mCurrentVehicleConnection)
+        mCurrentVehicleConnection->pollCurrentENUreference();
+}
+
