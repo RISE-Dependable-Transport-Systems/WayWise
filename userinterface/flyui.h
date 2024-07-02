@@ -58,10 +58,11 @@ private slots:
 
     void on_apStopButton_clicked();
 
-
     void on_precisionLandButton_clicked();
 
     void on_vehicleParameterButton_clicked();
+
+    void on_pollENUrefButton_clicked();
 
 private:
     class GotoClickOnMapModule : public MapModule {
