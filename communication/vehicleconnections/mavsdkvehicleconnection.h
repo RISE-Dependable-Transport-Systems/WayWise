@@ -107,6 +107,8 @@ protected:
     virtual void clearRouteOnVehicle(int id) override;
     virtual void appendToRouteOnVehicle(const QList<PosPoint> &route, int id) override;
     virtual void setActiveAutopilotIDOnVehicle(int id) override;
+    virtual void startFollowPointOnVehicle() override;
+    virtual void stopFollowPointOnVehicle() override;
 };
 
 #endif // MAVSDKVEHICLECONNECTION_H
