@@ -81,26 +81,50 @@ void FlyUI::on_getPositionButton_clicked()
 
 void FlyUI::on_apRestartButton_clicked()
 {
-    if (mCurrentVehicleConnection)
+    if (mCurrentVehicleConnection.isNull())
+        return;
+
+    if (!mCurrentVehicleConnection->hasFollowPointConnectionLocal())
+        mCurrentVehicleConnection->setFollowPointConnectionLocal(QSharedPointer<FollowPoint>::create(mCurrentVehicleConnection, PosType::defaultPosType));
+
+    if (ui->apExecuteRouteRadioButton->isChecked())
         mCurrentVehicleConnection->restartAutopilot();
+    else
+        mCurrentVehicleConnection->startFollowPoint();
 }
 
 void FlyUI::on_apStartButton_clicked()
 {
-    if (mCurrentVehicleConnection)
+    if (mCurrentVehicleConnection.isNull())
+        return;
+
+    if (!mCurrentVehicleConnection->hasFollowPointConnectionLocal())
+        mCurrentVehicleConnection->setFollowPointConnectionLocal(QSharedPointer<FollowPoint>::create(mCurrentVehicleConnection, PosType::defaultPosType));
+
+    if (ui->apExecuteRouteRadioButton->isChecked())
         mCurrentVehicleConnection->startAutopilot();
+    else
+        mCurrentVehicleConnection->startFollowPoint();
 }
 
 void FlyUI::on_apPauseButton_clicked()
 {
-    if (mCurrentVehicleConnection)
-        mCurrentVehicleConnection->pauseAutopilot();
+    if (mCurrentVehicleConnection) {
+        if (ui->apExecuteRouteRadioButton->isChecked())
+            mCurrentVehicleConnection->pauseAutopilot();
+        else
+            mCurrentVehicleConnection->stopFollowPoint();
+    }
 }
 
 void FlyUI::on_apStopButton_clicked()
 {
-    if (mCurrentVehicleConnection)
-        mCurrentVehicleConnection->stopAutopilot();
+    if (mCurrentVehicleConnection) {
+        if (ui->apExecuteRouteRadioButton->isChecked())
+            mCurrentVehicleConnection->stopAutopilot();
+        else
+            mCurrentVehicleConnection->stopFollowPoint();
+    }
 }
 
 QSharedPointer<VehicleConnection> FlyUI::getCurrentVehicleConnection() const
@@ -199,4 +223,3 @@ void FlyUI::on_pollENUrefButton_clicked()
     if (mCurrentVehicleConnection)
         mCurrentVehicleConnection->pollCurrentENUreference();
 }
-
