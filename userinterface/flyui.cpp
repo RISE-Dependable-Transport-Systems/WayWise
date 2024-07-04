@@ -1,5 +1,6 @@
 /*
  *     Copyright 2022 Marvin Damschen   marvin.damschen@ri.se
+ *               2024 Rickard Häll      rickard.hall@ri.se
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
  */
 #include "flyui.h"
@@ -21,6 +22,12 @@ FlyUI::~FlyUI()
 void FlyUI::setCurrentVehicleConnection(const QSharedPointer<VehicleConnection> &currentVehicleConnection)
 {
     mCurrentVehicleConnection = currentVehicleConnection;
+
+    if (mCurrentVehicleConnection)
+        if (!mCurrentVehicleConnection->hasFollowPointConnectionLocal())
+            mCurrentVehicleConnection->setFollowPointConnectionLocal(QSharedPointer<FollowPoint>::create(mCurrentVehicleConnection, PosType::defaultPosType));
+
+    connect(ui->followVehicleIdCombo, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &FlyUI::updateVehicleIdToFollow);
 }
 
 QSharedPointer<MapModule> FlyUI::getGotoClickOnMapModule()
@@ -84,9 +91,6 @@ void FlyUI::on_apRestartButton_clicked()
     if (mCurrentVehicleConnection.isNull())
         return;
 
-    if (!mCurrentVehicleConnection->hasFollowPointConnectionLocal())
-        mCurrentVehicleConnection->setFollowPointConnectionLocal(QSharedPointer<FollowPoint>::create(mCurrentVehicleConnection, PosType::defaultPosType));
-
     if (ui->apExecuteRouteRadioButton->isChecked())
         mCurrentVehicleConnection->restartAutopilot();
     else
@@ -97,9 +101,6 @@ void FlyUI::on_apStartButton_clicked()
 {
     if (mCurrentVehicleConnection.isNull())
         return;
-
-    if (!mCurrentVehicleConnection->hasFollowPointConnectionLocal())
-        mCurrentVehicleConnection->setFollowPointConnectionLocal(QSharedPointer<FollowPoint>::create(mCurrentVehicleConnection, PosType::defaultPosType));
 
     if (ui->apExecuteRouteRadioButton->isChecked())
         mCurrentVehicleConnection->startAutopilot();
@@ -222,4 +223,40 @@ void FlyUI::on_pollENUrefButton_clicked()
 {
     if (mCurrentVehicleConnection)
         mCurrentVehicleConnection->pollCurrentENUreference();
+}
+
+void FlyUI::updateFollowVehicleIdComboBox(const QList<QSharedPointer<MavsdkVehicleConnection>> &vehicleConnectionList)
+{
+    int previousCurrentIndex = ui->followVehicleIdCombo->currentIndex() < 0 ? 0 : ui->followVehicleIdCombo->currentIndex();
+
+    ui->followVehicleIdCombo->clear();
+    for (const auto& vehicleConnection : vehicleConnectionList) {
+        if (mCurrentVehicleConnection)
+            if(mCurrentVehicleConnection->getVehicleState()->getId() != vehicleConnection->getVehicleState()->getId())
+                ui->followVehicleIdCombo->addItem(QString::number(vehicleConnection->getVehicleState()->getId()),
+                                                  QVariant::fromValue(vehicleConnection));
+    }
+    ui->followVehicleIdCombo->setCurrentIndex((previousCurrentIndex < ui->followVehicleIdCombo->count()) ? previousCurrentIndex : (ui->followVehicleIdCombo->count()-1));
+}
+
+void FlyUI::updateVehicleIdToFollow(int vehicleId)
+{
+    if (mCurrentVehicleConnection.isNull())
+        return;
+
+    static int previousVehicleId = 0;
+    disconnect(ui->followVehicleIdCombo->itemData(previousVehicleId).value<QSharedPointer<MavsdkVehicleConnection>>()->getVehicleState().get(), &VehicleState::positionUpdated,  this, nullptr);
+
+    if (ui->followVehicleIdCombo->count() == 0)
+        return;
+
+    QSharedPointer<VehicleState> vehicleState = ui->followVehicleIdCombo->itemData(vehicleId).value<QSharedPointer<MavsdkVehicleConnection>>()->getVehicleState();
+
+    connect(vehicleState.get(), &ObjectState::positionUpdated, this, [this, vehicleState](){
+        auto positionFoVehicleToFollow = vehicleState->getPosition();
+        positionFoVehicleToFollow.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()));
+        mCurrentVehicleConnection->pointToFollowInEnuFrame(positionFoVehicleToFollow);
+    }, Qt::QueuedConnection);
+
+    previousVehicleId = vehicleId;
 }

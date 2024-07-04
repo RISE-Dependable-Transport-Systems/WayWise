@@ -1,5 +1,6 @@
 /*
  *     Copyright 2022 Marvin Damschen   marvin.damschen@ri.se
+ *               2024 Rickard Häll      rickard.hall@ri.se
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
  *
  * UI building block for flying a multicopter-type vehicle
@@ -32,6 +33,8 @@ public:
     QSharedPointer<VehicleConnection> getCurrentVehicleConnection() const;
     QSharedPointer<MapModule> getGotoClickOnMapModule();
 
+    void updateFollowVehicleIdComboBox(const QList<QSharedPointer<MavsdkVehicleConnection>> &vehicleConnectionList);
+
 public slots:
     void gotRouteForAutopilot(const QList<PosPoint>& route);
 
@@ -63,6 +66,8 @@ private slots:
     void on_vehicleParameterButton_clicked();
 
     void on_pollENUrefButton_clicked();
+
+    void updateVehicleIdToFollow(int vehicleId);
 
 private:
     class GotoClickOnMapModule : public MapModule {
