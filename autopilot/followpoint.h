@@ -12,6 +12,7 @@
 #include <QTimer>
 #include <QSharedPointer>
 #include <QPointF>
+#include <QLineF>
 #include "core/pospoint.h"
 #include "vehicles/controller/movementcontroller.h"
 #include "communication/vehicleconnections/vehicleconnection.h"

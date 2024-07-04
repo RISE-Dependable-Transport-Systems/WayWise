@@ -75,13 +75,14 @@ void FollowPoint::holdPosition()
         mMovementController->setDesiredSteering(0.0);
         mMovementController->setDesiredSpeed(0.0);
     } else {
-        mVehicleConnection->requestGotoENU(getCurrentVehiclePosition().getXYZ());
+        mVehicleConnection->requestGotoENU(getCurrentVehiclePosition().getXYZ(), true);
     }
 }
 
 void FollowPoint::pointToFollowInVehicleFrame(const PosPoint &point)
 {
     if (pointIsNew(point)) {
+        // ToDo: Apply follow point parameters here
         mLineFromVehicleToPoint.setP1(QPointF(0,0));
         mLineFromVehicleToPoint.setP2(point.getPoint());
         mDistanceToPointIn2D = mLineFromVehicleToPoint.length();
@@ -91,8 +92,8 @@ void FollowPoint::pointToFollowInVehicleFrame(const PosPoint &point)
 void FollowPoint::pointToFollowInEnuFrame(const PosPoint &point)
 {
     if (pointIsNew(point)) {
+        // ToDo: Apply follow point parameters here
         mCurrentPointToFollowInEnuFrame = point;
-        // ToDo: Follow point parameters should be applied here
         mCurrentPointToFollowInEnuFrame.setHeight(point.getHeight() + mFollowPointHeight);
 
         mDistanceToPointIn2D = getCurrentVehiclePosition().getDistanceTo(mCurrentPointToFollowInEnuFrame);
@@ -141,7 +142,7 @@ void FollowPoint::updateState()
                 mMovementController->setDesiredSteeringCurvature(getCurvatureToPointInVehicleFrame(QPointF(intersections[0].x(), intersections[0].y())));
                 mMovementController->setDesiredSpeed(mFollowPointSpeed);
             } else {
-                mVehicleConnection->requestGotoENU(mCurrentPointToFollowInEnuFrame.getXYZ());
+                mVehicleConnection->requestGotoENU(mCurrentPointToFollowInEnuFrame.getXYZ(), true);
             }
          }
         break;
