@@ -44,7 +44,7 @@ public slots:
     void pointToFollowInEnuFrame(const PosPoint &point);
 
 private:
-    const unsigned mFollowPointTimeout_ms = 1000;
+    unsigned mFollowPointTimeout_ms = 1000;
     unsigned mUpdateStatePeriod_ms = 50;
     QTimer mFollowPointHeartbeatTimer;
     QTimer mUpdateStateTimer;
