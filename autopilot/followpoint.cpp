@@ -130,15 +130,15 @@ void FollowPoint::updateState()
 
     // FOLLOW_POINT: we follow a point that is moving "follow me", works on vehicle frame to be independent of positioning
     case FollowPointSTMstates::FOLLOWING:
-        if (mDistanceToPointIn2D > mMaximumFollowPointDistance) {
-            qDebug() << "WARNING: Follow point is over" << mMaximumFollowPointDistance << "meters away. Exiting.";
+        if (mDistanceToPointIn2D > mFollowPointMaximumDistance) {
+            qDebug() << "WARNING: Follow point is over" << mFollowPointMaximumDistance << "meters away. Exiting.";
             stopFollowPoint();
         }
         if (mDistanceToPointIn2D < mFollowPointDistance)
             mStmState = FollowPointSTMstates::WAITING;
         else {
             if (isOnVehicle()) {
-                QVector<QPointF> intersections = geometry::findIntersectionsBetweenCircleAndLine(QPair<QPointF, double>(QPointF(0,0), mPurepursuitRadius), mLineFromVehicleToPoint);
+                QVector<QPointF> intersections = geometry::findIntersectionsBetweenCircleAndLine(QPair<QPointF, double>(QPointF(0,0), mVehicleState->getAutopilotRadius()), mLineFromVehicleToPoint);
                 mMovementController->setDesiredSteeringCurvature(getCurvatureToPointInVehicleFrame(QPointF(intersections[0].x(), intersections[0].y())));
                 mMovementController->setDesiredSpeed(mFollowPointSpeed);
             } else {

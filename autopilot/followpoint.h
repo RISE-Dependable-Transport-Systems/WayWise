@@ -46,25 +46,22 @@ public slots:
 
 private:
     unsigned mFollowPointTimeout_ms = 1000;
+    bool mFollowPointTimedOut = true;
     unsigned mUpdateStatePeriod_ms = 50;
     QTimer mFollowPointHeartbeatTimer;
     QTimer mUpdateStateTimer;
-
-    PosPoint mCurrentGoal;
-    FollowPointSTMstates mStmState = FollowPointSTMstates::NONE;
 
     PosPoint mCurrentPointToFollowInEnuFrame;
     double mDistanceToPointIn2D;
     QLineF mLineFromVehicleToPoint;
     double mFollowPointHeight = 3.0;
     double mFollowPointSpeed = 1.0;
-    double mFollowPointDistance = 1.0;
+    double mFollowPointDistance = 10.0;
     double mFollowPointAngleInDeg = 0;
-    bool mFollowPointTimedOut = true;
-    double mPurepursuitRadius = 1;
-    int mMaximumFollowPointDistance = 100;
+    int mFollowPointMaximumDistance = 100;
 
     PosType mPosTypeUsed = PosType::fused; // The type of position (Odom, GNSS, UWB, ...)
+    FollowPointSTMstates mStmState = FollowPointSTMstates::NONE;
 
     QSharedPointer<MovementController> mMovementController;
     QSharedPointer<VehicleConnection> mVehicleConnection;
