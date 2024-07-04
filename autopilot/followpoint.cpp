@@ -23,6 +23,10 @@ FollowPoint::FollowPoint(QSharedPointer<VehicleConnection> vehicleConnection, Po
     mPosTypeUsed = posTypeUsed;
     mVehicleState = mVehicleConnection->getVehicleState();
 
+    // Lower frequency for remote connection
+    mFollowPointTimeout_ms = 3000;
+    mUpdateStatePeriod_ms = 1000;
+
     initializeTimers();
 
     // ToDo: Provide system parameters to ControlTower
