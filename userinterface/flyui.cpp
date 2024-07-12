@@ -255,7 +255,7 @@ void FlyUI::updateVehicleIdToFollow(int vehicleId)
     connect(vehicleState.get(), &ObjectState::positionUpdated, this, [this, vehicleState](){
         auto positionOfVehicleToFollow = vehicleState->getPosition();
         positionOfVehicleToFollow.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()));
-        mCurrentVehicleConnection->pointToFollowInEnuFrame(positionOfVehicleToFollow);
+        mCurrentVehicleConnection->updatePointToFollowInEnuFrame(positionOfVehicleToFollow);
     }, Qt::QueuedConnection);
 
     previousVehicleId = vehicleId;

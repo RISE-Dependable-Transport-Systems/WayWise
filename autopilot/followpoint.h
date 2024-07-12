@@ -41,8 +41,8 @@ signals:
     void activateEmergencyBrake();
 
 public slots:
-    void pointToFollowInVehicleFrame(const PosPoint &point);
-    void pointToFollowInEnuFrame(const PosPoint &point);
+    void updatePointToFollowInVehicleFrame(const PosPoint &point);
+    void updatePointToFollowInEnuFrame(const PosPoint &point);
 
 private:
     unsigned mFollowPointTimeout_ms = 1000;
@@ -70,7 +70,6 @@ private:
 
     void updateState();
     void holdPosition();
-    PosPoint getCurrentVehiclePosition();
     double getCurvatureToPointInVehicleFrame(const QPointF &point);
     bool thePointIsNewResetTheTimer(const PosPoint &point);
     void initializeTimers();
