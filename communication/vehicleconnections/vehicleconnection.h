@@ -83,7 +83,7 @@ public:
     void setActiveAutopilotID(int id = 0);
     void startFollowPoint();
     void stopFollowPoint();
-    void pointToFollowInEnuFrame(const PosPoint &point);
+    void updatePointToFollowInEnuFrame(const PosPoint &point);
 
     QSharedPointer<VehicleState> getVehicleState() const;
     QSharedPointer<Gimbal> getGimbal() const;
