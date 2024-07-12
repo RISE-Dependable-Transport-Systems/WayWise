@@ -51,14 +51,15 @@ private:
     QTimer mFollowPointHeartbeatTimer;
     QTimer mUpdateStateTimer;
 
-    PosPoint mCurrentPointToFollowInEnuFrame;
-    double mDistanceToPointIn2D;
+    PosPoint mCurrentPointToFollow;
+    double mDistanceToPointIn2D = 0;
     QLineF mLineFromVehicleToPoint;
     double mFollowPointHeight = 3.0;
     double mFollowPointSpeed = 1.0;
     double mFollowPointDistance = 10.0;
-    double mFollowPointAngleInDeg = 0;
+    double mFollowPointAngleInDeg = 180; // [-180,180];
     int mFollowPointMaximumDistance = 100;
+    double mAutopilotRadius = 1;
 
     PosType mPosTypeUsed = PosType::fused; // The type of position (Odom, GNSS, UWB, ...)
     FollowPointSTMstates mStmState = FollowPointSTMstates::NONE;
@@ -71,7 +72,7 @@ private:
     void holdPosition();
     PosPoint getCurrentVehiclePosition();
     double getCurvatureToPointInVehicleFrame(const QPointF &point);
-    bool pointIsNew(const PosPoint &point);
+    bool thePointIsNewResetTheTimer(const PosPoint &point);
     void initializeTimers();
 };
 
