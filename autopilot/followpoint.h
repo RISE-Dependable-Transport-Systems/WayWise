@@ -19,6 +19,19 @@
 
 enum class FollowPointSTMstates {NONE, FOLLOWING, WAITING};
 
+struct FollowPointState {
+    FollowPointSTMstates stmState = FollowPointSTMstates::NONE;
+    PosPoint currentPointToFollow;
+    double distanceToPointIn2D = 0;
+    QLineF lineFromVehicleToPoint;
+    double followPointHeight = 3.0;
+    double followPointSpeed = 1.0;
+    double followPointDistance = 2.0;
+    double followPointAngleInDeg = 180; // [-180,180];
+    int followPointMaximumDistance = 100;
+    double autopilotRadius = 1;
+};
+
 class VehicleConnection;
 
 class FollowPoint : public QObject
@@ -51,18 +64,9 @@ private:
     QTimer mFollowPointHeartbeatTimer;
     QTimer mUpdateStateTimer;
 
-    PosPoint mCurrentPointToFollow;
-    double mDistanceToPointIn2D = 0;
-    QLineF mLineFromVehicleToPoint;
-    double mFollowPointHeight = 3.0;
-    double mFollowPointSpeed = 1.0;
-    double mFollowPointDistance = 10.0;
-    double mFollowPointAngleInDeg = 180; // [-180,180];
-    int mFollowPointMaximumDistance = 100;
-    double mAutopilotRadius = 1;
-
     PosType mPosTypeUsed = PosType::fused; // The type of position (Odom, GNSS, UWB, ...)
-    FollowPointSTMstates mStmState = FollowPointSTMstates::NONE;
+
+    FollowPointState mCurrentState;
 
     QSharedPointer<MovementController> mMovementController;
     QSharedPointer<VehicleConnection> mVehicleConnection;
