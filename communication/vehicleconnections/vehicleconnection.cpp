@@ -123,8 +123,8 @@ void VehicleConnection::stopFollowPoint()
         stopFollowPointOnVehicle();
 }
 
-void VehicleConnection::pointToFollowInEnuFrame(const PosPoint &point)
+void VehicleConnection::updatePointToFollowInEnuFrame(const PosPoint &point)
 {
     if (!mFollowPoint.isNull())
-        mFollowPoint->pointToFollowInEnuFrame(point);
+        mFollowPoint->updatePointToFollowInEnuFrame(point);
 }

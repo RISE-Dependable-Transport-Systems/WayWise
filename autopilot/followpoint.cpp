@@ -78,11 +78,11 @@ void FollowPoint::holdPosition()
         mMovementController->setDesiredSteering(0.0);
         mMovementController->setDesiredSpeed(0.0);
     } else {
-        mVehicleConnection->requestGotoENU(getCurrentVehiclePosition().getXYZ(), true);
+        mVehicleConnection->requestGotoENU(mVehicleState->getPosition(mPosTypeUsed).getXYZ(), true);
     }
 }
 
-void FollowPoint::pointToFollowInVehicleFrame(const PosPoint &point)
+void FollowPoint::updatePointToFollowInVehicleFrame(const PosPoint &point)
 {
     if (thePointIsNewResetTheTimer(point)) {
         mCurrentPointToFollow = point;
@@ -95,7 +95,7 @@ void FollowPoint::pointToFollowInVehicleFrame(const PosPoint &point)
     }
 }
 
-void FollowPoint::pointToFollowInEnuFrame(const PosPoint &point)
+void FollowPoint::updatePointToFollowInEnuFrame(const PosPoint &point)
 {
     if (thePointIsNewResetTheTimer(point)) {
         mCurrentPointToFollow = point;
@@ -103,7 +103,7 @@ void FollowPoint::pointToFollowInEnuFrame(const PosPoint &point)
         mCurrentPointToFollow.setHeight(point.getHeight() + mFollowPointHeight);
         mCurrentPointToFollow.setXY(point.getX() + mFollowPointDistance*cos((point.getYaw() + mFollowPointAngleInDeg)* M_PI / 180.0), point.getY() + mFollowPointDistance*sin((point.getYaw() + mFollowPointAngleInDeg)* M_PI / 180.0));
 
-        mDistanceToPointIn2D = getCurrentVehiclePosition().getDistanceTo(mCurrentPointToFollow);
+        mDistanceToPointIn2D = mVehicleState->getPosition(mPosTypeUsed).getDistanceTo(mCurrentPointToFollow);
     }
 }
 
@@ -121,11 +121,6 @@ bool FollowPoint::thePointIsNewResetTheTimer(const PosPoint &point)
         return true;
     }
     return false;
-}
-
-PosPoint FollowPoint::getCurrentVehiclePosition()
-{
-    return mVehicleState->getPosition(mPosTypeUsed);
 }
 
 void FollowPoint::updateState()
