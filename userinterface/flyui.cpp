@@ -253,9 +253,9 @@ void FlyUI::updateVehicleIdToFollow(int vehicleId)
     QSharedPointer<VehicleState> vehicleState = ui->followVehicleIdCombo->itemData(vehicleId).value<QSharedPointer<MavsdkVehicleConnection>>()->getVehicleState();
 
     connect(vehicleState.get(), &ObjectState::positionUpdated, this, [this, vehicleState](){
-        auto positionFoVehicleToFollow = vehicleState->getPosition();
-        positionFoVehicleToFollow.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()));
-        mCurrentVehicleConnection->pointToFollowInEnuFrame(positionFoVehicleToFollow);
+        auto positionOfVehicleToFollow = vehicleState->getPosition();
+        positionOfVehicleToFollow.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()));
+        mCurrentVehicleConnection->pointToFollowInEnuFrame(positionOfVehicleToFollow);
     }, Qt::QueuedConnection);
 
     previousVehicleId = vehicleId;
