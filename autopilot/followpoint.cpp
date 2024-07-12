@@ -98,9 +98,10 @@ void FollowPoint::pointToFollowInVehicleFrame(const PosPoint &point)
 void FollowPoint::pointToFollowInEnuFrame(const PosPoint &point)
 {
     if (thePointIsNewResetTheTimer(point)) {
-        // ToDo: Apply follow point parameters here
         mCurrentPointToFollow = point;
+        mCurrentPointToFollow.setRadius(mFollowPointDistance/10);
         mCurrentPointToFollow.setHeight(point.getHeight() + mFollowPointHeight);
+        mCurrentPointToFollow.setXY(point.getX() + mFollowPointDistance*cos((point.getYaw() + mFollowPointAngleInDeg)* M_PI / 180.0), point.getY() + mFollowPointDistance*sin((point.getYaw() + mFollowPointAngleInDeg)* M_PI / 180.0));
 
         mDistanceToPointIn2D = getCurrentVehiclePosition().getDistanceTo(mCurrentPointToFollow);
     }
