@@ -56,13 +56,16 @@ bool FollowPoint::isActive()
 void FollowPoint::startFollowPoint()
 {
     emit deactivateEmergencyBrake();
+    mVehicleState->setAutopilotRadius(mAutopilotRadius);
     mStmState = FollowPointSTMstates::FOLLOWING;
+    mFollowPointHeartbeatTimer.start(mFollowPointTimeout_ms);
     mUpdateStateTimer.start(mUpdateStatePeriod_ms);
 }
 
 void FollowPoint::stopFollowPoint()
 {
     mUpdateStateTimer.stop();
+    mFollowPointHeartbeatTimer.stop();
     mVehicleState->setAutopilotRadius(0);
     holdPosition();
     mStmState = FollowPointSTMstates::NONE;
@@ -81,26 +84,29 @@ void FollowPoint::holdPosition()
 
 void FollowPoint::pointToFollowInVehicleFrame(const PosPoint &point)
 {
-    if (pointIsNew(point)) {
-        // ToDo: Apply follow point parameters here
+    if (thePointIsNewResetTheTimer(point)) {
+        mCurrentPointToFollow = point;
+        mCurrentPointToFollow.setRadius(mFollowPointDistance);
         mLineFromVehicleToPoint.setP1(QPointF(0,0));
         mLineFromVehicleToPoint.setP2(point.getPoint());
         mDistanceToPointIn2D = mLineFromVehicleToPoint.length();
+        QVector<QPointF> intersections = geometry::findIntersectionsBetweenCircleAndLine(QPair<QPointF, double>(QPointF(0,0), mVehicleState->getAutopilotRadius()), mLineFromVehicleToPoint);
+        (intersections.size() != 0) ? mCurrentPointToFollow.setXY(intersections[0].x(), intersections[0].y()) : mCurrentPointToFollow.setXY(0, 0);
     }
 }
 
 void FollowPoint::pointToFollowInEnuFrame(const PosPoint &point)
 {
-    if (pointIsNew(point)) {
+    if (thePointIsNewResetTheTimer(point)) {
         // ToDo: Apply follow point parameters here
-        mCurrentPointToFollowInEnuFrame = point;
-        mCurrentPointToFollowInEnuFrame.setHeight(point.getHeight() + mFollowPointHeight);
+        mCurrentPointToFollow = point;
+        mCurrentPointToFollow.setHeight(point.getHeight() + mFollowPointHeight);
 
-        mDistanceToPointIn2D = getCurrentVehiclePosition().getDistanceTo(mCurrentPointToFollowInEnuFrame);
+        mDistanceToPointIn2D = getCurrentVehiclePosition().getDistanceTo(mCurrentPointToFollow);
     }
 }
 
-bool FollowPoint::pointIsNew(const PosPoint &point)
+bool FollowPoint::thePointIsNewResetTheTimer(const PosPoint &point)
 {
     static QTime oldPointTime = QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc());
 
@@ -133,23 +139,24 @@ void FollowPoint::updateState()
         if (mDistanceToPointIn2D > mFollowPointMaximumDistance) {
             qDebug() << "WARNING: Follow point is over" << mFollowPointMaximumDistance << "meters away. Exiting.";
             stopFollowPoint();
+            mStmState = FollowPointSTMstates::NONE;
+            break;
         }
-        if (mDistanceToPointIn2D < mFollowPointDistance)
+        if (mDistanceToPointIn2D < mCurrentPointToFollow.getRadius())
             mStmState = FollowPointSTMstates::WAITING;
         else {
             if (isOnVehicle()) {
-                QVector<QPointF> intersections = geometry::findIntersectionsBetweenCircleAndLine(QPair<QPointF, double>(QPointF(0,0), mVehicleState->getAutopilotRadius()), mLineFromVehicleToPoint);
-                mMovementController->setDesiredSteeringCurvature(getCurvatureToPointInVehicleFrame(QPointF(intersections[0].x(), intersections[0].y())));
+                mMovementController->setDesiredSteeringCurvature(getCurvatureToPointInVehicleFrame(QPointF(mCurrentPointToFollow.getX(), mCurrentPointToFollow.getY())));
                 mMovementController->setDesiredSpeed(mFollowPointSpeed);
             } else {
-                mVehicleConnection->requestGotoENU(mCurrentPointToFollowInEnuFrame.getXYZ(), true);
+                mVehicleConnection->requestGotoENU(mCurrentPointToFollow.getXYZ(), true);
             }
          }
         break;
     case FollowPointSTMstates::WAITING:
         holdPosition();
 
-        if (mDistanceToPointIn2D > mFollowPointDistance)
+        if (mDistanceToPointIn2D > mCurrentPointToFollow.getRadius())
             mStmState = FollowPointSTMstates::FOLLOWING;
         break;
     }
