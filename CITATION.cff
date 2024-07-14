@@ -1,0 +1,35 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: "Damschen"
+    given-names: "Marvin"
+    orcid: "https://orcid.org/0000-0002-6236-5799"
+  - family-names: "Häll"
+    given-names: "Rickard"
+    orcid: "https://orcid.org/0009-0002-7769-1957"
+  - family-names: "Mirzai"
+    given-names: "Aria"
+    orcid: "https://orcid.org/0009-0003-0563-079X"
+title: "WayWise: A rapid prototyping library for connected, autonomous vehicles"
+version: "a59b628"
+doi: "10.1016/j.simpa.2024.100682"
+date-released: 2024-06-28
+url: "https://github.com/SoftwareImpacts/SIMPAC-2024-139"
+preferred-citation:
+  type: article
+  authors:
+    - family-names: "Damschen"
+      given-names: "Marvin"
+      orcid: "https://orcid.org/0000-0002-6236-5799"
+    - family-names: "Häll"
+      given-names: "Rickard"
+      orcid: "https://orcid.org/0009-0002-7769-1957"
+    - family-names: "Mirzai"
+      given-names: "Aria"
+      orcid: "https://orcid.org/0009-0003-0563-079X"
+  doi: "10.1016/j.simpa.2024.100682"
+  journal: "Software Impacts"
+  month: 9
+  title: "WayWise: A rapid prototyping library for connected, autonomous vehicles"
+  volume: 21
+  year: 2024
