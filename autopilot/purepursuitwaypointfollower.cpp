@@ -10,6 +10,7 @@
 #include "communication/parameterserver.h"
 #include "core/geometry.h"
 
+
 PurepursuitWaypointFollower::PurepursuitWaypointFollower(QSharedPointer<MovementController> movementController)
 {
     mMovementController = movementController;
@@ -88,6 +89,39 @@ void PurepursuitWaypointFollower::resetState()
     mUpdateStateTimer.stop();
     mCurrentState.stmState = WayPointFollowerSTMstates::NONE;
     mCurrentState.currentWaypointIndex = mWaypointList.size();
+}
+
+double PurepursuitWaypointFollower::getCurvatureWithTrailer(QSharedPointer<TruckState> truckState, const QPointF &point, PosType vehiclePosType)
+{
+    const PosPoint vehiclePos = truckState->getPosition(vehiclePosType);
+    double currYaw_rad = vehiclePos.getYaw() * M_PI / 180.0;
+    double measuredTrailerAngle = truckState->getTrailerAngleRadians() ;
+    double l2 = 0.715;; // trailer wheelbase in meters
+
+    if (truckState->getSpeed()> 0 ){
+        QPointF pointInVehicleFrame;
+        pointInVehicleFrame.setX(point.x()-vehiclePos.getX());
+        pointInVehicleFrame.setY(point.y()-vehiclePos.getY());
+        double theta_err =  atan2(pointInVehicleFrame.y(), pointInVehicleFrame.x()) - currYaw_rad;
+        double desired_hitch_angle = atan(2*l2*sin(theta_err)); // desired trailer/hitch angle
+        double k=1; //gain
+        return  k*( measuredTrailerAngle - desired_hitch_angle ) - ( sin(measuredTrailerAngle)/ (l2)) ;
+
+    } else {
+        double trailerYaw = currYaw_rad - measuredTrailerAngle ;
+        double delta_x_ = (l2) * cos( trailerYaw);
+        double delta_y = (l2) * sin( trailerYaw);
+        double trailerPositionx = vehiclePos.getX() - delta_x_;
+        double trailerPositiony = vehiclePos.getY() - delta_y;
+
+        QPointF pointInTrailerFrame;
+        pointInTrailerFrame.setX(point.x()-trailerPositionx);
+        pointInTrailerFrame.setY(point.y()-trailerPositiony);
+        double theta_err =  atan2(pointInTrailerFrame.y(), pointInTrailerFrame.x()) - trailerYaw;
+        double desired_hitch_angle = atan(2*l2*sin(theta_err) / truckState->getAutopilotRadius() );
+        double k=-2.5; // gain
+        return  k*( measuredTrailerAngle - desired_hitch_angle ) - ( sin(measuredTrailerAngle)/ (l2)) ;
+    }
 }
 
 void PurepursuitWaypointFollower::updateState()
