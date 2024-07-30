@@ -341,6 +341,36 @@ void PurepursuitWaypointFollower::setRepeatRoute(bool value)
     mCurrentState.repeatRoute = value;
 }
 
+double PurepursuitWaypointFollower::getTrailerWheelBase() const
+{
+    return mCurrentState.trailerWheelBase;
+}
+
+void PurepursuitWaypointFollower::setTrailerWheelBase(double value)
+{
+    mCurrentState.trailerWheelBase = value;
+}
+
+double PurepursuitWaypointFollower::getForwardGainWithTrailer() const
+{
+    return mCurrentState.forwardGainWithTrailer;
+}
+
+void PurepursuitWaypointFollower::setForwardGainWithTrailer(double value)
+{
+    mCurrentState.forwardGainWithTrailer = value;
+}
+
+double PurepursuitWaypointFollower::getReverseGainWithTrailer() const
+{
+    return mCurrentState.reverseGainWithTrailer;
+}
+
+void PurepursuitWaypointFollower::setReverseGainWithTrailer(double value)
+{
+    mCurrentState.reverseGainWithTrailer = value;
+}
+
 const PosPoint PurepursuitWaypointFollower::getCurrentGoal()
 {
     return mCurrentState.currentGoal;

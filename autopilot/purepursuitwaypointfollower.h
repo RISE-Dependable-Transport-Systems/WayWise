@@ -32,6 +32,10 @@ struct WayPointFollowerState {
     bool repeatRoute = false;
     // -- for flying vehicles
     double overrideAltitude = 0.0;
+    // --for truck-trailer composition
+    double trailerWheelBase = 0.175;
+    double forwardGainWithTrailer = 1.0;
+    double reverseGainWithTrailer = 2.5;
 };
 
 class PurepursuitWaypointFollower : public WaypointFollower
@@ -74,6 +78,14 @@ public:
 
     PosType getPosTypeUsed() const;
     void setPosTypeUsed(const PosType &posTypeUsed);
+
+    // --for truck-trailer composition
+    double getTrailerWheelBase() const;
+    void setTrailerWheelBase(double value);
+    double getForwardGainWithTrailer() const;
+    void setForwardGainWithTrailer(double value);
+    double getReverseGainWithTrailer() const;
+    void setReverseGainWithTrailer(double value);
 
 signals:
     void distanceOfRouteLeft(double meters);
