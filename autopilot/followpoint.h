@@ -24,12 +24,14 @@ struct FollowPointState {
     PosPoint currentPointToFollow;
     double distanceToPointIn2D = 0;
     QLineF lineFromVehicleToPoint;
-    double followPointHeight = 3.0;
-    double followPointSpeed = 1.0;
     double followPointDistance = 2.0;
-    double followPointAngleInDeg = 180; // [-180,180];
     int followPointMaximumDistance = 100;
+    // For ground vehicles
+    double followPointSpeed = 1.0;
     double autopilotRadius = 1;
+    // For airbourne vehicles
+    double followPointHeight = 3.0;
+    double followPointAngleInDeg = 180; // [-180,180];
 };
 
 class VehicleConnection;
@@ -48,6 +50,15 @@ public:
     void stopFollowPoint();
 
     bool isActive();
+
+    void setFollowPointDistance(double distance);
+    double getFollowPointDistance() const;
+    void setFollowPointMaximumDistance(int distance);
+    int getFollowPointMaximumDistance() const;
+    void setFollowPointSpeed(double speed);
+    double getFollowPointSpeed() const;
+    void setAutopilotRadius(double radius);
+    double getAutopilotRadius() const;
 
 signals:
     void deactivateEmergencyBrake();
