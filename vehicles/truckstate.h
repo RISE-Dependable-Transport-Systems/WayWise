@@ -33,7 +33,7 @@ public:
     virtual void updateOdomPositionAndYaw(double drivenDistance, PosType usePosType = PosType::odom) override;
 
     QSharedPointer<TrailerState> getTrailerState() const { return mTrailerState; }
-    void setTrailerState(QSharedPointer<TrailerState> newTrailerState) { mTrailerState=newTrailerState; }
+    void setTrailerState(QSharedPointer<TrailerState> newTrailerState) { mTrailerState=newTrailerState; setHasTrailer(true);}
 
 
 #ifdef QT_GUI_LIB
