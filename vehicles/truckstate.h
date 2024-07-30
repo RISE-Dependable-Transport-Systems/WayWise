@@ -19,11 +19,11 @@ public:
 
     // Additional set/get state for angle sensor
     uint16_t getTrailerAngleRaw() const { return mTrailerRawAngle; }
-    double getTrailerAngleRadians() const { return mTrailerAngleRadians; }
+    double getTrailerAngleRadians() const override { return mTrailerAngleRadians; }
     double getTrailerAngleDegrees() const { return mTrailerAngleDegress; }
     double getTrailerWheelBase() const { return mtrailerwheelbase; }
 
-    void setTrailerAngle(uint16_t raw_angle , double angle_in_radians, double agnle_in_degrees) { 
+    void setTrailerAngle(uint16_t raw_angle , double angle_in_radians, double agnle_in_degrees) {
         mTrailerRawAngle = raw_angle;
         mTrailerAngleRadians = angle_in_radians;
         mTrailerAngleDegress = agnle_in_degrees;
