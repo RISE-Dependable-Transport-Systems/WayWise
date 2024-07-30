@@ -67,7 +67,7 @@ private slots:
 
     void on_pollENUrefButton_clicked();
 
-    void updateVehicleIdToFollow(int vehicleId);
+    void updateVehicleIdToFollow(int index);
 
 private:
     class GotoClickOnMapModule : public MapModule {

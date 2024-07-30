@@ -27,6 +27,7 @@ void FlyUI::setCurrentVehicleConnection(const QSharedPointer<VehicleConnection> 
         if (!mCurrentVehicleConnection->hasFollowPointConnectionLocal())
             mCurrentVehicleConnection->setFollowPointConnectionLocal(QSharedPointer<FollowPoint>::create(mCurrentVehicleConnection, PosType::defaultPosType));
 
+    disconnect(ui->followVehicleIdCombo, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, nullptr);
     connect(ui->followVehicleIdCombo, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &FlyUI::updateVehicleIdToFollow);
 }
 
@@ -239,24 +240,21 @@ void FlyUI::updateFollowVehicleIdComboBox(const QList<QSharedPointer<MavsdkVehic
     ui->followVehicleIdCombo->setCurrentIndex((previousCurrentIndex < ui->followVehicleIdCombo->count()) ? previousCurrentIndex : (ui->followVehicleIdCombo->count()-1));
 }
 
-void FlyUI::updateVehicleIdToFollow(int vehicleId)
+void FlyUI::updateVehicleIdToFollow(int index)
 {
-    if (mCurrentVehicleConnection.isNull())
+    if (index == -1)
         return;
 
-    static int previousVehicleId = 0;
-    disconnect(ui->followVehicleIdCombo->itemData(previousVehicleId).value<QSharedPointer<MavsdkVehicleConnection>>()->getVehicleState().get(), &VehicleState::positionUpdated,  this, nullptr);
+    for (auto i = 0 ; i < ui->followVehicleIdCombo->count(); i++) {
+        disconnect(ui->followVehicleIdCombo->itemData(i).value<QSharedPointer<MavsdkVehicleConnection>>()->getVehicleState().get(), &VehicleState::positionUpdated,  this, nullptr);
+    }
 
-    if (ui->followVehicleIdCombo->count() == 0)
-        return;
-
-    QSharedPointer<VehicleState> vehicleState = ui->followVehicleIdCombo->itemData(vehicleId).value<QSharedPointer<MavsdkVehicleConnection>>()->getVehicleState();
+    QSharedPointer<VehicleState> vehicleState = ui->followVehicleIdCombo->itemData(index).value<QSharedPointer<MavsdkVehicleConnection>>()->getVehicleState();
 
     connect(vehicleState.get(), &ObjectState::positionUpdated, this, [this, vehicleState](){
         auto positionOfVehicleToFollow = vehicleState->getPosition();
         positionOfVehicleToFollow.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()));
-        mCurrentVehicleConnection->updatePointToFollowInEnuFrame(positionOfVehicleToFollow);
+        if (mCurrentVehicleConnection)
+            mCurrentVehicleConnection->updatePointToFollowInEnuFrame(positionOfVehicleToFollow);
     }, Qt::QueuedConnection);
-
-    previousVehicleId = vehicleId;
 }
