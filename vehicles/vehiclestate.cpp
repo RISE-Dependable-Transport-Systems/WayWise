@@ -119,3 +119,13 @@ double VehicleState::getAutopilotRadius()
 {
     return mAutopilotRadius;
 }
+
+bool VehicleState::getHasTrailer() const
+{
+    return mHasTrailer;
+}
+
+void VehicleState::setHasTrailer(bool hasTrailer)
+{
+    mHasTrailer = hasTrailer;
+}

@@ -73,6 +73,9 @@ public:
     void setIsArmed(bool isArmed);
     void setAutopilotRadius(double radius);
     double getAutopilotRadius();
+    bool getHasTrailer() const;
+    void setHasTrailer(bool mHasTrailer);
+    virtual double getTrailerAngleRadians() const {return 0.0;}
 
     void simulationStep(double dt_ms, PosType usePosType = PosType::simulated); // Take current state and simulate step forward for dt_ms milliseconds, update state accordingly
     virtual void updateOdomPositionAndYaw(double drivenDistance, PosType usePosType = PosType::odom) = 0;
@@ -102,6 +105,7 @@ private:
     bool mIsArmed = false;
     FlightMode mFlightMode = FlightMode::Unknown;
     double mAutopilotRadius = 0;
+    bool mHasTrailer = false;
 
     std::array<float,3> mGyroscopeXYZ = std::array<float,3>({0.0, 0.0, 0.0}); // [deg/s]
     std::array<float,3> mAccelerometerXYZ = std::array<float,3>({0.0, 0.0, 0.0}); // [g]
