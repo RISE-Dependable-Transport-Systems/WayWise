@@ -5,6 +5,7 @@
 
 #include "followpoint.h"
 #include "core/geometry.h"
+#include "communication/parameterserver.h"
 #include <QDebug>
 
 FollowPoint::FollowPoint(QSharedPointer<MovementController> movementController)
@@ -14,7 +15,14 @@ FollowPoint::FollowPoint(QSharedPointer<MovementController> movementController)
 
     initializeTimers();
 
-    // ToDo: Provide system parameters to ControlTower
+    // Provide system parameters to ControlTower
+    if (ParameterServer::getInstance()) {
+        ParameterServer::getInstance()->provideParameter("FP_DIST", std::bind(&FollowPoint::setFollowPointDistance, this, std::placeholders::_1), std::bind(&FollowPoint::getFollowPointDistance, this));
+        ParameterServer::getInstance()->provideParameter("FP_MAX_DIST", std::bind(&FollowPoint::setFollowPointMaximumDistance, this, std::placeholders::_1), std::bind(&FollowPoint::getFollowPointMaximumDistance, this));
+        ParameterServer::getInstance()->provideParameter("FP_SPEED", std::bind(&FollowPoint::setFollowPointSpeed, this, std::placeholders::_1), std::bind(&FollowPoint::getFollowPointSpeed, this));
+        ParameterServer::getInstance()->provideParameter("FP_AP_RADIUS", std::bind(&FollowPoint::setAutopilotRadius, this, std::placeholders::_1), std::bind(&FollowPoint::getAutopilotRadius, this));
+
+    }
 }
 
 FollowPoint::FollowPoint(QSharedPointer<VehicleConnection> vehicleConnection, PosType posTypeUsed)
@@ -166,4 +174,44 @@ double FollowPoint::getCurvatureToPointInVehicleFrame(const QPointF &point)
     double steeringAngleProportional = (2*point.y()) / distanceSquared;
 
     return -steeringAngleProportional;
+}
+
+void FollowPoint::setFollowPointDistance(double distance)
+{
+    mCurrentState.followPointDistance = distance;
+}
+
+double FollowPoint::getFollowPointDistance() const
+{
+    return mCurrentState.followPointDistance;
+}
+
+void FollowPoint::setFollowPointMaximumDistance(int distance)
+{
+    mCurrentState.followPointMaximumDistance = distance;
+}
+
+int FollowPoint::getFollowPointMaximumDistance() const
+{
+    return mCurrentState.followPointMaximumDistance;
+}
+
+void FollowPoint::setFollowPointSpeed(double speed)
+{
+    mCurrentState.followPointSpeed = speed;
+}
+
+double FollowPoint::getFollowPointSpeed() const
+{
+    return mCurrentState.followPointSpeed;
+}
+
+void FollowPoint::setAutopilotRadius(double radius)
+{
+    mCurrentState.autopilotRadius = radius;
+}
+
+double FollowPoint::getAutopilotRadius() const
+{
+    return mCurrentState.autopilotRadius;
 }
