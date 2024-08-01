@@ -74,6 +74,7 @@ public:
     void setAutopilotRadius(double radius);
     double getAutopilotRadius();
     virtual double getCurvatureToPointInVehicleFrame(const QPointF &point);
+    double getCurvatureToPointInENU(const QPointF &point, PosType type);
 
     void simulationStep(double dt_ms, PosType usePosType = PosType::simulated); // Take current state and simulate step forward for dt_ms milliseconds, update state accordingly
     virtual void updateOdomPositionAndYaw(double drivenDistance, PosType usePosType = PosType::odom) = 0;

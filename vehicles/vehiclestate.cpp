@@ -128,3 +128,10 @@ double VehicleState::getCurvatureToPointInVehicleFrame(const QPointF &point)
 
     return -steeringAngleProportional;
 }
+
+double VehicleState::getCurvatureToPointInENU(const QPointF &point, PosType type)
+{
+    PosPoint vehiclePosition = mPositionBySource[(int)type];
+
+    return getCurvatureToPointInVehicleFrame(coordinateTransforms::ENUToVehicleFrame(point, vehiclePosition.getXYZ(), vehiclePosition.getYaw()));
+}

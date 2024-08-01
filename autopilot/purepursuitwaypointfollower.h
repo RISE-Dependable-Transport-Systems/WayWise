@@ -65,8 +65,6 @@ public:
 
     virtual QList<PosPoint> getCurrentRoute() override;
 
-    double getCurvatureToPointInENU(const QPointF& point);
-
     double getInterpolatedSpeed(const PosPoint &currentGoal, const PosPoint &lastWaypoint, const PosPoint &nextWaypoint);
 
     PosType getPosTypeUsed() const;

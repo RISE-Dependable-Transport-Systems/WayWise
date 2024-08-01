@@ -9,7 +9,6 @@
 #include "purepursuitwaypointfollower.h"
 #include "communication/parameterserver.h"
 #include "core/geometry.h"
-#include "core/coordinatetransforms.h"
 
 PurepursuitWaypointFollower::PurepursuitWaypointFollower(QSharedPointer<MovementController> movementController)
 {
@@ -89,13 +88,6 @@ void PurepursuitWaypointFollower::resetState()
     mUpdateStateTimer.stop();
     mCurrentState.stmState = WayPointFollowerSTMstates::NONE;
     mCurrentState.currentWaypointIndex = mWaypointList.size();
-}
-
-double PurepursuitWaypointFollower::getCurvatureToPointInENU(const QPointF &point)
-{
-    PosPoint vehiclePosition = mVehicleState->getPosition(mPosTypeUsed);
-
-    return mVehicleState->getCurvatureToPointInVehicleFrame(coordinateTransforms::ENUToVehicleFrame(point, vehiclePosition.getXYZ(), vehiclePosition.getYaw()));
 }
 
 void PurepursuitWaypointFollower::updateState()
@@ -233,7 +225,7 @@ void PurepursuitWaypointFollower::updateState()
 void PurepursuitWaypointFollower::updateControl(const PosPoint &goal)
 {
     if (isOnVehicle()) {
-        mMovementController->setDesiredSteeringCurvature(getCurvatureToPointInENU(goal.getPoint()));
+        mMovementController->setDesiredSteeringCurvature(mVehicleState->getCurvatureToPointInENU(goal.getPoint(), mPosTypeUsed));
         mMovementController->setDesiredSpeed(goal.getSpeed());
         mMovementController->setDesiredAttributes(goal.getAttributes());
     } else {
