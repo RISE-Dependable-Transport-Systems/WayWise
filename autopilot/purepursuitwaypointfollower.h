@@ -76,8 +76,6 @@ signals:
     void distanceOfRouteLeft(double meters);
 
 private:
-
-    PosPoint getCurrentVehiclePosition();
     void updateState();
     void updateControl(const PosPoint& goal);
     WayPointFollowerState mCurrentState;
