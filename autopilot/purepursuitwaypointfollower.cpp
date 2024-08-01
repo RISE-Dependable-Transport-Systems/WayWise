@@ -95,17 +95,7 @@ double PurepursuitWaypointFollower::getCurvatureToPointInENU(const QPointF &poin
     QSharedPointer<VehicleState> vehicleState = isOnVehicle() ? mMovementController->getVehicleState() : mVehicleConnection->getVehicleState();
     PosPoint vehiclePosition = vehicleState->getPosition(mPosTypeUsed);
 
-    return getCurvatureToPointInVehicleFrame(coordinateTransforms::ENUToVehicleFrame(point, vehiclePosition.getXYZ(), vehiclePosition.getYaw()));
-}
-
-double PurepursuitWaypointFollower::getCurvatureToPointInVehicleFrame(const QPointF &point)
-{
-    // ToDo: move to a general place?
-    // calc steering angle (pure pursuit)
-    double distanceSquared = pow(point.x(), 2) + pow(point.y(), 2);
-    double steeringAngleProportional = (2*point.y()) / distanceSquared;
-
-    return -steeringAngleProportional;
+    return vehicleState->getCurvatureToPointInVehicleFrame(coordinateTransforms::ENUToVehicleFrame(point, vehiclePosition.getXYZ(), vehiclePosition.getYaw()));
 }
 
 void PurepursuitWaypointFollower::updateState()
