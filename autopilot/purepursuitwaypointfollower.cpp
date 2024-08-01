@@ -71,7 +71,7 @@ void PurepursuitWaypointFollower::holdPosition()
         mMovementController->setDesiredSteering(0.0);
         mMovementController->setDesiredSpeed(0.0);
     } else {
-        mVehicleConnection->requestVelocityAndYaw({}, mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getYaw());
+        mVehicleConnection->requestVelocityAndYaw({}, mVehicleState->getPosition(mPosTypeUsed).getYaw());
     }
 }
 
@@ -232,12 +232,12 @@ void PurepursuitWaypointFollower::updateControl(const PosPoint &goal)
         // NOTE: we calculate in ENU coordinates
         xyz_t positionDifference = {goal.getX() - mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getX(),
                                     goal.getY() - mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getY(),
-                                    mCurrentState.overrideAltitude - mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getHeight()};
+                                    mCurrentState.overrideAltitude - mVehicleState->getPosition(mPosTypeUsed).getHeight()};
         double positionDiffDistance = sqrtf(positionDifference.x*positionDifference.x + positionDifference.y*positionDifference.y + positionDifference.z*positionDifference.z);
         double velocityFactor = goal.getSpeed() / positionDiffDistance;
 
-        double yawDeg = atan2(goal.getY() - mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getY(),
-                              goal.getX() - mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getX()) * 180.0 / M_PI;
+        double yawDeg = atan2(goal.getY() - mVehicleState->getPosition(mPosTypeUsed).getY(),
+                              goal.getX() - mVehicleState->getPosition(mPosTypeUsed).getX()) * 180.0 / M_PI;
 
         mVehicleConnection->requestVelocityAndYaw({positionDifference.x*velocityFactor, positionDifference.y*velocityFactor, positionDifference.z*velocityFactor}, yawDeg);
     }
