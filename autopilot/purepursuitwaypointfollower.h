@@ -14,7 +14,6 @@
 #include <QPointF>
 #include <QTimer>
 #include "vehicles/vehiclestate.h"
-#include "WayWise/vehicles/truckstate.h"
 #include "vehicles/controller/movementcontroller.h"
 #include "communication/vehicleconnections/vehicleconnection.h"
 #include "autopilot/waypointfollower.h"
@@ -65,8 +64,6 @@ public:
     virtual void resetState() override;
 
     virtual QList<PosPoint> getCurrentRoute() override;
-
-    double getCurvatureWithTrailer(QSharedPointer<TruckState> truckState, const QPointF &point, PosType vehiclePosType);
 
     double getInterpolatedSpeed(const PosPoint &currentGoal, const PosPoint &lastWaypoint, const PosPoint &nextWaypoint);
 

@@ -32,9 +32,13 @@ public:
     // Override the updateOdomPositionAndYaw function to consider the angle of the trailer
     virtual void updateOdomPositionAndYaw(double drivenDistance, PosType usePosType = PosType::odom) override;
 
+    double getCurvatureToPointInVehicleFrame(const QPointF &point) override;
+
     QSharedPointer<TrailerState> getTrailerState() const { return mTrailerState; }
     void setTrailerState(QSharedPointer<TrailerState> newTrailerState) { mTrailerState=newTrailerState; }
 
+    bool getHasTrailer() const ;
+    void setHasTrailer(bool mHasTrailer);
 
 #ifdef QT_GUI_LIB
     // Override or add drawing functions if needed (to draw a truck)
@@ -47,6 +51,9 @@ private:
     double mTrailerAngleDegress; // Angle in Degrees
     double mtrailerwheelbase; // trailer wheelbase
     QSharedPointer<TrailerState> mTrailerState; // trailer created dynamically
+    bool mHasTrailer = false;
+
+    double getCurvatureWithTrailer(const QPointF &point);
 };
 
 #endif // TRUCKSTATE_H
