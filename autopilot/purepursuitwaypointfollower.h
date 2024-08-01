@@ -85,6 +85,7 @@ private:
     PosType mPosTypeUsed = PosType::fused; // The type of position (Odom, GNSS, UWB, ...) that should be used for planning
     QSharedPointer<MovementController> mMovementController;
     QSharedPointer<VehicleConnection> mVehicleConnection;
+    QSharedPointer<VehicleState> mVehicleState;
     QList <PosPoint> mWaypointList;
     unsigned mUpdateStatePeriod_ms = 50;
     QTimer mUpdateStateTimer;
