@@ -93,8 +93,9 @@ void PurepursuitWaypointFollower::resetState()
 double PurepursuitWaypointFollower::getCurvatureToPointInENU(const QPointF &point)
 {
     QSharedPointer<VehicleState> vehicleState = isOnVehicle() ? mMovementController->getVehicleState() : mVehicleConnection->getVehicleState();
+    PosPoint vehiclePosition = vehicleState->getPosition(mPosTypeUsed);
 
-    return getCurvatureToPointInVehicleFrame(coordinateTransforms::ENUToVehicleFrame(point, vehicleState->getPosition(mPosTypeUsed).getXYZ()));
+    return getCurvatureToPointInVehicleFrame(coordinateTransforms::ENUToVehicleFrame(point, vehiclePosition.getXYZ(), vehiclePosition.getYaw()));
 }
 
 double PurepursuitWaypointFollower::getCurvatureToPointInVehicleFrame(const QPointF &point)
