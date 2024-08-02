@@ -5,6 +5,7 @@
  */
 #include "flyui.h"
 #include "ui_flyui.h"
+#include "autopilot/followpoint.h"
 
 FlyUI::FlyUI(QWidget *parent) :
     QWidget(parent),
