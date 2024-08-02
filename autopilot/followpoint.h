@@ -40,7 +40,7 @@ signals:
     void activateEmergencyBrake();
 
 public slots:
-    void updateFollowPointInVehicleFrame(const PosPoint &point);
+    void updatePointToFollowInVehicleFrame(const PosPoint &point);
 
 private:
     const unsigned mFollowPointTimeout_ms = 1000;

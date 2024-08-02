@@ -79,7 +79,7 @@ void FollowPoint::setPosTypeUsed(const PosType &posTypeUsed)
     mPosTypeUsed = posTypeUsed;
 }
 
-void FollowPoint::updateFollowPointInVehicleFrame(const PosPoint &point)
+void FollowPoint::updatePointToFollowInVehicleFrame(const PosPoint &point)
 {
     if ((mStmState == FollowPointSTMstates::FOLLOWING || mStmState == FollowPointSTMstates::WAITING) &&
          (point.getTime() > mCurrentFollowPointInVehicleFrame.getTime())) {
