@@ -65,9 +65,6 @@ public:
 
     virtual QList<PosPoint> getCurrentRoute() override;
 
-    double getCurvatureToPointInENU(const QPointF& point);
-    double getCurvatureToPointInVehicleFrame(const QPointF& point);
-
     double getInterpolatedSpeed(const PosPoint &currentGoal, const PosPoint &lastWaypoint, const PosPoint &nextWaypoint);
 
     PosType getPosTypeUsed() const;
@@ -77,8 +74,6 @@ signals:
     void distanceOfRouteLeft(double meters);
 
 private:
-
-    PosPoint getCurrentVehiclePosition();
     void updateState();
     void updateControl(const PosPoint& goal);
     WayPointFollowerState mCurrentState;
@@ -86,6 +81,7 @@ private:
     PosType mPosTypeUsed = PosType::fused; // The type of position (Odom, GNSS, UWB, ...) that should be used for planning
     QSharedPointer<MovementController> mMovementController;
     QSharedPointer<VehicleConnection> mVehicleConnection;
+    QSharedPointer<VehicleState> mVehicleState;
     QList <PosPoint> mWaypointList;
     unsigned mUpdateStatePeriod_ms = 50;
     QTimer mUpdateStateTimer;

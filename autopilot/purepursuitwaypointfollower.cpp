@@ -9,11 +9,11 @@
 #include "purepursuitwaypointfollower.h"
 #include "communication/parameterserver.h"
 #include "core/geometry.h"
-#include "core/coordinatetransforms.h"
 
 PurepursuitWaypointFollower::PurepursuitWaypointFollower(QSharedPointer<MovementController> movementController)
 {
     mMovementController = movementController;
+    mVehicleState = mMovementController->getVehicleState();
     connect(&mUpdateStateTimer, &QTimer::timeout, this, &PurepursuitWaypointFollower::updateState);
 
     // Provide system parameters to ControlTower
@@ -26,6 +26,7 @@ PurepursuitWaypointFollower::PurepursuitWaypointFollower(QSharedPointer<Movement
 PurepursuitWaypointFollower::PurepursuitWaypointFollower(QSharedPointer<VehicleConnection> vehicleConnection, PosType posTypeUsed)
 {
     mVehicleConnection = vehicleConnection;
+    mVehicleState = mVehicleConnection->getVehicleState();
     connect(&mUpdateStateTimer, &QTimer::timeout, this, &PurepursuitWaypointFollower::updateState);
     setPosTypeUsed(posTypeUsed);
 }
@@ -50,8 +51,7 @@ void PurepursuitWaypointFollower::startFollowingRoute(bool fromBeginning)
 {
     // Activate emergency brake for follow route
     emit activateEmergencyBrake();
-    const auto &vehicleState = (isOnVehicle() ? mMovementController->getVehicleState() : mVehicleConnection->getVehicleState());
-    mCurrentState.overrideAltitude = vehicleState->getPosition(mPosTypeUsed).getHeight();
+    mCurrentState.overrideAltitude = mVehicleState->getPosition(mPosTypeUsed).getHeight();
     qDebug() << "Note: WaypointFollower starts following route. Height info from route is ignored (staying at" << QString::number(mCurrentState.overrideAltitude, 'g', 2) << "m).";
 
     if (fromBeginning || mCurrentState.stmState == WayPointFollowerSTMstates::NONE)
@@ -71,14 +71,14 @@ void PurepursuitWaypointFollower::holdPosition()
         mMovementController->setDesiredSteering(0.0);
         mMovementController->setDesiredSpeed(0.0);
     } else {
-        mVehicleConnection->requestVelocityAndYaw({}, mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getYaw());
+        mVehicleConnection->requestVelocityAndYaw({}, mVehicleState->getPosition(mPosTypeUsed).getYaw());
     }
 }
 
 void PurepursuitWaypointFollower::stop()
 {
     mUpdateStateTimer.stop();
-    (isOnVehicle() ? mMovementController->getVehicleState() : mVehicleConnection->getVehicleState())->setAutopilotRadius(0);
+    mVehicleState->setAutopilotRadius(0);
     holdPosition();
     emit deactivateEmergencyBrake();
 }
@@ -90,26 +90,9 @@ void PurepursuitWaypointFollower::resetState()
     mCurrentState.currentWaypointIndex = mWaypointList.size();
 }
 
-double PurepursuitWaypointFollower::getCurvatureToPointInENU(const QPointF &point)
-{
-    QSharedPointer<VehicleState> vehicleState = isOnVehicle() ? mMovementController->getVehicleState() : mVehicleConnection->getVehicleState();
-
-    return getCurvatureToPointInVehicleFrame(coordinateTransforms::ENUToVehicleFrame(point, vehicleState->getPosition(mPosTypeUsed).getXYZ()));
-}
-
-double PurepursuitWaypointFollower::getCurvatureToPointInVehicleFrame(const QPointF &point)
-{
-    // ToDo: move to a general place?
-    // calc steering angle (pure pursuit)
-    double distanceSquared = pow(point.x(), 2) + pow(point.y(), 2);
-    double steeringAngleProportional = (2*point.y()) / distanceSquared;
-
-    return -steeringAngleProportional;
-}
-
 void PurepursuitWaypointFollower::updateState()
 {
-    QPointF currentVehiclePositionXY = getCurrentVehiclePosition().getPoint();
+    QPointF currentVehiclePositionXY = mVehicleState->getPosition(mPosTypeUsed).getPoint();
 
     switch (mCurrentState.stmState) {
     case WayPointFollowerSTMstates::NONE:
@@ -118,7 +101,7 @@ void PurepursuitWaypointFollower::updateState()
 
     // FOLLOW_ROUTE: waypoints describe a route to be followed waypoint by waypoint
     case WayPointFollowerSTMstates::FOLLOW_ROUTE_INIT:
-        currentVehiclePositionXY = getCurrentVehiclePosition().getPoint();
+        currentVehiclePositionXY = mVehicleState->getPosition(mPosTypeUsed).getPoint();
         if (mWaypointList.size()) {
             mCurrentState.currentWaypointIndex = 0;
             mCurrentState.currentGoal = mWaypointList.at(0);
@@ -129,7 +112,7 @@ void PurepursuitWaypointFollower::updateState()
 
     case WayPointFollowerSTMstates::FOLLOW_ROUTE_GOTO_BEGIN: {
         calculateDistanceOfRouteLeft();
-        currentVehiclePositionXY = getCurrentVehiclePosition().getPoint();
+        currentVehiclePositionXY = mVehicleState->getPosition(mPosTypeUsed).getPoint();
 
         // draw straight line to first point and apply purePursuitRadius to find intersection
         QLineF carToStartLine(currentVehiclePositionXY, mWaypointList.at(0).getPoint());
@@ -144,7 +127,7 @@ void PurepursuitWaypointFollower::updateState()
 
     case WayPointFollowerSTMstates::FOLLOW_ROUTE_FOLLOWING: {
         calculateDistanceOfRouteLeft();
-        currentVehiclePositionXY = getCurrentVehiclePosition().getPoint();
+        currentVehiclePositionXY = mVehicleState->getPosition(mPosTypeUsed).getPoint();
         QPointF currentWaypointPoint = mWaypointList.at(mCurrentState.currentWaypointIndex).getPoint();
 
         if (QLineF(currentVehiclePositionXY, currentWaypointPoint).length() < purePursuitRadius()) // consider previous waypoint as reached
@@ -242,19 +225,19 @@ void PurepursuitWaypointFollower::updateState()
 void PurepursuitWaypointFollower::updateControl(const PosPoint &goal)
 {
     if (isOnVehicle()) {
-        mMovementController->setDesiredSteeringCurvature(getCurvatureToPointInENU(goal.getPoint()));
+        mMovementController->setDesiredSteeringCurvature(mVehicleState->getCurvatureToPointInENU(goal.getPoint(), mPosTypeUsed));
         mMovementController->setDesiredSpeed(goal.getSpeed());
         mMovementController->setDesiredAttributes(goal.getAttributes());
     } else {
         // NOTE: we calculate in ENU coordinates
         xyz_t positionDifference = {goal.getX() - mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getX(),
                                     goal.getY() - mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getY(),
-                                    mCurrentState.overrideAltitude - mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getHeight()};
+                                    mCurrentState.overrideAltitude - mVehicleState->getPosition(mPosTypeUsed).getHeight()};
         double positionDiffDistance = sqrtf(positionDifference.x*positionDifference.x + positionDifference.y*positionDifference.y + positionDifference.z*positionDifference.z);
         double velocityFactor = goal.getSpeed() / positionDiffDistance;
 
-        double yawDeg = atan2(goal.getY() - mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getY(),
-                              goal.getX() - mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getX()) * 180.0 / M_PI;
+        double yawDeg = atan2(goal.getY() - mVehicleState->getPosition(mPosTypeUsed).getY(),
+                              goal.getX() - mVehicleState->getPosition(mPosTypeUsed).getX()) * 180.0 / M_PI;
 
         mVehicleConnection->requestVelocityAndYaw({positionDifference.x*velocityFactor, positionDifference.y*velocityFactor, positionDifference.z*velocityFactor}, yawDeg);
     }
@@ -315,17 +298,9 @@ double PurepursuitWaypointFollower::getInterpolatedSpeed(const PosPoint &current
     return lastWaypoint.getSpeed() + (nextWaypoint.getSpeed()-lastWaypoint.getSpeed())*(x/distanceBetweenWaypoints);
 }
 
-PosPoint PurepursuitWaypointFollower::getCurrentVehiclePosition()
-{
-    if (isOnVehicle())
-        return mMovementController->getVehicleState()->getPosition(mPosTypeUsed);
-    else
-        return mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed);
-}
-
 void PurepursuitWaypointFollower::calculateDistanceOfRouteLeft()
 {
-    double distance = QLineF(getCurrentVehiclePosition().getPoint(), mWaypointList.at(mCurrentState.currentWaypointIndex).getPoint()).length();
+    double distance = QLineF(mVehicleState->getPosition(mPosTypeUsed).getPoint(), mWaypointList.at(mCurrentState.currentWaypointIndex).getPoint()).length();
 
     for (int index = mCurrentState.currentWaypointIndex; index < mWaypointList.size()-1; index++) {
         distance += QLineF(mWaypointList.at(index).getPoint(), mWaypointList.at(index+1).getPoint()).length();
@@ -335,19 +310,17 @@ void PurepursuitWaypointFollower::calculateDistanceOfRouteLeft()
 
 double PurepursuitWaypointFollower::purePursuitRadius()
 {
-    const auto& vehicleState = (isOnVehicle() ? mMovementController->getVehicleState() : mVehicleConnection->getVehicleState());
-
     if (mCurrentState.adaptivePurePursuitRadius) {
-        double dynamicRadius =  mCurrentState.adaptivePurePursuitRadiusCoefficient * vehicleState->getSpeed();
+        double dynamicRadius =  mCurrentState.adaptivePurePursuitRadiusCoefficient * mVehicleState->getSpeed();
 
         if (dynamicRadius > mCurrentState.purePursuitRadius)
-            vehicleState->setAutopilotRadius(dynamicRadius);
+            mVehicleState->setAutopilotRadius(dynamicRadius);
         else
-            vehicleState->setAutopilotRadius(mCurrentState.purePursuitRadius);
+            mVehicleState->setAutopilotRadius(mCurrentState.purePursuitRadius);
     } else
-        vehicleState->setAutopilotRadius(mCurrentState.purePursuitRadius);
+        mVehicleState->setAutopilotRadius(mCurrentState.purePursuitRadius);
 
-    return vehicleState->getAutopilotRadius();
+    return mVehicleState->getAutopilotRadius();
 }
 
 void PurepursuitWaypointFollower::setAdaptivePurePursuitRadiusActive(bool adaptive)

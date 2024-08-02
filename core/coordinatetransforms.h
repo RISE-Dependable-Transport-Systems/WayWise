@@ -23,7 +23,6 @@ struct xyz_t {
     double x;
     double y;
     double z;
-    double yaw = NAN;
 };
 
 namespace coordinateTransforms {
@@ -169,7 +168,7 @@ inline double yawENUtoNED(double yaw_degENU) {
     return yaw_degNED;
 }
 
-inline QPointF ENUToVehicleFrame(const QPointF &point, const xyz_t &vehiclePosition)
+inline QPointF ENUToVehicleFrame(const QPointF &point, const xyz_t &vehiclePosition, const double yawDegENU)
 {
     // 1. transform point to vehicle frame
     QPointF pointInVehicleFrame;
@@ -177,7 +176,7 @@ inline QPointF ENUToVehicleFrame(const QPointF &point, const xyz_t &vehiclePosit
     pointInVehicleFrame.setX(point.x()-vehiclePosition.x);
     pointInVehicleFrame.setY(point.y()-vehiclePosition.y);
     // rotate
-    double currYaw_rad = vehiclePosition.yaw * M_PI / 180.0;
+    double currYaw_rad = yawDegENU * M_PI / 180.0;
     const double newX = cos(-currYaw_rad)*pointInVehicleFrame.x() - sin(-currYaw_rad)*pointInVehicleFrame.y();
     const double newY = sin(-currYaw_rad)*pointInVehicleFrame.x() + cos(-currYaw_rad)*pointInVehicleFrame.y();
     pointInVehicleFrame.setX(newX);

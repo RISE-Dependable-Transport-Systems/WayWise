@@ -119,3 +119,19 @@ double VehicleState::getAutopilotRadius()
 {
     return mAutopilotRadius;
 }
+
+double VehicleState::getCurvatureToPointInVehicleFrame(const QPointF &point)
+{
+    // calc steering angle (pure pursuit)
+    double distanceSquared = pow(point.x(), 2) + pow(point.y(), 2);
+    double steeringAngleProportional = (2*point.y()) / distanceSquared;
+
+    return -steeringAngleProportional;
+}
+
+double VehicleState::getCurvatureToPointInENU(const QPointF &point, PosType type)
+{
+    PosPoint vehiclePosition = mPositionBySource[(int)type];
+
+    return getCurvatureToPointInVehicleFrame(coordinateTransforms::ENUToVehicleFrame(point, vehiclePosition.getXYZ(), vehiclePosition.getYaw()));
+}
