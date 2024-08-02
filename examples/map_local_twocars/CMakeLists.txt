@@ -36,6 +36,7 @@ add_executable(map_local_twocars
     ${WAYWISE_PATH}/communication/vehicleconnections/vehicleconnection.cpp
     ${WAYWISE_PATH}/communication/parameterserver.cpp
     ${WAYWISE_PATH}/autopilot/purepursuitwaypointfollower.cpp
+    ${WAYWISE_PATH}/autopilot/followpoint.cpp
     ${WAYWISE_PATH}/core/coordinatetransforms.h
     ${WAYWISE_PATH}/userinterface/map/mapwidget.cpp
     ${WAYWISE_PATH}/userinterface/map/osmclient.cpp
