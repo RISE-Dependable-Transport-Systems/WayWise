@@ -85,7 +85,6 @@ private:
 
     void updateState();
     void holdPosition();
-    double getCurvatureToPointInVehicleFrame(const QPointF &point);
     bool thePointIsNewResetTheTimer(const PosPoint &point);
     void initializeTimers();
 };
