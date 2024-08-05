@@ -150,7 +150,7 @@ void FollowPoint::updateState()
             mCurrentState.stmState = FollowPointSTMstates::WAITING;
         else {
             if (isOnVehicle()) {
-                mMovementController->setDesiredSteeringCurvature(getCurvatureToPointInVehicleFrame(QPointF(mCurrentState.currentPointToFollow.getX(), mCurrentState.currentPointToFollow.getY())));
+                mMovementController->setDesiredSteeringCurvature(mVehicleState->getCurvatureToPointInVehicleFrame(QPointF(mCurrentState.currentPointToFollow.getX(), mCurrentState.currentPointToFollow.getY())));
                 mMovementController->setDesiredSpeed(mCurrentState.followPointSpeed);
             } else {
                 mVehicleConnection->requestGotoENU(mCurrentState.currentPointToFollow.getXYZ(), true);
@@ -164,16 +164,6 @@ void FollowPoint::updateState()
             mCurrentState.stmState = FollowPointSTMstates::FOLLOWING;
         break;
     }
-}
-
-double FollowPoint::getCurvatureToPointInVehicleFrame(const QPointF &point)
-{
-    // ToDo: move to a general place?
-    // calc steering angle (pure pursuit)
-    double distanceSquared = pow(point.x(), 2) + pow(point.y(), 2);
-    double steeringAngleProportional = (2*point.y()) / distanceSquared;
-
-    return -steeringAngleProportional;
 }
 
 void FollowPoint::setFollowPointDistance(double distance)
