@@ -13,6 +13,25 @@ class ParameterServer : public QObject
 {
     Q_OBJECT
 public:
+    struct IntParameter {
+        std::string name{};
+        int32_t value{};
+    };
+    struct FloatParameter {
+        std::string name{};
+        float value{};
+    };
+    struct CustomParameter {
+        std::string name{};
+        std::string value{};
+    };
+    struct AllParameters {
+        std::vector<IntParameter>
+            intParameters{};
+        std::vector<FloatParameter> floatParameters{};
+        std::vector<CustomParameter> customParameters{};
+    };
+
     static void initialize();
     static ParameterServer* getInstance();
     void updateParameter(std::string parameterName, float parameterValue);
