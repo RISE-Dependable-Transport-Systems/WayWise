@@ -31,11 +31,12 @@ private slots:
 
 private:
     void populateTableWithParameters();
-    bool sendChangedParametersToVehicle();
+    bool updateChangedParameters();
 
     Ui::VehicleParameterUI *ui;
     QSharedPointer<VehicleConnection> mCurrentVehicleConnection;
     ParameterServer::AllParameters mVehicleParameters;
+    ParameterServer::AllParameters mControlTowerParameters;
 };
 
 #endif // VEHICLEPARAMETERUI_H
