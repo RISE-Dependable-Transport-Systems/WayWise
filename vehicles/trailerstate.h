@@ -1,8 +1,8 @@
 /*
  *     Copyright 2024 RISE Sweden
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
- * 
- * Specialisation of ObjectState for tailer state 
+ *
+ * Specialisation of ObjectState for tailer state
  */
 
 #ifndef TRAILERSTATE_H

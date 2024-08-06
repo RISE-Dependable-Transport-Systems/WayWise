@@ -8,15 +8,15 @@
 #include <QDebug>
 
 TrailerState::TrailerState(ObjectID_t id, Qt::GlobalColor color) : ObjectState (id, color)
-{    
+{
 
     mLength = 0.96; // griffin specific
-    mWidth = 0.21;  // griffin specific 
-    
+    mWidth = 0.21;  // griffin specific
+
 }
 
 #ifdef QT_GUI_LIB
-// draw on demand 
+// draw on demand
 void TrailerState::drawTrailer(QPainter &painter, const QTransform &drawTrans, const PosPoint &carPos, double angle)
 {
 
@@ -33,7 +33,7 @@ void TrailerState::drawTrailer(QPainter &painter, const QTransform &drawTrans, c
     // Wheels
     painter.setBrush(QBrush(Qt::darkGray));
     painter.drawRoundedRect(trailer_len - trailer_len / 2.5,-(trailer_w / 2), trailer_len / 9.0, trailer_w, trailer_corner / 3, trailer_corner / 3);
-    
+
     // Draw trailer
     // simple draw a rectangle representing the trailer
     painter.setBrush(getColor());
@@ -42,8 +42,8 @@ void TrailerState::drawTrailer(QPainter &painter, const QTransform &drawTrans, c
 }
 
 void TrailerState::draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected){
-    // draw a trailer indepentently 
-     
+    // draw a trailer indepentently
+
     PosPoint pos = getPosition();
     double x = pos.getX() * 1000.0  ;// convert from m to mm (on the map objects are in mm)
     double y = pos.getY() * 1000.0  ;
@@ -58,7 +58,7 @@ void TrailerState::draw(QPainter &painter, const QTransform &drawTrans, const QT
     // Wheels
     painter.setBrush(QBrush(Qt::darkGray));
     painter.drawRoundedRect(trailer_len - trailer_len / 2.5,-(trailer_w / 2), trailer_len / 9.0, trailer_w, trailer_corner / 3, trailer_corner / 3);
-    
+
     // Draw trailer
     // simple draw a rectangle representing the trailer
     painter.setBrush(getColor());

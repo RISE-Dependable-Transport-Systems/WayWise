@@ -23,19 +23,15 @@ public:
     double getTrailerAngleDegrees() const { return mTrailerAngleDegress; }
     double getTrailerWheelBase() const { return mtrailerwheelbase; }
 
-    void setTrailerAngle(uint16_t raw_angle , double angle_in_radians, double agnle_in_degrees) { 
-        mTrailerRawAngle = raw_angle;
-        mTrailerAngleRadians = angle_in_radians;
-        mTrailerAngleDegress = agnle_in_degrees;
-    }
+    void setTrailerAngle(uint16_t raw_angle , double angle_in_radians, double agnle_in_degrees);
 
     // Override the updateOdomPositionAndYaw function to consider the angle of the trailer
     virtual void updateOdomPositionAndYaw(double drivenDistance, PosType usePosType = PosType::odom) override;
 
     double getCurvatureToPointInVehicleFrame(const QPointF &point) override;
 
-    QSharedPointer<TrailerState> getTrailerState() const { return mTrailerState; }
-    void setTrailerState(QSharedPointer<TrailerState> newTrailerState) { mTrailerState=newTrailerState; }
+    QSharedPointer<TrailerState> getTrailerState() const;
+    void setTrailerState(QSharedPointer<TrailerState> newTrailerState);
 
     bool getHasTrailer() const ;
     void setHasTrailer(bool mHasTrailer);
