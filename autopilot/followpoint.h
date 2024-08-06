@@ -59,6 +59,10 @@ public:
     double getFollowPointSpeed() const;
     void setAutopilotRadius(double radius);
     double getAutopilotRadius() const;
+    void setFollowPointHeight(double height);
+    double getFollowPointHeight() const;
+    void setFollowPointAngleInDeg(double angle);
+    double getFollowPointAngleInDeg() const;
 
 signals:
     void deactivateEmergencyBrake();
