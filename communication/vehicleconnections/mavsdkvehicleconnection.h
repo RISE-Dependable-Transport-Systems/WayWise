@@ -62,7 +62,7 @@ public:
     virtual std::pair<VehicleConnection::Result, int32_t> getIntParameterFromVehicle(std::string name) const override;
     virtual std::pair<VehicleConnection::Result, float> getFloatParameterFromVehicle(std::string name) const override;
     virtual std::pair<VehicleConnection::Result, std::string> getCustomParameterFromVehicle(std::string name) const override;
-    virtual VehicleConnection::AllParameters getAllParametersFromVehicle() override;
+    virtual ParameterServer::AllParameters getAllParametersFromVehicle() override;
     virtual void pollCurrentENUreference() override;
 
     void setConvertLocalPositionsToGlobalBeforeSending(bool convertLocalPositionsToGlobalBeforeSending);

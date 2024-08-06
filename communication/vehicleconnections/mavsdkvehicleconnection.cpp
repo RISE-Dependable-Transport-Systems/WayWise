@@ -775,13 +775,13 @@ std::pair<VehicleConnection::Result, std::string> MavsdkVehicleConnection::getCu
     return std::make_pair(convertParamResult(intParameter.first), intParameter.second);
 };
 
-VehicleConnection::AllParameters MavsdkVehicleConnection::getAllParametersFromVehicle()
+ParameterServer::AllParameters MavsdkVehicleConnection::getAllParametersFromVehicle()
 {
     mavsdk::Param::AllParams mavsdkVehicleParameters = mParam->get_all_params();
-    VehicleConnection::IntParameter intParameter;
-    VehicleConnection::FloatParameter floatParameter;
-    VehicleConnection::CustomParameter customParameter;
-    VehicleConnection::AllParameters allParameters;
+    ParameterServer::IntParameter intParameter;
+    ParameterServer::FloatParameter floatParameter;
+    ParameterServer::CustomParameter customParameter;
+    ParameterServer::AllParameters allParameters;
 
     for (const auto& vehicleParameter : mavsdkVehicleParameters.int_params) {
         intParameter.name = vehicleParameter.name;

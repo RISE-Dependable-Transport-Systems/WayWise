@@ -15,6 +15,7 @@
 #include "vehicles/vehiclestate.h"
 #include "sensors/camera/gimbal.h"
 #include "autopilot/waypointfollower.h"
+#include "communication/parameterserver.h"
 
 class VehicleConnection : public QObject
 {
@@ -29,25 +30,6 @@ public:
         Reboot,
         Shutdown,
         RebootComponentAndKeepItInTheBootloaderUntilUpgraded,
-    };
-
-    struct IntParameter {
-        std::string name{};
-        int32_t value{};
-    };
-    struct FloatParameter {
-        std::string name{};
-        float value{};
-    };
-    struct CustomParameter {
-        std::string name{};
-        std::string value{};
-    };
-    struct AllParameters {
-        std::vector<IntParameter>
-            intParameters{};
-        std::vector<FloatParameter> floatParameters{};
-        std::vector<CustomParameter> customParameters{};
     };
     enum class Result {
         Unknown,
@@ -80,7 +62,7 @@ public:
     virtual std::pair<Result, int32_t> getIntParameterFromVehicle(std::string name) const = 0;
     virtual std::pair<Result, float> getFloatParameterFromVehicle(std::string name) const = 0;
     virtual std::pair<Result, std::string> getCustomParameterFromVehicle(std::string name) const = 0;
-    virtual AllParameters getAllParametersFromVehicle() = 0;
+    virtual ParameterServer::AllParameters getAllParametersFromVehicle() = 0;
     virtual void pollCurrentENUreference() = 0;
 
     void setWaypointFollowerConnectionLocal(const QSharedPointer<WaypointFollower> &waypointFollower);
