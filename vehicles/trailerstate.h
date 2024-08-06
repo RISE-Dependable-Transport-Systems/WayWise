@@ -27,6 +27,8 @@ public:
     void setLength(double length) { mLength = length; }
     double getWidth() const { return mWidth; }
     void setWidth(double width) { mWidth = width; }
+    double getWheelBase() const{ return mWheelBase;}
+    void setWheelBase(double value){ mWheelBase = value;}
 
 #ifdef QT_GUI_LIB
     // drawing functions for trailer (to draw a trailer)
@@ -38,6 +40,7 @@ public:
 private:
     double mLength; // [m]
     double mWidth; // [m]
+    double mWheelBase; //[m]
 };
 
 #endif // TRAILERSTATE_H

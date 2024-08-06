@@ -36,6 +36,12 @@ public:
     bool getHasTrailer() const ;
     void setHasTrailer(bool mHasTrailer);
 
+    double getPurePursuitForwardGain() const{ return mPurePursuitForwardGain;}
+    void setPurePursuitForwardGain(double value){ mPurePursuitForwardGain = value;}
+
+    double getPurePursuitReverseGain() const{ return mPurePursuitReverseGain;}
+    void setPurePursuitReverseGain(double value){ mPurePursuitReverseGain = value;}
+
 #ifdef QT_GUI_LIB
     // Override or add drawing functions if needed (to draw a truck)
     virtual void draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected = true) override;
@@ -48,6 +54,9 @@ private:
     double mtrailerwheelbase; // trailer wheelbase
     QSharedPointer<TrailerState> mTrailerState; // trailer created dynamically
     bool mHasTrailer = false;
+
+    double mPurePursuitForwardGain;
+    double mPurePursuitReverseGain;
 
     double getCurvatureWithTrailer(const QPointF &point);
 };
