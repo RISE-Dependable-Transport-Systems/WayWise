@@ -36,10 +36,13 @@ void VehicleParameterUI::populateTableWithParameters()
 {
     ui->setNewParameterOnVehicleStatus->clear();
 
+    if (ParameterServer::getInstance())
+        mControlTowerParameters = ParameterServer::getInstance()->getAllParameters();
+
     int row = 0;
     int column = 0;
 
-    ui->tableWidget->setRowCount(mVehicleParameters.floatParameters.size()+mVehicleParameters.intParameters.size()+mVehicleParameters.customParameters.size());
+    ui->tableWidget->setRowCount(mVehicleParameters.floatParameters.size()+mVehicleParameters.intParameters.size()+mVehicleParameters.customParameters.size()+ mControlTowerParameters.floatParameters.size());
 
     for (const auto& vehicleIntParameter : mVehicleParameters.intParameters) {
         std::stringstream stream;
@@ -70,11 +73,22 @@ void VehicleParameterUI::populateTableWithParameters()
         ui->tableWidget->setItem(row, column+1, newItemValue);
         row++;
     }
+
+    for (const auto& ControlTowerFloatParameter : mControlTowerParameters.floatParameters) {
+        std::stringstream stream;
+        stream << std::fixed << std::setprecision(6) << ControlTowerFloatParameter.value;
+        std::string value = stream.str();
+        QTableWidgetItem *newItemName = new QTableWidgetItem(tr(ControlTowerFloatParameter.name.c_str()));
+        ui->tableWidget->setItem(row, column, newItemName);
+        QTableWidgetItem *newItemValue = new QTableWidgetItem(tr(value.c_str()));
+        ui->tableWidget->setItem(row, column+1, newItemValue);
+        row++;
+    }
 }
 
 void VehicleParameterUI::on_setNewParametersOnVehicleButton_clicked()
 {
-    if (sendChangedParametersToVehicle()) {
+    if (updateChangedParameters()) {
         ui->setNewParameterOnVehicleStatus->setStyleSheet("QLabel {color : green; }");
         ui->setNewParameterOnVehicleStatus->setText("Vehicle parameters successfully updated!");
     } else {
@@ -83,7 +97,7 @@ void VehicleParameterUI::on_setNewParametersOnVehicleButton_clicked()
     }
 }
 
-bool VehicleParameterUI::sendChangedParametersToVehicle()
+bool VehicleParameterUI::updateChangedParameters()
 {
     if (mCurrentVehicleConnection) {
         int row = 0;
@@ -119,6 +133,17 @@ bool VehicleParameterUI::sendChangedParametersToVehicle()
             }
             row++;
         }
+
+        for (const auto& ControlTowerFloatParameter : mControlTowerParameters.floatParameters) {
+            float tableWidgetParameterValue = ui->tableWidget->item(row, column)->text().toFloat();
+            if (tableWidgetParameterValue != ControlTowerFloatParameter.value) {
+                hasParamChanged = true;
+                if (!ParameterServer::getInstance()->updateParameter(ControlTowerFloatParameter.name, tableWidgetParameterValue))
+                     return false;
+            }
+            row++;
+        }
+
         return hasParamChanged;
     } else
         return false;
