@@ -13,10 +13,11 @@ class ParameterServer : public QObject
 {
     Q_OBJECT
 public:
+    static void initialize();
     static ParameterServer* getInstance();
     void updateParameter(std::string parameterName, float parameterValue);
-    virtual void provideParameter(std::string parameterName, std::function<void(float)> setClassParameterFunction, std::function<float(void)> getClassParameterFunction) = 0;
-    virtual void saveParametersToXmlFile(QString filename) = 0;
+    virtual void provideParameter(std::string parameterName, std::function<void(float)> setClassParameterFunction, std::function<float(void)> getClassParameterFunction);
+    virtual void saveParametersToXmlFile(QString filename);
 
 protected:
     ParameterServer();
