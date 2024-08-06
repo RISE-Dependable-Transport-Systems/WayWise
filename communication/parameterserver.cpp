@@ -56,13 +56,27 @@ void ParameterServer::saveParametersToXmlFile(QString filename)
     stream.setAutoFormatting(true);
     stream.writeStartDocument();
 
-    for (const auto& vehicleParameter : mParameterToClassMapping) {
-        auto parameterName = vehicleParameter.first;
-        auto ParameterValue = vehicleParameter.second.second();
-        stream.writeTextElement(QString::fromStdString(parameterName), QString::number(ParameterValue));
+    for (const auto& parameter : mParameterToClassMapping) {
+        auto parameterName = parameter.first;
+        auto parameterValue = parameter.second.second();
+        stream.writeTextElement(QString::fromStdString(parameterName), QString::number(parameterValue));
     }
 
     stream.writeEndElement();
     stream.writeEndDocument();
     parameterFile.close();
 };
+
+ParameterServer::AllParameters ParameterServer::getAllParameters()
+{
+    ParameterServer::FloatParameter floatParameter;
+    ParameterServer::AllParameters allParameters;
+
+    for (const auto& parameter : mParameterToClassMapping) {
+        floatParameter.name = parameter.first;
+        floatParameter.value = parameter.second.second();
+        allParameters.floatParameters.push_back(floatParameter);
+    }
+
+    return allParameters;
+}
