@@ -15,7 +15,7 @@ FollowPoint::FollowPoint(QSharedPointer<MovementController> movementController)
 
     initializeTimers();
 
-    // Provide system parameters to ControlTower
+    // Provide parameters to ControlTower
     if (ParameterServer::getInstance()) {
         ParameterServer::getInstance()->provideParameter("FP_DIST", std::bind(&FollowPoint::setFollowPointDistance, this, std::placeholders::_1), std::bind(&FollowPoint::getFollowPointDistance, this));
         ParameterServer::getInstance()->provideParameter("FP_MAX_DIST", std::bind(&FollowPoint::setFollowPointMaximumDistance, this, std::placeholders::_1), std::bind(&FollowPoint::getFollowPointMaximumDistance, this));
@@ -37,7 +37,15 @@ FollowPoint::FollowPoint(QSharedPointer<VehicleConnection> vehicleConnection, Po
 
     initializeTimers();
 
-    // ToDo: Provide system parameters to ControlTower
+    // Provide parameters to ControlTower
+    std::string id = std::to_string(mVehicleState->getId());
+    if (ParameterServer::getInstance()) {
+        ParameterServer::getInstance()->provideParameter("FP"+id+"_DIST", std::bind(&FollowPoint::setFollowPointDistance, this, std::placeholders::_1), std::bind(&FollowPoint::getFollowPointDistance, this));
+        ParameterServer::getInstance()->provideParameter("FP"+id+"_MAX_DIST", std::bind(&FollowPoint::setFollowPointMaximumDistance, this, std::placeholders::_1), std::bind(&FollowPoint::getFollowPointMaximumDistance, this));
+        ParameterServer::getInstance()->provideParameter("FP"+id+"_HEIGHT", std::bind(&FollowPoint::setFollowPointHeight, this, std::placeholders::_1), std::bind(&FollowPoint::getFollowPointHeight, this));
+        ParameterServer::getInstance()->provideParameter("FP"+id+"_ANGLE_DEG", std::bind(&FollowPoint::setFollowPointAngleInDeg, this, std::placeholders::_1), std::bind(&FollowPoint::getFollowPointAngleInDeg, this));
+
+    }
 }
 
 void FollowPoint::initializeTimers()
@@ -204,4 +212,24 @@ void FollowPoint::setAutopilotRadius(double radius)
 double FollowPoint::getAutopilotRadius() const
 {
     return mCurrentState.autopilotRadius;
+}
+
+void FollowPoint::setFollowPointHeight(double height)
+{
+    mCurrentState.followPointHeight = height;
+}
+
+double FollowPoint::getFollowPointHeight() const
+{
+    return mCurrentState.followPointHeight;
+}
+
+void FollowPoint::setFollowPointAngleInDeg(double angle)
+{
+    mCurrentState.followPointAngleInDeg = angle;
+}
+
+double FollowPoint::getFollowPointAngleInDeg() const
+{
+    return mCurrentState.followPointAngleInDeg;
 }
