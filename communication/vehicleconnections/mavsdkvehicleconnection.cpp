@@ -939,3 +939,19 @@ QList<PosPoint> MavsdkVehicleConnection::requestCurrentRouteFromVehicle()
 
     return currentRouteOnVehicle;
 }
+
+void MavsdkVehicleConnection::startFollowPointOnVehicle()
+{
+    if (mVehicleType == MAV_TYPE_GROUND_ROVER) // WayWise
+        requestFollowPoint();
+    else // PX4
+        throw  std::logic_error("PX4 vehicles only support follow point on remote connection");
+}
+
+void MavsdkVehicleConnection::stopFollowPointOnVehicle()
+{
+    if (mVehicleType == MAV_TYPE_GROUND_ROVER) // WayWise
+        pauseAutopilotOnVehicle();
+    else // PX4
+        throw  std::logic_error("PX4 vehicles only support follow point on remote connection");
+}
