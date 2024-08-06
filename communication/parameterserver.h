@@ -34,7 +34,7 @@ public:
 
     static void initialize();
     static ParameterServer* getInstance();
-    void updateParameter(std::string parameterName, float parameterValue);
+    bool updateParameter(std::string parameterName, float parameterValue);
     virtual void provideParameter(std::string parameterName, std::function<void(float)> setClassParameterFunction, std::function<float(void)> getClassParameterFunction);
     virtual void saveParametersToXmlFile(QString filename);
 

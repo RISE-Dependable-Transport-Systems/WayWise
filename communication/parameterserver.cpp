@@ -26,11 +26,15 @@ ParameterServer* ParameterServer::getInstance()
     return mInstancePtr;
 }
 
-void ParameterServer::updateParameter(std::string parameterName, float parameterValue)
+bool ParameterServer::updateParameter(std::string parameterName, float parameterValue)
 {
     const std::lock_guard<std::mutex> lock(mMutex);
-    auto setParameterFunction = mParameterToClassMapping.find(parameterName)->second.first;
-    setParameterFunction(parameterValue);
+    if (auto search = mParameterToClassMapping.find(parameterName); search != mParameterToClassMapping.end()) {
+        auto setParameterFunction = search->second.first;
+        setParameterFunction(parameterValue);
+        return true;
+    } else
+        return false;
 }
 
 void ParameterServer::provideParameter(std::string parameterName, std::function<void(float)> setClassParameterFunction, std::function<float(void)> getClassParameterFunction)
