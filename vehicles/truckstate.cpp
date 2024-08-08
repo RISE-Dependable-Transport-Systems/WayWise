@@ -30,39 +30,27 @@ double TruckState::getCurvatureToPointInVehicleFrame(const QPointF &point)
     }
 }
 
-double TruckState::getCurvatureWithTrailer(const QPointF &point)
+double TruckState::getCurvatureWithTrailer(const QPointF &pointInVehicleFrame)
 {
-    // The point has gone through coordinateTransforms::ENUToVehicleFrame -> vehiclePos is 0,0 with 0 rad yaw
-    // Calculations should be done in vehicle frame
-
-    const PosPoint vehiclePos; // = getPosition(vehiclePosType);
-    double currYaw_rad = vehiclePos.getYaw() * M_PI / 180.0;
     double measuredTrailerAngle = getTrailerAngleRadians() ;
     double l2 = mTrailerState->getWheelBase(); // trailer wheelbase in meters
 
     if (getSpeed()> 0 ){
-        QPointF pointInVehicleFrame;
-        pointInVehicleFrame.setX(point.x()-vehiclePos.getX());
-        pointInVehicleFrame.setY(point.y()-vehiclePos.getY());
-        double theta_err =  atan2(pointInVehicleFrame.y(), pointInVehicleFrame.x()) - currYaw_rad;
+        double theta_err =  atan2(pointInVehicleFrame.y(), pointInVehicleFrame.x());
         double desired_hitch_angle = atan(2*l2*sin(theta_err)); // desired trailer/hitch angle
         double k = getPurePursuitForwardGain(); //gain
         return  k*( measuredTrailerAngle - desired_hitch_angle ) - ( sin(measuredTrailerAngle)/ (l2)) ;
 
     } else {
-        double trailerYaw = currYaw_rad - measuredTrailerAngle ;
-        double delta_x_ = (l2) * cos( trailerYaw);
-        double delta_y = (l2) * sin( trailerYaw);
-        double trailerPositionx = vehiclePos.getX() - delta_x_;
-        double trailerPositiony = vehiclePos.getY() - delta_y;
+        double trailerYawInVehicleFrame = -measuredTrailerAngle ;
+        double trailerPositionInVehicleFrame_x = -(l2) * cos(trailerYawInVehicleFrame);
+        double trailerPositionInVehicleFrame_y = -(l2) * sin(trailerYawInVehicleFrame);
 
-        QPointF pointInTrailerFrame;
-        pointInTrailerFrame.setX(point.x()-trailerPositionx);
-        pointInTrailerFrame.setY(point.y()-trailerPositiony);
-        double theta_err =  atan2(pointInTrailerFrame.y(), pointInTrailerFrame.x()) - trailerYaw;
+        double theta_err =  atan2(pointInVehicleFrame.y()-trailerPositionInVehicleFrame_y,
+            pointInVehicleFrame.x()-trailerPositionInVehicleFrame_x) - trailerYawInVehicleFrame;
         double desired_hitch_angle = atan(2*l2*sin(theta_err) / getAutopilotRadius() );
         double k = getPurePursuitReverseGain(); // gain
-        return  k*( measuredTrailerAngle - desired_hitch_angle ) - ( sin(measuredTrailerAngle)/ (l2)) ;
+        return k*( measuredTrailerAngle - desired_hitch_angle ) - ( sin(measuredTrailerAngle)/ (l2));
     }
 }
 
