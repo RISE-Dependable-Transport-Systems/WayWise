@@ -125,41 +125,49 @@ bool DriveUI::getIsDriveUiVisible()
 
 void DriveUI::keyPressEvent(QKeyEvent *event)
 {
-    switch (event->key()) {
-    case Qt::Key_Up:
-        mArrowKeyStates.upPressed = true;
-        break;
-    case Qt::Key_Down:
-        mArrowKeyStates.downPressed = true;
-        break;
-    case Qt::Key_Left:
-        mArrowKeyStates.leftPressed = true;
-        break;
-    case Qt::Key_Right:
-        mArrowKeyStates.rightPressed = true;
-        break;
-    default:
-        break;
+    if (isDriveUiVisible) {
+        switch (event->key()) {
+        case Qt::Key_Up:
+            mArrowKeyStates.upPressed = true;
+            break;
+        case Qt::Key_Down:
+            mArrowKeyStates.downPressed = true;
+            break;
+        case Qt::Key_Left:
+            mArrowKeyStates.leftPressed = true;
+            break;
+        case Qt::Key_Right:
+            mArrowKeyStates.rightPressed = true;
+            break;
+        default:
+            break;
+        }
+    } else {
+        event->ignore();
     }
 }
 
 void DriveUI::keyReleaseEvent(QKeyEvent *event)
 {
-    switch (event->key()) {
-    case Qt::Key_Up:
-        mArrowKeyStates.upPressed = false;
-        break;
-    case Qt::Key_Down:
-        mArrowKeyStates.downPressed = false;
-        break;
-    case Qt::Key_Left:
-        mArrowKeyStates.leftPressed = false;
-        break;
-    case Qt::Key_Right:
-        mArrowKeyStates.rightPressed = false;
-        break;
-    default:
-        break;
+    if (isDriveUiVisible) {
+        switch (event->key()) {
+        case Qt::Key_Up:
+            mArrowKeyStates.upPressed = false;
+            break;
+        case Qt::Key_Down:
+            mArrowKeyStates.downPressed = false;
+            break;
+        case Qt::Key_Left:
+            mArrowKeyStates.leftPressed = false;
+            break;
+        case Qt::Key_Right:
+            mArrowKeyStates.rightPressed = false;
+            break;
+        default:
+            break;
+        }
+    } else {
+        event->ignore();
     }
 }
 
