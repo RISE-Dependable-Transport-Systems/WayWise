@@ -112,6 +112,17 @@ void DriveUI::on_apStopButton_clicked()
     }
 }
 
+
+void DriveUI::setIsDriveUiVisible(const bool value)
+{
+    isDriveUiVisible = value;
+}
+
+bool DriveUI::getIsDriveUiVisible()
+{
+    return isDriveUiVisible;
+}
+
 void DriveUI::keyPressEvent(QKeyEvent *event)
 {
     switch (event->key()) {

@@ -29,6 +29,9 @@ public:
     void setCurrentVehicleConnection(const QSharedPointer<VehicleConnection> &currentVehicleConnection);
     void gotRouteForAutopilot(const QList<PosPoint>& route);
 
+    void setIsDriveUiVisible(const bool value);
+    bool getIsDriveUiVisible();
+
 private slots:
     void on_apRestartButton_clicked();
 
@@ -56,6 +59,7 @@ private:
     struct {bool upPressed, downPressed, leftPressed, rightPressed;} mArrowKeyStates;
     struct {double throttle, steering;} mKeyControlState;
     QTimer mKeyControlTimer;
+    bool isDriveUiVisible;
 
     double getMaxSignedStepFromValueTowardsGoal(double value, double goal, double maxStepSize);
 
