@@ -229,7 +229,7 @@ void FlyUI::on_pollENUrefButton_clicked()
 
 void FlyUI::updateFollowVehicleIdComboBox(const QList<QSharedPointer<MavsdkVehicleConnection>> &vehicleConnectionList)
 {
-    int previousCurrentIndex = ui->followVehicleIdCombo->currentIndex() < 0 ? 0 : ui->followVehicleIdCombo->currentIndex();
+    auto currentVehicleId = QString(ui->followVehicleIdCombo->currentText()).isEmpty() ? 0 : ui->followVehicleIdCombo->currentText();
 
     ui->followVehicleIdCombo->clear();
     for (const auto& vehicleConnection : vehicleConnectionList) {
@@ -238,11 +238,14 @@ void FlyUI::updateFollowVehicleIdComboBox(const QList<QSharedPointer<MavsdkVehic
                 ui->followVehicleIdCombo->addItem(QString::number(vehicleConnection->getVehicleState()->getId()),
                                                   QVariant::fromValue(vehicleConnection));
     }
-    ui->followVehicleIdCombo->setCurrentIndex((previousCurrentIndex < ui->followVehicleIdCombo->count()) ? previousCurrentIndex : (ui->followVehicleIdCombo->count()-1));
+    ui->followVehicleIdCombo->setCurrentIndex(ui->followVehicleIdCombo->findText(currentVehicleId) < 0 ? 0 : ui->followVehicleIdCombo->findText(currentVehicleId));
 }
 
 void FlyUI::updateVehicleIdToFollow(int index)
 {
+    if (mCurrentVehicleConnection)
+        mCurrentVehicleConnection->stopFollowPoint();
+
     if (index == -1)
         return;
 
