@@ -29,7 +29,9 @@ ParameterServer* ParameterServer::getInstance()
 bool ParameterServer::updateParameter(std::string parameterName, float parameterValue)
 {
     const std::lock_guard<std::mutex> lock(mMutex);
-    if (auto search = mParameterToClassMapping.find(parameterName); search != mParameterToClassMapping.end()) {
+    auto search = mParameterToClassMapping.find(parameterName);
+
+    if (search != mParameterToClassMapping.end()) {
         auto setParameterFunction = search->second.first;
         setParameterFunction(parameterValue);
         return true;
@@ -48,8 +50,10 @@ void ParameterServer::saveParametersToXmlFile(QString filename)
     const std::lock_guard<std::mutex> lock(mMutex);
     QFile parameterFile(filename);
 
-    if (!parameterFile.open(QIODevice::WriteOnly))
-        qDebug() << "Could not save parameters";
+    if (!parameterFile.open(QIODevice::WriteOnly)) {
+        qDebug() << "Failed to open file, could not save parameters";
+        return;
+    }
 
     QXmlStreamWriter stream(&parameterFile);
     stream.setCodec("UTF-8");
