@@ -17,21 +17,22 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
     // Set up param plugin
     mParam.reset(new mavsdk::Param(mSystem));
 
-    // Setup gimbal
-    mComponentDiscoveredHandle = mSystem->subscribe_component_discovered([this](mavsdk::System::ComponentType){
-        if (mSystem->has_gimbal() && mGimbal.isNull()) {
-            mGimbal = QSharedPointer<MavsdkGimbal>::create(mSystem);
-            emit detectedGimbal(mGimbal);
-        }
-    });
-    if (mSystem->has_gimbal() && mGimbal.isNull()) // Gimbal might have been discovered before callback was registered
-        mGimbal = QSharedPointer<MavsdkGimbal>::create(mSystem);
-
     switch (mVehicleType) {
     case MAV_TYPE_QUADROTOR:
         qDebug() << "MavsdkVehicleConnection: we are talking to a MAV_TYPE_QUADROTOR / PX4.";
         mVehicleState = QSharedPointer<CopterState>::create(mSystem->get_system_id());
         mVehicleState->setName("Copter " + QString::number(mSystem->get_system_id()));
+
+        // Setup gimbal
+        mComponentDiscoveredHandle = mSystem->subscribe_component_discovered([this](mavsdk::System::ComponentType component_type){
+            if (component_type == mavsdk::System::ComponentType::GIMBAL && mSystem->has_gimbal() && mGimbal.isNull()) {
+                mGimbal = QSharedPointer<MavsdkGimbal>::create(mSystem);
+                emit detectedGimbal(mGimbal);
+            }
+        });
+        if (mSystem->has_gimbal() && mGimbal.isNull()) // Gimbal might have been discovered before callback was registered
+            mGimbal = QSharedPointer<MavsdkGimbal>::create(mSystem);
+
         break;
     case MAV_TYPE_GROUND_ROVER:
         {
