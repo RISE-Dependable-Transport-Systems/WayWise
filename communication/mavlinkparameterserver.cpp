@@ -41,8 +41,10 @@ void MavlinkParameterServer::saveParametersToXmlFile(QString filename)
     mavsdk::ParamServer::AllParams parameters = mMavsdkParamServer->retrieve_all_params();
     QFile parameterFile(filename);
 
-    if (!parameterFile.open(QIODevice::WriteOnly))
-        qDebug() << "Could not save parameters";
+    if (!parameterFile.open(QIODevice::WriteOnly)) {
+        qDebug() << "Failed to open file, could not save parameters";
+        return;
+    }
 
     QXmlStreamWriter stream(&parameterFile);
     stream.setCodec("UTF-8");
