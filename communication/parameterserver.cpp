@@ -26,23 +26,42 @@ ParameterServer* ParameterServer::getInstance()
     return mInstancePtr;
 }
 
-bool ParameterServer::updateParameter(std::string parameterName, float parameterValue)
+bool ParameterServer::updateIntParameter(std::string parameterName, int parameterValue)
 {
     const std::lock_guard<std::mutex> lock(mMutex);
-    auto search = mParameterToClassMapping.find(parameterName);
+    auto search = mIntParameterToClassMapping.find(parameterName);
 
-    if (search != mParameterToClassMapping.end()) {
-        auto setParameterFunction = search->second.first;
+    if (search != mIntParameterToClassMapping.end()) {
+        std::function<void(int)> setParameterFunction = search->second.first;
         setParameterFunction(parameterValue);
         return true;
     } else
         return false;
 }
 
-void ParameterServer::provideParameter(std::string parameterName, std::function<void(float)> setClassParameterFunction, std::function<float(void)> getClassParameterFunction)
+bool ParameterServer::updateFloatParameter(std::string parameterName, float parameterValue)
 {
     const std::lock_guard<std::mutex> lock(mMutex);
-    mParameterToClassMapping.insert_or_assign(parameterName, std::make_pair(setClassParameterFunction, getClassParameterFunction));
+    auto search = mFloatParameterToClassMapping.find(parameterName);
+
+    if (search != mFloatParameterToClassMapping.end()) {
+        std::function<void(float)> setParameterFunction = search->second.first;
+        setParameterFunction(parameterValue);
+        return true;
+    } else
+        return false;
+}
+
+void ParameterServer::provideIntParameter(std::string parameterName, std::function<void(int)> setClassParameterFunction, std::function<int(void)> getClassParameterFunction)
+{
+    const std::lock_guard<std::mutex> lock(mMutex);
+    mIntParameterToClassMapping.insert_or_assign(parameterName, std::make_pair(setClassParameterFunction, getClassParameterFunction));
+};
+
+void ParameterServer::provideFloatParameter(std::string parameterName, std::function<void(float)> setClassParameterFunction, std::function<float(void)> getClassParameterFunction)
+{
+    const std::lock_guard<std::mutex> lock(mMutex);
+    mFloatParameterToClassMapping.insert_or_assign(parameterName, std::make_pair(setClassParameterFunction, getClassParameterFunction));
 };
 
 void ParameterServer::saveParametersToXmlFile(QString filename)
@@ -60,9 +79,15 @@ void ParameterServer::saveParametersToXmlFile(QString filename)
     stream.setAutoFormatting(true);
     stream.writeStartDocument();
 
-    for (const auto& parameter : mParameterToClassMapping) {
-        auto parameterName = parameter.first;
-        auto parameterValue = parameter.second.second();
+    for (const auto& parameter : mIntParameterToClassMapping) {
+        std::string parameterName = parameter.first;
+        int parameterValue = parameter.second.second();
+        stream.writeTextElement(QString::fromStdString(parameterName), QString::number(parameterValue));
+    }
+
+    for (const auto& parameter : mFloatParameterToClassMapping) {
+        std::string parameterName = parameter.first;
+        float parameterValue = parameter.second.second();
         stream.writeTextElement(QString::fromStdString(parameterName), QString::number(parameterValue));
     }
 
@@ -73,10 +98,17 @@ void ParameterServer::saveParametersToXmlFile(QString filename)
 
 ParameterServer::AllParameters ParameterServer::getAllParameters()
 {
+    ParameterServer::IntParameter intParameter;
     ParameterServer::FloatParameter floatParameter;
     ParameterServer::AllParameters allParameters;
 
-    for (const auto& parameter : mParameterToClassMapping) {
+    for (const auto& parameter : mIntParameterToClassMapping) {
+        intParameter.name = parameter.first;
+        intParameter.value = parameter.second.second();
+        allParameters.intParameters.push_back(intParameter);
+    }
+
+    for (const auto& parameter : mFloatParameterToClassMapping) {
         floatParameter.name = parameter.first;
         floatParameter.value = parameter.second.second();
         allParameters.floatParameters.push_back(floatParameter);

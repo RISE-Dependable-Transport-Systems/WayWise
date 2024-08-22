@@ -34,10 +34,17 @@ void MavlinkParameterServer::initialize(std::shared_ptr<mavsdk::ServerComponent>
  * @param parameterName
  * Parameter names must be no more than 16 ASCII characters
  */
-void MavlinkParameterServer::provideParameter(std::string parameterName, std::function<void(float)> setClassParameterFunction, std::function<float(void)> getClassParameterFunction)
+void MavlinkParameterServer::provideIntParameter(std::string parameterName, std::function<void(int)> setClassParameterFunction, std::function<int(void)> getClassParameterFunction)
 {
     const std::lock_guard<std::mutex> lock(mMutex);
-    mParameterToClassMapping.insert_or_assign(parameterName, std::make_pair(setClassParameterFunction, getClassParameterFunction));
+    mIntParameterToClassMapping.insert_or_assign(parameterName, std::make_pair(setClassParameterFunction, getClassParameterFunction));
+    mMavsdkParamServer->provide_param_int(parameterName, getClassParameterFunction());
+};
+
+void MavlinkParameterServer::provideFloatParameter(std::string parameterName, std::function<void(float)> setClassParameterFunction, std::function<float(void)> getClassParameterFunction)
+{
+    const std::lock_guard<std::mutex> lock(mMutex);
+    mFloatParameterToClassMapping.insert_or_assign(parameterName, std::make_pair(setClassParameterFunction, getClassParameterFunction));
     mMavsdkParamServer->provide_param_float(parameterName, getClassParameterFunction());
 };
 
