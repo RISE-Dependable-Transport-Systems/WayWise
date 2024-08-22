@@ -19,6 +19,7 @@
 //#include "autopilot/purepursuitwaypointfollower.h"
 #include "vehicles/copterstate.h"
 #include "vehicles/carstate.h"
+#include "vehicles/truckstate.h"
 #include "sensors/camera/mavsdkgimbal.h"
 #include <mavsdk/mavsdk.h>
 #include <mavsdk/plugins/telemetry/telemetry.h>
@@ -96,6 +97,7 @@ private:
     VehicleConnection::Result convertParamResult(mavsdk::Param::Result result) const;
     QString convertMissionRawResult(mavsdk::MissionRaw::Result result) const;
     QString convertMavlinkPassthroughResult(mavsdk::MavlinkPassthrough::Result result) const;
+    void setupTruckState();
 
     // VehicleConnection interface
 protected:
