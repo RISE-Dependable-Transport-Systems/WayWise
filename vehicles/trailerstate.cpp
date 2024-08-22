@@ -13,6 +13,8 @@ TrailerState::TrailerState(ObjectID_t id, Qt::GlobalColor color) : ObjectState (
     mLength = 0.96; // griffin specific
     mWidth = 0.21;  // griffin specific
 
+    ObjectState::setWaywiseObjectType(WAYWISE_OBJECT_TYPE_TRAILER);
+
 }
 
 #ifdef QT_GUI_LIB

@@ -13,7 +13,7 @@
 
 CarState::CarState(ObjectID_t id, Qt::GlobalColor color) : VehicleState(id, color)
 {
-
+    ObjectState::setWaywiseObjectType(WAYWISE_OBJECT_TYPE_CAR);
 }
 
 #ifdef QT_GUI_LIB

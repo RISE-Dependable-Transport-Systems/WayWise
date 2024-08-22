@@ -12,6 +12,7 @@
 TruckState::TruckState(ObjectID_t id, Qt::GlobalColor color) : CarState(id, color)
 {
     // Additional initialization if needed for the TruckState
+    ObjectState::setWaywiseObjectType(WAYWISE_OBJECT_TYPE_TRUCK);
 }
 
 void TruckState::updateOdomPositionAndYaw(double drivenDistance, PosType usePosType)
