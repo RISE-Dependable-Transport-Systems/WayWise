@@ -16,7 +16,8 @@ class MavlinkParameterServer : public ParameterServer
     Q_OBJECT
 public:
     static void initialize(std::shared_ptr<mavsdk::ServerComponent> serverComponent);
-    virtual void provideParameter(std::string parameterName, std::function<void(float)> setClassParameterFunction, std::function<float(void)> getClassParameterFunction) override;
+    virtual void provideIntParameter(std::string parameterName, std::function<void(int)> setClassParameterFunction, std::function<int(void)> getClassParameterFunction) override;
+    virtual void provideFloatParameter(std::string parameterName, std::function<void(float)> setClassParameterFunction, std::function<float(void)> getClassParameterFunction) override;
     virtual void saveParametersToXmlFile(QString filename) override;
 
 protected:

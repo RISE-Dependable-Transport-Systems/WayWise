@@ -42,12 +42,11 @@ void VehicleParameterUI::populateTableWithParameters()
     int row = 0;
     int column = 0;
 
-    ui->tableWidget->setRowCount(mVehicleParameters.floatParameters.size()+mVehicleParameters.intParameters.size()+mVehicleParameters.customParameters.size()+ mControlTowerParameters.floatParameters.size());
+    ui->tableWidget->setRowCount(mVehicleParameters.floatParameters.size()+mVehicleParameters.intParameters.size()+mVehicleParameters.customParameters.size()+
+        mControlTowerParameters.floatParameters.size()+mControlTowerParameters.intParameters.size());
 
     for (const auto& vehicleIntParameter : mVehicleParameters.intParameters) {
-        std::stringstream stream;
-        stream << std::fixed << std::setprecision(0) << vehicleIntParameter.value;
-        std::string value = stream.str();
+        std::string value = std::to_string(vehicleIntParameter.value);
         QTableWidgetItem *newItemName = new QTableWidgetItem(tr(vehicleIntParameter.name.c_str()));
         ui->tableWidget->setItem(row, column, newItemName);
         QTableWidgetItem *newItemValue = new QTableWidgetItem(tr(value.c_str()));
@@ -70,6 +69,15 @@ void VehicleParameterUI::populateTableWithParameters()
         QTableWidgetItem *newItemName = new QTableWidgetItem(tr(vehicleCustomParameter.name.c_str()));
         ui->tableWidget->setItem(row, column, newItemName);
         QTableWidgetItem *newItemValue = new QTableWidgetItem(tr(vehicleCustomParameter.value.c_str()));
+        ui->tableWidget->setItem(row, column+1, newItemValue);
+        row++;
+    }
+
+    for (const auto& ControlTowerIntParameter : mControlTowerParameters.intParameters) {
+        std::string value = std::to_string(ControlTowerIntParameter.value);
+        QTableWidgetItem *newItemName = new QTableWidgetItem(tr(ControlTowerIntParameter.name.c_str()));
+        ui->tableWidget->setItem(row, column, newItemName);
+        QTableWidgetItem *newItemValue = new QTableWidgetItem(tr(value.c_str()));
         ui->tableWidget->setItem(row, column+1, newItemValue);
         row++;
     }
@@ -104,42 +112,57 @@ bool VehicleParameterUI::updateChangedParameters()
         int column = 1;
         bool hasParamChanged = false;
 
-        for (const auto& vehicleIntParameter : mVehicleParameters.intParameters) {
+        for (auto& vehicleIntParameter : mVehicleParameters.intParameters) {
             int32_t tableWidgetParameterValue = ui->tableWidget->item(row, column)->text().toInt();
             if (tableWidgetParameterValue != vehicleIntParameter.value) {
                 hasParamChanged = true;
                 if (mCurrentVehicleConnection->setIntParameterOnVehicle(vehicleIntParameter.name.c_str(), tableWidgetParameterValue) != VehicleConnection::Result::Success)
                     return false;
+                vehicleIntParameter.value = tableWidgetParameterValue;
             }
             row++;
         }
 
-        for (const auto& vehicleFloatParameter : mVehicleParameters.floatParameters) {
+        for (auto& vehicleFloatParameter : mVehicleParameters.floatParameters) {
             float tableWidgetParameterValue = ui->tableWidget->item(row, column)->text().toFloat();
             if (tableWidgetParameterValue != vehicleFloatParameter.value) {
                 hasParamChanged = true;
                 if (mCurrentVehicleConnection->setFloatParameterOnVehicle(vehicleFloatParameter.name.c_str(), tableWidgetParameterValue) != VehicleConnection::Result::Success)
-                     return false;
+                    return false;
+                vehicleFloatParameter.value = tableWidgetParameterValue;
             }
             row++;
         }
 
-        for (const auto& vehicleCustomParameter : mVehicleParameters.customParameters) {
+        for (auto& vehicleCustomParameter : mVehicleParameters.customParameters) {
             std::string tableWidgetParameterValue = ui->tableWidget->item(row, column)->text().toStdString();
             if (tableWidgetParameterValue != vehicleCustomParameter.value) {
                 hasParamChanged = true;
                 if (mCurrentVehicleConnection->setCustomParameterOnVehicle(vehicleCustomParameter.name.c_str(), tableWidgetParameterValue) != VehicleConnection::Result::Success)
-                     return false;
+                    return false;
+                vehicleCustomParameter.value = tableWidgetParameterValue;
             }
             row++;
         }
 
-        for (const auto& ControlTowerFloatParameter : mControlTowerParameters.floatParameters) {
+        for (auto& ControlTowerIntParameter : mControlTowerParameters.intParameters) {
+            float tableWidgetParameterValue = ui->tableWidget->item(row, column)->text().toInt();
+            if (tableWidgetParameterValue != ControlTowerIntParameter.value) {
+                hasParamChanged = true;
+                if (!ParameterServer::getInstance()->updateIntParameter(ControlTowerIntParameter.name, tableWidgetParameterValue))
+                    return false;
+                ControlTowerIntParameter.value = tableWidgetParameterValue;
+            }
+            row++;
+        }
+
+        for (auto& ControlTowerFloatParameter : mControlTowerParameters.floatParameters) {
             float tableWidgetParameterValue = ui->tableWidget->item(row, column)->text().toFloat();
             if (tableWidgetParameterValue != ControlTowerFloatParameter.value) {
                 hasParamChanged = true;
-                if (!ParameterServer::getInstance()->updateParameter(ControlTowerFloatParameter.name, tableWidgetParameterValue))
-                     return false;
+                if (!ParameterServer::getInstance()->updateFloatParameter(ControlTowerFloatParameter.name, tableWidgetParameterValue))
+                    return false;
+                ControlTowerFloatParameter.value = tableWidgetParameterValue;
             }
             row++;
         }
