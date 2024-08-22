@@ -21,6 +21,14 @@
 
 #include "core/pospoint.h"
 #include <math.h>
+typedef enum WAYWISE_OBJECT_TYPE
+{
+    WAYWISE_OBJECT_TYPE_GENERIC=0, /* Generic object | */
+    WAYWISE_OBJECT_TYPE_CAR=1, /* Car. | */
+    WAYWISE_OBJECT_TYPE_TRUCK=2, /* Truck | */
+    WAYWISE_OBJECT_TYPE_TRAILER=3, /* Trailer | */
+    WAYWISE_OBJECT_TYPE_QUADCOPTER=4, /* Quadcopter | */
+} WAYWISE_OBJECT_TYPE;
 
 class ObjectState : public QObject
 {
@@ -42,6 +50,8 @@ public:
     void setName(const QString& name) { mName = name; }
     Qt::GlobalColor getColor() const { return mColor; }
     void setColor(const Qt::GlobalColor color) { mColor = color; }
+    WAYWISE_OBJECT_TYPE getWaywiseObjectType() const { return mWaywiseObjectType; }
+    void setWaywiseObjectType(const WAYWISE_OBJECT_TYPE value) { mWaywiseObjectType = value; }
 
     // Dynamic state
     virtual PosPoint getPosition() const { return mPosition; }
@@ -67,6 +77,7 @@ private:
     QString mName;
     Qt::GlobalColor mColor;
     bool mDrawStatusText = true;
+    WAYWISE_OBJECT_TYPE mWaywiseObjectType = WAYWISE_OBJECT_TYPE_GENERIC;
 
 protected:
     // Dynamic state
