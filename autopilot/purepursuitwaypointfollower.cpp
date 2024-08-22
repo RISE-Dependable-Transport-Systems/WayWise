@@ -10,6 +10,7 @@
 #include "communication/parameterserver.h"
 #include "core/geometry.h"
 
+
 PurepursuitWaypointFollower::PurepursuitWaypointFollower(QSharedPointer<MovementController> movementController)
 {
     mMovementController = movementController;

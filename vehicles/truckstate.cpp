@@ -1,7 +1,7 @@
 /*
  *     Copyright 2024 RISE Sweden
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
- * 
+ *
  * Specific implementation of VehicleState for car-type (ackermann) vehicles, storing all (dynamic and static) state
  */
 
@@ -19,6 +19,70 @@ void TruckState::updateOdomPositionAndYaw(double drivenDistance, PosType usePosT
     // just Call the base class
     CarState::updateOdomPositionAndYaw(drivenDistance, usePosType);
 }
+
+double TruckState::getCurvatureToPointInVehicleFrame(const QPointF &point)
+{
+    if (mHasTrailer)
+        return getCurvatureWithTrailer(point);
+    else {
+        // just Call the base class
+        return CarState::getCurvatureToPointInVehicleFrame(point);
+    }
+}
+
+double TruckState::getCurvatureWithTrailer(const QPointF &pointInVehicleFrame)
+{
+    double measuredTrailerAngle = getTrailerAngleRadians() ;
+    double l2 = mTrailerState->getWheelBase(); // trailer wheelbase in meters
+
+    if (getSpeed()> 0 ){
+        double theta_err =  atan2(pointInVehicleFrame.y(), pointInVehicleFrame.x());
+        double desired_hitch_angle = atan(2*l2*sin(theta_err)); // desired trailer/hitch angle
+        double gain = getPurePursuitForwardGain();
+        double curve = gain *( measuredTrailerAngle - desired_hitch_angle ) - ( sin(measuredTrailerAngle)/ (l2)) ;
+        return curve/cos(measuredTrailerAngle);
+    } else {
+        double trailerYawInVehicleFrame = -measuredTrailerAngle ;
+        double trailerPositionInVehicleFrame_x = -(l2) * cos(trailerYawInVehicleFrame);
+        double trailerPositionInVehicleFrame_y = -(l2) * sin(trailerYawInVehicleFrame);
+
+        double theta_err =  atan2(pointInVehicleFrame.y()-trailerPositionInVehicleFrame_y,
+            pointInVehicleFrame.x()-trailerPositionInVehicleFrame_x) - trailerYawInVehicleFrame;
+        double desired_hitch_angle = atan(2*l2*sin(theta_err) / getAutopilotRadius() );
+        double gain = getPurePursuitReverseGain();
+        double curve = gain *( measuredTrailerAngle - desired_hitch_angle ) - ( sin(measuredTrailerAngle)/ (l2));
+        return curve/cos(measuredTrailerAngle);
+    }
+}
+
+bool TruckState::getHasTrailer() const
+{
+    return mHasTrailer;
+}
+
+void TruckState::setHasTrailer(bool hasTrailer)
+{
+    mHasTrailer = hasTrailer;
+}
+
+QSharedPointer<TrailerState> TruckState::getTrailerState() const
+{
+    return mTrailerState;
+}
+
+void TruckState::setTrailerState(QSharedPointer<TrailerState> newTrailerState)
+{
+    mTrailerState = newTrailerState;
+    mHasTrailer = true;
+}
+
+void TruckState::setTrailerAngle(uint16_t raw_angle , double angle_in_radians, double agnle_in_degrees)
+{
+    mTrailerRawAngle = raw_angle;
+    mTrailerAngleRadians = angle_in_radians;
+    mTrailerAngleDegress = agnle_in_degrees;
+}
+
 
 #ifdef QT_GUI_LIB
 void TruckState::draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected)
@@ -72,7 +136,7 @@ void TruckState::draw(QPainter &painter, const QTransform &drawTrans, const QTra
     // Hull
     painter.setBrush(col_hull);
     painter.drawRoundedRect(-truck_len / 6.0, -((truck_w - truck_len / 20.0) / 2.0), truck_len - (truck_len / 20.0), truck_w - truck_len / 20.0, truck_corner, truck_corner);
-    
+
     // draw trailer if exist
     if (!mTrailerState.isNull()) {
         double angleInDegrees = getTrailerAngleDegrees();
@@ -83,14 +147,14 @@ void TruckState::draw(QPainter &painter, const QTransform &drawTrans, const QTra
     }
 
     painter.restore();
-    
+
     painter.setBrush(col_center);
     painter.drawEllipse(QPointF(x, y), truck_w / 15.0, truck_w / 15.0);
 
     // Turning radius of truck
     painter.setPen(QPen(Qt::blue, 30));
     painter.setBrush(Qt::transparent);
-    
+
     painter.drawEllipse(QPointF(x, y), getAutopilotRadius()*1000.0, getAutopilotRadius()*1000.0);
     painter.setPen(Qt::black);
 
@@ -119,7 +183,7 @@ void TruckState::draw(QPainter &painter, const QTransform &drawTrans, const QTra
     QTextStream txtStream(&txt);
     txtStream.setRealNumberPrecision(3);
     txtStream << "Trailer: " << Qt::endl
-              << "(" << pos.getX()- dx << ", " << pos.getY()- dy << ", " 
+              << "(" << pos.getX()- dx << ", " << pos.getY()- dy << ", "
               << trailerYaw / (M_PI/180.0)<< ")" << Qt::endl;
     pt_txt.setX(newX + truck_w + truck_len * ((cos(trailerYaw) - 1) / 3));
     pt_txt.setY(newY);
@@ -169,7 +233,7 @@ void TruckState::draw(QPainter &painter, const QTransform &drawTrans, const QTra
                            pt_txt.x() + 400, pt_txt.y() + 65);
         painter.drawText(rect_txt, txt);
     }
-    
+
 }
 
 #endif
