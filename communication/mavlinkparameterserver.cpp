@@ -28,6 +28,12 @@ void MavlinkParameterServer::initialize(std::shared_ptr<mavsdk::ServerComponent>
         mInstancePtr = new MavlinkParameterServer(serverComponent);
 }
 
+/**
+ * By convention, every parameter in a group should share the same (meaningful) string prefix followed by an underscore.
+ *
+ * @param parameterName
+ * Parameter names must be no more than 16 ASCII characters
+ */
 void MavlinkParameterServer::provideParameter(std::string parameterName, std::function<void(float)> setClassParameterFunction, std::function<float(void)> getClassParameterFunction)
 {
     const std::lock_guard<std::mutex> lock(mMutex);

@@ -5,35 +5,63 @@
 
 #include "followpoint.h"
 #include "core/geometry.h"
+#include "communication/parameterserver.h"
 #include <QDebug>
-#include <QLineF>
 
 FollowPoint::FollowPoint(QSharedPointer<MovementController> movementController)
 {
     mMovementController = movementController;
-    connect(&mUpdateStateTimer, &QTimer::timeout, this, &FollowPoint::updateState);
+    mVehicleState = mMovementController->getVehicleState();
 
-    // ToDo: Provide system parameters to ControlTower
+    initializeTimers();
 
-    // Follow point requires continuous updates of the point to follow
-    mFollowPointTimedOut = true;
-    FollowPoint::mFollowPointHeartbeatTimer.setSingleShot(true);
-    connect(&mFollowPointHeartbeatTimer, &QTimer::timeout, this, [&](){
-        if ((mStmState == FollowPointSTMstates::FOLLOWING || mStmState == FollowPointSTMstates::WAITING) && this->isActive()) {
-            qDebug() << "WARNING: Follow point timed out. Stopping WaypointFollower.";
-            this->stopFollowPoint();
-        }
-        mFollowPointTimedOut = true;
-    });
+    // Provide parameters to ControlTower
+    if (ParameterServer::getInstance()) {
+        ParameterServer::getInstance()->provideParameter("FP_DIST", std::bind(&FollowPoint::setFollowPointDistance, this, std::placeholders::_1), std::bind(&FollowPoint::getFollowPointDistance, this));
+        ParameterServer::getInstance()->provideParameter("FP_MAX_DIST", std::bind(&FollowPoint::setFollowPointMaximumDistance, this, std::placeholders::_1), std::bind(&FollowPoint::getFollowPointMaximumDistance, this));
+        ParameterServer::getInstance()->provideParameter("FP_SPEED", std::bind(&FollowPoint::setFollowPointSpeed, this, std::placeholders::_1), std::bind(&FollowPoint::getFollowPointSpeed, this));
+        ParameterServer::getInstance()->provideParameter("FP_AP_RADIUS", std::bind(&FollowPoint::setAutopilotRadius, this, std::placeholders::_1), std::bind(&FollowPoint::getAutopilotRadius, this));
+
+    }
 }
 
 FollowPoint::FollowPoint(QSharedPointer<VehicleConnection> vehicleConnection, PosType posTypeUsed)
 {
     mVehicleConnection = vehicleConnection;
-    connect(&mUpdateStateTimer, &QTimer::timeout, this, &FollowPoint::updateState);
-    setPosTypeUsed(posTypeUsed);
+    mPosTypeUsed = posTypeUsed;
+    mVehicleState = mVehicleConnection->getVehicleState();
 
-    throw std::logic_error("FollowPoint::FollowPoint(..): follow point over remote connection not supported for now.");
+    // Lower frequency for remote connection
+    mFollowPointTimeout_ms = 3000;
+    mUpdateStatePeriod_ms = 1000;
+
+    initializeTimers();
+
+    // Provide parameters to ControlTower
+    std::string id = std::to_string(mVehicleState->getId());
+    if (ParameterServer::getInstance()) {
+        ParameterServer::getInstance()->provideParameter("FP"+id+"_DIST", std::bind(&FollowPoint::setFollowPointDistance, this, std::placeholders::_1), std::bind(&FollowPoint::getFollowPointDistance, this));
+        ParameterServer::getInstance()->provideParameter("FP"+id+"_MAX_DIST", std::bind(&FollowPoint::setFollowPointMaximumDistance, this, std::placeholders::_1), std::bind(&FollowPoint::getFollowPointMaximumDistance, this));
+        ParameterServer::getInstance()->provideParameter("FP"+id+"_HEIGHT", std::bind(&FollowPoint::setFollowPointHeight, this, std::placeholders::_1), std::bind(&FollowPoint::getFollowPointHeight, this));
+        ParameterServer::getInstance()->provideParameter("FP"+id+"_ANGLE_DEG", std::bind(&FollowPoint::setFollowPointAngleInDeg, this, std::placeholders::_1), std::bind(&FollowPoint::getFollowPointAngleInDeg, this));
+
+    }
+}
+
+void FollowPoint::initializeTimers()
+{
+    connect(&mUpdateStateTimer, &QTimer::timeout, this, &FollowPoint::updateState);
+
+    // Follow point requires continuous updates of the point to follow
+    mFollowPointTimedOut = true;
+    FollowPoint::mFollowPointHeartbeatTimer.setSingleShot(true);
+    connect(&mFollowPointHeartbeatTimer, &QTimer::timeout, this, [&](){
+        if ((mCurrentState.stmState == FollowPointSTMstates::FOLLOWING || mCurrentState.stmState == FollowPointSTMstates::WAITING) && this->isActive()) {
+            qDebug() << "WARNING: Follow point timed out. Stopping FollowPoint.";
+            this->stopFollowPoint();
+        }
+        mFollowPointTimedOut = true;
+    });
 }
 
 bool FollowPoint::isActive()
@@ -43,24 +71,20 @@ bool FollowPoint::isActive()
 
 void FollowPoint::startFollowPoint()
 {
-    // Deactivate emergency brake in order to use follow point
     emit deactivateEmergencyBrake();
-    if (isOnVehicle()) {
-        mStmState = FollowPointSTMstates::FOLLOWING;
-        mUpdateStateTimer.start(mUpdateStatePeriod_ms);
-    } else {
-        qDebug() << "WARNING: Follow Point not implemented for remote connections. Exiting.";
-        mUpdateStateTimer.stop();
-        mStmState = FollowPointSTMstates::NONE;
-    }
+    mVehicleState->setAutopilotRadius(mCurrentState.autopilotRadius);
+    mCurrentState.stmState = FollowPointSTMstates::FOLLOWING;
+    mFollowPointHeartbeatTimer.start(mFollowPointTimeout_ms);
+    mUpdateStateTimer.start(mUpdateStatePeriod_ms);
 }
 
 void FollowPoint::stopFollowPoint()
 {
     mUpdateStateTimer.stop();
-    (isOnVehicle() ? mMovementController->getVehicleState() : mVehicleConnection->getVehicleState())->setAutopilotRadius(0);
+    mFollowPointHeartbeatTimer.stop();
+    mVehicleState->setAutopilotRadius(0);
     holdPosition();
-    mStmState = FollowPointSTMstates::NONE;
+    mCurrentState.stmState = FollowPointSTMstates::NONE;
     emit activateEmergencyBrake();
 }
 
@@ -70,75 +94,142 @@ void FollowPoint::holdPosition()
         mMovementController->setDesiredSteering(0.0);
         mMovementController->setDesiredSpeed(0.0);
     } else {
-        mVehicleConnection->requestVelocityAndYaw({}, mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getYaw());
+        mVehicleConnection->requestGotoENU(mVehicleState->getPosition(mPosTypeUsed).getXYZ(), true);
     }
-}
-
-void FollowPoint::setPosTypeUsed(const PosType &posTypeUsed)
-{
-    mPosTypeUsed = posTypeUsed;
 }
 
 void FollowPoint::updatePointToFollowInVehicleFrame(const PosPoint &point)
 {
-    if ((mStmState == FollowPointSTMstates::FOLLOWING || mStmState == FollowPointSTMstates::WAITING) &&
-         (point.getTime() > mCurrentFollowPointInVehicleFrame.getTime())) {
-        if (mFollowPointTimedOut) {
-            qDebug() << "Follow Point: timeout reset.";
-        }
-
-        mCurrentFollowPointInVehicleFrame = point;
-        mFollowPointHeartbeatTimer.start(mFollowPointTimeout_ms);
-        mFollowPointTimedOut = false;
+    if (thePointIsNewResetTheTimer(point)) {
+        mCurrentState.currentPointToFollow = point;
+        mCurrentState.currentPointToFollow.setRadius(mCurrentState.followPointDistance);
+        mCurrentState.lineFromVehicleToPoint.setP1(QPointF(0,0));
+        mCurrentState.lineFromVehicleToPoint.setP2(point.getPoint());
+        mCurrentState.distanceToPointIn2D = mCurrentState.lineFromVehicleToPoint.length();
+        QVector<QPointF> intersections = geometry::findIntersectionsBetweenCircleAndLine(QPair<QPointF, double>(QPointF(0,0), mVehicleState->getAutopilotRadius()), mCurrentState.lineFromVehicleToPoint);
+        (intersections.size() != 0) ? mCurrentState.currentPointToFollow.setXY(intersections[0].x(), intersections[0].y()) : mCurrentState.currentPointToFollow.setXY(0, 0);
     }
 }
 
-PosPoint FollowPoint::getCurrentVehiclePosition()
+void FollowPoint::updatePointToFollowInEnuFrame(const PosPoint &point)
 {
-    if (isOnVehicle())
-        return mMovementController->getVehicleState()->getPosition(mPosTypeUsed);
-    else
-        return mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed);
+    if (thePointIsNewResetTheTimer(point)) {
+        mCurrentState.currentPointToFollow = point;
+        mCurrentState.currentPointToFollow.setRadius(mCurrentState.followPointDistance/10);
+        mCurrentState.currentPointToFollow.setHeight(point.getHeight() + mCurrentState.followPointHeight);
+        mCurrentState.currentPointToFollow.setXY(point.getX() + mCurrentState.followPointDistance*cos((point.getYaw() + mCurrentState.followPointAngleInDeg)* M_PI / 180.0), point.getY() + mCurrentState.followPointDistance*sin((point.getYaw() + mCurrentState.followPointAngleInDeg)* M_PI / 180.0));
+
+        mCurrentState.distanceToPointIn2D = mVehicleState->getPosition(mPosTypeUsed).getDistanceTo(mCurrentState.currentPointToFollow);
+    }
+}
+
+bool FollowPoint::thePointIsNewResetTheTimer(const PosPoint &point)
+{
+    static QTime oldPointTime = QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc());
+
+    if ((mCurrentState.stmState == FollowPointSTMstates::FOLLOWING || mCurrentState.stmState == FollowPointSTMstates::WAITING) &&
+            (point.getTime() > oldPointTime)) {
+        if (mFollowPointTimedOut)
+            qDebug() << "Follow Point: timeout reset.";
+
+        mFollowPointHeartbeatTimer.start(mFollowPointTimeout_ms);
+        mFollowPointTimedOut = false;
+        return true;
+    }
+    return false;
 }
 
 void FollowPoint::updateState()
 {
-    QLineF egoVehicleToFollowPointLine(QPointF(0,0), mCurrentFollowPointInVehicleFrame.getPoint());
-
-    switch (mStmState) {
+    switch (mCurrentState.stmState) {
     case FollowPointSTMstates::NONE:
         qDebug() << "WARNING: FollowPoint running uninitialized statemachine.";
         break;
 
     // FOLLOW_POINT: we follow a point that is moving "follow me", works on vehicle frame to be independent of positioning
     case FollowPointSTMstates::FOLLOWING:
-        if (egoVehicleToFollowPointLine.length() > mMaximumFollowPointDistance) {
-            qDebug() << "WARNING: Follow point is over" << mMaximumFollowPointDistance << "meters away. Exiting.";
+        if (mCurrentState.distanceToPointIn2D > mCurrentState.followPointMaximumDistance) {
+            qDebug() << "WARNING: Follow point is over" << mCurrentState.followPointMaximumDistance << "meters away. Exiting.";
             stopFollowPoint();
+            mCurrentState.stmState = FollowPointSTMstates::NONE;
+            break;
         }
-        if (egoVehicleToFollowPointLine.length() < mFollowPointDistance)
-            mStmState = FollowPointSTMstates::WAITING;
+        if (mCurrentState.distanceToPointIn2D < mCurrentState.currentPointToFollow.getRadius())
+            mCurrentState.stmState = FollowPointSTMstates::WAITING;
         else {
-            QVector<QPointF> intersections = geometry::findIntersectionsBetweenCircleAndLine(QPair<QPointF, double>(QPointF(0,0), mPurepursuitRadius), egoVehicleToFollowPointLine);
-            mMovementController->setDesiredSteeringCurvature(getCurvatureToPointInVehicleFrame(QPointF(intersections[0].x(), intersections[0].y())));
-            mMovementController->setDesiredSpeed(mFollowPointSpeed);
+            if (isOnVehicle()) {
+                mMovementController->setDesiredSteeringCurvature(mVehicleState->getCurvatureToPointInVehicleFrame(QPointF(mCurrentState.currentPointToFollow.getX(), mCurrentState.currentPointToFollow.getY())));
+                mMovementController->setDesiredSpeed(mCurrentState.followPointSpeed);
+            } else {
+                mVehicleConnection->requestGotoENU(mCurrentState.currentPointToFollow.getXYZ(), true);
+            }
          }
         break;
     case FollowPointSTMstates::WAITING:
         holdPosition();
 
-        if (egoVehicleToFollowPointLine.length() > mFollowPointDistance)
-            mStmState = FollowPointSTMstates::FOLLOWING;
+        if (mCurrentState.distanceToPointIn2D > mCurrentState.currentPointToFollow.getRadius())
+            mCurrentState.stmState = FollowPointSTMstates::FOLLOWING;
         break;
     }
 }
 
-double FollowPoint::getCurvatureToPointInVehicleFrame(const QPointF &point)
+void FollowPoint::setFollowPointDistance(double distance)
 {
-    // ToDo: move to a general place?
-    // calc steering angle (pure pursuit)
-    double distanceSquared = pow(point.x(), 2) + pow(point.y(), 2);
-    double steeringAngleProportional = (2*point.y()) / distanceSquared;
+    mCurrentState.followPointDistance = distance;
+}
 
-    return -steeringAngleProportional;
+double FollowPoint::getFollowPointDistance() const
+{
+    return mCurrentState.followPointDistance;
+}
+
+void FollowPoint::setFollowPointMaximumDistance(int distance)
+{
+    mCurrentState.followPointMaximumDistance = distance;
+}
+
+int FollowPoint::getFollowPointMaximumDistance() const
+{
+    return mCurrentState.followPointMaximumDistance;
+}
+
+void FollowPoint::setFollowPointSpeed(double speed)
+{
+    mCurrentState.followPointSpeed = speed;
+}
+
+double FollowPoint::getFollowPointSpeed() const
+{
+    return mCurrentState.followPointSpeed;
+}
+
+void FollowPoint::setAutopilotRadius(double radius)
+{
+    mCurrentState.autopilotRadius = radius;
+}
+
+double FollowPoint::getAutopilotRadius() const
+{
+    return mCurrentState.autopilotRadius;
+}
+
+void FollowPoint::setFollowPointHeight(double height)
+{
+    mCurrentState.followPointHeight = height;
+}
+
+double FollowPoint::getFollowPointHeight() const
+{
+    return mCurrentState.followPointHeight;
+}
+
+void FollowPoint::setFollowPointAngleInDeg(double angle)
+{
+    mCurrentState.followPointAngleInDeg = angle;
+}
+
+double FollowPoint::getFollowPointAngleInDeg() const
+{
+    return mCurrentState.followPointAngleInDeg;
 }

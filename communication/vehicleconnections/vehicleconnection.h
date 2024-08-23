@@ -16,6 +16,9 @@
 #include "sensors/camera/gimbal.h"
 #include "autopilot/waypointfollower.h"
 #include "communication/parameterserver.h"
+#include "autopilot/followpoint.h"
+
+class FollowPoint;
 
 class VehicleConnection : public QObject
 {
@@ -67,6 +70,8 @@ public:
 
     void setWaypointFollowerConnectionLocal(const QSharedPointer<WaypointFollower> &waypointFollower);
     bool hasWaypointFollowerConnectionLocal();
+    void setFollowPointConnectionLocal(const QSharedPointer<FollowPoint> &followPoint);
+    bool hasFollowPointConnectionLocal();
     bool isAutopilotActive();
     void restartAutopilot();
     void startAutopilot();
@@ -76,6 +81,9 @@ public:
     void appendToRoute(const QList<PosPoint> &route, int id = 0);
     void setRoute(const QList<PosPoint> &route, int id = 0);
     void setActiveAutopilotID(int id = 0);
+    void startFollowPoint();
+    void stopFollowPoint();
+    void updatePointToFollowInEnuFrame(const PosPoint &point);
 
     QSharedPointer<VehicleState> getVehicleState() const;
     QSharedPointer<Gimbal> getGimbal() const;
@@ -95,11 +103,13 @@ protected:
     virtual void clearRouteOnVehicle(int id = 0) {Q_UNUSED(id) throw  std::logic_error("Function not implemented");};
     virtual void appendToRouteOnVehicle(const QList<PosPoint> &route, int id = 0) {Q_UNUSED(route )Q_UNUSED(id) throw  std::logic_error("Function not implemented");};
     virtual void setActiveAutopilotIDOnVehicle(int id = 0) {Q_UNUSED(id) throw  std::logic_error("Function not implemented");};
+    virtual void startFollowPointOnVehicle() {throw  std::logic_error("Function not implemented");};
+    virtual void stopFollowPointOnVehicle() {throw  std::logic_error("Function not implemented");};
 
     QSharedPointer<VehicleState> mVehicleState;
     QSharedPointer<Gimbal> mGimbal;
     QSharedPointer<WaypointFollower> mWaypointFollower;
-
+    QSharedPointer<FollowPoint> mFollowPoint;
 
 };
 

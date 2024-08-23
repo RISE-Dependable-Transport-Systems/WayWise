@@ -14,6 +14,15 @@ bool VehicleConnection::hasWaypointFollowerConnectionLocal() {
     return !mWaypointFollower.isNull();
 }
 
+void VehicleConnection::setFollowPointConnectionLocal(const QSharedPointer<FollowPoint> &followPoint) {
+    qDebug() << "IMPORTANT NOTE: a connection-local FollowPoint has been set on VehicleConnection. From now on, the VehicleConnection will only communicate to this autopilot and not to potential autopilots on the vehicle itself!";
+    mFollowPoint = followPoint;
+}
+
+bool VehicleConnection::hasFollowPointConnectionLocal() {
+    return !mFollowPoint.isNull();
+}
+
 bool VehicleConnection::isAutopilotActive()
 {
     if (!mWaypointFollower.isNull())
@@ -97,3 +106,25 @@ void VehicleConnection::setActiveAutopilotID(int id)
     else
         setActiveAutopilotIDOnVehicle(id);
 };
+
+void VehicleConnection::startFollowPoint()
+{
+    if (!mFollowPoint.isNull())
+        mFollowPoint->startFollowPoint();
+    else
+        startFollowPointOnVehicle();
+}
+
+void VehicleConnection::stopFollowPoint()
+{
+    if (!mFollowPoint.isNull())
+        mFollowPoint->stopFollowPoint();
+    else
+        stopFollowPointOnVehicle();
+}
+
+void VehicleConnection::updatePointToFollowInEnuFrame(const PosPoint &point)
+{
+    if (!mFollowPoint.isNull())
+        mFollowPoint->updatePointToFollowInEnuFrame(point);
+}
