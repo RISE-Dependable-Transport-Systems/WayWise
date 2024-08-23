@@ -46,6 +46,8 @@ void TrailerState::drawTrailer(QPainter &painter, const QTransform &drawTrans, c
 void TrailerState::draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected){
     // draw a trailer indepentently
 
+    (void)txtTrans;
+    (void)isSelected;
     PosPoint pos = getPosition();
     double x = pos.getX() * 1000.0  ;// convert from m to mm (on the map objects are in mm)
     double y = pos.getY() * 1000.0  ;
