@@ -400,6 +400,11 @@ QList<QSharedPointer<ObjectState> > MapWidget::getObjectStateList() const
     return mObjectStateMap.values();
 }
 
+bool MapWidget::setTileServerUrl(QString path)
+{
+    return mOsm->setTileServerUrl(path);
+}
+
 void MapWidget::addMapModule(QSharedPointer<MapModule> m)
 {
     mMapModules.append(m);
