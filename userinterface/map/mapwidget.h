@@ -106,6 +106,8 @@ public:
 
     QList<QSharedPointer<ObjectState>> getObjectStateList() const;
 
+    bool setTileServerUrl(QString path);
+
 signals:
     void scaleChanged(double newScale);
     void offsetChanged(double newXOffset, double newYOffset);
