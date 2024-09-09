@@ -17,10 +17,10 @@ FollowPoint::FollowPoint(QSharedPointer<MovementController> movementController)
 
     // Provide parameters to ControlTower
     if (ParameterServer::getInstance()) {
-        ParameterServer::getInstance()->provideParameter("FP_DIST", std::bind(&FollowPoint::setFollowPointDistance, this, std::placeholders::_1), std::bind(&FollowPoint::getFollowPointDistance, this));
-        ParameterServer::getInstance()->provideParameter("FP_MAX_DIST", std::bind(&FollowPoint::setFollowPointMaximumDistance, this, std::placeholders::_1), std::bind(&FollowPoint::getFollowPointMaximumDistance, this));
-        ParameterServer::getInstance()->provideParameter("FP_SPEED", std::bind(&FollowPoint::setFollowPointSpeed, this, std::placeholders::_1), std::bind(&FollowPoint::getFollowPointSpeed, this));
-        ParameterServer::getInstance()->provideParameter("FP_AP_RADIUS", std::bind(&FollowPoint::setAutopilotRadius, this, std::placeholders::_1), std::bind(&FollowPoint::getAutopilotRadius, this));
+        ParameterServer::getInstance()->provideFloatParameter("FP_DIST", std::bind(&FollowPoint::setFollowPointDistance, this, std::placeholders::_1), std::bind(&FollowPoint::getFollowPointDistance, this));
+        ParameterServer::getInstance()->provideFloatParameter("FP_MAX_DIST", std::bind(&FollowPoint::setFollowPointMaximumDistance, this, std::placeholders::_1), std::bind(&FollowPoint::getFollowPointMaximumDistance, this));
+        ParameterServer::getInstance()->provideFloatParameter("FP_SPEED", std::bind(&FollowPoint::setFollowPointSpeed, this, std::placeholders::_1), std::bind(&FollowPoint::getFollowPointSpeed, this));
+        ParameterServer::getInstance()->provideFloatParameter("FP_AP_RADIUS", std::bind(&FollowPoint::setAutopilotRadius, this, std::placeholders::_1), std::bind(&FollowPoint::getAutopilotRadius, this));
 
     }
 }
@@ -40,10 +40,10 @@ FollowPoint::FollowPoint(QSharedPointer<VehicleConnection> vehicleConnection, Po
     // Provide parameters to ControlTower
     std::string id = std::to_string(mVehicleState->getId());
     if (ParameterServer::getInstance()) {
-        ParameterServer::getInstance()->provideParameter("FP"+id+"_DIST", std::bind(&FollowPoint::setFollowPointDistance, this, std::placeholders::_1), std::bind(&FollowPoint::getFollowPointDistance, this));
-        ParameterServer::getInstance()->provideParameter("FP"+id+"_MAX_DIST", std::bind(&FollowPoint::setFollowPointMaximumDistance, this, std::placeholders::_1), std::bind(&FollowPoint::getFollowPointMaximumDistance, this));
-        ParameterServer::getInstance()->provideParameter("FP"+id+"_HEIGHT", std::bind(&FollowPoint::setFollowPointHeight, this, std::placeholders::_1), std::bind(&FollowPoint::getFollowPointHeight, this));
-        ParameterServer::getInstance()->provideParameter("FP"+id+"_ANGLE_DEG", std::bind(&FollowPoint::setFollowPointAngleInDeg, this, std::placeholders::_1), std::bind(&FollowPoint::getFollowPointAngleInDeg, this));
+        ParameterServer::getInstance()->provideFloatParameter("FP"+id+"_DIST", std::bind(&FollowPoint::setFollowPointDistance, this, std::placeholders::_1), std::bind(&FollowPoint::getFollowPointDistance, this));
+        ParameterServer::getInstance()->provideFloatParameter("FP"+id+"_MAX_DIST", std::bind(&FollowPoint::setFollowPointMaximumDistance, this, std::placeholders::_1), std::bind(&FollowPoint::getFollowPointMaximumDistance, this));
+        ParameterServer::getInstance()->provideFloatParameter("FP"+id+"_HEIGHT", std::bind(&FollowPoint::setFollowPointHeight, this, std::placeholders::_1), std::bind(&FollowPoint::getFollowPointHeight, this));
+        ParameterServer::getInstance()->provideFloatParameter("FP"+id+"_ANGLE_DEG", std::bind(&FollowPoint::setFollowPointAngleInDeg, this, std::placeholders::_1), std::bind(&FollowPoint::getFollowPointAngleInDeg, this));
 
     }
 }

@@ -405,8 +405,14 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
         case MAVLINK_MSG_ID_PARAM_VALUE: // This message is sent when a parameter has been changed
             mavlink_param_value_t parameter;
             mavlink_msg_param_value_decode(&message, &parameter);
-            if (parameter.param_type == 9) // Float
-                mParameterServer->updateParameter(parameter.param_id, parameter.param_value);
+            if (parameter.param_type == MAV_PARAM_TYPE_REAL32) // Float
+                mParameterServer->updateFloatParameter(parameter.param_id, (float) parameter.param_value);
+            else if (parameter.param_type == MAV_PARAM_TYPE_INT32) // Int
+            {
+                mavlink_param_union_t param;
+                param.param_float = parameter.param_value;
+                mParameterServer->updateIntParameter(parameter.param_id, (int) param.param_int32);
+            }
             break;
         default: ;
 //            qDebug() << "out:" << message.msgid;
@@ -432,7 +438,11 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
     if (result == mavsdk::ConnectionResult::Success)
         qDebug() << "MavsdkVehicleServer is listening on" << controlTowerAddress.toString() << "with port" << controlTowerPort;
 
-    ParameterServer::getInstance()->provideParameter("MC_MAX_SPEED_MS", std::bind(&MavsdkVehicleServer::setManualControlMaxSpeed, this, std::placeholders::_1), std::bind(&MavsdkVehicleServer::getManualControlMaxSpeed, this));
+    ParameterServer::getInstance()->provideFloatParameter("MC_MAX_SPEED_MS", std::bind(&MavsdkVehicleServer::setManualControlMaxSpeed, this, std::placeholders::_1), std::bind(&MavsdkVehicleServer::getManualControlMaxSpeed, this));
+    ParameterServer::getInstance()->provideIntParameter("VEH_WW_OBJ_TYPE",
+        std::function<void(int)>([this](int value) {this->mVehicleState->setWaywiseObjectType(static_cast<WAYWISE_OBJECT_TYPE>(value));}),
+        std::function<int(void)>([this]() {return static_cast<int>(this->mVehicleState->getWaywiseObjectType());})
+    );
 }
 
 void MavsdkVehicleServer::heartbeatTimeout() {

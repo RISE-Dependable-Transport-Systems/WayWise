@@ -17,6 +17,8 @@ CopterState::CopterState(ObjectID_t id, Qt::GlobalColor color) : VehicleState(id
     mPropellerSize = 260;
     setWidth(520);
     setLength(520);
+
+    ObjectState::setWaywiseObjectType(WAYWISE_OBJECT_TYPE_QUADCOPTER);
 }
 
 void CopterState::draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected)

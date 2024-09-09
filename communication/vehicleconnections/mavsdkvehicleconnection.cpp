@@ -14,28 +14,70 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
     mVehicleType = vehicleType;
     mMavlinkPassthrough.reset(new mavsdk::MavlinkPassthrough(system));
 
-    // Setup gimbal
-    mComponentDiscoveredHandle = mSystem->subscribe_component_discovered([this](mavsdk::System::ComponentType){
-        if (mSystem->has_gimbal() && mGimbal.isNull()) {
-            mGimbal = QSharedPointer<MavsdkGimbal>::create(mSystem);
-            emit detectedGimbal(mGimbal);
-        }
-    });
-    if (mSystem->has_gimbal() && mGimbal.isNull()) // Gimbal might have been discovered before callback was registered
-        mGimbal = QSharedPointer<MavsdkGimbal>::create(mSystem);
+    // Set up param plugin
+    mParam.reset(new mavsdk::Param(mSystem));
 
     switch (mVehicleType) {
     case MAV_TYPE_QUADROTOR:
         qDebug() << "MavsdkVehicleConnection: we are talking to a MAV_TYPE_QUADROTOR / PX4.";
         mVehicleState = QSharedPointer<CopterState>::create(mSystem->get_system_id());
         mVehicleState->setName("Copter " + QString::number(mSystem->get_system_id()));
+
+        // Setup gimbal
+        mComponentDiscoveredHandle = mSystem->subscribe_component_discovered([this](mavsdk::System::ComponentType component_type){
+            if (component_type == mavsdk::System::ComponentType::GIMBAL && mSystem->has_gimbal() && mGimbal.isNull()) {
+                mGimbal = QSharedPointer<MavsdkGimbal>::create(mSystem);
+                emit detectedGimbal(mGimbal);
+            }
+        });
+        if (mSystem->has_gimbal() && mGimbal.isNull()) // Gimbal might have been discovered before callback was registered
+            mGimbal = QSharedPointer<MavsdkGimbal>::create(mSystem);
+
         break;
     case MAV_TYPE_GROUND_ROVER:
-        qDebug() << "MavsdkVehicleConnection: we are talking to a MAV_TYPE_GROUND_ROVER / WayWise.";
-        // TODO: detect different rover types...
-        mVehicleState = QSharedPointer<CarState>::create(mSystem->get_system_id());
-        mVehicleState->setName("Car " + QString::number(mSystem->get_system_id()));
-        break;
+        {
+            WAYWISE_OBJECT_TYPE mWaywiseObjectType = WAYWISE_OBJECT_TYPE_CAR;
+            auto waywiseObjTypeParamResult = getIntParameterFromVehicle("VEH_WW_OBJ_TYPE");
+            if (waywiseObjTypeParamResult.first == VehicleConnection::Result::Success) {
+                mWaywiseObjectType = static_cast<WAYWISE_OBJECT_TYPE>(waywiseObjTypeParamResult.second);
+                if (!(mWaywiseObjectType == WAYWISE_OBJECT_TYPE_TRUCK || mWaywiseObjectType == WAYWISE_OBJECT_TYPE_CAR)){
+                    qDebug() << "VEH_WW_OBJ_TYPE param is set to unsupported type for MAV_TYPE_GROUND_ROVER. We asuume that it is a car type.";
+                    mWaywiseObjectType = WAYWISE_OBJECT_TYPE_CAR;
+                }
+            }
+
+            switch (mWaywiseObjectType) {
+                case WAYWISE_OBJECT_TYPE_TRUCK:
+                {
+                    qDebug() << "MavsdkVehicleConnection: we are talking to a MAV_TYPE_GROUND_ROVER / WayWise Truck.";
+                    setupTruckState();
+                    break;
+                }
+                default:
+                {
+                    qDebug() << "MavsdkVehicleConnection: we are talking to a MAV_TYPE_GROUND_ROVER / WayWise Car.";
+                    mVehicleState = QSharedPointer<CarState>::create(mSystem->get_system_id());
+                    mVehicleState->setName("Car " + QString::number(mSystem->get_system_id()));
+
+                    QSharedPointer<CarState> mCarState = qSharedPointerDynamicCast<CarState>(mVehicleState);
+                    auto vehicleParamResult = getFloatParameterFromVehicle("VEH_LENGTH");
+                    if (vehicleParamResult.first == VehicleConnection::Result::Success) {
+                        mCarState->setLength(vehicleParamResult.second);
+                    }
+                    vehicleParamResult = getFloatParameterFromVehicle("VEH_WIDTH");
+                    if (vehicleParamResult.first == VehicleConnection::Result::Success) {
+                        mCarState->setWidth(vehicleParamResult.second);
+                    }
+                    vehicleParamResult = getFloatParameterFromVehicle("VEH_WHLBASE");
+                    if (vehicleParamResult.first == VehicleConnection::Result::Success) {
+                        mCarState->setAxisDistance(vehicleParamResult.second);
+                    }
+                    break;
+                }
+            }
+
+            break;
+        }
     default:
         qDebug() << "MavsdkVehicleConnection: unknown / unsupported vehicle type.";
         break;
@@ -233,9 +275,6 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
     // Set up action plugin
     mAction.reset(new mavsdk::Action(mSystem));
 
-    // Set up param plugin
-    mParam.reset(new mavsdk::Param(mSystem));
-
 // TODO: this should not happen here (blocking)
 //    // Precision Landing: set required target tracking accuracy for starting approach
 //    if (mParam->set_param_float("PLD_HACC_RAD", 5.0) != mavsdk::Param::Result::Success)
@@ -243,6 +282,67 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
 
     // Necessary such that MAVSDK callbacks (from other threads) can stop WaypointFollower (QTimer)
     connect(this, &MavsdkVehicleConnection::stopWaypointFollowerSignal, this, &MavsdkVehicleConnection::stopAutopilot);
+}
+
+void MavsdkVehicleConnection::setupTruckState()
+{
+    mVehicleState = QSharedPointer<TruckState>::create(mSystem->get_system_id());
+    mVehicleState->setName("Truck " + QString::number(mSystem->get_system_id()));
+
+    QSharedPointer<TruckState> mTruckState = qSharedPointerDynamicCast<TruckState>(mVehicleState);
+    auto vehicleParamResult = getFloatParameterFromVehicle("VEH_LENGTH");
+    if (vehicleParamResult.first == VehicleConnection::Result::Success) {
+        mTruckState->setLength(vehicleParamResult.second);
+    }
+    vehicleParamResult = getFloatParameterFromVehicle("VEH_WIDTH");
+    if (vehicleParamResult.first == VehicleConnection::Result::Success) {
+        mTruckState->setWidth(vehicleParamResult.second);
+    }
+    vehicleParamResult = getFloatParameterFromVehicle("VEH_WHLBASE");
+    if (vehicleParamResult.first == VehicleConnection::Result::Success) {
+        mTruckState->setAxisDistance(vehicleParamResult.second);
+    }
+
+    auto trailerParamResult = getIntParameterFromVehicle("TRLR_COMP_ID");
+    if (trailerParamResult.first == VehicleConnection::Result::Success) {
+        int trailer_component_id = trailerParamResult.second;
+        if (trailer_component_id>=0) {
+            // Setup Trailer
+            mavsdk::System::ComponentDiscoveredIdHandle mComponentDiscoveredIdHandle = mSystem->subscribe_component_discovered_id([this, mTruckState, trailer_component_id](mavsdk::System::ComponentType component_type, uint8_t component_id){
+                if (component_type == mavsdk::System::ComponentType::UNKNOWN && component_id == (uint8_t) trailer_component_id) {
+                    qDebug() << "Trailer discovered with system ID "<< mSystem->get_system_id() << " and component ID "<< component_id;
+                    mTruckState->setTrailerState(QSharedPointer<TrailerState>::create(component_id));
+                    QSharedPointer<TrailerState> mTrailerState = mTruckState->getTrailerState();
+                    mTrailerState->setName("Trailer " + QString::number(mSystem->get_system_id()));
+
+                    auto trailerParamResult = getFloatParameterFromVehicle("TRLR_LENGTH");
+                    if (trailerParamResult.first == VehicleConnection::Result::Success) {
+                        mTrailerState->setLength(trailerParamResult.second);
+                    }
+                    trailerParamResult = getFloatParameterFromVehicle("TRLR_WIDTH");
+                    if (trailerParamResult.first == VehicleConnection::Result::Success) {
+                        mTrailerState->setWidth(trailerParamResult.second);
+                    }
+                    trailerParamResult = getFloatParameterFromVehicle("TRLR_WHLBASE");
+                    if (trailerParamResult.first == VehicleConnection::Result::Success) {
+                        mTrailerState->setWheelBase(trailerParamResult.second);
+                    }
+
+                    mMavlinkPassthrough->subscribe_message(MAVLINK_MSG_ID_ATTITUDE, [this, mTruckState, component_id](const mavlink_message_t &message) {
+                    if (message.compid == component_id) {
+                        mavlink_attitude_t attitude_data;
+                        mavlink_msg_attitude_decode(&message, &attitude_data);
+
+                        // Extract yaw value from attitude message
+                        double angle_in_radians = (mTruckState->getPosition().getYaw() * (M_PI / 180.0)) - attitude_data.yaw;
+                        double angle_in_degrees = angle_in_radians * (180.0 / M_PI);
+                        mTruckState->setTrailerAngle(0, angle_in_radians, angle_in_degrees); // raw_angle is not currently used
+                    }
+                });
+                }
+            });
+        }
+    }
 }
 
 void MavsdkVehicleConnection::setEnuReference(const llh_t &enuReference)

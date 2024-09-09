@@ -12,6 +12,7 @@
 TruckState::TruckState(ObjectID_t id, Qt::GlobalColor color) : CarState(id, color)
 {
     // Additional initialization if needed for the TruckState
+    ObjectState::setWaywiseObjectType(WAYWISE_OBJECT_TYPE_TRUCK);
 }
 
 void TruckState::updateOdomPositionAndYaw(double drivenDistance, PosType usePosType)
@@ -141,9 +142,6 @@ void TruckState::draw(QPainter &painter, const QTransform &drawTrans, const QTra
     if (!mTrailerState.isNull()) {
         double angleInDegrees = getTrailerAngleDegrees();
         mTrailerState->drawTrailer(painter,drawTrans, pos, angleInDegrees);
-    } else {
-        // mTrailerState is empty
-        qDebug() << "WARN: Trailer is empty";
     }
 
     painter.restore();
@@ -161,7 +159,7 @@ void TruckState::draw(QPainter &painter, const QTransform &drawTrans, const QTra
     double trailerAngle  = getTrailerAngleRadians();
     double currYaw_rad = getPosition().getYaw() * (M_PI/180.0);
     double trailerYaw = currYaw_rad- trailerAngle;
-    double trailerAxis = getTrailerWheelBase;
+    double trailerAxis = getTrailerWheelBase();
     double dx = trailerAxis * cos(trailerYaw);
     double dy = trailerAxis * sin(trailerYaw);
     double newX = (pos.getX() - dx) *1000.0;
@@ -179,19 +177,6 @@ void TruckState::draw(QPainter &painter, const QTransform &drawTrans, const QTra
     QString txt;
     QPointF pt_txt;
     QRectF rect_txt;
-
-    QTextStream txtStream(&txt);
-    txtStream.setRealNumberPrecision(3);
-    txtStream << "Trailer: " << Qt::endl
-              << "(" << pos.getX()- dx << ", " << pos.getY()- dy << ", "
-              << trailerYaw / (M_PI/180.0)<< ")" << Qt::endl;
-    pt_txt.setX(newX + truck_w + truck_len * ((cos(trailerYaw) - 1) / 3));
-    pt_txt.setY(newY);
-    painter.setTransform(txtTrans);
-    pt_txt = drawTrans.map(pt_txt);
-    rect_txt.setCoords(pt_txt.x(), pt_txt.y() - 40,
-                           pt_txt.x() + 400, pt_txt.y() + 65);
-    painter.drawText(rect_txt, txt);
 
     if (getDrawStatusText()) {
         // Print data
@@ -221,10 +206,14 @@ void TruckState::draw(QPainter &painter, const QTransform &drawTrans, const QTra
         QTextStream txtStream(&txt);
         txtStream.setRealNumberPrecision(3);
         txtStream << getName() << Qt::endl
-                  << "(" << pos.getX() << ", " << pos.getY() << ", " << pos.getHeight() << ", " << (int)pos.getYaw() << ")" << Qt::endl
+                  << "(" << pos.getX() << ", " << pos.getY() << ", " << pos.getHeight() << ", " << pos.getYaw() << ")" << Qt::endl
                   << "State: " << (getIsArmed() ? "armed" : "disarmed") << Qt::endl
-                  << flightModeStr;
-
+                  << flightModeStr << Qt::endl << Qt::endl;
+        if (!mTrailerState.isNull()) {
+            txtStream << mTrailerState->getName() << Qt::endl
+                    << "(" << pos.getX()- dx << ", " << pos.getY()- dy << ", " << pos.getHeight() << ", "
+                    << trailerYaw * (180.0/M_PI)<< ")" << Qt::endl;
+        }
         pt_txt.setX(x + truck_w + truck_len * ((cos(getPosition().getYaw() * (M_PI/180.0)) + 1) / 3));
         pt_txt.setY(y);
         painter.setTransform(txtTrans);

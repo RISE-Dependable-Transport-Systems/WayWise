@@ -8,6 +8,8 @@
 
 #include <QObject>
 #include <mutex>
+#include <unordered_map>
+#include <functional>
 
 class ParameterServer : public QObject
 {
@@ -26,16 +28,17 @@ public:
         std::string value{};
     };
     struct AllParameters {
-        std::vector<IntParameter>
-            intParameters{};
+        std::vector<IntParameter> intParameters{};
         std::vector<FloatParameter> floatParameters{};
         std::vector<CustomParameter> customParameters{};
     };
 
     static void initialize();
     static ParameterServer* getInstance();
-    bool updateParameter(std::string parameterName, float parameterValue);
-    virtual void provideParameter(std::string parameterName, std::function<void(float)> setClassParameterFunction, std::function<float(void)> getClassParameterFunction);
+    bool updateIntParameter(std::string parameterName, int parameterValue);
+    bool updateFloatParameter(std::string parameterName, float parameterValue);
+    virtual void provideIntParameter(std::string parameterName, std::function<void(int)> setClassParameterFunction, std::function<int(void)> getClassParameterFunction);
+    virtual void provideFloatParameter(std::string parameterName, std::function<void(float)> setClassParameterFunction, std::function<float(void)> getClassParameterFunction);
     virtual void saveParametersToXmlFile(QString filename);
     AllParameters getAllParameters();
 
@@ -44,7 +47,8 @@ protected:
     virtual ~ParameterServer(){};
     static ParameterServer *mInstancePtr;
     std::mutex mMutex;
-    std::unordered_map<std::string, std::pair<std::function<void(float)>, std::function<float(void)>>> mParameterToClassMapping;
+    std::unordered_map<std::string, std::pair<std::function<void(int)>, std::function<int(void)>>> mIntParameterToClassMapping;
+    std::unordered_map<std::string, std::pair<std::function<void(float)>, std::function<float(void)>>> mFloatParameterToClassMapping;
 };
 
 #endif // PARAMETERSERVER_H
