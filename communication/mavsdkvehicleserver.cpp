@@ -439,6 +439,10 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
         qDebug() << "MavsdkVehicleServer is listening on" << controlTowerAddress.toString() << "with port" << controlTowerPort;
 
     ParameterServer::getInstance()->provideFloatParameter("MC_MAX_SPEED_MS", std::bind(&MavsdkVehicleServer::setManualControlMaxSpeed, this, std::placeholders::_1), std::bind(&MavsdkVehicleServer::getManualControlMaxSpeed, this));
+    ParameterServer::getInstance()->provideIntParameter("VEH_WW_OBJ_TYPE",
+        std::function<void(int)>([this](int value) {this->mVehicleState->setWaywiseObjectType(static_cast<WAYWISE_OBJECT_TYPE>(value));}),
+        std::function<int(void)>([this]() {return static_cast<int>(this->mVehicleState->getWaywiseObjectType());})
+    );
 }
 
 void MavsdkVehicleServer::heartbeatTimeout() {
