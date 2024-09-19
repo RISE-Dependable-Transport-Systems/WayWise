@@ -75,7 +75,8 @@ void SDVPVehiclePositionFuser::correctPositionAndYawGNSS(QSharedPointer<VehicleS
         PosSample closestPosFusedSample = getClosestPosFusedSampleInTime(posGNSS.getTime());
 
         // 2. Update yaw offset, limit max change depending on last driven distance reported by odometry (if available)
-        double yawErrorCmpToGNSS = posGNSS.getYaw() - closestPosFusedSample.yaw;
+        //    GNSS yaw represents direction of motion and needs to be reversed when driving backwards
+        double yawErrorCmpToGNSS = (((mPosOdomDistanceDrivenSinceGNSSupdate < 0.0) ? 180.0 : 0.0) + posGNSS.getYaw()) - closestPosFusedSample.yaw;
         while (yawErrorCmpToGNSS < -180.0) yawErrorCmpToGNSS += 360.0;
         while (yawErrorCmpToGNSS > 180.0) yawErrorCmpToGNSS -= 360.0;
         double yawMaxChangeDistanceInput = mPosOdomDistanceDrivenSinceGNSSupdate == 0.0 ? distanceMoved : abs(mPosOdomDistanceDrivenSinceGNSSupdate);
