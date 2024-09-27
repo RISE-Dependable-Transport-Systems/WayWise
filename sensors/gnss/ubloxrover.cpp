@@ -24,9 +24,9 @@ UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
     connect(&mUblox, &Ublox::rxNmeaGga, this, &UbloxRover::gotNmeaGga);
 
     // Automatic IMU orientation alignment feature
-    connect(&mUblox, &Ublox::rxEsfAlg, this, [this](const ubx_esf_alg &alg){
-        if (alg.autoMntAlgOn)
-            setIMUOrientationOffset(alg.roll, alg.pitch, (coordinateTransforms::yawNEDtoENU(alg.yaw) - 180.0));
+    // connect(&mUblox, &Ublox::rxEsfAlg, this, [this](const ubx_esf_alg &alg){
+    //     if (alg.autoMntAlgOn)
+    //         setIMUOrientationOffset(alg.roll, alg.pitch, (coordinateTransforms::yawNEDtoENU(alg.yaw) - 180.0));
 
     //        static int count = 0;
     //        if (count++%5)
@@ -35,7 +35,7 @@ UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
     //                 << "\nStatus:" << alg.status
     //                 << "\nAuto mount alignmend enabled:" << alg.autoMntAlgOn
     //                 << "\nRoll, Pitch, Yaw:" << alg.roll << alg.pitch << alg.yaw;
-    });
+    //});
 
     // Print nav-pvt message
     // Search for nav-pvt in following document:
@@ -82,26 +82,25 @@ UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
     // Print esf-status message
     // Search for sensor data type in following document for explanation:
     // https://www.u-blox.com/sites/default/files/ZED-F9R_Integrationmanual_UBX-20039643.pdf
-//    connect(&mUblox, &Ublox::rxEsfStatus, this, [](const ubx_esf_status &status){
-//        static int count = 0;
-//        if (count++%5)
-//            return;
-//        qDebug() << "ESF-STATUS data:"
-//                 << "\nVersion: " << status.version
-//                 << "\nFusion mode: " << status.fusion_mode
-//                 << "\nNumber of sensors: " << status.num_sens;
-//                    ;
-//        for (int i = 0;i < status.num_sens;i++) {
-//            qDebug() << "Sensor data type: " << status.sensors[i].type
-//                     << "\nSensor data used: " << status.sensors[i].used
-//                     << "\nSensor data ready: " << status.sensors[i].ready
-//                     << "\nSensor calibration status: " << status.sensors[i].calib_status
-//                     << "\nSensor time status: " << status.sensors[i].time_status
-//                     << "\nSensor observation freq: " << status.sensors[i].freq
-//                     ;
-//        }});
+   connect(&mUblox, &Ublox::rxEsfStatus, this, [](const ubx_esf_status &status){
+       static int count = 0;
+       if (count++%5)
+           return;
+       qDebug() << "ESF-STATUS data:"
+                << "\nVersion: " << status.version
+                << "\nFusion mode: " << status.fusion_mode
+                << "\nNumber of sensors: " << status.num_sens;
+       for (int i = 0;i < status.num_sens;i++) {
+           qDebug() << "Sensor data type: " << status.sensors[i].type
+                    << "\nSensor data used: " << status.sensors[i].used
+                    << "\nSensor data ready: " << status.sensors[i].ready
+                    << "\nSensor calibration status: " << status.sensors[i].calib_status
+                    << "\nSensor time status: " << status.sensors[i].time_status
+                    << "\nSensor observation freq: " << status.sensors[i].freq
+                    ;
+       }});
 
-    // Print config recevied from valget
+//    Print config recevied from valget
 //    connect(&mUblox, &Ublox::rxCfgValget, this, [](const ubx_cfg_valget &valget){
 //        qDebug() << "\n--- Polled UBX-CFG-VALGET ---"
 //                 << "\nVersion:" << valget.version
@@ -166,7 +165,7 @@ bool UbloxRover::configureUblox()
 {
     // The u-blox receiver detects the previously stored data in the flash.
     // It restores the corresponding memory and reports the success of the operation
-    mUblox.ubloxUpdSos(7);
+    // mUblox.ubloxUpdSos(7);
 
     // The rate of NMEA and UBX protocol output messages are configurable
     // and it is possible to enable or disable single NMEA or UBX messages individually.
@@ -183,74 +182,74 @@ bool UbloxRover::configureUblox()
     mUblox.ubxCfgMsg(UBX_CLASS_RXM, UBX_RXM_SFRBX, 0);
     mUblox.ubxCfgMsg(UBX_CLASS_NAV, UBX_NAV_SOL, 0);
 
-    unsigned char buffer[512];
-    int ind = 0;
-    mUblox.ubloxCfgAppendMntalg(buffer, &ind, true); // enable auto mount alignment
-    mUblox.ubloxCfgAppendRate(buffer, &ind, 100, 1, 0, 30); // nav prio mode
-    if (!mUblox.ubloxCfgValset(buffer, ind, true, true, true)) { // try valset
-        // setting auto mount alignment and nav prio failed -> this is F9P)
-        bool result = true;
-        result &= mUblox.ubxCfgRate(200, 1, 0);
+    //unsigned char buffer[512];
+    //int ind = 0;
+    // mUblox.ubloxCfgAppendMntalg(buffer, &ind, true); // enable auto mount alignment
+    // mUblox.ubloxCfgAppendRate(buffer, &ind, 100, 1, 0, 30); // nav prio mode
+    // if (!mUblox.ubloxCfgValset(buffer, ind, true, true, true)) { // try valset
+    //     // setting auto mount alignment and nav prio failed -> this is F9P)
+    //     bool result = true;
+    //     result &= mUblox.ubxCfgRate(200, 1, 0);
 
-        // Chip might have been used as base station, make sure to reconfigure.
-        // TODO: this code is taken from "old sdvp" s.th. F9P behaves as we are used to,
-        //       but needs to be revised, e.g., use VALSET msgs that work for F9R and F9P:
-        //        ind = 0;
-        //        mUblox.ubloxCfgAppendRate(buffer, &ind, 200, 1, 0);
-        //        result &= mUblox.ubloxCfgValset(buffer, ind, true, true, true);
+    //     // Chip might have been used as base station, make sure to reconfigure.
+    //     // TODO: this code is taken from "old sdvp" s.th. F9P behaves as we are used to,
+    //     //       but needs to be revised, e.g., use VALSET msgs that work for F9R and F9P:
+    //     //        ind = 0;
+    //     //        mUblox.ubloxCfgAppendRate(buffer, &ind, 200, 1, 0);
+    //     //        result &= mUblox.ubloxCfgValset(buffer, ind, true, true, true);
 
-        // Disable RTCM output
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1005, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1074, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1077, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1084, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1087, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1094, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1097, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1124, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1127, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1230, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_4072_0, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_4072_1, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_NAV, UBX_NAV_SVIN, 0);
+    //     // Disable RTCM output
+    //     result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1005, 0);
+    //     result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1074, 0);
+    //     result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1077, 0);
+    //     result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1084, 0);
+    //     result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1087, 0);
+    //     result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1094, 0);
+    //     result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1097, 0);
+    //     result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1124, 0);
+    //     result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1127, 0);
+    //     result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1230, 0);
+    //     result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_4072_0, 0);
+    //     result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_4072_1, 0);
+    //     result &= mUblox.ubxCfgMsg(UBX_CLASS_NAV, UBX_NAV_SVIN, 0);
 
-        // Enable NMEA GGA output (required by some NTRIP/RTCM servers)
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_GGA, 1);
+    //     // Enable NMEA GGA output (required by some NTRIP/RTCM servers)
+    //     result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_GGA, 1);
 
-        // Disable NMEA output (all but GGA)
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_GSV, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_GLL, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_GSA, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_RMC, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_VTG, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_GRS, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_GST, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_ZDA, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_GBS, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_DTM, 0);
+    //     // Disable NMEA output (all but GGA)
+    //     result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_GSV, 0);
+    //     result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_GLL, 0);
+    //     result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_GSA, 0);
+    //     result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_RMC, 0);
+    //     result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_VTG, 0);
+    //     result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_GRS, 0);
+    //     result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_GST, 0);
+    //     result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_ZDA, 0);
+    //     result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_GBS, 0);
+    //     result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_DTM, 0);
 
-        // Disable possible survey-in / fixed position
-        ubx_cfg_tmode3 cfg_mode;
-        memset(&cfg_mode, 0, sizeof(cfg_mode));
-        cfg_mode.mode = 0;
-        result &= mUblox.ubxCfgTmode3(&cfg_mode);
+    //     // Disable possible survey-in / fixed position
+    //     ubx_cfg_tmode3 cfg_mode;
+    //     memset(&cfg_mode, 0, sizeof(cfg_mode));
+    //     cfg_mode.mode = 0;
+    //     result &= mUblox.ubxCfgTmode3(&cfg_mode);
 
-        // Stationary dynamic model
-        ubx_cfg_nav5 nav5;
-        memset(&nav5, 0, sizeof(ubx_cfg_nav5));
-        nav5.apply_dyn = true;
-        nav5.dyn_model = 4;
-        result &= mUblox.ubxCfgNav5(&nav5);
+    //     // Stationary dynamic model
+    //     ubx_cfg_nav5 nav5;
+    //     memset(&nav5, 0, sizeof(ubx_cfg_nav5));
+    //     nav5.apply_dyn = true;
+    //     nav5.dyn_model = 11;
+    //     result &= mUblox.ubxCfgNav5(&nav5);
 
-        ind = 0;
-        mUblox.ubloxCfgAppendEnableGps(buffer, &ind, true, true, true);
-        mUblox.ubloxCfgAppendEnableGal(buffer, &ind, true, true, true);
-        mUblox.ubloxCfgAppendEnableBds(buffer, &ind, true, true, true);
-        mUblox.ubloxCfgAppendEnableGlo(buffer, &ind, true, true, true);
-        result &= mUblox.ubloxCfgValset(buffer, ind, true, true, true);
+    //     ind = 0;
+    //     mUblox.ubloxCfgAppendEnableGps(buffer, &ind, true, true, true);
+    //     mUblox.ubloxCfgAppendEnableGal(buffer, &ind, true, true, true);
+    //     mUblox.ubloxCfgAppendEnableBds(buffer, &ind, true, true, true);
+    //     mUblox.ubloxCfgAppendEnableGlo(buffer, &ind, true, true, true);
+    //     result &= mUblox.ubloxCfgValset(buffer, ind, true, true, true);
 
-        qDebug() << "UbloxRover: F9P configuration" << (result ? "was successful" : "reported an error");
-    }
+    //     qDebug() << "UbloxRover: F9P configuration" << (result ? "was successful" : "reported an error");
+    // }
 
     return true;
 }
@@ -344,7 +343,7 @@ void UbloxRover::updSosResponse(const ubx_upd_sos &sos)
                  << "\n--- End of response --\n";
         if(sos.response == 2) {
             // Once the u-blox receiver has started up it is recommended to delete the stored data
-            mUblox.ubloxUpdSos(1);
+           // mUblox.ubloxUpdSos(1);
         }
     }
 }

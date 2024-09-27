@@ -446,7 +446,7 @@ void PurepursuitWaypointFollower::updateControl(const PosPoint &goal)
 {
     if (isOnVehicle()) {
         mMovementController->setDesiredSteeringCurvature(getCurvatureToPointInENU(goal.getPoint()));
-         qDebug()<<"turning by: "<< mMovementController->getDesiredSteering();
+        //  qDebug()<<"turning by: "<< mMovementController->getDesiredSteering();
         mMovementController->setDesiredSpeed(goal.getSpeed());
         mMovementController->setDesiredAttributes(goal.getAttributes());
     } else {

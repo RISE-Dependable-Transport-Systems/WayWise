@@ -26,6 +26,10 @@ public:
         mTrailerAngleRadians = angle_in_radians;
         mTrailerAngleDegress = agnle_in_degrees;
     }
+    void setTrailerDistanceToF (int tofdistance){
+        trailer_tof_distance = tofdistance;
+    }
+
 
     // Override the updateOdomPositionAndYaw function to consider the angle of the trailer
     virtual void updateOdomPositionAndYaw(double drivenDistance, PosType usePosType = PosType::odom) override;
@@ -43,6 +47,7 @@ private:
     uint16_t mTrailerRawAngle; // Raw angle value from sensor
     double mTrailerAngleRadians; // Angle in Radians
     double mTrailerAngleDegress; // Angle in Degrees
+    int trailer_tof_distance; // distance to nearest object
     QSharedPointer<TrailerState> mTrailerState; // we assume the trailer happens dynamically, 
     //trailer can change during run time , also the trailer can exist if truck dies
 };

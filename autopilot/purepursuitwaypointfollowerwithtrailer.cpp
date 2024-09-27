@@ -55,9 +55,9 @@ double PurepursuitWaypointFollowerWithTrailer::getCurvatureToPointInENU(QSharedP
         double desired_hitch_angle = atan(2*l2*sin(theta_err) / truckState->getAutopilotRadius() ); //<-- desired trailerAngle
 
         // step 3, return the curvature of measured vs desired trailer hitch angle -> which will be transle to steering angle 
-         double k=-2.5; // K is a try and error value, higher value -> more responsive controler 
-        return  k*( measuredTrailerAngle - desired_hitch_angle ) - ( sin(measuredTrailerAngle)/ (l2)) ;
-
+         double k=-1.3; // K is a try and error value, higher value -> more responsive controler 
+        double d =  k*( measuredTrailerAngle - desired_hitch_angle ) - ( sin(measuredTrailerAngle)/ (l2)) ;
+        return d/cos(measuredTrailerAngle);
     }
 
 }
@@ -150,9 +150,8 @@ void PurepursuitWaypointFollowerWithTrailer::updateState()
             double delta_y = trailerAxis * sin(currYaw_rad - trailerAngle);
             currentVehiclePositionXY.setX( currentVehiclePositionXY.x() - delta_x_ );
             currentVehiclePositionXY.setY( currentVehiclePositionXY.y() - delta_y );
-
-
         }
+        
         QPointF currentWaypointPoint = mWaypointList.at(mCurrentState.currentWaypointIndex).getPoint();
 
         if (QLineF(currentVehiclePositionXY, currentWaypointPoint).length() < purePursuitRadius()) // consider previous waypoint as reached

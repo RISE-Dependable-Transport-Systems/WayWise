@@ -1057,7 +1057,8 @@ void Ublox::ubloxOdometerInput(ubx_esf_datatype_enum dataType, uint32_t dataFiel
 
     ubx_put_U4(buffer, &ind, timeTag); // TODO: Time  tag  of  measurement  generated  by  external sensor?
     ubx_put_X2(buffer, &ind, 4096); // Binary: 0001000000000000. Flags. Set all unused bits to zero. We have 1 measurement
-    ubx_put_U2(buffer, &ind, 0); // Identification number of data provider?
+    //ubx_put_X2(buffer, &ind, 2048); // Binary: 0000100000000000. Flags. Set all unused bits to zero. We have 1 measurement
+     ubx_put_U2(buffer, &ind, 0); // Identification number of data provider?
     ubx_put_X4(buffer, &ind, data);
 
     ubx_encode_send(UBX_CLASS_ESF, UBX_ESF_MEAS, buffer, ind, 0);
