@@ -313,6 +313,71 @@ void PurepursuitWaypointFollower::updateState()
         break;
 
     case WayPointFollowerSTMstates::FOLLOW_ROUTE_GOTO_BEGIN: {
+        qDebug()<< "START LOGGING" ;
+        auto truckState = qSharedPointerDynamicCast<TruckState>(mMovementController->getVehicleState());
+
+        truckState->initLogFile("truckposition");
+        truckState->initLogFile("trailerposition");
+        truckState->initLogFile("angle");
+        truckState->initLogFile("distance");
+        truckState->initLogFile("steering");
+        truckState->initLogFile("tofback");
+
+
+                // Start the timer for logging
+        connect(&mLogTimer, &QTimer::timeout, [this,truckState]() {
+            // logging data for different categories
+
+            PosPoint carPosition = getCurrentVehiclePosition();
+            // QString timestamp = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz");
+            QString PositionlogMessage = QString("%1, %2, %3")
+                         .arg(carPosition.getX())
+                         .arg(carPosition.getY())
+                         .arg(carPosition.getYaw());
+
+        double trailerYaw = carPosition.getYaw() - truckState->getTrailerAngleRadians() ; // in radians θ = θ_vehicle - θ_e (hitch-angle)
+        double delta_x_ = (0.715) * cos( trailerYaw); // trailer x difference from x of the truck wheelbase
+        double delta_y = (0.715) * sin( trailerYaw); // trailer y difference from y of the truck wheelbase
+        double trailerPositionx = carPosition.getX() - delta_x_;
+        double trailerPositiony = carPosition.getY() - delta_y;
+            QString TrailerPositionlogMessage = QString("%1, %2, %3")
+                    .arg(trailerPositionx)
+                    .arg(trailerPositiony)
+                    .arg(trailerYaw);
+
+
+            QString AnglelogMessage = QString("%1, %2, %3")
+                         .arg(truckState->getTrailerAngleRadians())
+                         .arg(truckState->getTrailerAngleDegrees())
+                         .arg(truckState->getTrailerAngleRaw());
+
+            QString ToFlogMessage = QString("%1")
+                         .arg(truckState->getTrailerDistanceToF());
+
+            QString DistanceMessage = QString("%1")
+                         .arg(truckState->GetTotalDistance());
+            
+            QString SteeringMessage = QString("%1")
+                         .arg( mMovementController->getDesiredSteering());
+
+            QString tofbackMessage = QString("%1")
+                         .arg( truckState->getTrailerDistanceToF());
+
+
+            truckState->logData("truckposition", PositionlogMessage);
+            truckState->logData("trailerposition", TrailerPositionlogMessage);
+            truckState->logData("angle", AnglelogMessage);
+            truckState->logData("distance", DistanceMessage);
+            truckState->logData("steering", SteeringMessage);
+            truckState->logData("tofback", tofbackMessage);
+
+            //vehicleState->startLogging(); // Replace with your logging logic
+        });
+        mLogTimer.start(mLogFrequency);
+
+
+
+
         calculateDistanceOfRouteLeft();
         currentVehiclePositionXY = getCurrentVehiclePosition().getPoint();
 
@@ -342,11 +407,7 @@ void PurepursuitWaypointFollower::updateState()
             double delta_y = trailerAxis * sin(currYaw_rad - trailerAngle);
             currentVehiclePositionXY.setX( currentVehiclePositionXY.x() - delta_x_ );
             currentVehiclePositionXY.setY( currentVehiclePositionXY.y() - delta_y );
-
-
         }
-
-
 
         QPointF currentWaypointPoint = mWaypointList.at(mCurrentState.currentWaypointIndex).getPoint();
 
@@ -431,11 +492,22 @@ void PurepursuitWaypointFollower::updateState()
         }
     } break;
 
-    case WayPointFollowerSTMstates::FOLLOW_ROUTE_FINISHED:
+    case WayPointFollowerSTMstates::FOLLOW_ROUTE_FINISHED:{
+        qDebug()<< "STOP LOGGING" ;
+        
+        auto truckState = qSharedPointerDynamicCast<TruckState>(mMovementController->getVehicleState());
+
+         // Stop the logging timer
+        mLogTimer.stop();  // Stop the timer
+
+        // Disconnect the timeout signal to avoid calling the lambda again
+        disconnect(&mLogTimer, &QTimer::timeout, nullptr, nullptr);
+
+
         mCurrentState.stmState = WayPointFollowerSTMstates::NONE;
         mCurrentState.currentWaypointIndex = mWaypointList.size();
         stop();
-        break;
+    }break;
 
     default:
         break;

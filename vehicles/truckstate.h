@@ -10,6 +10,8 @@
 #include "carstate.h"
 #include "trailerstate.h"
 #include <QSharedPointer>
+#include <QFile>
+#include <QTextStream>
 
 class TruckState : public CarState
 {
@@ -29,6 +31,14 @@ public:
     void setTrailerDistanceToF (int tofdistance){
         trailer_tof_distance = tofdistance;
     }
+    int getTrailerDistanceToF (){
+        return trailer_tof_distance;
+    }
+
+
+void initLogFile(const QString &category);
+void closeLogFiles();
+void logData(const QString &category, const QString &data);
 
 
     // Override the updateOdomPositionAndYaw function to consider the angle of the trailer
@@ -50,6 +60,11 @@ private:
     int trailer_tof_distance; // distance to nearest object
     QSharedPointer<TrailerState> mTrailerState; // we assume the trailer happens dynamically, 
     //trailer can change during run time , also the trailer can exist if truck dies
+    
+    QMap<QString, QSharedPointer<QFile>> logFiles;         // Store QFile using std::unique_ptr
+    QMap<QString, QSharedPointer<QTextStream>> logStreams; // Store QTextStream using std::unique_ptr
+
+
 };
 
 #endif // TRUCKSTATE_H

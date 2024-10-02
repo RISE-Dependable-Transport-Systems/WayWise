@@ -14,6 +14,10 @@
 #include <QSharedPointer>
 #include <QPointF>
 #include <QTimer>
+#include <QFile>
+#include <QTextStream>
+#include <QDateTime>
+
 #include "vehicles/vehiclestate.h"
 #include "vehicles/controller/movementcontroller.h"
 #include "communication/vehicleconnections/vehicleconnection.h"
@@ -106,6 +110,12 @@ protected:
     QList <PosPoint> mWaypointList;
     unsigned mUpdateStatePeriod_ms = 50;
     QTimer mUpdateStateTimer;
+
+    QTimer mLogTimer;  // Timer for logging
+    int mLogFrequency;  // log interval in milliseconds
+    QFile mLogFile;        // Log file
+    QTextStream mLogStream; // Stream to write to the log file
+
 
     void holdPosition();
     void calculateDistanceOfRouteLeft();

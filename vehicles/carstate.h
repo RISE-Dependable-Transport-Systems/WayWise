@@ -42,6 +42,9 @@ public:
     inline double getMaxSteeringAngle() const { return mMaxSteeringAngle < M_PI/180.0 ? M_PI/4.0 : mMaxSteeringAngle; } // 45° assumed if unset
     void setMaxSteeringAngle(double steeringAngle_rad);
     void setMinTurnRadiusRear(double minTurnRadius_m);
+    
+    void UpdateTotalDistance(double distance);
+    double GetTotalDistance(){return mDisplacement;}
 
     // Dynamic state
     void setSteering(double steering) override;
@@ -61,6 +64,7 @@ private:
     double mAxisDistance; // [m]
     double mMaxSteeringAngle = 0.0; // [rad]
     double mMinTurnRadiusRear = std::numeric_limits<double>::infinity(); // [m]
+    double mDisplacement = 0.0;
 
 
 };

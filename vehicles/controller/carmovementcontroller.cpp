@@ -80,6 +80,7 @@ void CarMovementController::updateVehicleState(double rpm, int tachometer, int t
 
     carState->setSpeed(currentSpeed);
     carState->updateOdomPositionAndYaw(drivenDistance);
+    carState->UpdateTotalDistance(drivenDistance);
 
     previousTachometer = tachometer;
     emit updatedOdomPositionAndYaw(carState, drivenDistance);

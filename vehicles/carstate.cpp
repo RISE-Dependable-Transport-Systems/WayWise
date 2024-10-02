@@ -261,3 +261,9 @@ double CarState::steeringCurvatureToSteering(double steeringCurvature)
 
     return steeringAngle_rad / getMaxSteeringAngle();
 }
+
+
+void CarState::UpdateTotalDistance(double distance){
+    mDisplacement += distance;
+    qDebug()<<"Displacement"<<mDisplacement;
+}

@@ -53,7 +53,9 @@ MapWidget::MapWidget(QWidget *parent) : QWidget(parent)
     //mRefLlh = {57.78100308, 12.76925422, 253.76};
 
     // RISE RTK base station
-    mRefLlh = {57.71495867, 12.89134921, 219.0};
+    //mRefLlh = {57.71495867, 12.89134921, 219.0};
+    
+    mRefLlh = {57.68412443207728, 11.983627080917358, 51};
 
     // Hardcoded for now
     mOsm->setCacheDir("osm_tiles");

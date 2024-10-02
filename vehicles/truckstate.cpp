@@ -8,6 +8,63 @@
 #include "truckstate.h"
 #include <QDebug>
 #include <QDateTime>
+#include <QFile>
+#include <QString>
+#include <QTextStream>
+#include <QMap>
+#include <memory>  // For std::unique_ptr
+
+
+// Function to initialize a log file for a given category
+void TruckState::initLogFile(const QString &category) {
+    // Generate a unique filename for the log category
+    QString fileName = QString("%1_log_%2.csv")
+        .arg(category)
+        .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd_hh-mm-ss"));
+    
+    // Create and open the log file
+     QSharedPointer<QFile> logFile = QSharedPointer<QFile>::create(fileName);
+    
+    if (logFile->open(QIODevice::WriteOnly | QIODevice::Text)) {
+        // Create a text stream associated with the file
+        QSharedPointer<QTextStream> logStream = QSharedPointer<QTextStream>::create(logFile.data());
+
+        // Insert the log file and text stream into the QMap
+        logFiles.insert(category, logFile);
+        logStreams.insert(category, logStream);
+
+        qDebug() << "Log file opened for category:" << category << "->" << fileName;
+    } else {
+        qWarning() << "Could not open log file for category:" << category;
+    }
+}
+
+// Function to close all log files
+void TruckState::closeLogFiles() {
+    for (auto &category : logFiles.keys()) {
+        if (logFiles[category]->isOpen()) {
+            logFiles[category]->close();
+            qDebug() << "Log file closed for category:" << category;
+        }
+    }
+    // unique_ptr objects will automatically clean up when the QMap is cleared
+    logFiles.clear();
+    logStreams.clear();
+}
+
+// Function to log data for a given category (e.g., position, angle, distance)
+void TruckState::logData(const QString &category, const QString &data) {
+    if (logFiles.contains(category) && logFiles[category]->isOpen()) {
+        (*logStreams[category]) << data << Qt::endl;  // Write data to the stream
+        logStreams[category]->flush();            // Ensure immediate write to the file
+    } else {
+        qWarning() << "Log file not initialized or closed for category:" << category;
+    }
+}
+
+
+
+
 
 TruckState::TruckState(int id, Qt::GlobalColor color) :
     CarState(id, color)
