@@ -27,8 +27,9 @@ VL53L0XUpdater::VL53L0XUpdater(QSharedPointer<VehicleState> vehicleState) : ToFS
       connect(&mPollTimer, &QTimer::timeout, [this, vehicleState]() {
          int iDistance = tofReadDistance();
          if (iDistance < 4096){ // valid range?
-            qDebug() <<  "Distance = " <<  iDistance << "dmm";
+            qDebug() <<  "Object Distance to trailer = " <<  iDistance << "mm";
          }
+
          QSharedPointer<TruckState> truckState = qSharedPointerDynamicCast<TruckState>(vehicleState);
          if (truckState) {  
             truckState->setTrailerDistanceToF(iDistance);

@@ -22,7 +22,7 @@ public:
     virtual bool setUpdateIntervall(int pollIntervall_ms) override;
 
 private:
-    int mPollIntervall_ms = 2000; // interval (ms) to read from AS5600,
+    int mPollIntervall_ms = 500; // interval (ms) to read from AS5600,
     QTimer mPollTimer;
 };
 

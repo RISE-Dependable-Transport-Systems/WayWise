@@ -82,23 +82,23 @@ UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
     // Print esf-status message
     // Search for sensor data type in following document for explanation:
     // https://www.u-blox.com/sites/default/files/ZED-F9R_Integrationmanual_UBX-20039643.pdf
-   connect(&mUblox, &Ublox::rxEsfStatus, this, [](const ubx_esf_status &status){
-       static int count = 0;
-       if (count++%5)
-           return;
-       qDebug() << "ESF-STATUS data:"
-                << "\nVersion: " << status.version
-                << "\nFusion mode: " << status.fusion_mode
-                << "\nNumber of sensors: " << status.num_sens;
-       for (int i = 0;i < status.num_sens;i++) {
-           qDebug() << "Sensor data type: " << status.sensors[i].type
-                    << "\nSensor data used: " << status.sensors[i].used
-                    << "\nSensor data ready: " << status.sensors[i].ready
-                    << "\nSensor calibration status: " << status.sensors[i].calib_status
-                    << "\nSensor time status: " << status.sensors[i].time_status
-                    << "\nSensor observation freq: " << status.sensors[i].freq
-                    ;
-       }});
+//    connect(&mUblox, &Ublox::rxEsfStatus, this, [](const ubx_esf_status &status){
+//        static int count = 0;
+//        if (count++%5)
+//            return;
+//        qDebug() << "ESF-STATUS data:"
+//                 << "\nVersion: " << status.version
+//                 << "\nFusion mode: " << status.fusion_mode
+//                 << "\nNumber of sensors: " << status.num_sens;
+//        for (int i = 0;i < status.num_sens;i++) {
+//            qDebug() << "Sensor data type: " << status.sensors[i].type
+//                     << "\nSensor data used: " << status.sensors[i].used
+//                     << "\nSensor data ready: " << status.sensors[i].ready
+//                     << "\nSensor calibration status: " << status.sensors[i].calib_status
+//                     << "\nSensor time status: " << status.sensors[i].time_status
+//                     << "\nSensor observation freq: " << status.sensors[i].freq
+//                     ;
+//        }});
 
 //    Print config recevied from valget
 //    connect(&mUblox, &Ublox::rxCfgValget, this, [](const ubx_cfg_valget &valget){
