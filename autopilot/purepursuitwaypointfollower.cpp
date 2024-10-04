@@ -313,7 +313,7 @@ void PurepursuitWaypointFollower::updateState()
         break;
 
     case WayPointFollowerSTMstates::FOLLOW_ROUTE_GOTO_BEGIN: {
-        qDebug()<< "START LOGGING" ;
+        qDebug()<< "Start logging" ;
         auto truckState = qSharedPointerDynamicCast<TruckState>(mMovementController->getVehicleState());
 
         truckState->initLogFile("truckposition");
@@ -322,11 +322,31 @@ void PurepursuitWaypointFollower::updateState()
         truckState->initLogFile("distance");
         truckState->initLogFile("steering");
         truckState->initLogFile("tofback");
+        // truckState->initLogFile("tofrear");
+        truckState->initLogFile("accelerometer");
+        truckState->initLogFile("gyroscope");
 
+        
+        truckState->logData("truckposition", "x,y,yaw");
+        truckState->logData("steering", "time,angle");
 
                 // Start the timer for logging
         connect(&mLogTimer, &QTimer::timeout, [this,truckState]() {
             // logging data for different categories
+
+
+            std::array<float, 3> gyrodata = truckState-> getGyroscopeXYZ() ;
+            QString GyrologMessage = QString("%1, %2, %3")
+                         .arg(gyrodata[0])
+                         .arg(gyrodata[1])
+                         .arg(gyrodata[2]);
+
+            std::array<float, 3> accelerdata = truckState-> getAccelerometerXYZ();
+            QString AccelogMessage = QString("%1, %2, %3")
+                         .arg(accelerdata[0])
+                         .arg(accelerdata[1])
+                         .arg(accelerdata[2]);
+
 
             PosPoint carPosition = getCurrentVehiclePosition();
             // QString timestamp = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz");
@@ -357,7 +377,8 @@ void PurepursuitWaypointFollower::updateState()
             QString DistanceMessage = QString("%1")
                          .arg(truckState->GetTotalDistance());
             
-            QString SteeringMessage = QString("%1")
+            QString SteeringMessage = QString("%1, %2")
+                        .arg( QDateTime::currentDateTime().toString("HH:mm:ss"))
                          .arg( mMovementController->getDesiredSteering());
 
             QString tofbackMessage = QString("%1")
@@ -370,6 +391,9 @@ void PurepursuitWaypointFollower::updateState()
             truckState->logData("distance", DistanceMessage);
             truckState->logData("steering", SteeringMessage);
             truckState->logData("tofback", tofbackMessage);
+            // truckState->logData("tofrear", tofbackMessage);
+            truckState->logData("accelerometer", AccelogMessage);
+            truckState->logData("gyroscope", GyrologMessage);
 
             //vehicleState->startLogging(); // Replace with your logging logic
         });
@@ -493,12 +517,12 @@ void PurepursuitWaypointFollower::updateState()
     } break;
 
     case WayPointFollowerSTMstates::FOLLOW_ROUTE_FINISHED:{
-        qDebug()<< "STOP LOGGING" ;
+        qDebug()<< "Stop logging" ;
         
         auto truckState = qSharedPointerDynamicCast<TruckState>(mMovementController->getVehicleState());
-
          // Stop the logging timer
         mLogTimer.stop();  // Stop the timer
+        truckState->closeLogFiles();
 
         // Disconnect the timeout signal to avoid calling the lambda again
         disconnect(&mLogTimer, &QTimer::timeout, nullptr, nullptr);

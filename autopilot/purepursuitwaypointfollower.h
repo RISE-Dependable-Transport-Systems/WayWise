@@ -112,7 +112,7 @@ protected:
     QTimer mUpdateStateTimer;
 
     QTimer mLogTimer;  // Timer for logging
-    int mLogFrequency;  // log interval in milliseconds
+    int mLogFrequency = 200;  // log interval in milliseconds
     QFile mLogFile;        // Log file
     QTextStream mLogStream; // Stream to write to the log file
 

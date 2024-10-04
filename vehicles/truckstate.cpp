@@ -18,9 +18,10 @@
 // Function to initialize a log file for a given category
 void TruckState::initLogFile(const QString &category) {
     // Generate a unique filename for the log category
-    QString fileName = QString("%1_log_%2.csv")
-        .arg(category)
-        .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd_hh-mm-ss"));
+    // QString fileName = QString("%1_log_%2.csv")
+    QString fileName = QString("%1_log.csv")
+        .arg(category);
+        //.arg(QDateTime::currentDateTime().toString("yyyy-MM-dd_hh-mm-ss"));
     
     // Create and open the log file
      QSharedPointer<QFile> logFile = QSharedPointer<QFile>::create(fileName);
