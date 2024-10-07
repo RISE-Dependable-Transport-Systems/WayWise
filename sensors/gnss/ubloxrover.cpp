@@ -18,7 +18,7 @@ UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
     connect(&mUblox, &Ublox::rxNavPvt, this, &UbloxRover::updateGNSSPositionAndYaw);
 
     // Save-on-shutdown feature
-    connect(&mUblox, &Ublox::rxUpdSos, this, &UbloxRover::updSosResponse);
+    //connect(&mUblox, &Ublox::rxUpdSos, this, &UbloxRover::updSosResponse);
 
     // Fordward received NMEA GGA messages
     connect(&mUblox, &Ublox::rxNmeaGga, this, &UbloxRover::gotNmeaGga);
@@ -290,8 +290,8 @@ void UbloxRover::updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt)
         gnssPos.setHeight(xyz.z);
 
         // Yaw --- based on last GNSS position if fusion (F9R) unavailable
-        static xyz_t lastXyz;
-        if(pvt.head_veh_valid) {
+         static xyz_t lastXyz;
+        // if(pvt.head_veh_valid) {
             double yaw_degENU = coordinateTransforms::yawNEDtoENU(pvt.head_veh) + mIMUOrientationOffset.yawOffset_deg;
 
             // normalize to [-180.0:180.0[
@@ -301,8 +301,10 @@ void UbloxRover::updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt)
                 yaw_degENU -= 360.0;
 
             gnssPos.setYaw(yaw_degENU);
-        } else
-            gnssPos.setYaw(atan2(xyz.y - lastXyz.y, xyz.x - lastXyz.x) * 180.0 / M_PI);
+        // } else
+        // gnssPos.setYaw(atan2(xyz.y - lastXyz.y, xyz.x - lastXyz.x) * 180.0 / M_PI);
+    
+        // gnssPos.setYaw( pvt.head_veh);
 
         // Time and speed
         gnssPos.setTime(QTime::fromMSecsSinceStartOfDay((pvt.i_tow % ms_per_day) - leapSeconds_ms));
