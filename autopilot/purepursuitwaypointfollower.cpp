@@ -328,6 +328,11 @@ void PurepursuitWaypointFollower::updateState()
 
         
         truckState->logData("truckposition", "x,y,yaw");
+        truckState->logData("trailerposition", "x,y,yaw");
+        truckState->logData("steering", "time,angle");
+        
+        truckState->logData("steering", "time,angle");
+        truckState->logData("steering", "time,angle");
         truckState->logData("steering", "time,angle");
 
                 // Start the timer for logging
@@ -348,18 +353,24 @@ void PurepursuitWaypointFollower::updateState()
                          .arg(accelerdata[2]);
 
 
-            PosPoint carPosition = getCurrentVehiclePosition();
+            PosPoint truckPosition = getCurrentVehiclePosition();
             // QString timestamp = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz");
             QString PositionlogMessage = QString("%1, %2, %3")
-                         .arg(carPosition.getX())
-                         .arg(carPosition.getY())
-                         .arg(carPosition.getYaw());
+                         .arg(truckPosition.getX())
+                         .arg(truckPosition.getY())
+                         .arg(truckPosition.getYaw());
 
-        double trailerYaw = carPosition.getYaw() - truckState->getTrailerAngleRadians() ; // in radians θ = θ_vehicle - θ_e (hitch-angle)
-        double delta_x_ = (0.715) * cos( trailerYaw); // trailer x difference from x of the truck wheelbase
-        double delta_y = (0.715) * sin( trailerYaw); // trailer y difference from y of the truck wheelbase
-        double trailerPositionx = carPosition.getX() - delta_x_;
-        double trailerPositiony = carPosition.getY() - delta_y;
+
+            double trailerAngle = truckState->getTrailerAngleRadians();
+            double currYaw_rad = getCurrentVehiclePosition().getYaw() * M_PI / 180.0;
+            double trailerAxis = 0.715;
+            double delta_x_ = trailerAxis * cos(currYaw_rad- trailerAngle);
+            double delta_y = trailerAxis * sin(currYaw_rad - trailerAngle);
+            double trailerPositionx = truckPosition.getX() - delta_x_;
+            double trailerPositiony = truckPosition.getY() - delta_y;
+
+            double trailerYaw = currYaw_rad - trailerAngle ; 
+
             QString TrailerPositionlogMessage = QString("%1, %2, %3")
                     .arg(trailerPositionx)
                     .arg(trailerPositiony)
@@ -379,7 +390,7 @@ void PurepursuitWaypointFollower::updateState()
             
             QString SteeringMessage = QString("%1, %2")
                         .arg( QDateTime::currentDateTime().toString("HH:mm:ss"))
-                         .arg( mMovementController->getDesiredSteering());
+                         .arg( truckState->getMaxSteeringAngle() * mMovementController->getDesiredSteering() );
 
             QString tofbackMessage = QString("%1")
                          .arg( truckState->getTrailerDistanceToF());

@@ -265,5 +265,5 @@ double CarState::steeringCurvatureToSteering(double steeringCurvature)
 
 void CarState::UpdateTotalDistance(double distance){
     mDisplacement += distance;
-    qDebug()<<"Displacement"<<mDisplacement;
+    //qDebug()<<"Displacement"<<mDisplacement;
 }
