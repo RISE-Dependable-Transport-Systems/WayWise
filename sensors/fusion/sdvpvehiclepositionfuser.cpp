@@ -64,7 +64,7 @@ void SDVPVehiclePositionFuser::correctPositionAndYawGNSS(QSharedPointer<VehicleS
 {
     mPosGNSSisFused = fused;
     PosPoint posGNSS = vehicleState->getPosition(PosType::GNSS);
-    PosPoint posIMU = vehicleState->getPosition(PosType::IMU);
+    // PosPoint posIMU = vehicleState->getPosition(PosType::IMU);
     PosPoint posFused = vehicleState->getPosition(PosType::fused);
 
     if (mPosGNSSisFused) {// use GNSS position directly if that was already fused (e.g., F9R).
@@ -73,21 +73,24 @@ void SDVPVehiclePositionFuser::correctPositionAndYawGNSS(QSharedPointer<VehicleS
     } else {
         
         posFused.setXY(posGNSS.getX(), posGNSS.getY());
+        if ( vehicleState->getSpeed() > 0){
             posFused.setYaw(posGNSS.getYaw());
+        }
          //qDebug() << " forward yaw " << posGNSS.getYaw();
         // if( vehicleState->getSpeed() >= 0) {
         //     posFused.setYaw(posGNSS.getYaw());
         //     // qDebug() << " forward yaw " << posGNSS.getYaw();
         // }
-        if ( vehicleState->getSpeed() < 0){
-        //         // When moving in reverse, adjust the yaw accordingly
-            float reverseYaw = posGNSS.getYaw() + 180.0; // Invert yaw by adding 180 degrees
-            if (reverseYaw > 180.0) {
-                reverseYaw -= 360.0; // Ensure yaw stays within the range of [-180, 180] degrees
-            }
-            posFused.setYaw(reverseYaw);
-             //qDebug() << " reverse yaw " << reverseYaw;
-        }
+
+        // if ( vehicleState->getSpeed() <=  0){
+        // //         // When moving in reverse, adjust the yaw accordingly
+        //     float reverseYaw = posGNSS.getYaw() + 180.0; // Invert yaw by adding 180 degrees
+        //     if (reverseYaw > 180.0) {
+        //         reverseYaw -= 360.0; // Ensure yaw stays within the range of [-180, 180] degrees
+        //     }
+        //     posFused.setYaw(reverseYaw);
+        //      //qDebug() << " reverse yaw " << reverseYaw;
+        // }
 //         // 1. GNSS position is precise, but old. Find sampled position at matching time to calculate error
 //         PosSample closestPosFusedSample = getClosestPosFusedSampleInTime(posGNSS.getTime());
 
@@ -145,41 +148,59 @@ void SDVPVehiclePositionFuser::correctPositionAndYawOdom(QSharedPointer<VehicleS
 
 void SDVPVehiclePositionFuser::correctPositionAndYawIMU(QSharedPointer<VehicleState> vehicleState)
 {
-    // if (!mPosGNSSisFused) {
-    //     static bool standstillAtLastCall = false;
-    //     static double yawWhenStopping = 0.0;
-    //     static double yawDriftSinceStandstill = 0.0;
+    if ( vehicleState->getSpeed() < 0){
+         static bool standstillAtLastCall = false;
+         static double yawWhenStopping = 0.0;
+         static double yawDriftSinceStandstill = 0.0;
+         PosPoint posGNSS = vehicleState->getPosition(PosType::GNSS);
+         double gpsHeading = posGNSS.getYaw();
 
     //     // --- correct relative/raw IMU yaw with external offset
-    //     PosPoint posIMU = vehicleState->getPosition(PosType::IMU);
-    //     PosPoint posFused = vehicleState->getPosition(PosType::fused);
+         PosPoint posIMU = vehicleState->getPosition(PosType::IMU);
+         PosPoint posFused = vehicleState->getPosition(PosType::fused);
 
-    //     // 1. handle drift at standstill
-    //     if (fabs(vehicleState->getSpeed()) < 0.05) {
-    //         if (!standstillAtLastCall)
-    //             yawWhenStopping = posIMU.getYaw();
+        // 1. handle drift at standstill
+        if (fabs(vehicleState->getSpeed()) < 0.05) {
+            if (!standstillAtLastCall)
+                yawWhenStopping = posIMU.getYaw();
 
-    //         standstillAtLastCall = true;
-    //         yawDriftSinceStandstill = yawWhenStopping - posIMU.getYaw();
-    //         posIMU.setYaw(yawWhenStopping); // fix yaw during standstill
-    //     } else {
-    //         if (standstillAtLastCall)
-    //             mPosIMUyawOffset += yawDriftSinceStandstill;
+            standstillAtLastCall = true;
+            yawDriftSinceStandstill = yawWhenStopping - posIMU.getYaw();
+            posIMU.setYaw(yawWhenStopping); // fix yaw during standstill
+        } else {
+            if (standstillAtLastCall){
+                // Recalibrate using GPS heading if speed is reasonable (e.g., > 1 m/s)
+                if (vehicleState->getSpeed() > 1.0 ) {
+                    double imuYaw = posIMU.getYaw();
+                    double yawCorrection = gpsHeading - imuYaw;
+                    // Apply the offset correction by directly adjusting the yaw offset
+                    if (yawCorrection < -180.0) {
+                        yawCorrection += 360.0;
+                    } else if (yawCorrection >= 180.0) {
+                        yawCorrection -= 360.0;
+                    }
+                    
+                    // Adjust the IMU yaw offset using GPS heading
+                    mPosIMUyawOffset += yawCorrection;
+                 }
+                //mPosIMUyawOffset += yawDriftSinceStandstill;
+            }
+        
 
-    //         standstillAtLastCall = false;
-    //     }
+            standstillAtLastCall = false;
+        }
 
-    //     // 2. apply offset & normalize
-    //     double yawResult = posIMU.getYaw() + mPosIMUyawOffset;
-    //     while (yawResult < -180.0)
-    //         yawResult += 360.0;
-    //     while (yawResult >= 180.0)
-    //         yawResult -= 360.0;
-    //     posFused.setYaw(yawResult);
+        // 2. apply offset & normalize
+        double yawResult = posIMU.getYaw() + mPosIMUyawOffset;
+        while (yawResult < -180.0)
+            yawResult += 360.0;
+        while (yawResult >= 180.0)
+            yawResult -= 360.0;
+        posFused.setYaw(yawResult);
 
-    //     posFused.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()));
-    //     vehicleState->setPosition(posFused);
-    // }
+        posFused.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()));
+        vehicleState->setPosition(posFused);
+    }
 }
 
 void SDVPVehiclePositionFuser::setPosGNSSxyStaticGain(double posGNSSxyStaticGain)

@@ -150,7 +150,8 @@ double PurepursuitWaypointFollower::getCurvatureToPointInENU(QSharedPointer<Vehi
         double theta_err =  atan2(pointInVehicleFrame.y(), pointInVehicleFrame.x()) - currYaw_rad; // the theta error between the target point and curect position 
         double desired_hitch_angle = atan(2*l2*sin(theta_err)); // desired trailer/hitch angle
         double k=1; // K is a try and error value, higher value -> more responsive controler 
-        return  k*( measuredTrailerAngle - desired_hitch_angle ) - ( sin(measuredTrailerAngle)/ (l2)) ;
+        double curve = k *( measuredTrailerAngle - desired_hitch_angle ) - ( sin(measuredTrailerAngle)/ (l2));
+        return curve/cos(measuredTrailerAngle);
 
     } else {
         // double l1=truckState->getAxisDistance(); // truck wheelbase in meters 
@@ -175,8 +176,9 @@ double PurepursuitWaypointFollower::getCurvatureToPointInENU(QSharedPointer<Vehi
         double desired_hitch_angle = atan(2*l2*sin(theta_err) / truckState->getAutopilotRadius() ); //<-- desired trailerAngle
 
         // step 3, return the curvature of measured vs desired trailer hitch angle -> which will be transle to steering angle 
-         double k=-2.5; // K is a try and error value, higher value -> more responsive controler 
-        return  k*( measuredTrailerAngle - desired_hitch_angle ) - ( sin(measuredTrailerAngle)/ (l2)) ;
+         double k=-1.3; // K is a try and error value, higher value -> more responsive controler 
+         double curve = k *( measuredTrailerAngle - desired_hitch_angle ) - ( sin(measuredTrailerAngle)/ (l2));
+        return curve/cos(measuredTrailerAngle);
 
     }
 
@@ -318,7 +320,7 @@ void PurepursuitWaypointFollower::updateState()
 
         truckState->initLogFile("truckposition");
         truckState->initLogFile("trailerposition");
-        truckState->initLogFile("angle");
+        truckState->initLogFile("trailerAngle");
         truckState->initLogFile("distance");
         truckState->initLogFile("steering");
         truckState->initLogFile("tofback");
@@ -329,11 +331,10 @@ void PurepursuitWaypointFollower::updateState()
         
         truckState->logData("truckposition", "x,y,yaw");
         truckState->logData("trailerposition", "x,y,yaw");
+        truckState->logData("trailerAngle", "time,trailerAngle");
         truckState->logData("steering", "time,angle");
         
-        truckState->logData("steering", "time,angle");
-        truckState->logData("steering", "time,angle");
-        truckState->logData("steering", "time,angle");
+
 
                 // Start the timer for logging
         connect(&mLogTimer, &QTimer::timeout, [this,truckState]() {
@@ -398,7 +399,7 @@ void PurepursuitWaypointFollower::updateState()
 
             truckState->logData("truckposition", PositionlogMessage);
             truckState->logData("trailerposition", TrailerPositionlogMessage);
-            truckState->logData("angle", AnglelogMessage);
+            truckState->logData("trailerAngle", AnglelogMessage);
             truckState->logData("distance", DistanceMessage);
             truckState->logData("steering", SteeringMessage);
             truckState->logData("tofback", tofbackMessage);
