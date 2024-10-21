@@ -384,8 +384,8 @@ void PurepursuitWaypointFollower::updateState()
 
             QString AnglelogMessage = QString("%1,%2,%3")
                          .arg( QDateTime::currentDateTime().toString("HH:mm:ss"))
-                         .arg(truckState->getTrailerAngleRadians())
-                         .arg(truckState->getTrailerAngleDegrees());
+                         .arg(truckState->getTrailerAngleDegrees())
+                         .arg(truckState->getTrailerAngleRadians());
 
             QString tofbackMessage = QString("%1,%2")
                         .arg( QDateTime::currentDateTime().toString("HH:mm:ss"))
