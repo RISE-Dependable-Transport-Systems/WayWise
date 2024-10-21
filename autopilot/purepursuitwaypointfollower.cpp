@@ -324,17 +324,19 @@ void PurepursuitWaypointFollower::updateState()
         truckState->initLogFile("distance");
         truckState->initLogFile("steering");
         truckState->initLogFile("tofback");
-        // truckState->initLogFile("tofrear");
+
         truckState->initLogFile("accelerometer");
         truckState->initLogFile("gyroscope");
-
+        // truckState->initLogFile("tofrear");
         
-        truckState->logData("truckposition", "x,y,yaw");
-        truckState->logData("trailerposition", "x,y,yaw");
-        truckState->logData("trailerAngle", "time,trailerAngle");
+        truckState->logData("truckposition", "time,x,y,yaw");
+        truckState->logData("trailerposition", "time,x,y,yaw");
+        truckState->logData("trailerAngle", "time,degrees,radians");
+        truckState->logData("distance", "time,m");
         truckState->logData("steering", "time,angle");
-        
+        truckState->logData("tofback", "time,m");
 
+        
 
                 // Start the timer for logging
         connect(&mLogTimer, &QTimer::timeout, [this,truckState]() {
@@ -342,13 +344,13 @@ void PurepursuitWaypointFollower::updateState()
 
 
             std::array<float, 3> gyrodata = truckState-> getGyroscopeXYZ() ;
-            QString GyrologMessage = QString("%1, %2, %3")
+            QString GyrologMessage = QString("%1,%2,%3")
                          .arg(gyrodata[0])
                          .arg(gyrodata[1])
                          .arg(gyrodata[2]);
 
             std::array<float, 3> accelerdata = truckState-> getAccelerometerXYZ();
-            QString AccelogMessage = QString("%1, %2, %3")
+            QString AccelogMessage = QString("%1,%2, %3")
                          .arg(accelerdata[0])
                          .arg(accelerdata[1])
                          .arg(accelerdata[2]);
@@ -356,10 +358,11 @@ void PurepursuitWaypointFollower::updateState()
 
             PosPoint truckPosition = getCurrentVehiclePosition();
             // QString timestamp = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz");
-            QString PositionlogMessage = QString("%1, %2, %3")
-                         .arg(truckPosition.getX())
-                         .arg(truckPosition.getY())
-                         .arg(truckPosition.getYaw());
+            QString PositionlogMessage = QString("%1,%2,%3,%4")
+                        .arg( QDateTime::currentDateTime().toString("HH:mm:ss"))
+                        .arg(truckPosition.getX())
+                        .arg(truckPosition.getY())
+                        .arg(truckPosition.getYaw());
 
 
             double trailerAngle = truckState->getTrailerAngleRadians();
@@ -372,29 +375,30 @@ void PurepursuitWaypointFollower::updateState()
 
             double trailerYaw = currYaw_rad - trailerAngle ; 
 
-            QString TrailerPositionlogMessage = QString("%1, %2, %3")
+            QString TrailerPositionlogMessage = QString("%1,%2,%3,%4")
+                    .arg( QDateTime::currentDateTime().toString("HH:mm:ss"))
                     .arg(trailerPositionx)
                     .arg(trailerPositiony)
                     .arg(trailerYaw);
 
 
-            QString AnglelogMessage = QString("%1, %2, %3")
+            QString AnglelogMessage = QString("%1,%2,%3")
+                         .arg( QDateTime::currentDateTime().toString("HH:mm:ss"))
                          .arg(truckState->getTrailerAngleRadians())
-                         .arg(truckState->getTrailerAngleDegrees())
-                         .arg(truckState->getTrailerAngleRaw());
+                         .arg(truckState->getTrailerAngleDegrees());
 
-            QString ToFlogMessage = QString("%1")
+            QString tofbackMessage = QString("%1,%2")
+                        .arg( QDateTime::currentDateTime().toString("HH:mm:ss"))
                          .arg(truckState->getTrailerDistanceToF());
 
-            QString DistanceMessage = QString("%1")
-                         .arg(truckState->GetTotalDistance());
-            
-            QString SteeringMessage = QString("%1, %2")
+            QString DistanceMessage = QString("%1,%2")
                         .arg( QDateTime::currentDateTime().toString("HH:mm:ss"))
-                         .arg( truckState->getMaxSteeringAngle() * mMovementController->getDesiredSteering() );
+                        .arg(truckState->GetTotalDistance());
+            
+            QString SteeringMessage = QString("%1,%2")
+                        .arg( QDateTime::currentDateTime().toString("HH:mm:ss"))
+                        .arg( truckState->getMaxSteeringAngle() * mMovementController->getDesiredSteering() );
 
-            QString tofbackMessage = QString("%1")
-                         .arg( truckState->getTrailerDistanceToF());
 
 
             truckState->logData("truckposition", PositionlogMessage);
