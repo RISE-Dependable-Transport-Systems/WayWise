@@ -158,6 +158,7 @@ double PurepursuitWaypointFollower::getCurvatureToPointInENU(QSharedPointer<Vehi
         double l2 = 0.715; // trailer wheelbase in meters (from middle point of trucks's wheel/ also happens to be the joint)
 
         double trailerYaw = currYaw_rad - measuredTrailerAngle ; // in radians θ = θ_vehicle - θ_e (hitch-angle)
+        trailerYaw = fmod(trailerYaw + M_PI, 2 * M_PI) - M_PI;
 
         double delta_x_ = (l2) * cos( trailerYaw); // trailer x difference from x of the truck wheelbase
         double delta_y = (l2) * sin( trailerYaw); // trailer y difference from y of the truck wheelbase
@@ -374,6 +375,7 @@ void PurepursuitWaypointFollower::updateState()
             double trailerPositiony = truckPosition.getY() - delta_y;
 
             double trailerYaw = currYaw_rad - trailerAngle ; 
+            trailerYaw = fmod(trailerYaw + M_PI, 2 * M_PI) - M_PI;
 
             QString TrailerPositionlogMessage = QString("%1,%2,%3,%4")
                     .arg( QDateTime::currentDateTime().toString("HH:mm:ss"))
@@ -441,10 +443,14 @@ void PurepursuitWaypointFollower::updateState()
             auto truckState = qSharedPointerDynamicCast<TruckState>(mMovementController->getVehicleState());
             double trailerAngle = truckState->getTrailerAngleRadians();
             double currYaw_rad = getCurrentVehiclePosition().getYaw() * M_PI / 180.0;
-
             double trailerAxis = 0.715; // <----- TODO set as a parameter  
-            double delta_x_ = trailerAxis * cos(currYaw_rad- trailerAngle);
-            double delta_y = trailerAxis * sin(currYaw_rad - trailerAngle);
+            double trailerYaw = currYaw_rad - trailerAngle ; // in radians θ = θ_vehicle - θ_e (hitch-angle)
+            trailerYaw = fmod(trailerYaw + M_PI, 2 * M_PI) - M_PI;
+            double delta_x_ = (trailerAxis) * cos( trailerYaw); // trailer x difference from x of the truck wheelbase
+            double delta_y = (trailerAxis) * sin( trailerYaw); // trailer y difference from y of the truck wheelbase
+
+            // double delta_x_ = trailerAxis * cos(currYaw_rad- trailerAngle);
+            // double delta_y = trailerAxis * sin(currYaw_rad - trailerAngle);
             currentVehiclePositionXY.setX( currentVehiclePositionXY.x() - delta_x_ );
             currentVehiclePositionXY.setY( currentVehiclePositionXY.y() - delta_y );
         }
