@@ -163,6 +163,7 @@ void TruckState::draw(QPainter &painter, const QTransform &drawTrans, const QTra
     double trailerAngle  = getTrailerAngleRadians();
     double currYaw_rad = getPosition().getYaw() * (M_PI/180.0);
     double trailerYaw = currYaw_rad- trailerAngle;
+    trailerYaw = fmod(trailerYaw + M_PI, 2 * M_PI) - M_PI;
     double trailerAxis = 0.715;
     double dx = trailerAxis * cos(trailerYaw);
     double dy = trailerAxis * sin(trailerYaw);
