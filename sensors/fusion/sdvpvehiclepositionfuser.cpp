@@ -71,8 +71,10 @@ void SDVPVehiclePositionFuser::correctPositionAndYawGNSS(QSharedPointer<VehicleS
         posFused.setYaw(posGNSS.getYaw());
         posFused.setXY(posGNSS.getX(), posGNSS.getY());
     } else {
-        
-        posFused.setXY(posGNSS.getX(), posGNSS.getY());
+         if ( abs(vehicleState->getSpeed() ) < 0.05) {
+            posFused.setXY(posGNSS.getX(), posGNSS.getY());
+            //posFused.setYaw(posGNSS.getYaw());
+        }
         // if ( vehicleState->getSpeed() > 0){
         //     posFused.setYaw(posGNSS.getYaw());
         // }
@@ -129,7 +131,7 @@ void SDVPVehiclePositionFuser::correctPositionAndYawGNSS(QSharedPointer<VehicleS
 
 void SDVPVehiclePositionFuser::correctPositionAndYawOdom(QSharedPointer<VehicleState> vehicleState, double distanceDriven)
 {
-    if ( vehicleState->getSpeed() < 0.05) {
+    if ( !mPosGNSSisFused) {
         PosPoint posFused = vehicleState->getPosition(PosType::fused);
 
         // use Odom input from motorcontroller for IMU-based dead reckoning
@@ -148,7 +150,7 @@ void SDVPVehiclePositionFuser::correctPositionAndYawOdom(QSharedPointer<VehicleS
 
 void SDVPVehiclePositionFuser::correctPositionAndYawIMU(QSharedPointer<VehicleState> vehicleState)
 {
-    if (!mPosGNSSisFused){
+    if (!mPosGNSSisFused) {
         static bool standstillAtLastCall = false;
         static double yawWhenStopping = 0.0;
         static double yawDriftSinceStandstill = 0.0;
@@ -172,23 +174,13 @@ void SDVPVehiclePositionFuser::correctPositionAndYawIMU(QSharedPointer<VehicleSt
             standstillAtLastCall = false;
         }
 
-       
-        // PosPoint posGNSS = vehicleState->getPosition(PosType::GNSS);
-        // float yawGNSS = posGNSS.getYaw() + 180.0; // Invert yaw by adding 180 degrees
-        // if (yawGNSS > 180.0) {
-        //         yawGNSS -= 360.0; // Ensure yaw stays within the range of [-180, 180] degrees
-        // }
-
-
-
         // 2. apply offset & normalize
-        double yawResult = posIMU.getYaw();
+        double yawResult = posIMU.getYaw() + mPosIMUyawOffset;
         while (yawResult < -180.0)
             yawResult += 360.0;
         while (yawResult >= 180.0)
             yawResult -= 360.0;
-
-        posFused.setYaw(posIMU.getYaw());
+        posFused.setYaw(yawResult);
 
         posFused.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()));
         vehicleState->setPosition(posFused);
