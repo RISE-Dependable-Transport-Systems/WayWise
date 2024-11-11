@@ -75,52 +75,6 @@ void SDVPVehiclePositionFuser::correctPositionAndYawGNSS(QSharedPointer<VehicleS
             posFused.setXY(posGNSS.getX(), posGNSS.getY());
             //posFused.setYaw(posGNSS.getYaw());
         }
-        // if ( vehicleState->getSpeed() > 0){
-        //     posFused.setYaw(posGNSS.getYaw());
-        // }
-         //qDebug() << " forward yaw " << posGNSS.getYaw();
-        // if( vehicleState->getSpeed() >= 0) {
-        //     posFused.setYaw(posGNSS.getYaw());
-        //     // qDebug() << " forward yaw " << posGNSS.getYaw();
-        // }
-
-        // if ( vehicleState->getSpeed() <=  0){
-        // //         // When moving in reverse, adjust the yaw accordingly
-        //     float reverseYaw = posGNSS.getYaw() + 180.0; // Invert yaw by adding 180 degrees
-        //     if (reverseYaw > 180.0) {
-        //         reverseYaw -= 360.0; // Ensure yaw stays within the range of [-180, 180] degrees
-        //     }
-        //     posFused.setYaw(reverseYaw);
-        //      //qDebug() << " reverse yaw " << reverseYaw;
-        // }
-//         // 1. GNSS position is precise, but old. Find sampled position at matching time to calculate error
-//         PosSample closestPosFusedSample = getClosestPosFusedSampleInTime(posGNSS.getTime());
-
-//         // 2. Update yaw offset, limit max change depending on last driven distance reported by odometry (if available)
-//         //    GNSS yaw represents direction of motion and needs to be reversed when driving backwards
-//         double yawErrorCmpToGNSS = (((mPosOdomDistanceDrivenSinceGNSSupdate < 0.0) ? 180.0 : 0.0) + posGNSS.getYaw()) - closestPosFusedSample.yaw;
-//         while (yawErrorCmpToGNSS < -180.0) yawErrorCmpToGNSS += 360.0;
-//         while (yawErrorCmpToGNSS > 180.0) yawErrorCmpToGNSS -= 360.0;
-//         double yawMaxChangeDistanceInput = mPosOdomDistanceDrivenSinceGNSSupdate == 0.0 ? distanceMoved : abs(mPosOdomDistanceDrivenSinceGNSSupdate);
-//         double yawStepSize = yawMaxChangeDistanceInput * mPosGNSSyawGain;
-//         double stepYaw = getMaxSignedStepFromValueTowardsGoal(mPosIMUyawOffset, mPosIMUyawOffset + yawErrorCmpToGNSS, yawStepSize);
-
-//         mPosIMUyawOffset += stepYaw;
-
-//         // 3. Update position, limit max change depending on last driven distance reported by odometry (if available) but jump to GNSS position if error is big
-//         double posMaxChangeDistanceInput = yawMaxChangeDistanceInput;
-//         double xyStepSize = mPosGNSSxyStaticGain + posMaxChangeDistanceInput * mPosGNSSxyDynamicGain;
-//         double stepX = getMaxSignedStepFromValueTowardsGoal(closestPosFusedSample.posXY.x(), posGNSS.getX(), xyStepSize);
-//         double stepY = getMaxSignedStepFromValueTowardsGoal(closestPosFusedSample.posXY.y(), posGNSS.getY(), xyStepSize);
-//         QPointF posErrorCmpToGNSS = QPointF(posGNSS.getX() - closestPosFusedSample.posXY.x(), posGNSS.getY() - closestPosFusedSample.posXY.y());
-
-//         if (abs(posErrorCmpToGNSS.x()) > BIG_DISTANCE_ERROR_m || abs(posErrorCmpToGNSS.y()) > BIG_DISTANCE_ERROR_m) {
-//             posFused.setXY(posGNSS.getX(), posGNSS.getY());
-// //            qDebug() << "BIG_DISTANCE_ERROR_m";
-//         } else {
-//             posFused.setX(posFused.getX() + stepX);
-//             posFused.setY(posFused.getY() + stepY);
-//         }
     }
 
     posFused.setHeight(posGNSS.getHeight());
