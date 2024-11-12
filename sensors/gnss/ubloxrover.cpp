@@ -12,6 +12,7 @@
 UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
 {
     mVehicleState = vehicleState;
+    //mEnuReference = {57.71495867, 12.89134921, 219.0};
     mEnuReference = {57.68412443207728, 11.983627080917358, 51}; // AztaZero {57.7810, 12.7692, 0}, Klätterlabbet {57.6876, 11.9807, 0};
 
     // Use GNSS reception to update location

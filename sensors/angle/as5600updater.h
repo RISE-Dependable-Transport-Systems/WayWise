@@ -25,7 +25,7 @@ public:
     virtual bool setUpdateIntervall(int pollIntervall_ms) override;
 
 private:
-    int mPollIntervall_ms = 50; // interval (ms) to read from AS5600,
+    int mPollIntervall_ms = 100; // interval (ms) to read from AS5600,
     QTimer mPollTimer;
     double angleOffset; // offset if the start angle is not zero
 };
