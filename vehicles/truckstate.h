@@ -22,6 +22,8 @@ public:
     double getTrailerAngleRadians() const { return mTrailerAngleRadians; }
     double getTrailerAngleDegrees() const { return mTrailerAngleDegress; }
     double getTrailerWheelBase() const { return mtrailerwheelbase; }
+    void setTrailerWheelBase ( double value ){ mtrailerwheelbase =value;}
+
 
     void setTrailerAngle(uint16_t raw_angle , double angle_in_radians, double agnle_in_degrees);
 
