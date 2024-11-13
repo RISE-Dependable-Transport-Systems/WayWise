@@ -9,7 +9,7 @@
 #include "purepursuitwaypointfollower.h"
 #include "communication/parameterserver.h"
 #include "core/geometry.h"
-
+#include "WayWise/vehicles/truckstate.h"
 
 PurepursuitWaypointFollower::PurepursuitWaypointFollower(QSharedPointer<MovementController> movementController)
 {
@@ -129,6 +129,23 @@ void PurepursuitWaypointFollower::updateState()
     case WayPointFollowerSTMstates::FOLLOW_ROUTE_FOLLOWING: {
         calculateDistanceOfRouteLeft();
         currentVehiclePositionXY = mVehicleState->getPosition(mPosTypeUsed).getPoint();
+        if(mMovementController->getVehicleState()->getSpeed() < 0){
+            auto truckState = qSharedPointerDynamicCast<TruckState>(mMovementController->getVehicleState());
+            if(truckState){
+                double currYaw_rad = mVehicleState->getPosition(mPosTypeUsed).getYaw() * M_PI / 180.0;
+                double trailerAngle = truckState->getTrailerAngleRadians();
+                double trailerAxis = truckState->  getTrailerWheelBase ();
+                double trailerYaw = currYaw_rad - trailerAngle ; // in radians θ = θ_vehicle - θ_e (hitch-angle)
+                trailerYaw = fmod(trailerYaw + M_PI, 2 * M_PI) - M_PI;
+                double delta_x_ = (trailerAxis) * cos( trailerYaw); // trailer x difference from x of the truck wheelbase
+                double delta_y = (trailerAxis) * sin( trailerYaw); // trailer y difference from y of the truck wheelbase
+
+                // double delta_x_ = trailerAxis * cos(currYaw_rad- trailerAngle);
+                // double delta_y = trailerAxis * sin(currYaw_rad - trailerAngle);
+                currentVehiclePositionXY.setX( currentVehiclePositionXY.x() - delta_x_ );
+                currentVehiclePositionXY.setY( currentVehiclePositionXY.y() - delta_y );                
+            }
+        }
         QPointF currentWaypointPoint = mWaypointList.at(mCurrentState.currentWaypointIndex).getPoint();
 
         if (QLineF(currentVehiclePositionXY, currentWaypointPoint).length() < purePursuitRadius()) // consider previous waypoint as reached
