@@ -36,6 +36,13 @@ public:
     bool getHasTrailer() const ;
     void setHasTrailer(bool mHasTrailer);
 
+    void setTrailerDistanceToF (int tofdistance){
+        trailer_tof_distance = tofdistance;
+    }
+    int getTrailerDistanceToF (){
+        return trailer_tof_distance;
+    }
+
     double getPurePursuitForwardGain() const{ return mPurePursuitForwardGain;}
     void setPurePursuitForwardGain(double value){ mPurePursuitForwardGain = value;}
 
@@ -54,7 +61,7 @@ private:
     double mtrailerwheelbase; // trailer wheelbase
     QSharedPointer<TrailerState> mTrailerState; // trailer created dynamically
     bool mHasTrailer = false;
-
+    int trailer_tof_distance; // distance to nearest object
     double mPurePursuitForwardGain;
     double mPurePursuitReverseGain;
 
