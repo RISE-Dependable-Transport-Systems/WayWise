@@ -15,15 +15,9 @@ TruckState::TruckState(ObjectID_t id, Qt::GlobalColor color) : CarState(id, colo
     ObjectState::setWaywiseObjectType(WAYWISE_OBJECT_TYPE_TRUCK);
 }
 
-void TruckState::updateOdomPositionAndYaw(double drivenDistance, PosType usePosType)
-{
-    // just Call the base class
-    CarState::updateOdomPositionAndYaw(drivenDistance, usePosType);
-}
-
 double TruckState::getCurvatureToPointInVehicleFrame(const QPointF &point)
 {
-    if (mHasTrailer)
+    if (hasTrailer())
         return getCurvatureWithTrailer(point);
     else {
         // just Call the base class
@@ -36,7 +30,7 @@ double TruckState::getCurvatureWithTrailer(const QPointF &pointInVehicleFrame)
     double measuredTrailerAngle = getTrailerAngleRadians() ;
     double l2 = mTrailerState->getWheelBase(); // trailer wheelbase in meters
 
-    if (getSpeed()> 0 ){
+    if (getSpeed() > 0){
         double theta_err =  atan2(pointInVehicleFrame.y(), pointInVehicleFrame.x());
         double desired_hitch_angle = atan(2*l2*sin(theta_err)); // desired trailer/hitch angle
         double gain = getPurePursuitForwardGain();
@@ -56,14 +50,9 @@ double TruckState::getCurvatureWithTrailer(const QPointF &pointInVehicleFrame)
     }
 }
 
-bool TruckState::getHasTrailer() const
+bool TruckState::hasTrailer() const
 {
-    return mHasTrailer;
-}
-
-void TruckState::setHasTrailer(bool hasTrailer)
-{
-    mHasTrailer = hasTrailer;
+    return !mTrailerState.isNull();
 }
 
 QSharedPointer<TrailerState> TruckState::getTrailerState() const
@@ -74,7 +63,6 @@ QSharedPointer<TrailerState> TruckState::getTrailerState() const
 void TruckState::setTrailerState(QSharedPointer<TrailerState> newTrailerState)
 {
     mTrailerState = newTrailerState;
-    mHasTrailer = true;
 }
 
 void TruckState::setTrailerAngle(double angle_deg)
@@ -136,11 +124,8 @@ void TruckState::draw(QPainter &painter, const QTransform &drawTrans, const QTra
     painter.setBrush(col_hull);
     painter.drawRoundedRect(-truck_len / 6.0, -((truck_w - truck_len / 20.0) / 2.0), truck_len - (truck_len / 20.0), truck_w - truck_len / 20.0, truck_corner, truck_corner);
 
-    // draw trailer if exist
-    if (!mTrailerState.isNull()) {
-        double angleInDegrees = getTrailerAngleDegrees();
-        mTrailerState->drawTrailer(painter,drawTrans, pos, angleInDegrees);
-    }
+    if (hasTrailer())
+        mTrailerState->drawTrailer(painter, drawTrans, pos, getTrailerAngleDegrees());
 
     painter.restore();
 
