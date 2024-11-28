@@ -23,16 +23,12 @@ public:
 
     void setTrailerAngle(double angle_deg);
 
-    // Override the updateOdomPositionAndYaw function to consider the angle of the trailer
-    virtual void updateOdomPositionAndYaw(double drivenDistance, PosType usePosType = PosType::odom) override;
-
     double getCurvatureToPointInVehicleFrame(const QPointF &point) override;
 
     QSharedPointer<TrailerState> getTrailerState() const;
     void setTrailerState(QSharedPointer<TrailerState> newTrailerState);
 
-    bool getHasTrailer() const ;
-    void setHasTrailer(bool mHasTrailer);
+    bool hasTrailer() const;
 
     double getPurePursuitForwardGain() const{ return mPurePursuitForwardGain;}
     void setPurePursuitForwardGain(double value){ mPurePursuitForwardGain = value;}
@@ -47,8 +43,7 @@ public:
 
 private:
     double mTrailerAngle_deg; // Angle in Degrees
-    QSharedPointer<TrailerState> mTrailerState; // trailer created dynamically
-    bool mHasTrailer = false;
+    QSharedPointer<TrailerState> mTrailerState = nullptr; // trailer created dynamically
 
     double mPurePursuitForwardGain;
     double mPurePursuitReverseGain;
