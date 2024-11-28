@@ -23,11 +23,10 @@ AS5600Updater::AS5600Updater(QSharedPointer<VehicleState> vehicleState, double a
          if (res == 0) {
             //qDebug() << "as5600: scaled angle: " << scaled_angle << "| in Radians : "  <<"| in degrees: " << deg ;
             angleInDegrees = angleInDegrees - this->angleOffset;
-            double angleRadians = angleInDegrees * (M_PI / 180.0);
             // for the moment only a truck has an angle sensor
             QSharedPointer<TruckState> truckState = qSharedPointerDynamicCast<TruckState>(vehicleState);
             if (truckState) {
-                  truckState->setTrailerAngle(scaled_angle, angleRadians, angleInDegrees);
+                  truckState->setTrailerAngle(angleInDegrees);
             } else {
                qDebug() << "Error: Failed to cast VehicleState to TruckState.";
             }
