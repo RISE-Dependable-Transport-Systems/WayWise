@@ -77,11 +77,9 @@ void TruckState::setTrailerState(QSharedPointer<TrailerState> newTrailerState)
     mHasTrailer = true;
 }
 
-void TruckState::setTrailerAngle(uint16_t raw_angle , double angle_in_radians, double agnle_in_degrees)
+void TruckState::setTrailerAngle(double angle_deg)
 {
-    mTrailerRawAngle = raw_angle;
-    mTrailerAngleRadians = angle_in_radians;
-    mTrailerAngleDegress = agnle_in_degrees;
+    mTrailerAngle_deg = angle_deg;
 }
 
 

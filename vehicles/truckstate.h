@@ -18,14 +18,10 @@ public:
     TruckState(ObjectID_t id = 1, Qt::GlobalColor color = Qt::blue);
 
     // Additional set/get state for angle sensor
-    uint16_t getTrailerAngleRaw() const { return mTrailerRawAngle; }
-    double getTrailerAngleRadians() const { return mTrailerAngleRadians; }
-    double getTrailerAngleDegrees() const { return mTrailerAngleDegress; }
-    double getTrailerWheelBase() const { return mtrailerwheelbase; }
-    void setTrailerWheelBase ( double value ){ mtrailerwheelbase =value;}
+    double getTrailerAngleRadians() const { return mTrailerAngle_deg * (M_PI / 180.0); }
+    double getTrailerAngleDegrees() const { return mTrailerAngle_deg; }
 
-
-    void setTrailerAngle(uint16_t raw_angle , double angle_in_radians, double agnle_in_degrees);
+    void setTrailerAngle(double angle_deg);
 
     // Override the updateOdomPositionAndYaw function to consider the angle of the trailer
     virtual void updateOdomPositionAndYaw(double drivenDistance, PosType usePosType = PosType::odom) override;
@@ -50,10 +46,7 @@ public:
 #endif
 
 private:
-    uint16_t mTrailerRawAngle; // Raw angle value from sensor
-    double mTrailerAngleRadians; // Angle in Radians
-    double mTrailerAngleDegress; // Angle in Degrees
-    double mtrailerwheelbase; // trailer wheelbase
+    double mTrailerAngle_deg; // Angle in Degrees
     QSharedPointer<TrailerState> mTrailerState; // trailer created dynamically
     bool mHasTrailer = false;
 
