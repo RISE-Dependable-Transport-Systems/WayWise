@@ -6,7 +6,6 @@
 #include "mavsdkvehicleconnection.h"
 #include <QDebug>
 #include <QDateTime>
-#include <variant>
 
 MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System> system, MAV_TYPE vehicleType)
 {
@@ -311,8 +310,8 @@ void MavsdkVehicleConnection::setupTruckState()
             mavsdk::System::ComponentDiscoveredIdHandle mComponentDiscoveredIdHandle = mSystem->subscribe_component_discovered_id([this, mTruckState, trailer_component_id](mavsdk::System::ComponentType component_type, uint8_t component_id){
                 if (component_type == mavsdk::System::ComponentType::UNKNOWN && component_id == (uint8_t) trailer_component_id) {
                     qDebug() << "Trailer discovered with system ID "<< mSystem->get_system_id() << " and component ID "<< component_id;
-                    mTruckState->setTrailerState(QSharedPointer<TrailerState>::create(component_id));
-                    QSharedPointer<TrailerState> mTrailerState = mTruckState->getTrailerState();
+                    mTruckState->setTrailingVehicle(QSharedPointer<TrailerState>::create(component_id));
+                    QSharedPointer<TrailerState> mTrailerState = mTruckState->getTrailingVehicle();
                     mTrailerState->setName("Trailer " + QString::number(mSystem->get_system_id()));
 
                     auto trailerParamResult = getFloatParameterFromVehicle("TRLR_LENGTH");
@@ -328,7 +327,7 @@ void MavsdkVehicleConnection::setupTruckState()
                         mTrailerState->setWheelBase(trailerParamResult.second);
                     }
 
-                    mMavlinkPassthrough->subscribe_message(MAVLINK_MSG_ID_ATTITUDE, [this, mTruckState, component_id](const mavlink_message_t &message) {
+                    mMavlinkPassthrough->subscribe_message(MAVLINK_MSG_ID_ATTITUDE, [mTruckState, component_id](const mavlink_message_t &message) {
                     if (message.compid == component_id) {
                         mavlink_attitude_t attitude_data;
                         mavlink_msg_attitude_decode(&message, &attitude_data);
@@ -336,7 +335,7 @@ void MavsdkVehicleConnection::setupTruckState()
                         // Extract yaw value from attitude message
                         double angle_in_radians = (mTruckState->getPosition().getYaw() * (M_PI / 180.0)) - attitude_data.yaw;
                         double angle_in_degrees = angle_in_radians * (180.0 / M_PI);
-                        mTruckState->setTrailerAngle(0, angle_in_radians, angle_in_degrees); // raw_angle is not currently used
+                        mTruckState->setTrailerAngle(angle_in_degrees);
                     }
                 });
                 }
