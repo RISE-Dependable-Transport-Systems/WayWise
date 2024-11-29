@@ -25,10 +25,39 @@ double TruckState::getCurvatureToPointInVehicleFrame(const QPointF &point)
     }
 }
 
+void TruckState::updateOdomPositionAndYaw(double drivenDistance, PosType usePosType)
+{
+    CarState::updateOdomPositionAndYaw(drivenDistance, usePosType);
+    if (hasTrailingVehicle())
+        updateTrailingVehicleOdomPositionAndYaw(getPosition(usePosType), usePosType);
+}
+
+void TruckState::updateTrailingVehicleOdomPositionAndYaw(PosPoint hitchPosition, PosType usePosType)
+{
+    if(hasTrailingVehicle()) {
+        QSharedPointer<TrailerState> trailer = getTrailingVehicle();
+        PosPoint currentTrailerPosition = trailer->getPosition(usePosType);
+
+        double currYaw_rad = hitchPosition.getYaw() * M_PI / 180.0;
+        double trailerYaw_rad = currYaw_rad - getTrailerAngleRadians() ; // in radians θ = θ_vehicle - θ_e (hitch-angle)
+
+        double trailerAxis = trailer->getWheelBase();
+        trailerYaw_rad = fmod(trailerYaw_rad + M_PI, 2 * M_PI) - M_PI;
+        double delta_x = (trailerAxis) * cos( trailerYaw_rad); // trailer x difference from x of the truck wheelbase
+        double delta_y = (trailerAxis) * sin( trailerYaw_rad); // trailer y difference from y of the truck wheelbase
+
+        currentTrailerPosition.setX(hitchPosition.getX() - delta_x);
+        currentTrailerPosition.setY(hitchPosition.getY() - delta_y);
+        currentTrailerPosition.setYaw(trailerYaw_rad * 180.0 / M_PI);
+        currentTrailerPosition.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()));
+        trailer->setPosition(currentTrailerPosition);
+    }
+}
+
 double TruckState::getCurvatureWithTrailer(const QPointF &pointInVehicleFrame)
 {
     double measuredTrailerAngle = getTrailerAngleRadians() ;
-    double l2 = mTrailerState->getWheelBase(); // trailer wheelbase in meters
+    double l2 = getTrailingVehicle()->getWheelBase(); // trailer wheelbase in meters
 
     if (getSpeed() > 0){
         double theta_err =  atan2(pointInVehicleFrame.y(), pointInVehicleFrame.x());
@@ -50,11 +79,22 @@ double TruckState::getCurvatureWithTrailer(const QPointF &pointInVehicleFrame)
     }
 }
 
+QSharedPointer<TrailerState> TruckState::getTrailingVehicle() const {
+    // NOTE: setTrailingVehicle / getTrailingVehicle hide the functions inherited from VehicleState.
+    // This means, we know the trailing vehicle is a TrailerState here with reasonable certainty.
+    // This is not perfect but I have no better solution right now.
+    return qSharedPointerDynamicCast<TrailerState>(VehicleState::getTrailingVehicle());
+}
+
+void TruckState::setTrailingVehicle(QSharedPointer<TrailerState> trailer)
+{
+    VehicleState::setTrailingVehicle(trailer);
+}
+
 void TruckState::setTrailerAngle(double angle_deg)
 {
     mTrailerAngle_deg = angle_deg;
 }
-
 
 #ifdef QT_GUI_LIB
 void TruckState::draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected)
