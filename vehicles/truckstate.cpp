@@ -149,8 +149,8 @@ void TruckState::draw(QPainter &painter, const QTransform &drawTrans, const QTra
     painter.setBrush(col_hull);
     painter.drawRoundedRect(-truck_len / 6.0, -((truck_w - truck_len / 20.0) / 2.0), truck_len - (truck_len / 20.0), truck_w - truck_len / 20.0, truck_corner, truck_corner);
 
-    if (hasTrailer())
-        mTrailerState->drawTrailer(painter, drawTrans, pos, getTrailerAngleDegrees());
+    if (hasTrailingVehicle())
+        getTrailingVehicle()->drawTrailer(painter, drawTrans, pos, getTrailerAngleDegrees());
 
     painter.restore();
 
@@ -167,7 +167,7 @@ void TruckState::draw(QPainter &painter, const QTransform &drawTrans, const QTra
     double trailerAngle  = getTrailerAngleRadians();
     double currYaw_rad = getPosition().getYaw() * (M_PI/180.0);
     double trailerYaw = currYaw_rad- trailerAngle;
-    double trailerAxis = getTrailerWheelBase();
+    double trailerAxis = getTrailingVehicle()->getWheelBase();
     double dx = trailerAxis * cos(trailerYaw);
     double dy = trailerAxis * sin(trailerYaw);
     double newX = (pos.getX() - dx) *1000.0;
@@ -180,11 +180,6 @@ void TruckState::draw(QPainter &painter, const QTransform &drawTrans, const QTra
     painter.setBrush(Qt::transparent);
     painter.drawEllipse(QPointF(newX, newY), getAutopilotRadius()*1000.0, getAutopilotRadius()*1000.0);
     painter.setPen(Qt::black);
-
-
-    QString txt;
-    QPointF pt_txt;
-    QRectF rect_txt;
 
     if (getDrawStatusText()) {
         // Print data
@@ -217,8 +212,8 @@ void TruckState::draw(QPainter &painter, const QTransform &drawTrans, const QTra
                   << "(" << pos.getX() << ", " << pos.getY() << ", " << pos.getHeight() << ", " << pos.getYaw() << ")" << Qt::endl
                   << "State: " << (getIsArmed() ? "armed" : "disarmed") << Qt::endl
                   << flightModeStr << Qt::endl << Qt::endl;
-        if (!mTrailerState.isNull()) {
-            txtStream << mTrailerState->getName() << Qt::endl
+        if (hasTrailingVehicle()) {
+            txtStream << getTrailingVehicle()->getName() << Qt::endl
                     << "(" << pos.getX()- dx << ", " << pos.getY()- dy << ", " << pos.getHeight() << ", "
                     << trailerYaw * (180.0/M_PI)<< ")" << Qt::endl;
         }
