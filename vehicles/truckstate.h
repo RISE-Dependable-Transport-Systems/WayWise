@@ -25,11 +25,6 @@ public:
 
     double getCurvatureToPointInVehicleFrame(const QPointF &point) override;
 
-    QSharedPointer<TrailerState> getTrailerState() const;
-    void setTrailerState(QSharedPointer<TrailerState> newTrailerState);
-
-    bool hasTrailer() const;
-
     double getPurePursuitForwardGain() const{ return mPurePursuitForwardGain;}
     void setPurePursuitForwardGain(double value){ mPurePursuitForwardGain = value;}
 

@@ -7,7 +7,7 @@
 #include "trailerstate.h"
 #include <QDebug>
 
-TrailerState::TrailerState(ObjectID_t id, Qt::GlobalColor color) : ObjectState (id, color)
+TrailerState::TrailerState(ObjectID_t id, Qt::GlobalColor color) : VehicleState (id, color)
 {
 
     mLength = 0.96; // griffin specific
