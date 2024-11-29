@@ -134,7 +134,7 @@ void PurepursuitWaypointFollower::updateState()
             if(truckState){
                 double currYaw_rad = mVehicleState->getPosition(mPosTypeUsed).getYaw() * M_PI / 180.0;
                 double trailerAngle = truckState->getTrailerAngleRadians();
-                double trailerAxis = truckState->getTrailerState()->getWheelBase();
+                double trailerAxis = qSharedPointerDynamicCast<TrailerState>(truckState->getTrailingVehicle())->getWheelBase();
                 double trailerYaw = currYaw_rad - trailerAngle ; // in radians θ = θ_vehicle - θ_e (hitch-angle)
                 trailerYaw = fmod(trailerYaw + M_PI, 2 * M_PI) - M_PI;
                 double delta_x_ = (trailerAxis) * cos( trailerYaw); // trailer x difference from x of the truck wheelbase

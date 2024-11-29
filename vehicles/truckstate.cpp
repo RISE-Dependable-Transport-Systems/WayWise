@@ -17,7 +17,7 @@ TruckState::TruckState(ObjectID_t id, Qt::GlobalColor color) : CarState(id, colo
 
 double TruckState::getCurvatureToPointInVehicleFrame(const QPointF &point)
 {
-    if (hasTrailer())
+    if (hasTrailingVehicle())
         return getCurvatureWithTrailer(point);
     else {
         // just Call the base class
@@ -48,21 +48,6 @@ double TruckState::getCurvatureWithTrailer(const QPointF &pointInVehicleFrame)
         double curve = gain *( measuredTrailerAngle - desired_hitch_angle ) - ( sin(measuredTrailerAngle)/ (l2));
         return curve/cos(measuredTrailerAngle);
     }
-}
-
-bool TruckState::hasTrailer() const
-{
-    return !mTrailerState.isNull();
-}
-
-QSharedPointer<TrailerState> TruckState::getTrailerState() const
-{
-    return mTrailerState;
-}
-
-void TruckState::setTrailerState(QSharedPointer<TrailerState> newTrailerState)
-{
-    mTrailerState = newTrailerState;
 }
 
 void TruckState::setTrailerAngle(double angle_deg)
