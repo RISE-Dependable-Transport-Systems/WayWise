@@ -7,8 +7,8 @@
 #ifndef TRUCKSTATE_H
 #define TRUCKSTATE_H
 
-#include "carstate.h"
-#include "trailerstate.h"
+#include "vehicles/carstate.h"
+#include "vehicles/trailerstate.h"
 #include <QSharedPointer>
 
 class TruckState : public CarState
@@ -17,13 +17,9 @@ class TruckState : public CarState
 public:
     TruckState(ObjectID_t id = 1, Qt::GlobalColor color = Qt::blue);
 
-    // Additional set/get state for angle sensor
-    double getTrailerAngleRadians() const { return mTrailerAngle_deg * (M_PI / 180.0); }
-    double getTrailerAngleDegrees() const { return mTrailerAngle_deg; }
-
-    void setTrailerAngle(double angle_deg);
-
     double getCurvatureToPointInVehicleFrame(const QPointF &point) override;
+    virtual void updateOdomPositionAndYaw(double drivenDistance, PosType usePosType = PosType::odom) override;
+    void updateTrailingVehicleOdomPositionAndYaw(PosPoint hitchPosition, PosType usePosType = PosType::odom);
 
     double getPurePursuitForwardGain() const{ return mPurePursuitForwardGain;}
     void setPurePursuitForwardGain(double value){ mPurePursuitForwardGain = value;}
@@ -31,19 +27,26 @@ public:
     double getPurePursuitReverseGain() const{ return mPurePursuitReverseGain;}
     void setPurePursuitReverseGain(double value){ mPurePursuitReverseGain = value;}
 
+    QSharedPointer<TrailerState> getTrailingVehicle() const;
+    void setTrailingVehicle(QSharedPointer<TrailerState> trailer);
+    // Additional set/get state for angle of trailing vehicle towards us / ego vehicle
+    double getTrailerAngleRadians() const { return mTrailerAngle_deg * (M_PI / 180.0); }
+    double getTrailerAngleDegrees() const { return mTrailerAngle_deg; }
+    void setTrailerAngle(double angle_deg);
+
 #ifdef QT_GUI_LIB
     // Override or add drawing functions if needed (to draw a truck)
     virtual void draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected = true) override;
 #endif
 
 private:
-    double mTrailerAngle_deg; // Angle in Degrees
-    QSharedPointer<TrailerState> mTrailerState = nullptr; // trailer created dynamically
-
     double mPurePursuitForwardGain;
     double mPurePursuitReverseGain;
 
+    double mTrailerAngle_deg; // Angle in Degrees
+
     double getCurvatureWithTrailer(const QPointF &point);
+
 };
 
 #endif // TRUCKSTATE_H

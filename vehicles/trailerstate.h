@@ -31,8 +31,8 @@ public:
     void setWheelBase(double value){ mWheelBase = value;}
 
     // VehicleState interface
+    void updateOdomPositionAndYaw(double drivenDistance, PosType usePosType);
     // TODO
-    void updateOdomPositionAndYaw(double drivenDistance, PosType usePosType) { Q_UNUSED(drivenDistance); Q_UNUSED(usePosType); };
     double steeringCurvatureToSteering(double steeringCurvature) { Q_UNUSED(steeringCurvature); return 0;};
 
 #ifdef QT_GUI_LIB
