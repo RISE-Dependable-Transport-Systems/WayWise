@@ -135,3 +135,18 @@ double VehicleState::getCurvatureToPointInENU(const QPointF &point, PosType type
 
     return getCurvatureToPointInVehicleFrame(coordinateTransforms::ENUToVehicleFrame(point, vehiclePosition.getXYZ(), vehiclePosition.getYaw()));
 }
+
+QSharedPointer<VehicleState> VehicleState::getTrailingVehicle() const
+{
+    return mTrailingVehicle;
+}
+
+void VehicleState::setTrailingVehicle(QSharedPointer<VehicleState> trailer)
+{
+    mTrailingVehicle = trailer;
+}
+
+bool VehicleState::hasTrailingVehicle() const
+{
+    return !mTrailingVehicle.isNull();
+}

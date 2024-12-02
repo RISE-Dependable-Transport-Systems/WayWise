@@ -7,7 +7,7 @@
 #include "trailerstate.h"
 #include <QDebug>
 
-TrailerState::TrailerState(ObjectID_t id, Qt::GlobalColor color) : ObjectState (id, color)
+TrailerState::TrailerState(ObjectID_t id, Qt::GlobalColor color) : VehicleState (id, color)
 {
 
     mLength = 0.96; // griffin specific
@@ -15,6 +15,14 @@ TrailerState::TrailerState(ObjectID_t id, Qt::GlobalColor color) : ObjectState (
 
     ObjectState::setWaywiseObjectType(WAYWISE_OBJECT_TYPE_TRAILER);
 
+}
+
+void TrailerState::updateOdomPositionAndYaw(double drivenDistance, PosType usePosType)
+{
+    // In our context, the trailer is passive.
+    // Its position / state is updated by the truck / towing vehicle it is attached to
+    Q_UNUSED(drivenDistance)
+    Q_UNUSED(usePosType)
 }
 
 #ifdef QT_GUI_LIB

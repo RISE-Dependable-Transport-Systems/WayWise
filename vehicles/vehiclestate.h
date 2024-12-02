@@ -14,6 +14,7 @@
 #include <QObject>
 #include <QVector>
 #include <QString>
+#include <QSharedPointer>
 #ifdef QT_GUI_LIB
 #include <QPainter>
 #endif
@@ -76,6 +77,12 @@ public:
     virtual double getCurvatureToPointInVehicleFrame(const QPointF &point);
     double getCurvatureToPointInENU(const QPointF &point, PosType type);
 
+    // A vehicle can have a trailing vehicle
+    // what this means needs to be defined in child classes
+    QSharedPointer<VehicleState> getTrailingVehicle() const;
+    void setTrailingVehicle(QSharedPointer<VehicleState> trailer);
+    bool hasTrailingVehicle() const;
+
     void simulationStep(double dt_ms, PosType usePosType = PosType::simulated); // Take current state and simulate step forward for dt_ms milliseconds, update state accordingly
     virtual void updateOdomPositionAndYaw(double drivenDistance, PosType usePosType = PosType::odom) = 0;
     virtual double steeringCurvatureToSteering(double steeringCurvature) = 0;
@@ -104,6 +111,8 @@ private:
     bool mIsArmed = false;
     FlightMode mFlightMode = FlightMode::Unknown;
     double mAutopilotRadius = 0;
+
+    QSharedPointer<VehicleState> mTrailingVehicle;
 
     std::array<float,3> mGyroscopeXYZ = std::array<float,3>({0.0, 0.0, 0.0}); // [deg/s]
     std::array<float,3> mAccelerometerXYZ = std::array<float,3>({0.0, 0.0, 0.0}); // [g]

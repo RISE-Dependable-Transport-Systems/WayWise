@@ -10,7 +10,6 @@
 #include "communication/parameterserver.h"
 #include "core/geometry.h"
 
-
 PurepursuitWaypointFollower::PurepursuitWaypointFollower(QSharedPointer<MovementController> movementController)
 {
     mMovementController = movementController;
@@ -94,6 +93,8 @@ void PurepursuitWaypointFollower::resetState()
 void PurepursuitWaypointFollower::updateState()
 {
     QPointF currentVehiclePositionXY = mVehicleState->getPosition(mPosTypeUsed).getPoint();
+    if (mVehicleState->hasTrailingVehicle() && mVehicleState->getSpeed() < 0) // position defined by trailer when backing (if exists)
+        currentVehiclePositionXY = mVehicleState->getTrailingVehicle()->getPosition(mPosTypeUsed).getPoint();
 
     switch (mCurrentState.stmState) {
     case WayPointFollowerSTMstates::NONE:
@@ -102,7 +103,6 @@ void PurepursuitWaypointFollower::updateState()
 
     // FOLLOW_ROUTE: waypoints describe a route to be followed waypoint by waypoint
     case WayPointFollowerSTMstates::FOLLOW_ROUTE_INIT:
-        currentVehiclePositionXY = mVehicleState->getPosition(mPosTypeUsed).getPoint();
         if (mWaypointList.size()) {
             mCurrentState.currentWaypointIndex = 0;
             mCurrentState.currentGoal = mWaypointList.at(0);
@@ -112,8 +112,7 @@ void PurepursuitWaypointFollower::updateState()
         break;
 
     case WayPointFollowerSTMstates::FOLLOW_ROUTE_GOTO_BEGIN: {
-        calculateDistanceOfRouteLeft();
-        currentVehiclePositionXY = mVehicleState->getPosition(mPosTypeUsed).getPoint();
+        calculateDistanceOfRouteLeft(currentVehiclePositionXY);
 
         // draw straight line to first point and apply purePursuitRadius to find intersection
         QLineF carToStartLine(currentVehiclePositionXY, mWaypointList.at(0).getPoint());
@@ -124,13 +123,13 @@ void PurepursuitWaypointFollower::updateState()
             updateControl(mCurrentState.currentGoal);
         } else // first waypoint within circle -> start route
             mCurrentState.stmState = WayPointFollowerSTMstates::FOLLOW_ROUTE_FOLLOWING;
+
     } break;
 
     case WayPointFollowerSTMstates::FOLLOW_ROUTE_FOLLOWING: {
-        calculateDistanceOfRouteLeft();
-        currentVehiclePositionXY = mVehicleState->getPosition(mPosTypeUsed).getPoint();
-        QPointF currentWaypointPoint = mWaypointList.at(mCurrentState.currentWaypointIndex).getPoint();
+        calculateDistanceOfRouteLeft(currentVehiclePositionXY);
 
+        QPointF currentWaypointPoint = mWaypointList.at(mCurrentState.currentWaypointIndex).getPoint();
         if (QLineF(currentVehiclePositionXY, currentWaypointPoint).length() < purePursuitRadius()) // consider previous waypoint as reached
             mCurrentState.currentWaypointIndex++;
 
@@ -299,9 +298,9 @@ double PurepursuitWaypointFollower::getInterpolatedSpeed(const PosPoint &current
     return lastWaypoint.getSpeed() + (nextWaypoint.getSpeed()-lastWaypoint.getSpeed())*(x/distanceBetweenWaypoints);
 }
 
-void PurepursuitWaypointFollower::calculateDistanceOfRouteLeft()
+void PurepursuitWaypointFollower::calculateDistanceOfRouteLeft(const QPointF currentVehiclePositionXY)
 {
-    double distance = QLineF(mVehicleState->getPosition(mPosTypeUsed).getPoint(), mWaypointList.at(mCurrentState.currentWaypointIndex).getPoint()).length();
+    double distance = QLineF(currentVehiclePositionXY, mWaypointList.at(mCurrentState.currentWaypointIndex).getPoint()).length();
 
     for (int index = mCurrentState.currentWaypointIndex; index < mWaypointList.size()-1; index++) {
         distance += QLineF(mWaypointList.at(index).getPoint(), mWaypointList.at(index+1).getPoint()).length();

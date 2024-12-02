@@ -10,13 +10,13 @@
 
 
 #include <QObject>
-#include "vehicles/objectstate.h"
+#include "vehicles/vehiclestate.h"
 
 #ifdef QT_GUI_LIB
 #include <QPainter>
 #endif
 
-class TrailerState : public ObjectState
+class TrailerState : public VehicleState
 {
     Q_OBJECT
 public:
@@ -29,6 +29,11 @@ public:
     void setWidth(double width) { mWidth = width; }
     double getWheelBase() const{ return mWheelBase;}
     void setWheelBase(double value){ mWheelBase = value;}
+
+    // VehicleState interface
+    void updateOdomPositionAndYaw(double drivenDistance, PosType usePosType);
+    // TODO
+    double steeringCurvatureToSteering(double steeringCurvature) { Q_UNUSED(steeringCurvature); return 0;};
 
 #ifdef QT_GUI_LIB
     // drawing functions for trailer (to draw a trailer)
