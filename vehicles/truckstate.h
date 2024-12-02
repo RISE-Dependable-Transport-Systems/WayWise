@@ -33,6 +33,7 @@ public:
     double getTrailerAngleRadians() const { return mTrailerAngle_deg * (M_PI / 180.0); }
     double getTrailerAngleDegrees() const { return mTrailerAngle_deg; }
     void setTrailerAngle(double angle_deg);
+    virtual void setPosition(PosPoint &point) override;
 
 #ifdef QT_GUI_LIB
     // Override or add drawing functions if needed (to draw a truck)

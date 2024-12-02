@@ -32,6 +32,14 @@ void TruckState::updateOdomPositionAndYaw(double drivenDistance, PosType usePosT
         updateTrailingVehicleOdomPositionAndYaw(getPosition(usePosType), usePosType);
 }
 
+void TruckState::setPosition(PosPoint &point)
+{
+    CarState::setPosition(point);
+    if (hasTrailingVehicle()){
+        updateTrailingVehicleOdomPositionAndYaw(point, point.getType());
+    }
+}
+
 void TruckState::updateTrailingVehicleOdomPositionAndYaw(PosPoint hitchPosition, PosType usePosType)
 {
     if(hasTrailingVehicle()) {
