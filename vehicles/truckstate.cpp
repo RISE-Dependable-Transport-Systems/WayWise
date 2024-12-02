@@ -171,23 +171,27 @@ void TruckState::draw(QPainter &painter, const QTransform &drawTrans, const QTra
 
     painter.drawEllipse(QPointF(x, y), getAutopilotRadius()*1000.0, getAutopilotRadius()*1000.0);
     painter.setPen(Qt::black);
+    // Turning radius
 
-    double trailerAngle  = getTrailerAngleRadians();
-    double currYaw_rad = getPosition().getYaw() * (M_PI/180.0);
-    double trailerYaw = currYaw_rad- trailerAngle;
-    double trailerAxis = getTrailingVehicle()->getWheelBase();
-    double dx = trailerAxis * cos(trailerYaw);
-    double dy = trailerAxis * sin(trailerYaw);
-    double newX = (pos.getX() - dx) *1000.0;
-    double newY = ( pos.getY() - dy) *1000.0;
+    // TODO: needs cleanup
+    double trailerYaw = 0.0, dx = 0.0, dy = 0.0;
+    if (hasTrailingVehicle()) {
+        double trailerAngle  = getTrailerAngleRadians();
+        double currYaw_rad = getPosition().getYaw() * (M_PI/180.0);
+        double trailerYaw = currYaw_rad- trailerAngle;
+        double trailerAxis = getTrailingVehicle()->getWheelBase();
+        double dx = trailerAxis * cos(trailerYaw);
+        double dy = trailerAxis * sin(trailerYaw);
+        double newX = (pos.getX() - dx) *1000.0;
+        double newY = ( pos.getY() - dy) *1000.0;
 
-    painter.setBrush(Qt::darkMagenta);
-    painter.drawEllipse(QPointF(newX, newY), truck_w / 15.0, truck_w / 15.0);
-     // Turning radius
-    painter.setPen(QPen(Qt::darkMagenta, 20));
-    painter.setBrush(Qt::transparent);
-    painter.drawEllipse(QPointF(newX, newY), getAutopilotRadius()*1000.0, getAutopilotRadius()*1000.0);
-    painter.setPen(Qt::black);
+        painter.setBrush(Qt::darkMagenta);
+        painter.drawEllipse(QPointF(newX, newY), truck_w / 15.0, truck_w / 15.0);
+        painter.setPen(QPen(Qt::darkMagenta, 20));
+        painter.setBrush(Qt::transparent);
+        painter.drawEllipse(QPointF(newX, newY), getAutopilotRadius()*1000.0, getAutopilotRadius()*1000.0);
+        painter.setPen(Qt::black);
+    }
 
     if (getDrawStatusText()) {
         // Print data
