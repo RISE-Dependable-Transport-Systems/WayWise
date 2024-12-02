@@ -87,7 +87,7 @@ private:
     QTimer mUpdateStateTimer;
 
     void holdPosition();
-    void calculateDistanceOfRouteLeft();
+    void calculateDistanceOfRouteLeft(QPointF currentVehiclePositionXY);
     double purePursuitRadius();
 };
 
