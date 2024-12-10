@@ -708,13 +708,13 @@ void MavsdkVehicleServer::sendMissionAck(quint8 type)
 
 void MavsdkVehicleServer::createMavsdkComponentForTrailer(const QHostAddress controlTowerAddress, const unsigned controlTowerPort, const QAbstractSocket::SocketType controlTowerSocketType)
 {
-    auto mTrailerState = mVehicleState->getTrailingVehicle();
+    auto trailerState = mVehicleState->getTrailingVehicle();
 
     mavsdk::Mavsdk::Configuration config =
         mavsdk::Mavsdk::Configuration{mavsdk::Mavsdk::ComponentType::Custom};
     config.set_system_id(mVehicleState->getId());
     config.set_always_send_heartbeats(true);
-    config.set_component_id(mTrailerState->getId());
+    config.set_component_id(trailerState->getId());
     mTrailerMavsdk.reset(new mavsdk::Mavsdk{config});
 
     mTrailerMavsdk->subscribe_on_new_system(
@@ -735,18 +735,18 @@ void MavsdkVehicleServer::createMavsdkComponentForTrailer(const QHostAddress con
         });
 
     mTrailerMavsdk->intercept_outgoing_messages_async(
-        [mTrailerState](mavlink_message_t & message) {
+        [trailerState](mavlink_message_t & message) {
             switch (message.msgid) {
             case MAVLINK_MSG_ID_HEARTBEAT: // Fix some info in heartbeat s.th. MAVSDK / ControlTower detects vehicle correctly
                 mavlink_heartbeat_t heartbeat;
                 mavlink_msg_heartbeat_decode(&message, &heartbeat);
-                if (message.compid == mTrailerState->getId()) {
+                if (message.compid == trailerState->getId()) {
                     heartbeat.type = MAV_TYPE_ONBOARD_CONTROLLER;
                     heartbeat.autopilot = MAV_AUTOPILOT_INVALID;
                 }
                 mavlink_msg_heartbeat_encode(message.sysid, message.compid, &message, &heartbeat);
                 break;
-            default:;
+            default: ;
                 //            qDebug() << "out:" << message.msgid;
             }
             return true;
@@ -763,7 +763,36 @@ void MavsdkVehicleServer::createMavsdkComponentForTrailer(const QHostAddress con
         break;
     }
 
-    if (result == mavsdk::ConnectionResult::Success)
+    if (result == mavsdk::ConnectionResult::Success) {
         qDebug() << "Trailer component listening for MAVSDK connection.";
+
+        connect(&mPublishMavlinkTimer, &QTimer::timeout, [this](){
+            if (mTrailerMavlinkPassthrough) {
+                mTrailerMavlinkPassthrough->queue_message(
+                    [this](MavlinkAddress mavlink_address, uint8_t channel)->mavlink_message_t {
+                        auto trailerState = mVehicleState->getTrailingVehicle();
+                        mavlink_message_t trailerYawMsg;
+
+                        mavlink_address.system_id = mVehicleState->getId();
+                        mavlink_address.component_id = mVehicleState->getTrailingVehicle()->getId();
+
+                        mavlink_msg_attitude_pack_chan(
+                            mavlink_address.system_id,
+                            mavlink_address.component_id,
+                            channel,
+                            &trailerYawMsg,
+                            0.0,            // time_boot_ms (not used)
+                            0.0,            // roll (not used)
+                            0.0,            // pitch (not used)
+                            trailerState->getPosition(PosType::fused).getYaw() * (M_PI / 180.0),   // yaw (your desired yaw value)
+                            0.0,            // rollspeed (not used)
+                            0.0,            // pitchspeed (not used)
+                            0.0             // yawspeed (not used)
+                            );
+                        return trailerYawMsg;
+                    });
+            }
+        });
+    }
 }
 
