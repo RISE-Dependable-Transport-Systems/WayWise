@@ -47,6 +47,8 @@ private:
     std::shared_ptr<mavsdk::MissionRawServer> mMissionRawServer;
     std::shared_ptr<mavsdk::MavlinkPassthrough> mMavlinkPassthrough;
     QTimer mPublishMavlinkTimer;
+    std::shared_ptr<mavsdk::Mavsdk> mTrailerMavsdk;
+    std::shared_ptr<mavsdk::MavlinkPassthrough> mTrailerMavlinkPassthrough;
 
     QDateTime mMavsdkVehicleServerCreationTime = QDateTime::currentDateTime();
     ParameterServer *mParameterServer;
@@ -61,6 +63,7 @@ private:
     void sendMissionAck(quint8 type);
     double mManualControlMaxSpeed = 2.0; // [m/s]
     quint8 mSystemId = 1;
+    void createMavsdkComponentForTrailer(const QHostAddress controlTowerAddress, const unsigned controlTowerPort, const QAbstractSocket::SocketType controlTowerSocketType);
 };
 
 #endif // MAVSDKVEHICLESERVER_H

@@ -22,6 +22,7 @@ class TrailerState : public VehicleState
 public:
 
     TrailerState(ObjectID_t id = 25, Qt::GlobalColor color = Qt::white);
+    virtual void provideParameters() override;
 
     double getLength() const { return mLength; }
     void setLength(double length) { mLength = length; }

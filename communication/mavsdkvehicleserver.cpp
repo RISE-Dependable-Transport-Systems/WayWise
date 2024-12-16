@@ -435,8 +435,11 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
         break;
     }
 
-    if (result == mavsdk::ConnectionResult::Success)
+    if (result == mavsdk::ConnectionResult::Success) {
         qDebug() << "MavsdkVehicleServer is listening on" << controlTowerAddress.toString() << "with port" << controlTowerPort;
+        if (vehicleState->hasTrailingVehicle())
+            createMavsdkComponentForTrailer(controlTowerAddress, controlTowerPort, controlTowerSocketType);
+    }
 
     ParameterServer::getInstance()->provideFloatParameter("MC_MAX_SPEED_MS", std::bind(&MavsdkVehicleServer::setManualControlMaxSpeed, this, std::placeholders::_1), std::bind(&MavsdkVehicleServer::getManualControlMaxSpeed, this));
     ParameterServer::getInstance()->provideIntParameter("VEH_WW_OBJ_TYPE",
@@ -701,5 +704,95 @@ void MavsdkVehicleServer::sendMissionAck(quint8 type)
         return mavMissionAckMsg;
     }) != mavsdk::MavlinkPassthrough::Result::Success)
             qWarning() << "Could not send MISSION_ACK via MAVLINK.";
+}
+
+void MavsdkVehicleServer::createMavsdkComponentForTrailer(const QHostAddress controlTowerAddress, const unsigned controlTowerPort, const QAbstractSocket::SocketType controlTowerSocketType)
+{
+    auto trailerState = mVehicleState->getTrailingVehicle();
+
+    mavsdk::Mavsdk::Configuration config =
+        mavsdk::Mavsdk::Configuration{mavsdk::Mavsdk::ComponentType::Custom};
+    config.set_system_id(mVehicleState->getId());
+    config.set_always_send_heartbeats(true);
+    config.set_component_id(trailerState->getId());
+    mTrailerMavsdk.reset(new mavsdk::Mavsdk{config});
+
+    mTrailerMavsdk->subscribe_on_new_system(
+        [this]() {
+            for (const auto & system : mTrailerMavsdk->systems()) {
+                auto mavlinkPassthrough = new mavsdk::MavlinkPassthrough(system);
+                mavlinkPassthrough->subscribe_message(
+                    MAVLINK_MSG_ID_HEARTBEAT,
+                    [this, mavlinkPassthrough, system](const mavlink_message_t & message) {
+                        mavlink_heartbeat_t heartbeat;
+                        mavlink_msg_heartbeat_decode(&message, &heartbeat);
+                        // unsubscribe from further heartbeats by deleting passthrough
+                        delete mavlinkPassthrough;
+                        if ((MAV_TYPE) heartbeat.type == MAV_TYPE_GCS)
+                            mTrailerMavlinkPassthrough.reset(new mavsdk::MavlinkPassthrough(system));
+                    });
+            }
+        });
+
+    mTrailerMavsdk->intercept_outgoing_messages_async(
+        [trailerState](mavlink_message_t & message) {
+            switch (message.msgid) {
+            case MAVLINK_MSG_ID_HEARTBEAT: // Fix some info in heartbeat s.th. MAVSDK / ControlTower detects vehicle correctly
+                mavlink_heartbeat_t heartbeat;
+                mavlink_msg_heartbeat_decode(&message, &heartbeat);
+                if (message.compid == trailerState->getId()) {
+                    heartbeat.type = MAV_TYPE_ONBOARD_CONTROLLER;
+                    heartbeat.autopilot = MAV_AUTOPILOT_INVALID;
+                }
+                mavlink_msg_heartbeat_encode(message.sysid, message.compid, &message, &heartbeat);
+                break;
+            default: ;
+                //            qDebug() << "out:" << message.msgid;
+            }
+            return true;
+        });
+
+    mavsdk::ConnectionResult result;
+    switch (controlTowerSocketType) {
+    case QAbstractSocket::UdpSocket:
+        result = mTrailerMavsdk->setup_udp_remote(controlTowerAddress.toString().toStdString(), controlTowerPort);
+        break;
+    default:
+        qDebug() << "MavsdkVehicleServer initialized for unsupported controlTowerSocketType. Not connecting.";
+        result = mavsdk::ConnectionResult::SocketError;
+        break;
+    }
+
+    if (result == mavsdk::ConnectionResult::Success) {
+        qDebug() << "Trailer component listening for MAVSDK connection.";
+
+        connect(&mPublishMavlinkTimer, &QTimer::timeout, [this](){
+            if (mTrailerMavlinkPassthrough) {
+                mTrailerMavlinkPassthrough->queue_message(
+                    [this](MavlinkAddress mavlink_address, uint8_t channel)->mavlink_message_t {
+                        auto trailerState = mVehicleState->getTrailingVehicle();
+                        mavlink_message_t trailerYawMsg;
+
+                        mavlink_address.system_id = mVehicleState->getId();
+                        mavlink_address.component_id = mVehicleState->getTrailingVehicle()->getId();
+
+                        mavlink_msg_attitude_pack_chan(
+                            mavlink_address.system_id,
+                            mavlink_address.component_id,
+                            channel,
+                            &trailerYawMsg,
+                            0.0,            // time_boot_ms (not used)
+                            0.0,            // roll (not used)
+                            0.0,            // pitch (not used)
+                            trailerState->getPosition(PosType::fused).getYaw() * (M_PI / 180.0),   // yaw
+                            0.0,            // rollspeed (not used)
+                            0.0,            // pitchspeed (not used)
+                            0.0             // yawspeed (not used)
+                            );
+                        return trailerYawMsg;
+                    });
+            }
+        });
+    }
 }
 

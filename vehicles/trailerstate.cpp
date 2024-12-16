@@ -5,6 +5,7 @@
  */
 
 #include "trailerstate.h"
+#include "communication/parameterserver.h"
 #include <QDebug>
 
 TrailerState::TrailerState(ObjectID_t id, Qt::GlobalColor color) : VehicleState (id, color)
@@ -15,6 +16,14 @@ TrailerState::TrailerState(ObjectID_t id, Qt::GlobalColor color) : VehicleState 
 
     ObjectState::setWaywiseObjectType(WAYWISE_OBJECT_TYPE_TRAILER);
 
+}
+
+void TrailerState::provideParameters()
+{
+    ParameterServer::getInstance()->provideIntParameter("TRLR_COMP_ID", std::bind(&TrailerState::setId, this, std::placeholders::_1, false), std::bind(&TrailerState::getId, this));
+    ParameterServer::getInstance()->provideFloatParameter("TRLR_LENGTH", std::bind(&TrailerState::setLength, this, std::placeholders::_1), std::bind(&TrailerState::getLength, this));
+    ParameterServer::getInstance()->provideFloatParameter("TRLR_WIDTH", std::bind(&TrailerState::setWidth, this, std::placeholders::_1), std::bind(&TrailerState::getWidth, this));
+    ParameterServer::getInstance()->provideFloatParameter("TRLR_WHLBASE", std::bind(&TrailerState::setWheelBase, this, std::placeholders::_1), std::bind(&TrailerState::getWheelBase, this));
 }
 
 void TrailerState::updateOdomPositionAndYaw(double drivenDistance, PosType usePosType)
