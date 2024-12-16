@@ -784,7 +784,7 @@ void MavsdkVehicleServer::createMavsdkComponentForTrailer(const QHostAddress con
                             0.0,            // time_boot_ms (not used)
                             0.0,            // roll (not used)
                             0.0,            // pitch (not used)
-                            trailerState->getPosition(PosType::fused).getYaw() * (M_PI / 180.0),   // yaw (your desired yaw value)
+                            trailerState->getPosition(PosType::fused).getYaw() * (M_PI / 180.0),   // yaw
                             0.0,            // rollspeed (not used)
                             0.0,            // pitchspeed (not used)
                             0.0             // yawspeed (not used)
