@@ -6,7 +6,6 @@
  */
 
 #include "truckstate.h"
-#include "communication/parameterserver.h"
 #include <QDebug>
 #include <QDateTime>
 
@@ -14,13 +13,6 @@ TruckState::TruckState(ObjectID_t id, Qt::GlobalColor color) : CarState(id, colo
 {
     // Additional initialization if needed for the TruckState
     ObjectState::setWaywiseObjectType(WAYWISE_OBJECT_TYPE_TRUCK);
-}
-
-void TruckState::provideParameters()
-{
-    ParameterServer::getInstance()->provideFloatParameter("VEH_LENGTH", std::bind(&TruckState::setLength, this, std::placeholders::_1), std::bind(&TruckState::getLength, this));
-    ParameterServer::getInstance()->provideFloatParameter("VEH_WIDTH", std::bind(&TruckState::setWidth, this, std::placeholders::_1), std::bind(&TruckState::getWidth, this));
-    ParameterServer::getInstance()->provideFloatParameter("VEH_WHLBASE", std::bind(&TruckState::setAxisDistance, this, std::placeholders::_1), std::bind(&TruckState::getAxisDistance, this));
 }
 
 double TruckState::getCurvatureToPointInVehicleFrame(const QPointF &point)

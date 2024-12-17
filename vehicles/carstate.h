@@ -30,6 +30,7 @@ public:
 #endif
     virtual void updateOdomPositionAndYaw(double drivenDistance, PosType usePosType = PosType::odom) override;
     virtual double steeringCurvatureToSteering(double steeringCurvature) override;
+    virtual void provideParameters() override;
 
     // Static state
     double getAxisDistance() const { return fabs(mAxisDistance) < 0.001 ? 0.8*getLength() : mAxisDistance; }

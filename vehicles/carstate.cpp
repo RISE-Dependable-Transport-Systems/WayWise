@@ -11,6 +11,8 @@
 #include <QDebug>
 #include <QDateTime>
 
+#include "communication/parameterserver.h"
+
 CarState::CarState(ObjectID_t id, Qt::GlobalColor color) : VehicleState(id, color)
 {
     ObjectState::setWaywiseObjectType(WAYWISE_OBJECT_TYPE_CAR);
@@ -260,4 +262,11 @@ double CarState::steeringCurvatureToSteering(double steeringCurvature)
         steeringAngle_rad = getMaxSteeringAngle() * ((steeringAngle_rad > 0) ? 1.0 : -1.0);
 
     return steeringAngle_rad / getMaxSteeringAngle();
+}
+
+void CarState::provideParameters()
+{
+    ParameterServer::getInstance()->provideFloatParameter("VEH_LENGTH", std::bind(&CarState::setLength, this, std::placeholders::_1), std::bind(&CarState::getLength, this));
+    ParameterServer::getInstance()->provideFloatParameter("VEH_WIDTH", std::bind(&CarState::setWidth, this, std::placeholders::_1), std::bind(&CarState::getWidth, this));
+    ParameterServer::getInstance()->provideFloatParameter("VEH_WHLBASE", std::bind(&CarState::setAxisDistance, this, std::placeholders::_1), std::bind(&CarState::getAxisDistance, this));
 }
