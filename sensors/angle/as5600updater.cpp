@@ -26,15 +26,16 @@ AS5600Updater::AS5600Updater(QSharedPointer<VehicleState> vehicleState, double a
             // for the moment only a truck has an angle sensor
             QSharedPointer<TruckState> truckState = qSharedPointerDynamicCast<TruckState>(vehicleState);
             if (truckState) {
-                  truckState->setTrailerAngle(angleInDegrees);
+                truckState->setTrailerAngle(angleInDegrees);
+                mIsConnected = true;
             } else {
-               qDebug() << "Error: Failed to cast VehicleState to TruckState.";
+                qDebug() << "Error: Failed to cast VehicleState to TruckState.";
             }
          } else {
             qDebug() << "ERROR: as5600 Read failed";
          }
-      });   
-      mPollTimer.start(mPollIntervall_ms); // call back (poll) every mPollIntervall_ms e.g., 50 ms
+      });
+      mPollTimer.start(mPollIntervall_ms);
    } else {
       qDebug() << "ERROR: Unable to open i2c bus to AS5600";
    }
@@ -46,6 +47,11 @@ bool AS5600Updater::setUpdateIntervall(int pollIntervall_ms)
    mPollTimer.start(mPollIntervall_ms);
 
    return true;
+}
+
+bool AS5600Updater::isConnected()
+{
+    return mIsConnected;
 }
 
 void AS5600Updater::printSensorInfo()

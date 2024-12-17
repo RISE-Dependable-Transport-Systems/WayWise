@@ -27,40 +27,55 @@ double TruckState::getCurvatureToPointInVehicleFrame(const QPointF &point)
 {
     if (hasTrailingVehicle())
         return getCurvatureWithTrailer(point);
-    else {
-        // just Call the base class
+    else
         return CarState::getCurvatureToPointInVehicleFrame(point);
-    }
 }
 
 void TruckState::updateOdomPositionAndYaw(double drivenDistance, PosType usePosType)
 {
+    updateTrailingVehicleOdomPositionAndYaw(drivenDistance, usePosType);
     CarState::updateOdomPositionAndYaw(drivenDistance, usePosType);
-    if (hasTrailingVehicle())
-        updateTrailingVehicleOdomPositionAndYaw(getPosition(usePosType), usePosType);
 }
 
 void TruckState::setPosition(PosPoint &point)
 {
     CarState::setPosition(point);
     if (hasTrailingVehicle()){
-        updateTrailingVehicleOdomPositionAndYaw(point, point.getType());
+        updateTrailingVehicleOdomPositionAndYaw(0, point.getType());
     }
 }
 
-void TruckState::updateTrailingVehicleOdomPositionAndYaw(PosPoint hitchPosition, PosType usePosType)
+bool TruckState::getSimulateTrailer() const
+{
+    return mSimulateTrailer;
+}
+
+void TruckState::setSimulateTrailer(bool simulateTrailer)
+{
+    mSimulateTrailer = simulateTrailer;
+}
+
+void TruckState::updateTrailingVehicleOdomPositionAndYaw(double drivenDistance, PosType usePosType)
 {
     if(hasTrailingVehicle()) {
+        auto hitchPosition = getPosition(usePosType);
         QSharedPointer<TrailerState> trailer = getTrailingVehicle();
         PosPoint currentTrailerPosition = trailer->getPosition(usePosType);
 
         double currYaw_rad = hitchPosition.getYaw() * M_PI / 180.0;
-        double trailerYaw_rad = currYaw_rad - getTrailerAngleRadians() ; // in radians θ = θ_vehicle - θ_e (hitch-angle)
 
-        double trailerAxis = trailer->getWheelBase();
-        trailerYaw_rad = fmod(trailerYaw_rad + M_PI, 2 * M_PI) - M_PI;
-        double delta_x = (trailerAxis) * cos( trailerYaw_rad); // trailer x difference from x of the truck wheelbase
-        double delta_y = (trailerAxis) * sin( trailerYaw_rad); // trailer y difference from y of the truck wheelbase
+        double trailerYaw_rad = getTrailingVehicle()->getPosition(usePosType).getYaw() * M_PI / 180.0;
+        if (mSimulateTrailer) { // We do not get external updates on the trailer angle -> simple estimation
+            trailerYaw_rad = trailerYaw_rad + ((drivenDistance / getTrailingVehicle()->getWheelBase()) * sin(currYaw_rad - trailerYaw_rad));
+            trailerYaw_rad = fmod(trailerYaw_rad + M_PI, 2 * M_PI) - M_PI;
+            setTrailerAngle((currYaw_rad - trailerYaw_rad) * 180.0 / M_PI);
+        } else {
+            trailerYaw_rad = currYaw_rad - getTrailerAngleRadians();
+            trailerYaw_rad = fmod(trailerYaw_rad + M_PI, 2 * M_PI) - M_PI;
+        }
+
+        double delta_x = (trailer->getWheelBase()) * cos(trailerYaw_rad); // trailer x difference from x of the truck wheelbase
+        double delta_y = (trailer->getWheelBase()) * sin(trailerYaw_rad); // trailer y difference from y of the truck wheelbase
 
         currentTrailerPosition.setX(hitchPosition.getX() - delta_x);
         currentTrailerPosition.setY(hitchPosition.getY() - delta_y);
@@ -72,27 +87,27 @@ void TruckState::updateTrailingVehicleOdomPositionAndYaw(PosPoint hitchPosition,
 
 double TruckState::getCurvatureWithTrailer(const QPointF &pointInVehicleFrame)
 {
-    double measuredTrailerAngle = getTrailerAngleRadians() ;
+    double trailerAngle_rad = getTrailerAngleRadians();
+    trailerAngle_rad = fmod(trailerAngle_rad + M_PI, 2 * M_PI) - M_PI;
+    double desiredTrailerAngle_rad;
     double l2 = getTrailingVehicle()->getWheelBase(); // trailer wheelbase in meters
+    double gain;
 
     if (getSpeed() > 0){
         double theta_err =  atan2(pointInVehicleFrame.y(), pointInVehicleFrame.x());
-        double desired_hitch_angle = atan(2*l2*sin(theta_err)); // desired trailer/hitch angle
-        double gain = getPurePursuitForwardGain();
-        double curve = gain *( measuredTrailerAngle - desired_hitch_angle ) - ( sin(measuredTrailerAngle)/ (l2)) ;
-        return curve/cos(measuredTrailerAngle);
+        desiredTrailerAngle_rad = atan(2 * l2 * sin(theta_err)); // desired trailer angle towards truck
+        gain = getPurePursuitForwardGain();
     } else {
-        double trailerYawInVehicleFrame = -measuredTrailerAngle ;
-        double trailerPositionInVehicleFrame_x = -(l2) * cos(trailerYawInVehicleFrame);
-        double trailerPositionInVehicleFrame_y = -(l2) * sin(trailerYawInVehicleFrame);
+        double trailerPositionInVehicleFrame_x = -(l2) * cos(-trailerAngle_rad);
+        double trailerPositionInVehicleFrame_y = -(l2) * sin(-trailerAngle_rad);
 
-        double theta_err =  atan2(pointInVehicleFrame.y()-trailerPositionInVehicleFrame_y,
-            pointInVehicleFrame.x()-trailerPositionInVehicleFrame_x) - trailerYawInVehicleFrame;
-        double desired_hitch_angle = atan(2*l2*sin(theta_err) / getAutopilotRadius() );
-        double gain = getPurePursuitReverseGain();
-        double curve = gain *( measuredTrailerAngle - desired_hitch_angle ) - ( sin(measuredTrailerAngle)/ (l2));
-        return curve/cos(measuredTrailerAngle);
+        double theta_err =  atan2(pointInVehicleFrame.y() - trailerPositionInVehicleFrame_y,
+                                 pointInVehicleFrame.x() - trailerPositionInVehicleFrame_x) - -trailerAngle_rad;
+        desiredTrailerAngle_rad = atan(2 * l2 * sin(theta_err) / getAutopilotRadius());
+        gain = getPurePursuitReverseGain();
     }
+    double curve = gain * (trailerAngle_rad - desiredTrailerAngle_rad) - (sin(trailerAngle_rad) / (l2));
+    return curve / cos(trailerAngle_rad);
 }
 
 QSharedPointer<TrailerState> TruckState::getTrailingVehicle() const {

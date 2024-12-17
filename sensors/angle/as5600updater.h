@@ -23,11 +23,14 @@ public:
     AS5600Updater(QSharedPointer<VehicleState> vehicleState, double angleOffset=0);
     void printSensorInfo();
     virtual bool setUpdateIntervall(int pollIntervall_ms) override;
+    virtual bool isConnected() override;
 
 private:
     int mPollIntervall_ms = 50; // interval (ms) to read from AS5600,
     QTimer mPollTimer;
+    bool mIsConnected = false;
     double angleOffset; // offset if the start angle is not zero
+
 };
 
 #endif // AS5600UPDATER_H

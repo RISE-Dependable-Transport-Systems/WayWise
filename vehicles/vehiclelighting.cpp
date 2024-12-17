@@ -40,10 +40,14 @@ VehicleLighting::VehicleLighting(QSharedPointer<VehicleState> vehicleState, QStr
 VehicleLighting::~VehicleLighting()
 {
     // Release lines
-    mBackupLight.release();
-    mBrakeLight.release();
-    mRightTurnSignal.release();
-    mLeftTurnSignal.release();
+    if (mBackupLight)
+        mBackupLight.release();
+    if (mBrakeLight)
+        mBrakeLight.release();
+    if (mRightTurnSignal)
+        mRightTurnSignal.release();
+    if (mLeftTurnSignal)
+        mLeftTurnSignal.release();
 }
 
 void VehicleLighting::turnSignal(double steering)
