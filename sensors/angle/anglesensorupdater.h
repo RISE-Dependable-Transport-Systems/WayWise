@@ -19,6 +19,7 @@ public:
     AngleSensorUpdater(QSharedPointer<VehicleState> vehicleState);
     QSharedPointer<VehicleState> getVehicleState() const;
     virtual bool setUpdateIntervall(int intervall_ms) = 0;
+    virtual bool isConnected() = 0;
 
 
 signals:
