@@ -20,7 +20,7 @@ public:
 
     double getCurvatureToPointInVehicleFrame(const QPointF &point) override;
     virtual void updateOdomPositionAndYaw(double drivenDistance, PosType usePosType = PosType::odom) override;
-    void updateTrailingVehicleOdomPositionAndYaw(PosPoint hitchPosition, PosType usePosType = PosType::odom);
+    void updateTrailingVehicleOdomPositionAndYaw(double drivenDistance, PosType usePosType = PosType::odom);
 
     double getPurePursuitForwardGain() const{ return mPurePursuitForwardGain;}
     void setPurePursuitForwardGain(double value){ mPurePursuitForwardGain = value;}
@@ -36,16 +36,20 @@ public:
     void setTrailerAngle(double angle_deg);
     virtual void setPosition(PosPoint &point) override;
 
+    bool getSimulateTrailer() const;
+    void setSimulateTrailer(bool simulateTrailer);
+
 #ifdef QT_GUI_LIB
     // Override or add drawing functions if needed (to draw a truck)
     virtual void draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected = true) override;
 #endif
 
 private:
-    double mPurePursuitForwardGain;
-    double mPurePursuitReverseGain;
+    double mPurePursuitForwardGain = 1.0;
+    double mPurePursuitReverseGain = -1.0;
 
-    double mTrailerAngle_deg; // Angle in Degrees
+    double mTrailerAngle_deg = 0.0;
+    bool mSimulateTrailer = false;
 
     double getCurvatureWithTrailer(const QPointF &point);
 

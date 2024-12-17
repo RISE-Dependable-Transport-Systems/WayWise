@@ -44,9 +44,10 @@ public:
     double mAngle;
 
 private:
-    double mLength; // [m]
-    double mWidth; // [m]
-    double mWheelBase; //[m]
+    // Default values from Griffin
+    double mLength = 0.96; // [m]
+    double mWidth = 0.21; // [m]
+    double mWheelBase = 0.64; //[m]
 };
 
 #endif // TRAILERSTATE_H
