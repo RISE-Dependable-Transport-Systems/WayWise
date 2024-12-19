@@ -1,6 +1,7 @@
 /*
  *     Copyright 2022 Marvin Damschen   marvin.damschen@ri.se
  *               2022 Rickard Häll      rickard.hall@ri.se
+ *               2024 Aria Mirzai       aria.mirzai@ri.se
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
  */
 
@@ -47,6 +48,10 @@ private slots:
     void on_requestShutdownButton_clicked();
 
     void on_pollENUrefButton_clicked();
+
+    void on_lowGearButton_clicked();
+
+    void on_highGearButton_clicked();
 
 private:
     Ui::DriveUI *ui;

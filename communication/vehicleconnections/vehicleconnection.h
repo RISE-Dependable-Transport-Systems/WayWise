@@ -1,6 +1,7 @@
 /*
  *     Copyright 2022 Marvin Damschen   marvin.damschen@ri.se
  *               2022 Rickard Häll      rickard.hall@ri.se
+ *               2024 Aria Mirzai       aria.mirzai@ri.se
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
  *
  * Abstract class to communicate with a vehicle using a remote VehicleConnection
@@ -44,6 +45,10 @@ public:
         NoSystem,
         ParamValueTooLong,
     };
+    enum class Gearbox {
+        lowGear = 1000,
+        highGear = 2000,
+    };
 
     virtual QList<PosPoint> requestCurrentRouteFromVehicle() = 0;
     virtual void requestGotoENU(const xyz_t &xyz, bool changeAutopilotMode = false) = 0;
@@ -58,6 +63,7 @@ public:
     virtual void requestFollowPoint() = 0;
     virtual void setManualControl(double x, double y, double z, double r, uint16_t buttonStateMask) = 0;
     virtual void setActuatorOutput(int index, float value) = 0;
+    virtual void requestGearSwitch(int gpioPin, Gearbox gear) = 0;
     virtual bool requestRebootOrShutdownOfSystemComponents(SystemComponent systemComponent, ComponentAction componentAction) = 0;
     virtual Result setIntParameterOnVehicle(std::string name, int32_t value) = 0;
     virtual Result setFloatParameterOnVehicle(std::string, float value) = 0;

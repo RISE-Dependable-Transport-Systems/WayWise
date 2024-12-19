@@ -1,6 +1,7 @@
 /*
  *     Copyright 2022 Marvin Damschen   marvin.damschen@ri.se
  *               2022 Rickard Häll      rickard.hall@ri.se
+ *               2024 Aria Mirzai        aria.mirzai@ri.se
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
  */
 
@@ -205,3 +206,18 @@ void DriveUI::on_pollENUrefButton_clicked()
         mCurrentVehicleConnection->pollCurrentENUreference();
 }
 
+void DriveUI::on_lowGearButton_clicked()
+{
+    const int gpioPin = ui->pinSpinBox->value();
+
+    if (mCurrentVehicleConnection)
+        mCurrentVehicleConnection->requestGearSwitch(gpioPin, VehicleConnection::Gearbox::lowGear);
+}
+
+void DriveUI::on_highGearButton_clicked()
+{
+    const int gpioPin = ui->pinSpinBox->value();
+
+    if (mCurrentVehicleConnection)
+        mCurrentVehicleConnection->requestGearSwitch(gpioPin, VehicleConnection::Gearbox::highGear);
+}

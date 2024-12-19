@@ -1,6 +1,7 @@
 /*
  *     Copyright 2022 Marvin Damschen   marvin.damschen@ri.se
  *               2022 Rickard Häll      rickard.hall@ri.se
+ *               2024 Aria Mirzai       aria.mirzai@ri.se
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
  */
 #include "mavsdkvehicleconnection.h"
@@ -805,6 +806,24 @@ void MavsdkVehicleConnection::setActiveAutopilotIDOnVehicle(int id)
     auto result = mMavlinkPassthrough->send_command_long(ComLong);
     if (result != mavsdk::MavlinkPassthrough::Result::Success)
         qDebug() << "Warning: could not send MISSION_SET_CURRENT via MAVLINK (" << convertMavlinkPassthroughResult(result) << ")";
+}
+
+void MavsdkVehicleConnection::requestGearSwitch(int gpioPin, VehicleConnection::Gearbox gear_pwm)
+{
+    if(!mMavlinkPassthrough)
+        return;
+
+    mavsdk::MavlinkPassthrough::CommandInt ComInt;
+    memset(&ComInt, 0, sizeof (ComInt));
+    ComInt.target_compid = mMavlinkPassthrough->get_target_compid();
+    ComInt.target_sysid = mMavlinkPassthrough->get_target_sysid();
+    ComInt.command = MAV_CMD_DO_SET_SERVO;
+    ComInt.param1 = gpioPin;
+    ComInt.param2 = static_cast<float>(gear_pwm);
+
+    auto result = mMavlinkPassthrough->send_command_int(ComInt);
+    if (result != mavsdk::MavlinkPassthrough::Result::Success)
+        qDebug() << "Warning: MavsdkVehicleConnection's request to switch gear failed (" << convertMavlinkPassthroughResult(result) << ")";
 }
 
 bool MavsdkVehicleConnection::requestRebootOrShutdownOfSystemComponents(VehicleConnection::SystemComponent systemComponent, VehicleConnection::ComponentAction componentAction)
