@@ -50,13 +50,23 @@ public:
 
     // Static state
     double getLength() const { return mLength; }
-    void setLength(double length) { mLength = length; }
+    virtual void setLength(double length) { mLength = length; }
     double getWidth() const { return mWidth; }
     void setWidth(double width) { mWidth = width; }
     double getMinAcceleration() const { return mMinAcceleration; }
     void setMinAcceleration(double minAcceleration) { mMinAcceleration = minAcceleration; }
     double getMaxAcceleration() const { return mMaxAcceleration; }
     void setMaxAcceleration(double maxAcceleration) { mMaxAcceleration = maxAcceleration; }
+
+    xyz_t getRearAxleToCenterOffset() const { return mRearAxleToCenterOffset; }
+    void setRearAxleToCenterOffset(double rearAxleToCenterOffsetX) { mRearAxleToCenterOffset.x = rearAxleToCenterOffsetX; }
+    void setRearAxleToCenterOffset(xyz_t rearAxleToCenterOffset) { mRearAxleToCenterOffset = rearAxleToCenterOffset; }
+    xyz_t getRearAxleToRearEndOffset() const { return mRearAxleToRearEndOffset; }
+    void setRearAxleToRearEndOffset(double rearAxleToRearEndOffsetX) { mRearAxleToRearEndOffset.x = rearAxleToRearEndOffsetX; }
+    void setRearAxleToRearEndOffset(xyz_t rearAxleToRearEndOffset) { mRearAxleToRearEndOffset = rearAxleToRearEndOffset; }
+    xyz_t getRearAxleToHitchOffset() const { return mRearAxleToHitchOffset; }
+    void setRearAxleToHitchOffset(double rearAxleToHitchOffsetX) { mRearAxleToHitchOffset.x = rearAxleToHitchOffsetX; }
+    void setRearAxleToHitchOffset(xyz_t rearAxleToHitchOffset) { mRearAxleToHitchOffset = rearAxleToHitchOffset; }
 
     // Dynamic state
     virtual PosPoint getPosition(PosType type) const;
@@ -101,6 +111,10 @@ private:
     // TODO: reasonable default values? set here or move?
     double mMinAcceleration = -5.0; // [m/s²]
     double mMaxAcceleration = 3.0; // [m/s²]
+
+    xyz_t mRearAxleToCenterOffset;
+    xyz_t mRearAxleToRearEndOffset;
+    xyz_t mRearAxleToHitchOffset;
 
     // Dynamic state
     double mSteering = 0.0; // [-1.0:1.0]

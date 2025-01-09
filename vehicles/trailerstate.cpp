@@ -10,20 +10,46 @@
 
 TrailerState::TrailerState(ObjectID_t id, Qt::GlobalColor color) : VehicleState (id, color)
 {
-
-    mLength = 0.96; // griffin specific
-    mWidth = 0.21;  // griffin specific
+    // Default values from Griffin
+    setLength(0.96); // [m]
+    setWidth(0.21); // [m]
+    setWheelBase(0.64); // [m]
 
     ObjectState::setWaywiseObjectType(WAYWISE_OBJECT_TYPE_TRAILER);
 
 }
 
-void TrailerState::provideParameters()
+void TrailerState::setLength(double length)
+{
+    VehicleState::setLength(length);
+    setRearAxleToRearEndOffset(-0.1 * length);
+    setRearAxleToCenterOffset(0.0);
+    setRearAxleToHitchOffset(0.7 * length);
+}
+
+void TrailerState::provideParametersToParameterServer()
 {
     ParameterServer::getInstance()->provideIntParameter("TRLR_COMP_ID", std::bind(&TrailerState::setId, this, std::placeholders::_1, false), std::bind(&TrailerState::getId, this));
     ParameterServer::getInstance()->provideFloatParameter("TRLR_LENGTH", std::bind(&TrailerState::setLength, this, std::placeholders::_1), std::bind(&TrailerState::getLength, this));
     ParameterServer::getInstance()->provideFloatParameter("TRLR_WIDTH", std::bind(&TrailerState::setWidth, this, std::placeholders::_1), std::bind(&TrailerState::getWidth, this));
     ParameterServer::getInstance()->provideFloatParameter("TRLR_WHLBASE", std::bind(&TrailerState::setWheelBase, this, std::placeholders::_1), std::bind(&TrailerState::getWheelBase, this));
+
+
+    ParameterServer::getInstance()->provideFloatParameter("TRLR_RA2CO_X", std::bind(static_cast<void (TrailerState::*)(double)>(&TrailerState::setRearAxleToCenterOffset), this, std::placeholders::_1),
+        [this]() -> float {
+            return static_cast<float>(this->getRearAxleToCenterOffset().x);
+        }
+    );
+    ParameterServer::getInstance()->provideFloatParameter("TRLR_RA2REO_X", std::bind(static_cast<void (TrailerState::*)(double)>(&TrailerState::setRearAxleToRearEndOffset), this, std::placeholders::_1),
+        [this]() -> float {
+            return static_cast<float>(this->getRearAxleToRearEndOffset().x);
+        }
+    );
+    ParameterServer::getInstance()->provideFloatParameter("TRLR_RA2HO_X", std::bind(static_cast<void (TrailerState::*)(double)>(&TrailerState::setRearAxleToHitchOffset), this, std::placeholders::_1),
+        [this]() -> float {
+            return static_cast<float>(this->getRearAxleToHitchOffset().x);
+        }
+    );
 }
 
 void TrailerState::updateOdomPositionAndYaw(double drivenDistance, PosType usePosType)

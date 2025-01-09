@@ -18,6 +18,13 @@ CarState::CarState(ObjectID_t id, Qt::GlobalColor color) : VehicleState(id, colo
     ObjectState::setWaywiseObjectType(WAYWISE_OBJECT_TYPE_CAR);
 }
 
+void CarState::setLength(double length)
+{
+    VehicleState::setLength(length);
+    setRearAxleToRearEndOffset(-0.25 * length);
+    setRearAxleToCenterOffset(0.0);
+}
+
 #ifdef QT_GUI_LIB
 void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected)
 {
@@ -264,9 +271,20 @@ double CarState::steeringCurvatureToSteering(double steeringCurvature)
     return steeringAngle_rad / getMaxSteeringAngle();
 }
 
-void CarState::provideParameters()
+void CarState::provideParametersToParameterServer()
 {
     ParameterServer::getInstance()->provideFloatParameter("VEH_LENGTH", std::bind(&CarState::setLength, this, std::placeholders::_1), std::bind(&CarState::getLength, this));
     ParameterServer::getInstance()->provideFloatParameter("VEH_WIDTH", std::bind(&CarState::setWidth, this, std::placeholders::_1), std::bind(&CarState::getWidth, this));
     ParameterServer::getInstance()->provideFloatParameter("VEH_WHLBASE", std::bind(&CarState::setAxisDistance, this, std::placeholders::_1), std::bind(&CarState::getAxisDistance, this));
+
+    ParameterServer::getInstance()->provideFloatParameter("VEH_RA2CO_X", std::bind(static_cast<void (CarState::*)(double)>(&CarState::setRearAxleToCenterOffset), this, std::placeholders::_1),
+        [this]() -> float {
+            return static_cast<float>(this->getRearAxleToCenterOffset().x);
+        }
+    );
+    ParameterServer::getInstance()->provideFloatParameter("VEH_RA2REO_X", std::bind(static_cast<void (CarState::*)(double)>(&CarState::setRearAxleToRearEndOffset), this, std::placeholders::_1),
+        [this]() -> float {
+            return static_cast<float>(this->getRearAxleToRearEndOffset().x);
+        }
+    );
 }

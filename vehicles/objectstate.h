@@ -38,7 +38,7 @@ public:
     typedef xyz_t Velocity;
     typedef xyz_t Acceleration;
     ObjectState(ObjectID_t id = 1, Qt::GlobalColor color = Qt::red);
-    virtual void provideParameters() {}; // Provide using ParameterServer in child classes (if implemented)
+    virtual void provideParametersToParameterServer() {}; // Provide using ParameterServer in child classes (if implemented)
 #ifdef QT_GUI_LIB
     virtual void draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected = true) = 0;
     virtual QPainterPath getBoundingBox() const { return QPainterPath(); }

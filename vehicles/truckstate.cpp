@@ -9,10 +9,18 @@
 #include <QDebug>
 #include <QDateTime>
 
+#include "communication/parameterserver.h"
+
 TruckState::TruckState(ObjectID_t id, Qt::GlobalColor color) : CarState(id, color)
 {
     // Additional initialization if needed for the TruckState
     ObjectState::setWaywiseObjectType(WAYWISE_OBJECT_TYPE_TRUCK);
+}
+
+void TruckState::setLength(double length)
+{
+    CarState::setLength(length);
+    setRearAxleToHitchOffset(0.1 * length);
 }
 
 double TruckState::getCurvatureToPointInVehicleFrame(const QPointF &point)
@@ -117,6 +125,21 @@ void TruckState::setTrailingVehicle(QSharedPointer<TrailerState> trailer)
 void TruckState::setTrailerAngle(double angle_deg)
 {
     mTrailerAngle_deg = angle_deg;
+}
+
+void TruckState::provideParametersToParameterServer()
+{
+    CarState::provideParametersToParameterServer();
+
+    ParameterServer::getInstance()->provideFloatParameter("VEH_RA2HO_X", std::bind(static_cast<void (TruckState::*)(double)>(&TruckState::setRearAxleToHitchOffset), this, std::placeholders::_1),
+        [this]() -> float {
+            return static_cast<float>(this->getRearAxleToHitchOffset().x);
+        }
+    );
+
+    if(hasTrailingVehicle()) {
+        getTrailingVehicle()->provideParametersToParameterServer();
+    }
 }
 
 #ifdef QT_GUI_LIB

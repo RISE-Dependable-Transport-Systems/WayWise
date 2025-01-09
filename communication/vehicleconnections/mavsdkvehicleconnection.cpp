@@ -49,7 +49,10 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
                 case WAYWISE_OBJECT_TYPE_TRUCK:
                 {
                     qDebug() << "MavsdkVehicleConnection: we are talking to a MAV_TYPE_GROUND_ROVER / WayWise Truck.";
-                    setupTruckState();
+                    mVehicleState = QSharedPointer<TruckState>::create(mSystem->get_system_id());
+                    mVehicleState->setName("Truck " + QString::number(mSystem->get_system_id()));
+                    QSharedPointer<TruckState> mTruckState = qSharedPointerDynamicCast<TruckState>(mVehicleState);
+                    setupTruckState(mTruckState);
                     break;
                 }
                 default:
@@ -57,20 +60,8 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
                     qDebug() << "MavsdkVehicleConnection: we are talking to a MAV_TYPE_GROUND_ROVER / WayWise Car.";
                     mVehicleState = QSharedPointer<CarState>::create(mSystem->get_system_id());
                     mVehicleState->setName("Car " + QString::number(mSystem->get_system_id()));
-
                     QSharedPointer<CarState> mCarState = qSharedPointerDynamicCast<CarState>(mVehicleState);
-                    auto vehicleParamResult = getFloatParameterFromVehicle("VEH_LENGTH");
-                    if (vehicleParamResult.first == VehicleConnection::Result::Success) {
-                        mCarState->setLength(vehicleParamResult.second);
-                    }
-                    vehicleParamResult = getFloatParameterFromVehicle("VEH_WIDTH");
-                    if (vehicleParamResult.first == VehicleConnection::Result::Success) {
-                        mCarState->setWidth(vehicleParamResult.second);
-                    }
-                    vehicleParamResult = getFloatParameterFromVehicle("VEH_WHLBASE");
-                    if (vehicleParamResult.first == VehicleConnection::Result::Success) {
-                        mCarState->setAxisDistance(vehicleParamResult.second);
-                    }
+                    setupCarState(mCarState);
                     break;
                 }
             }
@@ -283,23 +274,37 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
     connect(this, &MavsdkVehicleConnection::stopWaypointFollowerSignal, this, &MavsdkVehicleConnection::stopAutopilot);
 }
 
-void MavsdkVehicleConnection::setupTruckState()
+void MavsdkVehicleConnection::setupCarState(QSharedPointer<CarState> carState)
 {
-    mVehicleState = QSharedPointer<TruckState>::create(mSystem->get_system_id());
-    mVehicleState->setName("Truck " + QString::number(mSystem->get_system_id()));
-
-    QSharedPointer<TruckState> mTruckState = qSharedPointerDynamicCast<TruckState>(mVehicleState);
     auto vehicleParamResult = getFloatParameterFromVehicle("VEH_LENGTH");
     if (vehicleParamResult.first == VehicleConnection::Result::Success) {
-        mTruckState->setLength(vehicleParamResult.second);
+        carState->setLength(vehicleParamResult.second);
     }
     vehicleParamResult = getFloatParameterFromVehicle("VEH_WIDTH");
     if (vehicleParamResult.first == VehicleConnection::Result::Success) {
-        mTruckState->setWidth(vehicleParamResult.second);
+        carState->setWidth(vehicleParamResult.second);
     }
     vehicleParamResult = getFloatParameterFromVehicle("VEH_WHLBASE");
     if (vehicleParamResult.first == VehicleConnection::Result::Success) {
-        mTruckState->setAxisDistance(vehicleParamResult.second);
+        carState->setAxisDistance(vehicleParamResult.second);
+    }
+
+    vehicleParamResult = getFloatParameterFromVehicle("VEH_RA2CO_X");
+    if (vehicleParamResult.first == VehicleConnection::Result::Success) {
+        carState->setRearAxleToCenterOffset(vehicleParamResult.second);
+    }
+    vehicleParamResult = getFloatParameterFromVehicle("VEH_RA2REO_X");
+    if (vehicleParamResult.first == VehicleConnection::Result::Success) {
+        carState->setRearAxleToRearEndOffset(vehicleParamResult.second);
+    }
+}
+
+void MavsdkVehicleConnection::setupTruckState(QSharedPointer<TruckState> truckState)
+{
+    setupCarState(truckState);
+    auto vehicleParamResult = getFloatParameterFromVehicle("VEH_RA2HO_X");
+    if (vehicleParamResult.first == VehicleConnection::Result::Success) {
+        truckState->setRearAxleToHitchOffset(vehicleParamResult.second);
     }
 
     auto trailerParamResult = getIntParameterFromVehicle("TRLR_COMP_ID");
@@ -307,11 +312,11 @@ void MavsdkVehicleConnection::setupTruckState()
         int trailer_component_id = trailerParamResult.second;
         if (trailer_component_id>=0) {
             // Setup Trailer
-            mavsdk::System::ComponentDiscoveredIdHandle mComponentDiscoveredIdHandle = mSystem->subscribe_component_discovered_id([this, mTruckState, trailer_component_id](mavsdk::System::ComponentType component_type, uint8_t component_id){
+            mavsdk::System::ComponentDiscoveredIdHandle mComponentDiscoveredIdHandle = mSystem->subscribe_component_discovered_id([this, truckState, trailer_component_id](mavsdk::System::ComponentType component_type, uint8_t component_id){
                 if (component_type == mavsdk::System::ComponentType::UNKNOWN && component_id == (uint8_t) trailer_component_id) {
                     qDebug() << "Trailer discovered with system ID "<< mSystem->get_system_id() << " and component ID "<< component_id;
-                    mTruckState->setTrailingVehicle(QSharedPointer<TrailerState>::create(component_id));
-                    QSharedPointer<TrailerState> mTrailerState = mTruckState->getTrailingVehicle();
+                    truckState->setTrailingVehicle(QSharedPointer<TrailerState>::create(component_id));
+                    QSharedPointer<TrailerState> mTrailerState = truckState->getTrailingVehicle();
                     mTrailerState->setName("Trailer " + QString::number(mSystem->get_system_id()));
 
                     auto trailerParamResult = getFloatParameterFromVehicle("TRLR_LENGTH");
@@ -325,6 +330,20 @@ void MavsdkVehicleConnection::setupTruckState()
                     trailerParamResult = getFloatParameterFromVehicle("TRLR_WHLBASE");
                     if (trailerParamResult.first == VehicleConnection::Result::Success) {
                         mTrailerState->setWheelBase(trailerParamResult.second);
+                    }
+
+                    trailerParamResult = getFloatParameterFromVehicle("TRLR_RA2CO_X");
+                    if (trailerParamResult.first == VehicleConnection::Result::Success) {
+                        mTrailerState->setRearAxleToCenterOffset(trailerParamResult.second);
+                    }
+                    trailerParamResult = getFloatParameterFromVehicle("TRLR_RA2REO_X");
+                    if (trailerParamResult.first == VehicleConnection::Result::Success) {
+                        mTrailerState->setRearAxleToRearEndOffset(trailerParamResult.second);
+                    }
+                    trailerParamResult = getFloatParameterFromVehicle("TRLR_RA2HO_X");
+                    if (trailerParamResult.first == VehicleConnection::Result::Success) {
+                        qDebug() << "Got trailer hitch offset: "<< trailerParamResult.second;
+                        mTrailerState->setRearAxleToHitchOffset(trailerParamResult.second);
                     }
 
                     mMavlinkPassthrough->subscribe_message(MAVLINK_MSG_ID_ATTITUDE, [mTruckState, component_id](const mavlink_message_t &message) {
