@@ -46,7 +46,46 @@ void PurepursuitWaypointFollower::addWaypoint(const PosPoint &point)
 
 void PurepursuitWaypointFollower::addRoute(const QList<PosPoint> &route)
 {
-    mWaypointList.append(route);
+    if (route.isEmpty()) {
+        return;
+    }
+
+    if (!isActive()) {
+        mWaypointList.append(route);
+    } else {
+        // Calculate closest point on new route to current vehicle position
+        QPointF currentVehiclePositionXY = mVehicleState->getPosition(mPosTypeUsed).getPoint();
+        if (mVehicleState->hasTrailingVehicle() && mVehicleState->getSpeed() < 0) // position defined by trailer when backing (if exists)
+            currentVehiclePositionXY = mVehicleState->getTrailingVehicle()->getPosition(mPosTypeUsed).getPoint();
+
+        int closestPointIndex = 0;
+        double minDistance = std::numeric_limits<double>::max();
+
+        for (int i = 0; i < route.size(); i++) {
+            double distance = QLineF(currentVehiclePositionXY, route[i].getPoint()).length();
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestPointIndex = i;
+            }
+        }
+        // Truncate the current route and append the new route from closest point onwards
+        mWaypointList = mWaypointList.mid(0, mCurrentState.currentWaypointIndex);
+        mWaypointList.append(route.mid(closestPointIndex));
+
+        // Update current waypoint index
+        while (mCurrentState.currentWaypointIndex < mWaypointList.size()) {
+            if (QLineF(currentVehiclePositionXY, mWaypointList.at(mCurrentState.currentWaypointIndex).getPoint()).length() >= purePursuitRadius()) {
+                break;
+            }
+            mCurrentState.currentWaypointIndex++;
+        }
+        if (mCurrentState.currentWaypointIndex >= mWaypointList.size()) {
+            mCurrentState.currentWaypointIndex--;
+            mCurrentState.stmState = WayPointFollowerSTMstates::FOLLOW_ROUTE_APPROACHING_END_GOAL;
+        } else {
+            mCurrentState.stmState = WayPointFollowerSTMstates::FOLLOW_ROUTE_FOLLOWING;
+        }
+    }
 }
 
 void PurepursuitWaypointFollower::startFollowingRoute(bool fromBeginning)
