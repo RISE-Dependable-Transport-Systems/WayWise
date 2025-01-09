@@ -66,6 +66,14 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
                 }
             }
 
+            if (system->has_autopilot())
+            {
+                auto paramResult = getIntParameterFromVehicle("PP_EGA_TYPE");
+                if (paramResult.first == VehicleConnection::Result::Success) {
+                    mVehicleState->setEndGoalAlignmentType(static_cast<AutopilotEndGoalAlignmentType>(paramResult.second));
+                }
+            }
+
             break;
         }
     default:
@@ -260,6 +268,14 @@ MavsdkVehicleConnection::MavsdkVehicleConnection(std::shared_ptr<mavsdk::System>
             mavlink_msg_named_value_float_decode(&message, &mavMsg);
             mVehicleState->setAutopilotRadius(mavMsg.value);
         }
+    });
+
+    // Autopilot Target Point
+    mMavlinkPassthrough->subscribe_message(MAVLINK_MSG_ID_POSITION_TARGET_LOCAL_NED, [this](const mavlink_message_t &mavMsg) {
+        mavlink_position_target_local_ned_t autopilotPoints;
+        mavlink_msg_position_target_local_ned_decode(&mavMsg, &autopilotPoints);
+        xyz_t autopilotTargetPointENU = coordinateTransforms::nedToENU({autopilotPoints.x, autopilotPoints.y, 0});
+        mVehicleState->setAutopilotTargetPoint(QPointF(autopilotTargetPointENU.x, autopilotTargetPointENU.y));
     });
 
     // Set up action plugin

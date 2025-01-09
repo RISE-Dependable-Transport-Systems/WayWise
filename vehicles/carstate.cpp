@@ -287,4 +287,9 @@ void CarState::provideParametersToParameterServer()
             return static_cast<float>(this->getRearAxleToRearEndOffset().x);
         }
     );
+
+    ParameterServer::getInstance()->provideIntParameter("PP_EGA_TYPE",
+        std::function<void(int)>([this](int value) {this->setEndGoalAlignmentType(static_cast<AutopilotEndGoalAlignmentType>(value));}),
+        std::function<int(void)>([this]() {return static_cast<int>(this->getEndGoalAlignmentType());})
+    );
 }
