@@ -71,6 +71,8 @@ public:
     // Dynamic state
     virtual PosPoint getPosition(PosType type) const;
     virtual PosPoint getPosition() const override { return getPosition(PosType::simulated); }
+    virtual PosPoint posInVehicleFrameToPosPointENU(xyz_t offset, PosType type) const;
+    virtual PosPoint posInVehicleFrameToPosPointENU(xyz_t offset) const { return posInVehicleFrameToPosPointENU(offset, PosType::simulated); }
     virtual void setPosition(PosPoint &point) override;
     virtual QTime getTime() const override { return mTime; }
     virtual void setTime(const QTime &time) override { mTime = time; }
