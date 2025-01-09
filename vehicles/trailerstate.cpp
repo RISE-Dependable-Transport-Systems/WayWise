@@ -62,28 +62,43 @@ void TrailerState::updateOdomPositionAndYaw(double drivenDistance, PosType usePo
 
 #ifdef QT_GUI_LIB
 // draw on demand
-void TrailerState::drawTrailer(QPainter &painter, const QTransform &drawTrans, const PosPoint &carPos, double angle)
+void TrailerState::drawTrailer(QPainter &painter, const QTransform &drawTrans)
 {
+    if (!isStateInitialized())
+        return;
 
-    double x = carPos.getX() * 1000.0  ;// convert from m to mm (on the map objects are in mm)
-    double y = carPos.getY() * 1000.0  ;
+    PosPoint pos = getPosition();
+    double x = pos.getX() * 1000.0  ;// convert from m to mm (on the map objects are in mm)
+    double y = pos.getY() * 1000.0  ;
     double trailer_len = getLength() * 1000.0;
     const double trailer_w = getWidth() * 1000.0;
     const double trailer_corner = 0.02 * 1000.0;
+    xyz_t rearAxleToRearEndOffset = getRearAxleToRearEndOffset();
+    double rearAxleToRearEndOffsetX = rearAxleToRearEndOffset.x * 1000.0;
+    xyz_t rearAxleToHitchOffset = getRearAxleToHitchOffset();
 
     painter.setTransform(drawTrans);
     painter.translate(x, y);
-    painter.rotate(carPos.getYaw() - angle + 180);
+    painter.rotate(pos.getYaw());
 
-    // Wheels
+    // Rear axle wheels
     painter.setBrush(QBrush(Qt::darkGray));
-    painter.drawRoundedRect(trailer_len - trailer_len / 2.5,-(trailer_w / 2), trailer_len / 9.0, trailer_w, trailer_corner / 3, trailer_corner / 3);
+    double wheel_diameter = trailer_len / 9.0;
+    double wheel_width = trailer_w / 12.0;
+    painter.drawRoundedRect(- wheel_diameter/2, - (trailer_w / 2 + wheel_width / 2), wheel_diameter, (trailer_w + wheel_width), trailer_corner / 3, trailer_corner / 3);
 
     // Draw trailer
     // simple draw a rectangle representing the trailer
     painter.setBrush(getColor());
-    painter.drawRoundedRect(-trailer_len / 6.0, -((trailer_w - trailer_len / 20.0) / 2.0), trailer_len - (trailer_len / 20.0), trailer_w - trailer_len / 20.0, trailer_corner, trailer_corner);
+    painter.drawRoundedRect(rearAxleToRearEndOffsetX, -((trailer_w - trailer_len / 20.0) / 2.0), trailer_len - (trailer_len / 20.0), trailer_w - trailer_len / 20.0, trailer_corner, trailer_corner);
 
+    // Rear axle point
+    painter.setBrush(Qt::red);
+    painter.drawEllipse(QPointF(0, 0), trailer_w / 15.0, trailer_w / 15.0);
+
+    // Hitch
+    painter.setBrush(Qt::black);
+    painter.drawEllipse(QPointF(rearAxleToHitchOffset.x, rearAxleToHitchOffset.y)*1000.0, trailer_w / 9.0, trailer_w / 9.0);
 }
 
 void TrailerState::draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected){

@@ -27,6 +27,9 @@ public:
 #ifdef QT_GUI_LIB
     virtual void draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected = true) override;
     virtual QPainterPath getBoundingBox() const override;
+
+    void setStateInitialized(bool value){ mStateInitialized = value;}
+    bool isStateInitialized(){ return mStateInitialized;}
 #endif
     virtual void updateOdomPositionAndYaw(double drivenDistance, PosType usePosType = PosType::odom) override;
     virtual double steeringCurvatureToSteering(double steeringCurvature) override;
@@ -65,7 +68,9 @@ private:
     double mMaxSteeringAngle = 0.0; // [rad]
     double mMinTurnRadiusRear = std::numeric_limits<double>::infinity(); // [m]
 
-
+#ifdef QT_GUI_LIB
+    bool mStateInitialized = false; // whether parameters are setup
+#endif
 };
 
 #endif // CARSTATE_H

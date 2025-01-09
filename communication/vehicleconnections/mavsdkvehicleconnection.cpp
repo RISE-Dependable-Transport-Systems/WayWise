@@ -314,6 +314,7 @@ void MavsdkVehicleConnection::setupCarState(QSharedPointer<CarState> carState)
     if (vehicleParamResult.first == VehicleConnection::Result::Success) {
         carState->setRearAxleToRearEndOffset(vehicleParamResult.second);
     }
+    carState->setStateInitialized(true);
 }
 
 void MavsdkVehicleConnection::setupTruckState(QSharedPointer<TruckState> truckState)
@@ -323,6 +324,7 @@ void MavsdkVehicleConnection::setupTruckState(QSharedPointer<TruckState> truckSt
     if (vehicleParamResult.first == VehicleConnection::Result::Success) {
         truckState->setRearAxleToHitchOffset(vehicleParamResult.second);
     }
+    truckState->setStateInitialized(true);
 
     auto trailerParamResult = getIntParameterFromVehicle("TRLR_COMP_ID");
     if (trailerParamResult.first == VehicleConnection::Result::Success) {
@@ -362,6 +364,7 @@ void MavsdkVehicleConnection::setupTruckState(QSharedPointer<TruckState> truckSt
                         qDebug() << "Got trailer hitch offset: "<< trailerParamResult.second;
                         mTrailerState->setRearAxleToHitchOffset(trailerParamResult.second);
                     }
+                    mTrailerState->setStateInitialized(true);
 
                     mMavlinkPassthrough->subscribe_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, [truckState, component_id](const mavlink_message_t &message) {
                         if (message.compid == component_id) {
