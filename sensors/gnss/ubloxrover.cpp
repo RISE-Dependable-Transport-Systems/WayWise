@@ -10,10 +10,8 @@
 #include <cmath>
 
 UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
+    : GNSSReceiver(vehicleState)
 {
-    mVehicleState = vehicleState;
-    mEnuReference = {57.6828, 11.9637, 0}; // AztaZero {57.7810, 12.7692, 0}, Klätterlabbet {57.6876, 11.9807, 0};
-
     // Use GNSS reception to update location
     connect(&mUblox, &Ublox::rxNavPvt, this, &UbloxRover::updateGNSSPositionAndYaw);
 
@@ -136,12 +134,6 @@ bool UbloxRover::isSerialConnected()
     return mUblox.isSerialConnected();
 }
 
-void UbloxRover::setEnuRef(llh_t enuRef)
-{
-    mEnuReference = enuRef;
-    mEnuReferenceSet = true;
-}
-
 void UbloxRover::writeRtcmToUblox(QByteArray data)
 {
     mUblox.writeRaw(data);
@@ -150,16 +142,6 @@ void UbloxRover::writeRtcmToUblox(QByteArray data)
 void UbloxRover::writeOdoToUblox(ubx_esf_datatype_enum dataType, uint32_t dataField)
 {
     mUblox.ubloxOdometerInput(dataType, dataField);
-}
-
-void UbloxRover::setIMUOrientationOffset(double roll_deg, double pitch_deg, double yaw_deg)
-{
-    mIMUOrientationOffset = {roll_deg, pitch_deg, yaw_deg};
-}
-
-void UbloxRover::setGNSSPositionOffset(double xOffset, double yOffset)
-{
-    mGNSSPositionOffset = {xOffset, yOffset, 0.0};
 }
 
 bool UbloxRover::configureUblox()
@@ -271,8 +253,7 @@ void UbloxRover::updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt)
         xyz_t xyz = {0.0, 0.0, 0.0};
 
         if (!mEnuReferenceSet) {
-            mEnuReference = llh;
-            mEnuReferenceSet = true;
+            setEnuRef(llh);
         } else
             xyz = coordinateTransforms::llhToEnu(mEnuReference, llh);
 
@@ -317,11 +298,6 @@ void UbloxRover::updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt)
 
         lastXyz = xyz;
     }
-}
-
-llh_t UbloxRover::getEnuRef() const
-{
-    return mEnuReference;
 }
 
 void UbloxRover::updSosResponse(const ubx_upd_sos &sos)

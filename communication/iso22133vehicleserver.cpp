@@ -81,13 +81,16 @@ iso22133VehicleServer::iso22133VehicleServer(
 
 void iso22133VehicleServer::setUbloxRover(
     QSharedPointer<UbloxRover> ubloxRover) {
-    if (!mUbloxRover.isNull())
-        QObject::disconnect(
-            mUbloxRover.get(), &UbloxRover::txNavPvt, this,
-            &iso22133VehicleServer::updateRawGpsAndGpsInfoFromUbx);
-
-    mUbloxRover = ubloxRover;
-    QObject::connect(mUbloxRover.get(), &UbloxRover::txNavPvt, this,
+    if (!mGNSSReceiver.isNull()) {
+        QSharedPointer<UbloxRover> mUbloxRover = qSharedPointerDynamicCast<UbloxRover>(mGNSSReceiver);
+        if (mUbloxRover) {
+            QObject::disconnect(
+                mUbloxRover.get(), &UbloxRover::txNavPvt, this,
+                &iso22133VehicleServer::updateRawGpsAndGpsInfoFromUbx);
+        }
+    }
+    VehicleServer::setGNSSReceiver(ubloxRover);
+    QObject::connect(ubloxRover.get(), &UbloxRover::txNavPvt, this,
                      &iso22133VehicleServer::updateRawGpsAndGpsInfoFromUbx);
 }
 
@@ -157,9 +160,9 @@ void iso22133VehicleServer::onOSEM(ObjectSettingsType &osem) {
     qDebug() << "Object Settings Received";
     setObjectSettings(osem);
     const llh_t llh = {osem.coordinateSystemOrigin.latitude_deg, osem.coordinateSystemOrigin.longitude_deg, osem.coordinateSystemOrigin.altitude_m};
-    if (!mUbloxRover.isNull())
+    if (!mGNSSReceiver.isNull())
     {
-        mUbloxRover->setEnuRef(llh);
+        mGNSSReceiver->setEnuRef(llh);
     } else {
         qWarning() << "No UbloxRover set to receive llh!!";
     }

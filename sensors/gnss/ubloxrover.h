@@ -12,23 +12,18 @@
 #include <QObject>
 #include <QSharedPointer>
 #include "ublox.h"
-#include "core/coordinatetransforms.h"
-#include "vehicles/vehiclestate.h"
+#include "gnssreceiver.h"
 
-class UbloxRover : public QObject
+class UbloxRover : public GNSSReceiver
 {
     Q_OBJECT
 public:
     UbloxRover(QSharedPointer<VehicleState> vehicleState);
     bool connectSerial(const QSerialPortInfo &serialPortInfo);
     bool isSerialConnected();
-    llh_t getEnuRef() const;
-    void setEnuRef(llh_t enuRef);
     void writeRtcmToUblox(QByteArray data);
     void writeOdoToUblox(ubx_esf_datatype_enum dataType, uint32_t dataField);
     void saveOnShutdown();
-    void setIMUOrientationOffset(double roll_deg, double pitch_deg, double yaw_deg);
-    void setGNSSPositionOffset(double xOffset, double yOffset);
 
 signals:
     void updatedGNSSPositionAndYaw(QSharedPointer<VehicleState> vehicleState, double distanceMoved, bool fused);
@@ -41,14 +36,7 @@ private:
     void updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt);
 
     const int ms_per_day = 24 * 60 * 60 * 1000;
-
-    llh_t mEnuReference;
-    bool mEnuReferenceSet = false;
-
     Ublox mUblox;
-    QSharedPointer<VehicleState> mVehicleState;
-    struct {double rollOffset_deg, pitchOffset_deg, yawOffset_deg;} mIMUOrientationOffset;
-    xyz_t mGNSSPositionOffset = {0.0, 0.0, 0.0};
 };
 
 #endif // UBLOXROVER_H

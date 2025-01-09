@@ -23,6 +23,7 @@ class VehicleServer : public QObject
 public:
     VehicleServer(QSharedPointer<VehicleState> vehicleState) : mVehicleState(vehicleState) {};
     virtual void setUbloxRover(QSharedPointer<UbloxRover> ubloxRover) = 0;
+    virtual void setGNSSReceiver(QSharedPointer<GNSSReceiver> gnssReceiver) { mGNSSReceiver = gnssReceiver; }
     virtual void setWaypointFollower(QSharedPointer<WaypointFollower> waypointFollower) = 0;
     virtual void setMovementController(QSharedPointer<MovementController> movementController) = 0;
     virtual void setManualControlMaxSpeed(double manualControlMaxSpeed_ms) = 0;
@@ -44,7 +45,7 @@ signals:
 
 protected:
     QSharedPointer<VehicleState> mVehicleState;
-    QSharedPointer<UbloxRover> mUbloxRover;
+    QSharedPointer<GNSSReceiver> mGNSSReceiver;
     QSharedPointer<WaypointFollower> mWaypointFollower;
     QSharedPointer<MovementController> mMovementController;
     QSharedPointer<FollowPoint> mFollowPoint;
