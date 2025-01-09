@@ -23,6 +23,8 @@
 #include "vehicles/objectstate.h"
 #include <math.h>
 
+enum class AutopilotEndGoalAlignmentType {REAR_AXLE, FRONT_REAR_END, CENTER};
+
 class VehicleState : public ObjectState
 {
     Q_OBJECT
@@ -86,6 +88,10 @@ public:
     void setIsArmed(bool isArmed);
     void setAutopilotRadius(double radius);
     double getAutopilotRadius();
+    void setAutopilotTargetPoint(QPointF autopilotTargetPoint) { mAutopilotTargetPoint = autopilotTargetPoint; }
+    QPointF getAutopilotTargetPoint() const { return mAutopilotTargetPoint; }
+    AutopilotEndGoalAlignmentType getEndGoalAlignmentType() const {return mEndGoalAlignmentType;};
+    void setEndGoalAlignmentType(AutopilotEndGoalAlignmentType value) { mEndGoalAlignmentType = value; };
     virtual double getCurvatureToPointInVehicleFrame(const QPointF &point);
     double getCurvatureToPointInENU(const QPointF &point, PosType type);
 
@@ -127,6 +133,8 @@ private:
     bool mIsArmed = false;
     FlightMode mFlightMode = FlightMode::Unknown;
     double mAutopilotRadius = 0;
+    QPointF mAutopilotTargetPoint;
+    AutopilotEndGoalAlignmentType mEndGoalAlignmentType = AutopilotEndGoalAlignmentType::REAR_AXLE;
 
     QSharedPointer<VehicleState> mTrailingVehicle;
 
