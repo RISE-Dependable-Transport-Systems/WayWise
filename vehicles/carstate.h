@@ -39,10 +39,6 @@ public:
     virtual void setLength(double length) override;
     double getAxisDistance() const { return fabs(mAxisDistance) < 0.001 ? 0.8*getLength() : mAxisDistance; }
     void setAxisDistance(double axisDistance) { mAxisDistance = axisDistance; }
-    double getRearOverhang() const { return mRearOverhang; }
-    void setRearOverhang(double rearOverhang) { mRearOverhang = rearOverhang; }
-    double getFrontOverhang() const { return mFrontOverhang; }
-    void setFrontOverhang(double frontOverhang) { mFrontOverhang = frontOverhang; }
 
     inline double getMaxSteeringAngle() const { return mMaxSteeringAngle < M_PI/180.0 ? M_PI/4.0 : mMaxSteeringAngle; } // 45° assumed if unset
     void setMaxSteeringAngle(double steeringAngle_rad);
@@ -62,8 +58,6 @@ public:
     virtual void setVelocity(const Velocity &velocity) override;
 
 private:
-    double mRearOverhang = 0.0; //[m]
-    double mFrontOverhang = 0.0; //[m]
     double mAxisDistance = 0.0; // [m]
     double mMaxSteeringAngle = 0.0; // [rad]
     double mMinTurnRadiusRear = std::numeric_limits<double>::infinity(); // [m]

@@ -218,7 +218,7 @@ QPainterPath CarState::getBoundingBox() const
 {
     QPainterPath carBoundingBox;
 
-    carBoundingBox.addRect(-mRearOverhang, -getWidth()/2, getLength(), getWidth());
+    carBoundingBox.addRect(getRearAxleToRearEndOffset().x, -getWidth()/2, getLength(), getWidth());
     carBoundingBox.closeSubpath();
 
     return carBoundingBox;
