@@ -40,6 +40,7 @@ add_executable(RCCar_ISO22133_autopilot
     ${WAYWISE_PATH}/sensors/gnss/ublox.cpp
     ${WAYWISE_PATH}/sensors/gnss/rtcm3_simple.cpp
     ${WAYWISE_PATH}/sensors/gnss/ubloxrover.cpp
+    ${WAYWISE_PATH}/sensors/gnss/gnssreceiver.cpp
     ${WAYWISE_PATH}/sensors/camera/gimbal.h
     ${WAYWISE_PATH}/communication/vehicleconnections/vehicleconnection.cpp
     ${WAYWISE_PATH}/communication/parameterserver.cpp
