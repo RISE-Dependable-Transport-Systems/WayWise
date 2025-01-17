@@ -25,6 +25,12 @@ void CarState::setLength(double length)
     setRearAxleToCenterOffset(0.0);
 }
 
+void CarState::setVelocity(const Velocity &velocity)
+{
+    VehicleState::setVelocity(velocity);
+    setSpeed(velocity.x);
+}
+
 #ifdef QT_GUI_LIB
 void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected)
 {

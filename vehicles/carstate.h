@@ -56,6 +56,7 @@ public:
     const QPointF getStoppingPointForTurnRadiusAndBrakingDistance(const double turnRadius, const double brakeDistance) const;
     const QPointF getStoppingPointForTurnRadius(const double turnRadius) const;
     inline double getMinTurnRadiusRear() const { return qMax(qMin(getAxisDistance() / tanf(getMaxSteeringAngle()), mMinTurnRadiusRear), pow(getSpeed(), 2)/(0.21*9.81)); }
+    virtual void setVelocity(const Velocity &velocity) override;
 
 private:
     double mRearOverhang = 0.0; //[m]
