@@ -440,7 +440,9 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
         if (vehicleState->hasTrailingVehicle())
             createMavsdkComponentForTrailer(controlTowerAddress, controlTowerPort, controlTowerSocketType);
     }
+}
 
+void MavsdkVehicleServer::provideParametersToParameterServer() {
     ParameterServer::getInstance()->provideFloatParameter("MC_MAX_SPEED_MS", std::bind(&MavsdkVehicleServer::setManualControlMaxSpeed, this, std::placeholders::_1), std::bind(&MavsdkVehicleServer::getManualControlMaxSpeed, this));
     ParameterServer::getInstance()->provideIntParameter("VEH_WW_OBJ_TYPE",
         std::function<void(int)>([this](int value) {this->mVehicleState->setWaywiseObjectType(static_cast<WAYWISE_OBJECT_TYPE>(value));}),

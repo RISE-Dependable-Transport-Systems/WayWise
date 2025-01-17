@@ -40,6 +40,8 @@ public:
     void updateRawGpsAndGpsInfoFromUbx(const ubx_nav_pvt &pvt) override;
     void setMavsdkRawGpsAndGpsInfo(const mavsdk::TelemetryServer::RawGps &rawGps, const mavsdk::TelemetryServer::GpsInfo &gpsInfo);
 
+    void provideParametersToParameterServer();
+
 private:
     std::shared_ptr<mavsdk::Mavsdk> mMavsdk;
     std::shared_ptr<mavsdk::TelemetryServer> mTelemetryServer;

@@ -114,15 +114,24 @@ int MultiWaypointFollower::addWaypointFollower(QSharedPointer<WaypointFollower> 
 
     mWaypointFollowerList.append(waypointFollower);
 
+    return (getNumberOfWaypointFollowers() - 1) ;
+}
+
+void MultiWaypointFollower::provideParametersToParameterServer()
+{
+    for (int i = 0; i < mWaypointFollowerList.size(); i++)
+        provideParametersToParameterServer(i);
+}
+
+void MultiWaypointFollower::provideParametersToParameterServer(int waypointfollowerID)
+{
     // Provide system parameters to ControlTower
     if (ParameterServer::getInstance()) {
-        ParameterServer::getInstance()->provideFloatParameter("PP_RADIUS", std::bind(&MultiWaypointFollower::setPurePursuitRadius, this, std::placeholders::_1),
+        ParameterServer::getInstance()->provideFloatParameter("PP"+std::to_string(waypointfollowerID)+"_RADIUS", std::bind(&MultiWaypointFollower::setPurePursuitRadius, this, std::placeholders::_1),
                                                         std::bind(&MultiWaypointFollower::getPurePursuitRadius, this));
-        ParameterServer::getInstance()->provideFloatParameter("PP_ARC", std::bind(&MultiWaypointFollower::setAdaptivePurePursuitRadiusCoefficient, this, std::placeholders::_1),
+        ParameterServer::getInstance()->provideFloatParameter("PP"+std::to_string(waypointfollowerID)+"_ARC", std::bind(&MultiWaypointFollower::setAdaptivePurePursuitRadiusCoefficient, this, std::placeholders::_1),
                                                         std::bind(&MultiWaypointFollower::getAdaptivePurePursuitRadiusCoefficient, this));
     }
-
-    return (getNumberOfWaypointFollowers() - 1) ;
 }
 
 void MultiWaypointFollower::setActiveWaypointFollower(int waypointfollowerID)

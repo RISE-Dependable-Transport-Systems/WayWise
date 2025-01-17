@@ -15,12 +15,6 @@ PurepursuitWaypointFollower::PurepursuitWaypointFollower(QSharedPointer<Movement
     mMovementController = movementController;
     mVehicleState = mMovementController->getVehicleState();
     connect(&mUpdateStateTimer, &QTimer::timeout, this, &PurepursuitWaypointFollower::updateState);
-
-    // Provide system parameters to ControlTower
-    if (ParameterServer::getInstance()) {
-        ParameterServer::getInstance()->provideFloatParameter("PP_RADIUS", std::bind(&PurepursuitWaypointFollower::setPurePursuitRadius, this, std::placeholders::_1), std::bind(&PurepursuitWaypointFollower::getPurePursuitRadius, this));
-        ParameterServer::getInstance()->provideFloatParameter("PP_ARC", std::bind(&PurepursuitWaypointFollower::setAdaptivePurePursuitRadiusCoefficient, this, std::placeholders::_1), std::bind(&PurepursuitWaypointFollower::getAdaptivePurePursuitRadiusCoefficient, this));
-    }
 }
 
 PurepursuitWaypointFollower::PurepursuitWaypointFollower(QSharedPointer<VehicleConnection> vehicleConnection, PosType posTypeUsed)
@@ -29,6 +23,14 @@ PurepursuitWaypointFollower::PurepursuitWaypointFollower(QSharedPointer<VehicleC
     mVehicleState = mVehicleConnection->getVehicleState();
     connect(&mUpdateStateTimer, &QTimer::timeout, this, &PurepursuitWaypointFollower::updateState);
     setPosTypeUsed(posTypeUsed);
+}
+
+void PurepursuitWaypointFollower::provideParametersToParameterServer()
+{
+    if (ParameterServer::getInstance()) {
+        ParameterServer::getInstance()->provideFloatParameter("PP_RADIUS", std::bind(&PurepursuitWaypointFollower::setPurePursuitRadius, this, std::placeholders::_1), std::bind(&PurepursuitWaypointFollower::getPurePursuitRadius, this));
+        ParameterServer::getInstance()->provideFloatParameter("PP_ARC", std::bind(&PurepursuitWaypointFollower::setAdaptivePurePursuitRadiusCoefficient, this, std::placeholders::_1), std::bind(&PurepursuitWaypointFollower::getAdaptivePurePursuitRadiusCoefficient, this));
+    }
 }
 
 void PurepursuitWaypointFollower::clearRoute()

@@ -70,6 +70,8 @@ public:
     PosType getPosTypeUsed() const;
     void setPosTypeUsed(const PosType &posTypeUsed);
 
+    void provideParametersToParameterServer();
+
 signals:
     void distanceOfRouteLeft(double meters);
 
