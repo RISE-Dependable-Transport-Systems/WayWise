@@ -37,6 +37,8 @@ public:
     void sendGpsOriginLlh(const llh_t &gpsOriginLlh) override;
     void mavResult(const uint16_t command, MAV_RESULT result, MAV_COMPONENT compId);
     void on_logSent(const QString& message, const quint8& severity);
+    void updateRawGpsAndGpsInfoFromUbx(const ubx_nav_pvt &pvt) override;
+    void setMavsdkRawGpsAndGpsInfo(const mavsdk::TelemetryServer::RawGps &rawGps, const mavsdk::TelemetryServer::GpsInfo &gpsInfo);
 
 private:
     std::shared_ptr<mavsdk::Mavsdk> mMavsdk;
@@ -55,7 +57,6 @@ private:
 
     const unsigned mCountdown_ms = 2000;
 
-    void updateRawGpsAndGpsInfoFromUbx(const ubx_nav_pvt &pvt) override;
     void heartbeatTimeout() override;
     void heartbeatReset() override;
     PosPoint convertMissionItemToPosPoint(const mavsdk::MissionRawServer::MissionItem &item);

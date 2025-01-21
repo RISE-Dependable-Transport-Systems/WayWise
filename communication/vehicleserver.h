@@ -23,12 +23,14 @@ class VehicleServer : public QObject
 public:
     VehicleServer(QSharedPointer<VehicleState> vehicleState) : mVehicleState(vehicleState) {};
     virtual void setUbloxRover(QSharedPointer<UbloxRover> ubloxRover) = 0;
+    virtual void setGNSSReceiver(QSharedPointer<GNSSReceiver> gnssReceiver) { mGNSSReceiver = gnssReceiver; }
     virtual void setWaypointFollower(QSharedPointer<WaypointFollower> waypointFollower) = 0;
     virtual void setMovementController(QSharedPointer<MovementController> movementController) = 0;
     virtual void setManualControlMaxSpeed(double manualControlMaxSpeed_ms) = 0;
     virtual void setFollowPoint(QSharedPointer<FollowPoint> followPoint) = 0;
     virtual double getManualControlMaxSpeed() const = 0;
     virtual void sendGpsOriginLlh(const llh_t &gpsOriginLlh) = 0;
+    virtual void updateRawGpsAndGpsInfoFromUbx(const ubx_nav_pvt &pvt) = 0;
 
 signals:
     void startWaypointFollower(bool fromBeginning);
@@ -44,7 +46,7 @@ signals:
 
 protected:
     QSharedPointer<VehicleState> mVehicleState;
-    QSharedPointer<UbloxRover> mUbloxRover;
+    QSharedPointer<GNSSReceiver> mGNSSReceiver;
     QSharedPointer<WaypointFollower> mWaypointFollower;
     QSharedPointer<MovementController> mMovementController;
     QSharedPointer<FollowPoint> mFollowPoint;
@@ -53,7 +55,6 @@ protected:
     QTimer mHeartbeatTimer;
     const unsigned mCountdown_ms = 2000;
 
-    virtual void updateRawGpsAndGpsInfoFromUbx(const ubx_nav_pvt &pvt) = 0;
     virtual void heartbeatTimeout() = 0;
     virtual void heartbeatReset() = 0;
 

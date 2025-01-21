@@ -64,14 +64,14 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
         mavsdk::TelemetryServer::Position homePositionLlh{};
         mavsdk::TelemetryServer::Position positionLlh{};
 
-        if (!mUbloxRover.isNull()) {
+        if (!mGNSSReceiver.isNull()) {
             // publish gpsOrigin
-            sendGpsOriginLlh(mUbloxRover->getEnuRef());
+            sendGpsOriginLlh(mGNSSReceiver->getEnuRef());
 
             //TODO: homePositionLlh should not be EnuRef
-            homePositionLlh = {mUbloxRover->getEnuRef().latitude, mUbloxRover->getEnuRef().longitude, static_cast<float>(mUbloxRover->getEnuRef().height), 0};
+            homePositionLlh = {mGNSSReceiver->getEnuRef().latitude, mGNSSReceiver->getEnuRef().longitude, static_cast<float>(mGNSSReceiver->getEnuRef().height), 0};
 
-            llh_t fusedPosGlobal = coordinateTransforms::enuToLlh(mUbloxRover->getEnuRef(), {mVehicleState->getPosition(PosType::fused).getXYZ()});
+            llh_t fusedPosGlobal = coordinateTransforms::enuToLlh(mGNSSReceiver->getEnuRef(), {mVehicleState->getPosition(PosType::fused).getXYZ()});
             positionLlh = {fusedPosGlobal.latitude, fusedPosGlobal.longitude, static_cast<float>(fusedPosGlobal.height), 0};
         }
 
@@ -470,11 +470,14 @@ void MavsdkVehicleServer::heartbeatReset()
 
 void MavsdkVehicleServer::setUbloxRover(QSharedPointer<UbloxRover> ubloxRover)
 {
-    if (!mUbloxRover.isNull())
-        disconnect(mUbloxRover.get(), &UbloxRover::txNavPvt, this, &MavsdkVehicleServer::updateRawGpsAndGpsInfoFromUbx);
-
-    mUbloxRover = ubloxRover;
-    connect(mUbloxRover.get(), &UbloxRover::txNavPvt, this, &MavsdkVehicleServer::updateRawGpsAndGpsInfoFromUbx);
+    if (!mGNSSReceiver.isNull()) {
+        QSharedPointer<UbloxRover> mUbloxRover = qSharedPointerDynamicCast<UbloxRover>(mGNSSReceiver);
+        if (mUbloxRover) {
+            disconnect(mUbloxRover.get(), &UbloxRover::txNavPvt, this, &MavsdkVehicleServer::updateRawGpsAndGpsInfoFromUbx);
+        }
+    }
+    VehicleServer::setGNSSReceiver(ubloxRover);
+    connect(ubloxRover.get(), &UbloxRover::txNavPvt, this, &MavsdkVehicleServer::updateRawGpsAndGpsInfoFromUbx);
 }
 
 void MavsdkVehicleServer::updateRawGpsAndGpsInfoFromUbx(const ubx_nav_pvt &pvt) {
@@ -505,6 +508,12 @@ void MavsdkVehicleServer::updateRawGpsAndGpsInfoFromUbx(const ubx_nav_pvt &pvt) 
             mGpsInfo.fix_type= mavsdk::TelemetryServer::FixType::RtkFixed;
     }
 
+}
+
+void MavsdkVehicleServer::setMavsdkRawGpsAndGpsInfo(const mavsdk::TelemetryServer::RawGps &rawGps, const mavsdk::TelemetryServer::GpsInfo &gpsInfo)
+{
+    mRawGps = rawGps;
+    mGpsInfo = gpsInfo;
 }
 
 void MavsdkVehicleServer::setWaypointFollower(QSharedPointer<WaypointFollower> waypointFollower)
