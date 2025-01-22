@@ -114,14 +114,14 @@ public:
 
 private:
     // Static state
-    double mLength; // [m]
-    double mWidth; // [m]
+    double mLength = 0.8; // [m]
+    double mWidth = 0.335; // [m]
     // TODO: reasonable default values? set here or move?
     double mMinAcceleration = -5.0; // [m/s²]
     double mMaxAcceleration = 3.0; // [m/s²]
 
     xyz_t mRearAxleToCenterOffset;
-    xyz_t mRearAxleToRearEndOffset;
+    xyz_t mRearAxleToRearEndOffset{-0.1333, 0.0, 0.0};
     xyz_t mRearAxleToHitchOffset;
 
     // Dynamic state

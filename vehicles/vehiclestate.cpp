@@ -12,9 +12,6 @@ VehicleState::VehicleState(ObjectID_t id, Qt::GlobalColor color)
     : ObjectState (id, color)
 {
     mTime = QTime();
-    mLength = 0.8;
-    mWidth = 0.335;
-    mRearAxleToRearEndOffset.x = -0.2;
 
     for (int i = 0; i < (int)PosType::_LAST_; i++)
         switch((PosType) i) {

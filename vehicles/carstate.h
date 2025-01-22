@@ -37,7 +37,7 @@ public:
 
     // Static state
     virtual void setLength(double length) override;
-    double getAxisDistance() const { return fabs(mAxisDistance) < 0.001 ? 0.8*getLength() : mAxisDistance; }
+    double getAxisDistance() const { return fabs(mAxisDistance) < 0.001 ? 0.6*getLength() : mAxisDistance; }
     void setAxisDistance(double axisDistance) { mAxisDistance = axisDistance; }
 
     inline double getMaxSteeringAngle() const { return mMaxSteeringAngle < M_PI/180.0 ? M_PI/4.0 : mMaxSteeringAngle; } // 45° assumed if unset
