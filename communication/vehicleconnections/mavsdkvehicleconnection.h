@@ -97,7 +97,8 @@ private:
     VehicleConnection::Result convertParamResult(mavsdk::Param::Result result) const;
     QString convertMissionRawResult(mavsdk::MissionRaw::Result result) const;
     QString convertMavlinkPassthroughResult(mavsdk::MavlinkPassthrough::Result result) const;
-    void setupTruckState();
+    void setupCarState(QSharedPointer<CarState> carState);
+    void setupTruckState(QSharedPointer<TruckState> truckState);
 
     // VehicleConnection interface
 protected:

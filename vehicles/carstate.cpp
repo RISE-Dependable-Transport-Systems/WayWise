@@ -18,11 +18,26 @@ CarState::CarState(ObjectID_t id, Qt::GlobalColor color) : VehicleState(id, colo
     ObjectState::setWaywiseObjectType(WAYWISE_OBJECT_TYPE_CAR);
 }
 
+void CarState::setLength(double length)
+{
+    VehicleState::setLength(length);
+    setRearAxleToRearEndOffset(-0.25 * length);
+    setRearAxleToCenterOffset(0.0);
+}
+
+void CarState::setVelocity(const Velocity &velocity)
+{
+    VehicleState::setVelocity(velocity);
+    setSpeed(velocity.x);
+}
+
 #ifdef QT_GUI_LIB
 void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected)
 {
+    if (!isStateInitialized())
+        return;
+
     PosPoint pos = getPosition();
-    //        LocPoint pos_gps = VehicleState->getLocationGps();
 
     const double car_len = getLength() * 1000.0;
     const double car_w = getWidth() * 1000.0;
@@ -30,8 +45,10 @@ void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTrans
 
     double x = pos.getX() * 1000.0;
     double y = pos.getY() * 1000.0;
-    //        double x_gps = pos_gps.getX() * 1000.0;
-    //        double y_gps = pos_gps.getY() * 1000.0;
+    xyz_t rearAxleToRearEndOffset = getRearAxleToRearEndOffset();
+    double rearAxleToRearEndOffsetX = rearAxleToRearEndOffset.x * 1000.0;
+    const double wheelbase = getAxisDistance() * 1000.0;
+
     painter.setTransform(drawTrans);
 
     QColor col_wheels;
@@ -39,8 +56,6 @@ void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTrans
     QColor col_ap;
     QColor col_sigma = Qt::red;
     QColor col_hull = getColor();
-    QColor col_center = Qt::blue;
-    //        QColor col_gps = Qt::magenta;
 
     if (isSelected) {
         col_wheels = Qt::black;
@@ -61,30 +76,65 @@ void CarState::draw(QPainter &painter, const QTransform &drawTrans, const QTrans
     }
 
     // Draw car
-    painter.setBrush(QBrush(col_wheels));
     painter.save();
     painter.translate(x, y);
     painter.rotate(pos.getYaw());
-    // Wheels
-    painter.drawRoundedRect(-car_len / 12.0,-(car_w / 2), car_len / 6.0, car_w, car_corner / 3, car_corner / 3);
-    painter.drawRoundedRect(car_len - car_len / 2.5,-(car_w / 2), car_len / 6.0, car_w, car_corner / 3, car_corner / 3);
+    // Rear axle wheels
+    const double wheel_diameter = car_len / 6.0;
+    const double wheel_width = car_w / 12.0;
+    painter.setBrush(QBrush(col_wheels));
+    painter.drawRoundedRect(- wheel_diameter/2, - (car_w / 2 + wheel_width / 2), wheel_diameter, (car_w + wheel_width), car_corner / 3, car_corner / 3);
+    // Front axle wheels
+    painter.drawRoundedRect(wheelbase - wheel_diameter/2, -(car_w / 2 + wheel_width / 2), wheel_diameter, (car_w + wheel_width), car_corner / 3, car_corner / 3);
     // Front bumper
     painter.setBrush(col_bumper);
-    painter.drawRoundedRect(-car_len / 6.0, -((car_w - car_len / 20.0) / 2.0), car_len, car_w - car_len / 20.0, car_corner, car_corner);
+    painter.drawRoundedRect(rearAxleToRearEndOffsetX, -((car_w - car_len / 20.0) / 2.0), car_len, car_w - car_len / 20.0, car_corner, car_corner);
     // Hull
     painter.setBrush(col_hull);
-    painter.drawRoundedRect(-car_len / 6.0, -((car_w - car_len / 20.0) / 2.0), car_len - (car_len / 20.0), car_w - car_len / 20.0, car_corner, car_corner);
+    painter.drawRoundedRect(rearAxleToRearEndOffsetX, -((car_w - car_len / 20.0) / 2.0), car_len - (car_len / 20.0), car_w - car_len / 20.0, car_corner, car_corner);
     painter.restore();
 
-    // Center
-    painter.setBrush(col_center);
+    // Rear axle point
+    painter.setBrush(Qt::blue);
     painter.drawEllipse(QPointF(x, y), car_w / 15.0, car_w / 15.0);
 
     // Turning radius
-    painter.setPen(QPen(Qt::red, 40));
-    painter.setBrush(Qt::transparent);
-    painter.drawEllipse(QPointF(x, y), getAutopilotRadius()*1000.0, getAutopilotRadius()*1000.0);
-    painter.setPen(Qt::black);
+    if (getAutopilotRadius() > 0.001){
+        painter.setBrush(Qt::green);
+
+        QPointF vehicleAlignmentReferencePointXY;
+        VehicleState* referenceVehicleState = this;
+        if (hasTrailingVehicle() && getSpeed() < 0) {
+            referenceVehicleState = getTrailingVehicle().get();
+        }
+
+        switch (getEndGoalAlignmentType()) {
+            case AutopilotEndGoalAlignmentType::CENTER: {
+                xyz_t offset = referenceVehicleState->getRearAxleToCenterOffset();
+                vehicleAlignmentReferencePointXY = referenceVehicleState->posInVehicleFrameToPosPointENU(offset).getPoint();
+            } break;
+            case AutopilotEndGoalAlignmentType::FRONT_REAR_END: {
+                xyz_t offset = referenceVehicleState->getRearAxleToRearEndOffset();
+                if(getSpeed() >= 0) {
+                    offset.x += referenceVehicleState->getLength();
+                }
+                vehicleAlignmentReferencePointXY = referenceVehicleState->posInVehicleFrameToPosPointENU(offset).getPoint();
+            } break;
+            case AutopilotEndGoalAlignmentType::REAR_AXLE:
+            default:{
+                vehicleAlignmentReferencePointXY = referenceVehicleState->getPosition().getPoint();
+            } break;
+        }
+        painter.drawEllipse(vehicleAlignmentReferencePointXY*1000.0, car_len / 20.0, car_len / 20.0);
+
+        painter.setPen(QPen(Qt::red, 40));
+        painter.setBrush(Qt::transparent);
+        painter.drawEllipse(QPointF(x, y), getAutopilotRadius()*1000.0, getAutopilotRadius()*1000.0);
+
+        painter.setBrush(Qt::darkMagenta);
+        QPointF autopilotTargetPoint = getAutopilotTargetPoint();
+        painter.drawEllipse(autopilotTargetPoint*1000.0, car_len / 20.0, car_len / 20.0);
+    }
 
     //        // GPS Location
     //        painter.setBrush(col_gps);
@@ -168,7 +218,7 @@ QPainterPath CarState::getBoundingBox() const
 {
     QPainterPath carBoundingBox;
 
-    carBoundingBox.addRect(-mRearOverhang, -getWidth()/2, getLength(), getWidth());
+    carBoundingBox.addRect(getRearAxleToRearEndOffset().x, -getWidth()/2, getLength(), getWidth());
     carBoundingBox.closeSubpath();
 
     return carBoundingBox;
@@ -264,9 +314,25 @@ double CarState::steeringCurvatureToSteering(double steeringCurvature)
     return steeringAngle_rad / getMaxSteeringAngle();
 }
 
-void CarState::provideParameters()
+void CarState::provideParametersToParameterServer()
 {
     ParameterServer::getInstance()->provideFloatParameter("VEH_LENGTH", std::bind(&CarState::setLength, this, std::placeholders::_1), std::bind(&CarState::getLength, this));
     ParameterServer::getInstance()->provideFloatParameter("VEH_WIDTH", std::bind(&CarState::setWidth, this, std::placeholders::_1), std::bind(&CarState::getWidth, this));
     ParameterServer::getInstance()->provideFloatParameter("VEH_WHLBASE", std::bind(&CarState::setAxisDistance, this, std::placeholders::_1), std::bind(&CarState::getAxisDistance, this));
+
+    ParameterServer::getInstance()->provideFloatParameter("VEH_RA2CO_X", std::bind(static_cast<void (CarState::*)(double)>(&CarState::setRearAxleToCenterOffset), this, std::placeholders::_1),
+        [this]() -> float {
+            return static_cast<float>(this->getRearAxleToCenterOffset().x);
+        }
+    );
+    ParameterServer::getInstance()->provideFloatParameter("VEH_RA2REO_X", std::bind(static_cast<void (CarState::*)(double)>(&CarState::setRearAxleToRearEndOffset), this, std::placeholders::_1),
+        [this]() -> float {
+            return static_cast<float>(this->getRearAxleToRearEndOffset().x);
+        }
+    );
+
+    ParameterServer::getInstance()->provideIntParameter("PP_EGA_TYPE",
+        std::function<void(int)>([this](int value) {this->setEndGoalAlignmentType(static_cast<AutopilotEndGoalAlignmentType>(value));}),
+        std::function<int(void)>([this]() {return static_cast<int>(this->getEndGoalAlignmentType());})
+    );
 }

@@ -23,6 +23,8 @@
 #include "vehicles/objectstate.h"
 #include <math.h>
 
+enum class AutopilotEndGoalAlignmentType {REAR_AXLE, FRONT_REAR_END, CENTER};
+
 class VehicleState : public ObjectState
 {
     Q_OBJECT
@@ -50,7 +52,7 @@ public:
 
     // Static state
     double getLength() const { return mLength; }
-    void setLength(double length) { mLength = length; }
+    virtual void setLength(double length) { mLength = length; }
     double getWidth() const { return mWidth; }
     void setWidth(double width) { mWidth = width; }
     double getMinAcceleration() const { return mMinAcceleration; }
@@ -58,9 +60,21 @@ public:
     double getMaxAcceleration() const { return mMaxAcceleration; }
     void setMaxAcceleration(double maxAcceleration) { mMaxAcceleration = maxAcceleration; }
 
+    xyz_t getRearAxleToCenterOffset() const { return mRearAxleToCenterOffset; }
+    void setRearAxleToCenterOffset(double rearAxleToCenterOffsetX) { mRearAxleToCenterOffset.x = rearAxleToCenterOffsetX; }
+    void setRearAxleToCenterOffset(xyz_t rearAxleToCenterOffset) { mRearAxleToCenterOffset = rearAxleToCenterOffset; }
+    xyz_t getRearAxleToRearEndOffset() const { return mRearAxleToRearEndOffset; }
+    void setRearAxleToRearEndOffset(double rearAxleToRearEndOffsetX) { mRearAxleToRearEndOffset.x = rearAxleToRearEndOffsetX; }
+    void setRearAxleToRearEndOffset(xyz_t rearAxleToRearEndOffset) { mRearAxleToRearEndOffset = rearAxleToRearEndOffset; }
+    xyz_t getRearAxleToHitchOffset() const { return mRearAxleToHitchOffset; }
+    void setRearAxleToHitchOffset(double rearAxleToHitchOffsetX) { mRearAxleToHitchOffset.x = rearAxleToHitchOffsetX; }
+    void setRearAxleToHitchOffset(xyz_t rearAxleToHitchOffset) { mRearAxleToHitchOffset = rearAxleToHitchOffset; }
+
     // Dynamic state
     virtual PosPoint getPosition(PosType type) const;
     virtual PosPoint getPosition() const override { return getPosition(PosType::simulated); }
+    virtual PosPoint posInVehicleFrameToPosPointENU(xyz_t offset, PosType type) const;
+    virtual PosPoint posInVehicleFrameToPosPointENU(xyz_t offset) const { return posInVehicleFrameToPosPointENU(offset, PosType::simulated); }
     virtual void setPosition(PosPoint &point) override;
     virtual QTime getTime() const override { return mTime; }
     virtual void setTime(const QTime &time) override { mTime = time; }
@@ -74,6 +88,10 @@ public:
     void setIsArmed(bool isArmed);
     void setAutopilotRadius(double radius);
     double getAutopilotRadius();
+    void setAutopilotTargetPoint(QPointF autopilotTargetPoint) { mAutopilotTargetPoint = autopilotTargetPoint; }
+    QPointF getAutopilotTargetPoint() const { return mAutopilotTargetPoint; }
+    AutopilotEndGoalAlignmentType getEndGoalAlignmentType() const {return mEndGoalAlignmentType;};
+    void setEndGoalAlignmentType(AutopilotEndGoalAlignmentType value) { mEndGoalAlignmentType = value; };
     virtual double getCurvatureToPointInVehicleFrame(const QPointF &point);
     double getCurvatureToPointInENU(const QPointF &point, PosType type);
 
@@ -96,11 +114,15 @@ public:
 
 private:
     // Static state
-    double mLength; // [m]
-    double mWidth; // [m]
+    double mLength = 0.8; // [m]
+    double mWidth = 0.335; // [m]
     // TODO: reasonable default values? set here or move?
     double mMinAcceleration = -5.0; // [m/s²]
     double mMaxAcceleration = 3.0; // [m/s²]
+
+    xyz_t mRearAxleToCenterOffset;
+    xyz_t mRearAxleToRearEndOffset{-0.1333, 0.0, 0.0};
+    xyz_t mRearAxleToHitchOffset;
 
     // Dynamic state
     double mSteering = 0.0; // [-1.0:1.0]
@@ -111,6 +133,8 @@ private:
     bool mIsArmed = false;
     FlightMode mFlightMode = FlightMode::Unknown;
     double mAutopilotRadius = 0;
+    QPointF mAutopilotTargetPoint;
+    AutopilotEndGoalAlignmentType mEndGoalAlignmentType = AutopilotEndGoalAlignmentType::REAR_AXLE;
 
     QSharedPointer<VehicleState> mTrailingVehicle;
 

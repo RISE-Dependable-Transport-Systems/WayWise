@@ -41,7 +41,9 @@ void CarMovementController::setDesiredSpeed(double desiredSpeed)
             qDebug() << "WARNING: CarMovementController has no MotorController connection. Simulating movement."; // TODO: create explicitly simulated controller
             warnedOnce = true;
         }
-        mCarState->setSpeed(desiredSpeed);
+        xyz_t currentVelocity = mCarState->getVelocity();
+        currentVelocity.x = desiredSpeed;
+        mCarState->setVelocity(currentVelocity);
     }
 }
 
@@ -78,7 +80,9 @@ void CarMovementController::updateVehicleState(double rpm, int tachometer, int t
     double currentSpeed = rpm/getSpeedToRPMFactor();
     double drivenDistance = (tachometer - previousTachometer)/getSpeedToRPMFactor() * 60.0;
 
-    carState->setSpeed(currentSpeed);
+    xyz_t currentVelocity = carState->getVelocity();
+    currentVelocity.x = currentSpeed;
+    carState->setVelocity(currentVelocity);
     carState->updateOdomPositionAndYaw(drivenDistance);
 
     previousTachometer = tachometer;

@@ -18,10 +18,11 @@
 #include "communication/vehicleconnections/vehicleconnection.h"
 #include "autopilot/waypointfollower.h"
 
-enum class WayPointFollowerSTMstates {NONE, FOLLOW_ROUTE_INIT, FOLLOW_ROUTE_GOTO_BEGIN, FOLLOW_ROUTE_FOLLOWING, FOLLOW_ROUTE_FINISHED};
+enum class WayPointFollowerSTMstates {NONE, FOLLOW_ROUTE_INIT, FOLLOW_ROUTE_GOTO_BEGIN, FOLLOW_ROUTE_FOLLOWING, FOLLOW_ROUTE_APPROACHING_END_GOAL, FOLLOW_ROUTE_FINISHED};
 struct WayPointFollowerState {
     WayPointFollowerSTMstates stmState = WayPointFollowerSTMstates::NONE;
     PosPoint currentGoal;
+    QPointF startPointXY;
     int currentWaypointIndex;
     bool adaptivePurePursuitRadius = false;
     double purePursuitRadius = 1.0;
@@ -49,6 +50,11 @@ public:
     double getAdaptivePurePursuitRadiusCoefficient();
     void setAdaptivePurePursuitRadiusCoefficient(double coefficient);
 
+    bool getRetryAfterEndGoalOvershot() const {return mRetryAfterEndGoalOvershot;};
+    void setRetryAfterEndGoalOvershot(bool value) { mRetryAfterEndGoalOvershot = value; };
+    double getEndGoalAlignmentThreshold() const {return mEndGoalAlignmentThreshold;};
+    void setEndGoalAlignmentThreshold(double value) { mEndGoalAlignmentThreshold = value; };
+
     virtual bool getRepeatRoute() const override;
     virtual void setRepeatRoute(bool value) override;
 
@@ -70,6 +76,9 @@ public:
     PosType getPosTypeUsed() const;
     void setPosTypeUsed(const PosType &posTypeUsed);
 
+    void provideParametersToParameterServer();
+    QPointF getVehicleAlignmentReferencePoint();
+
 signals:
     void distanceOfRouteLeft(double meters);
 
@@ -89,6 +98,9 @@ private:
     void holdPosition();
     void calculateDistanceOfRouteLeft(QPointF currentVehiclePositionXY);
     double purePursuitRadius();
+
+    bool mRetryAfterEndGoalOvershot = false;
+    double mEndGoalAlignmentThreshold = 0.1; //[m]
 };
 
 #endif // PUREPURSUITWAYPOINTFOLLOWER_H

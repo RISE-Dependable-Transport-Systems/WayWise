@@ -27,18 +27,18 @@ public:
 #ifdef QT_GUI_LIB
     virtual void draw(QPainter &painter, const QTransform &drawTrans, const QTransform &txtTrans, bool isSelected = true) override;
     virtual QPainterPath getBoundingBox() const override;
+
+    void setStateInitialized(bool value){ mStateInitialized = value;}
+    bool isStateInitialized(){ return mStateInitialized;}
 #endif
     virtual void updateOdomPositionAndYaw(double drivenDistance, PosType usePosType = PosType::odom) override;
     virtual double steeringCurvatureToSteering(double steeringCurvature) override;
-    virtual void provideParameters() override;
+    virtual void provideParametersToParameterServer() override;
 
     // Static state
-    double getAxisDistance() const { return fabs(mAxisDistance) < 0.001 ? 0.8*getLength() : mAxisDistance; }
+    virtual void setLength(double length) override;
+    double getAxisDistance() const { return fabs(mAxisDistance) < 0.001 ? 0.6*getLength() : mAxisDistance; }
     void setAxisDistance(double axisDistance) { mAxisDistance = axisDistance; }
-    double getRearOverhang() const { return mRearOverhang; }
-    void setRearOverhang(double rearOverhang) { mRearOverhang = rearOverhang; }
-    double getFrontOverhang() const { return mFrontOverhang; }
-    void setFrontOverhang(double frontOverhang) { mFrontOverhang = frontOverhang; }
 
     inline double getMaxSteeringAngle() const { return mMaxSteeringAngle < M_PI/180.0 ? M_PI/4.0 : mMaxSteeringAngle; } // 45° assumed if unset
     void setMaxSteeringAngle(double steeringAngle_rad);
@@ -55,15 +55,16 @@ public:
     const QPointF getStoppingPointForTurnRadiusAndBrakingDistance(const double turnRadius, const double brakeDistance) const;
     const QPointF getStoppingPointForTurnRadius(const double turnRadius) const;
     inline double getMinTurnRadiusRear() const { return qMax(qMin(getAxisDistance() / tanf(getMaxSteeringAngle()), mMinTurnRadiusRear), pow(getSpeed(), 2)/(0.21*9.81)); }
+    virtual void setVelocity(const Velocity &velocity) override;
 
 private:
-    double mRearOverhang = 0.0; //[m]
-    double mFrontOverhang = 0.0; //[m]
     double mAxisDistance = 0.0; // [m]
     double mMaxSteeringAngle = 0.0; // [rad]
     double mMinTurnRadiusRear = std::numeric_limits<double>::infinity(); // [m]
 
-
+#ifdef QT_GUI_LIB
+    bool mStateInitialized = false; // whether parameters are setup
+#endif
 };
 
 #endif // CARSTATE_H

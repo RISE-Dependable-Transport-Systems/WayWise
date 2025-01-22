@@ -47,6 +47,9 @@ public:
     QSharedPointer<WaypointFollower> getActiveWaypointFollower();
     int getNumberOfWaypointFollowers();
 
+    void provideParametersToParameterServer();
+    void provideParametersToParameterServer(int waypointfollowerID);
+
 public slots:
     void receiveDistanceOfRouteLeft(double meters);
 

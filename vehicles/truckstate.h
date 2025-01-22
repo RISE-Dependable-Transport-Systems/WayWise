@@ -17,6 +17,7 @@ class TruckState : public CarState
 public:
     TruckState(ObjectID_t id = 1, Qt::GlobalColor color = Qt::blue);
 
+    virtual void setLength(double length) override;
     double getCurvatureToPointInVehicleFrame(const QPointF &point) override;
     virtual void updateOdomPositionAndYaw(double drivenDistance, PosType usePosType = PosType::odom) override;
     void updateTrailingVehicleOdomPositionAndYaw(double drivenDistance, PosType usePosType = PosType::odom);
@@ -37,6 +38,8 @@ public:
 
     bool getSimulateTrailer() const;
     void setSimulateTrailer(bool simulateTrailer);
+
+    virtual void provideParametersToParameterServer() override;
 
 #ifdef QT_GUI_LIB
     // Override or add drawing functions if needed (to draw a truck)

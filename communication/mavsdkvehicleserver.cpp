@@ -373,6 +373,46 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
             }) != mavsdk::MavlinkPassthrough::Result::Success)
                     qWarning() << "Could not send Autopilot Radius via MAVLINK.";
         });
+
+        // Publish Autopilot lookahead and reference points
+        connect(&mPublishMavlinkTimer, &QTimer::timeout, [this]() {
+            if (mMavlinkPassthrough->queue_message([&](MavlinkAddress mavlink_address, uint8_t channel) {
+                mavlink_message_t mavMsg;
+                mavlink_position_target_local_ned_t autopilotPoints;
+
+                memset(&autopilotPoints, 0, sizeof(mavlink_position_target_local_ned_t));
+
+                autopilotPoints.time_boot_ms = QDateTime::currentMSecsSinceEpoch() - mMavsdkVehicleServerCreationTime.toMSecsSinceEpoch();
+
+                QPointF autopilotTargetPointENU_XY = mVehicleState->getAutopilotTargetPoint();
+                xyz_t autopilotTargetPointNED = coordinateTransforms::enuToNED({autopilotTargetPointENU_XY.x(), autopilotTargetPointENU_XY.y(), 0});
+                autopilotPoints.x = autopilotTargetPointNED.x;
+                autopilotPoints.y = autopilotTargetPointNED.y;
+
+                autopilotPoints.type_mask = POSITION_TARGET_TYPEMASK_Z_IGNORE|
+                                        POSITION_TARGET_TYPEMASK_VX_IGNORE |
+                                        POSITION_TARGET_TYPEMASK_VY_IGNORE |
+                                        POSITION_TARGET_TYPEMASK_VZ_IGNORE |
+                                        POSITION_TARGET_TYPEMASK_AX_IGNORE |
+                                        POSITION_TARGET_TYPEMASK_AY_IGNORE |
+                                        POSITION_TARGET_TYPEMASK_AZ_IGNORE |
+                                        POSITION_TARGET_TYPEMASK_YAW_IGNORE |
+                                        POSITION_TARGET_TYPEMASK_YAW_RATE_IGNORE;
+
+                mavlink_address.system_id = mSystemId;
+                mavlink_address.component_id = MAV_COMP_ID_AUTOPILOT1;
+
+                // Encode and send the POSITION_TARGET_LOCAL_NED message
+                mavlink_msg_position_target_local_ned_encode_chan(mavlink_address.system_id,
+                                                                mavlink_address.component_id,
+                                                                channel,
+                                                                &mavMsg,
+                                                                &autopilotPoints);
+
+                return mavMsg;
+            }) != mavsdk::MavlinkPassthrough::Result::Success)
+                qWarning() << "Could not send Autopilot Reference Point via MAVLINK.";
+        });
     });
 
     mMavsdk->intercept_outgoing_messages_async([this](mavlink_message_t &message){
@@ -440,7 +480,9 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
         if (vehicleState->hasTrailingVehicle())
             createMavsdkComponentForTrailer(controlTowerAddress, controlTowerPort, controlTowerSocketType);
     }
+}
 
+void MavsdkVehicleServer::provideParametersToParameterServer() {
     ParameterServer::getInstance()->provideFloatParameter("MC_MAX_SPEED_MS", std::bind(&MavsdkVehicleServer::setManualControlMaxSpeed, this, std::placeholders::_1), std::bind(&MavsdkVehicleServer::getManualControlMaxSpeed, this));
     ParameterServer::getInstance()->provideIntParameter("VEH_WW_OBJ_TYPE",
         std::function<void(int)>([this](int value) {this->mVehicleState->setWaywiseObjectType(static_cast<WAYWISE_OBJECT_TYPE>(value));}),
@@ -776,31 +818,23 @@ void MavsdkVehicleServer::createMavsdkComponentForTrailer(const QHostAddress con
         qDebug() << "Trailer component listening for MAVSDK connection.";
 
         connect(&mPublishMavlinkTimer, &QTimer::timeout, [this](){
-            if (mTrailerMavlinkPassthrough) {
-                mTrailerMavlinkPassthrough->queue_message(
-                    [this](MavlinkAddress mavlink_address, uint8_t channel)->mavlink_message_t {
-                        auto trailerState = mVehicleState->getTrailingVehicle();
-                        mavlink_message_t trailerYawMsg;
+            if (mTrailerMavlinkPassthrough && mTrailerMavlinkPassthrough->queue_message(
+                [this](MavlinkAddress mavlink_address, uint8_t channel)->mavlink_message_t {
+                    auto trailerState = mVehicleState->getTrailingVehicle();
+                    mavlink_message_t trailerYawMsg;
+                    mavlink_named_value_float_t trailerYaw;
 
-                        mavlink_address.system_id = mVehicleState->getId();
-                        mavlink_address.component_id = mVehicleState->getTrailingVehicle()->getId();
+                    trailerYaw.time_boot_ms = QDateTime::currentMSecsSinceEpoch() - mMavsdkVehicleServerCreationTime.toMSecsSinceEpoch();
+                    trailerYaw.value = trailerState->getPosition(PosType::fused).getYaw();
+                    mavlink_address.system_id = mVehicleState->getId();
+                    mavlink_address.component_id = mVehicleState->getTrailingVehicle()->getId();
 
-                        mavlink_msg_attitude_pack_chan(
-                            mavlink_address.system_id,
-                            mavlink_address.component_id,
-                            channel,
-                            &trailerYawMsg,
-                            0.0,            // time_boot_ms (not used)
-                            0.0,            // roll (not used)
-                            0.0,            // pitch (not used)
-                            trailerState->getPosition(PosType::fused).getYaw() * (M_PI / 180.0),   // yaw
-                            0.0,            // rollspeed (not used)
-                            0.0,            // pitchspeed (not used)
-                            0.0             // yawspeed (not used)
-                            );
-                        return trailerYawMsg;
-                    });
-            }
+                    strcpy(trailerYaw.name, "TRLR_YAW");
+                    mavlink_msg_named_value_float_encode_chan(mavlink_address.system_id, mavlink_address.component_id, channel, &trailerYawMsg, &trailerYaw);
+
+                    return trailerYawMsg;
+                }) != mavsdk::MavlinkPassthrough::Result::Success)
+                    qWarning() << "Could not send Trailer Yaw via MAVLINK.";
         });
     }
 }

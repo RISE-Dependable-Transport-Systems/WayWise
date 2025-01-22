@@ -64,6 +64,8 @@ public:
     void setFollowPointAngleInDeg(double angle);
     double getFollowPointAngleInDeg() const;
 
+    void provideParametersToParameterServer();
+
 signals:
     void deactivateEmergencyBrake();
     void activateEmergencyBrake();
