@@ -1,7 +1,5 @@
 /*
- *     Copyright 2012 Benjamin Vedder   benjamin@vedder.se
- *               2020 Marvin Damschen   marvin.damschen@ri.se
- *               2021 Lukas Wikander    lukas.wikander@astazero.com
+ *     Copyright 2021 RISE Research Institutes of Sweden AB, Safety and Transport   waywise@ri.se
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
  */
 

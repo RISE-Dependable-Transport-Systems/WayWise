@@ -1,5 +1,5 @@
 /*
- *     Copyright 2022 Marvin Damschen   marvin.damschen@ri.se
+ *     Copyright 2022 RISE Research Institutes of Sweden AB, Safety and Transport   waywise@ri.se
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
  *
  * MapModule that allows creating and interacting with routes on the map

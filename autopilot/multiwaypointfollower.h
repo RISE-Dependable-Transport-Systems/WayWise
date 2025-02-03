@@ -1,5 +1,5 @@
 /*
- *     Copyright 2022 Rickard Häll   rickard.hall@ri.se
+ *     Copyright 2022 RISE Research Institutes of Sweden AB, Safety and Transport   waywise@ri.se
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
  *
  * Holds multiple waypointfollowers to enable switching between routes.

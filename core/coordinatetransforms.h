@@ -1,7 +1,5 @@
 /*
- *     Copyright 2016 - 2017 Benjamin Vedder	benjamin@vedder.se
- *               2021        Marvin Damschen    marvin.damschen@ri.se
- *               2024        Rickard Häll       rickard.hall@ri.se
+ *     Copyright 2024 RISE Research Institutes of Sweden AB, Safety and Transport   waywise@ri.se
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
  *
  * Header-only coordinate transformations, mainly ENU <-> latitude, longitude, height
