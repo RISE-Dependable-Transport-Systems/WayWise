@@ -1,7 +1,7 @@
 # WayWise
 ![Workflow build result](https://github.com/RISE-Dependable-Transport-Systems/WayWise/actions/workflows/main.yml/badge.svg)
 
-![ww](https://user-images.githubusercontent.com/2404625/166413759-d1d2f771-984c-4dec-9036-866cf29dc547.png)
+https://github.com/user-attachments/assets/22279eb2-fc61-4fe6-91da-493cc589b09c
 
 WayWise ([way-wise](https://en.wiktionary.org/wiki/way-wise): _Expert or knowledgeable in finding or keeping the way; knowing the way or route._) is a rapid prototyping library for connected, autonomous vehicles.
 It is developed within research projects at the RISE Dependable Transport Systems group to investigate the use of autonomous vehicles (rc cars, tractors, drones) and, especially, related functional safety as well as cybersecurity risks and opportunities they bring, in various use cases (road traffic, agriculture, maritime).
