@@ -1,5 +1,5 @@
 /*
- *     Copyright 2020  Marvin Damschen   marvin.damschen@ri.se
+ *     Copyright 2020 RISE Research Institutes of Sweden AB, Safety and Transport   waywise@ri.se
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
  *
  * Sets up u-blox GNSS reciver connected over serial as a basestation. Supports/tested with F9P/F9R only for now.

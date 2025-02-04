@@ -1,5 +1,5 @@
 /*
- *     Copyright 2022 Marvin Damschen   marvin.damschen@ri.se
+ *     Copyright 2022 RISE Research Institutes of Sweden AB, Safety and Transport   waywise@ri.se
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
  *
  * MapModule that traces the different vehicles' position types, manages them and draws them on the map

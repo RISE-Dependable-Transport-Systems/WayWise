@@ -1,5 +1,5 @@
 /*
- *     Copyright 2024 Rickard Häll   rickard.hall@ri.se
+ *     Copyright 2024 RISE Research Institutes of Sweden AB, Safety and Transport   waywise@ri.se
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
  */
 

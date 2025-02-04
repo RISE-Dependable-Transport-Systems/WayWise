@@ -1,8 +1,7 @@
 /*
- *     Copyright 2021 Marvin Damschen   marvin.damschen@ri.se
- *               2021 Rickard Häll      rickard.hall@ri.se
+ *     Copyright 2021 RISE Research Institutes of Sweden AB, Safety and Transport   waywise@ri.se
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
- * 
+ *
  * Implements communication with a moving u-blox-based GNSS receiver
  */
 

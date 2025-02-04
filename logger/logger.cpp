@@ -1,5 +1,6 @@
 /*
- *  Author: Aria Mirzai, aria.mirzai@ri.se (2023)
+ *     Copyright 2023 RISE Research Institutes of Sweden AB, Safety and Transport   waywise@ri.se
+ *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
  */
 
 #include <QDateTime>

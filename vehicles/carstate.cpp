@@ -1,10 +1,7 @@
 /*
- *     Copyright 2012 Benjamin Vedder   benjamin@vedder.se
- *               2020 Marvin Damschen   marvin.damschen@ri.se
- *               2021 Lukas Wikander    lukas.wikander@astazero.com
- *               2022 Rickard Häll      rickard.hall@ri.se
+ *     Copyright 2022 RISE Research Institutes of Sweden AB, Safety and Transport   waywise@ri.se
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
- * 
+ *
  * Specific implementation of VehicleState for car-type (ackermann) vehicles, storing all (dynamic and static) state
  */
 #include "carstate.h"

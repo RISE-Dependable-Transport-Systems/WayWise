@@ -1,6 +1,5 @@
 /*
- *     Copyright 2024 Ramana Avula      ramana.reddy.avula@ri.se
- *               2024 Marvin Damschen   marvin.damschen@ri.se
+ *     Copyright 2024 RISE Research Institutes of Sweden AB, Safety and Transport   waywise@ri.se
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
  *
  * Abstract base class for GNSS receivers, supporting both real and simulated GNSS data.
