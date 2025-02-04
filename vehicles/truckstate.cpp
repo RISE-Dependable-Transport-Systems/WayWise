@@ -64,14 +64,35 @@ void TruckState::updateTrailingVehicleOdomPositionAndYaw(double drivenDistance, 
 
         double currYaw_rad = truckHitchPosition.getYaw() * M_PI / 180.0;
 
+        double trailerAngle_rad = getTrailerAngleRadians();
         double trailerYaw_rad = trailer->getPosition(usePosType).getYaw() * M_PI / 180.0;
         if (mSimulateTrailer) { // We do not get external updates on the trailer angle -> simple estimation
-            trailerYaw_rad = trailerYaw_rad + ((drivenDistance / trailer->getWheelBase()) * sin(currYaw_rad - trailerYaw_rad));
-            trailerYaw_rad = fmod(trailerYaw_rad + M_PI, 2 * M_PI) - M_PI;
-            setTrailerAngle((currYaw_rad - trailerYaw_rad) * 180.0 / M_PI);
+            if (fabs(getSteering()) > 0) {
+                trailerYaw_rad = trailerYaw_rad + ((drivenDistance / trailer->getWheelBase()) * sin(trailerAngle_rad));
+                trailerAngle_rad = currYaw_rad - trailerYaw_rad;
+                trailerAngle_rad = fmod(trailerAngle_rad + M_PI, 2 * M_PI) - M_PI;
+                trailerAngle_rad = std::clamp(trailerAngle_rad, -M_PI_2, M_PI_2);
+                trailerYaw_rad = fmod((currYaw_rad - trailerAngle_rad) + M_PI, 2 * M_PI) - M_PI;
+            } else {
+                if (fabs(trailerAngle_rad) > 0) {
+                    double dampingFactor = fabs(drivenDistance) / trailer->getWheelBase();
+                    dampingFactor = (dampingFactor > 0.2) ? 0.2 : dampingFactor;
+                    dampingFactor = (dampingFactor < 0.01 && fabs(drivenDistance) > 0) ? 0.01 : dampingFactor;
+                    if (drivenDistance < 0) {
+                        trailerAngle_rad = trailerAngle_rad * (1 + dampingFactor);
+                    } else {
+                        trailerAngle_rad = trailerAngle_rad * (1 - dampingFactor);
+                    }
+                    trailerAngle_rad = fmod(trailerAngle_rad + M_PI, 2 * M_PI) - M_PI;
+                    trailerAngle_rad = std::clamp(trailerAngle_rad, -M_PI_2, M_PI_2);
+                    trailerYaw_rad = fmod((currYaw_rad -  trailerAngle_rad) + M_PI, 2 * M_PI) - M_PI;
+                } else {
+                    trailerYaw_rad = currYaw_rad;
+                }
+            }
+            setTrailerAngle(trailerAngle_rad * 180.0 / M_PI);
         } else {
-            trailerYaw_rad = currYaw_rad - getTrailerAngleRadians();
-            trailerYaw_rad = fmod(trailerYaw_rad + M_PI, 2 * M_PI) - M_PI;
+            trailerYaw_rad = fmod((currYaw_rad -  trailerAngle_rad) + M_PI, 2 * M_PI) - M_PI;
         }
         currentTrailerPosition.setXYZ(truckHitchPosition.getXYZ());
         xyz_t trailerHitchToTrailerRearAxleOffset = -(getTrailingVehicle()->getRearAxleToHitchOffset());
