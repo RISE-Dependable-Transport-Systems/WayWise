@@ -10,17 +10,22 @@
 DepthAiCamera::DepthAiCamera()
 {
     // Connect to camera stream
-    mJsonParser.connectToHost(QHostAddress::LocalHost, 8070);
+    attemptConnection();
     QObject::connect(&mJsonParser, &JsonStreamParserTcp::gotJsonArray, this, &DepthAiCamera::cameraInput);
     QObject::connect(&mJsonParser, &JsonStreamParserTcp::connectionError, this, &DepthAiCamera::handleConnectionError);
 
-    connect(&mTimer, &QTimer::timeout, this, &DepthAiCamera::ConnectionIssue);
-    mTimer.start(3000); // [ms]
+    connect(&mConnectionTimer, &QTimer::timeout, this, &DepthAiCamera::ConnectionIssue);
+    mConnectionTimer.start(3000); // [ms]
+}
+
+void DepthAiCamera::attemptConnection()
+{
+    mJsonParser.connectToHost(QHostAddress::LocalHost, 8070);
 }
 
 void DepthAiCamera::cameraInput(const QString& tcpMsg)
 {
-    mTimer.start(3000); // Reset
+    mConnectionTimer.start(3000); // Restart
     emit brakeSignal(tcpMsg);
 }
 
@@ -33,5 +38,6 @@ void DepthAiCamera::ConnectionIssue()
 void DepthAiCamera::handleConnectionError(QTcpSocket::SocketError error)
 {
     qDebug() << "Info: DepthAiCamera not connected, got" << error;
-    mTimer.stop();
+    mConnectionTimer.stop();
+    attemptConnection(); // Try to reconnect
 }

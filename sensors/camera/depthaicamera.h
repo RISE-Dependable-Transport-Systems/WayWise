@@ -27,11 +27,12 @@ private:
     JsonStreamParserTcp mJsonParser;
 
     PosPoint mCameraData;
-    QTimer mTimer;
+    QTimer mConnectionTimer;
 
     void cameraInput(const QString& tcpMsg);
     void ConnectionIssue();
     void handleConnectionError(QTcpSocket::SocketError error);
+    void attemptConnection();
 };
 
 #endif // DEPTHAICAMERA_H
