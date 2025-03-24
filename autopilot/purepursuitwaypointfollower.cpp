@@ -300,48 +300,48 @@ void PurepursuitWaypointFollower::updateState()
 
         const PosPoint& endGoalPosPoint = mWaypointList.at(mCurrentState.currentWaypointIndex);
         QPointF endGoalPointXY = endGoalPosPoint.getPoint();
-        QLineF referencePointToEndGoalLine(vehicleAlignmentReferencePointXY, endGoalPointXY);
-        double referencePointToEndGoalDistance = referencePointToEndGoalLine.length();
-        bool isAlignedWithEndGoal = referencePointToEndGoalDistance < mEndGoalAlignmentThreshold;
-        bool hasOvershotEndGoal = false;
-
-        QLineF lastWayPointToEndGoalLine;
-        lastWayPointToEndGoalLine.setP2(endGoalPointXY);
-        if (mCurrentState.currentWaypointIndex) {
-            lastWayPointToEndGoalLine.setP1(mWaypointList[mCurrentState.currentWaypointIndex - 1].getPoint());
-        } else {
-            lastWayPointToEndGoalLine.setP1(mCurrentState.startPointXY);
-        }
-        double angleBetweenLines = referencePointToEndGoalLine.angleTo(lastWayPointToEndGoalLine);
-        if (angleBetweenLines > 180) { // Convert to -180 to 180 range
-            angleBetweenLines -= 360;
-        }
-        if (fabs(angleBetweenLines) < 90) { // check if we are still approaching end goal or overshot it
-            isAlignedWithEndGoal = false;
-        } else {
-            hasOvershotEndGoal = true;
-        }
+        QLineF endGoalToreferencePointLine(endGoalPointXY, vehicleAlignmentReferencePointXY);
+        double endGoalToreferencePointDistance = endGoalToreferencePointLine.length();
+        bool isAlignedWithEndGoal = endGoalToreferencePointDistance < mEndGoalAlignmentThreshold;
 
         if (isAlignedWithEndGoal) {
             if (!mCurrentState.repeatRoute) {
                 mCurrentState.stmState = WayPointFollowerSTMstates::FOLLOW_ROUTE_FINISHED;
-                qDebug() << "Goal reached with accuracy:" << referencePointToEndGoalDistance << "m.";
+                qDebug() << "Goal reached with accuracy:" << endGoalToreferencePointDistance << "m.";
             } else {
-                qDebug() << "Goal reached with accuracy:" << referencePointToEndGoalDistance << "m. Repeating the route...";
+                qDebug() << "Goal reached with accuracy:" << endGoalToreferencePointDistance << "m. Repeating the route...";
             }
-        } else if (hasOvershotEndGoal && !mRetryAfterEndGoalOvershot) {
-            stop();
-            qDebug() << "Goal overshot! Stopped waypoint follower with distance to goal:" << referencePointToEndGoalDistance << "m.";
         } else {
-            double purePursuitRadius_ = purePursuitRadius();
-            double rearAxleToReferencePointOffset_x = currentVehiclePositionXY.x() - vehicleAlignmentReferencePointXY.x();
-            double extensionDistance = std::max(purePursuitRadius_ + rearAxleToReferencePointOffset_x - referencePointToEndGoalDistance, 0.0);
-            double extensionRatio = (extensionDistance + lastWayPointToEndGoalLine.length()) / lastWayPointToEndGoalLine.length();
-            auto extendedGoalPoint = lastWayPointToEndGoalLine.pointAt(extensionRatio);
+            QPointF previousWayPointPointXY;
+            if (mCurrentState.currentWaypointIndex > 0) {
+                previousWayPointPointXY = mWaypointList[mCurrentState.currentWaypointIndex - 1].getPoint();
+            } else {
+                previousWayPointPointXY = mCurrentState.startPointXY;
+            }
+            QLineF endGoalToPreviousWayPointLine(endGoalPointXY, previousWayPointPointXY);
 
-            mCurrentState.currentGoal.setXY(extendedGoalPoint.x(), extendedGoalPoint.y());
-            mCurrentState.currentGoal.setSpeed(endGoalPosPoint.getSpeed());
-            updateControl(mCurrentState.currentGoal);
+            double angleBetweenLines = endGoalToreferencePointLine.angleTo(endGoalToPreviousWayPointLine);
+            if (angleBetweenLines > 180) { // Convert to -180 to 180 range
+                angleBetweenLines -= 360;
+            }
+
+            bool hasOvershotEndGoal = false;
+            if (fabs(angleBetweenLines) > 90) { // check if we are still approaching end goal or overshot it
+                hasOvershotEndGoal = true;
+            }
+            if (hasOvershotEndGoal && !mRetryAfterEndGoalOvershot) {
+                stop();
+                qDebug() << "Goal overshot! Stopped waypoint follower with distance to goal:" << endGoalToreferencePointDistance << "m.";
+            } else {
+                double purePursuitRadius_ = purePursuitRadius();
+                double extensionDistance = std::max(purePursuitRadius_ - endGoalToreferencePointDistance, 0.0);
+                double extensionRatio = (-extensionDistance) / endGoalToPreviousWayPointLine.length();
+                QPointF extendedGoalPointXY = endGoalToPreviousWayPointLine.pointAt(extensionRatio);
+
+                mCurrentState.currentGoal.setXY(extendedGoalPointXY.x(), extendedGoalPointXY.y());
+                mCurrentState.currentGoal.setSpeed(endGoalPosPoint.getSpeed());
+                updateControl(mCurrentState.currentGoal);
+            }
         }
     } break;
     case WayPointFollowerSTMstates::FOLLOW_ROUTE_FINISHED:
