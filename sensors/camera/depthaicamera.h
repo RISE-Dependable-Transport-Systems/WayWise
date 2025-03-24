@@ -9,6 +9,7 @@
 #define DEPTHAICAMERA_H
 
 #include <QObject>
+#include <QTimer>
 #include "core/pospoint.h"
 #include "communication/jsonstreamparsertcp.h"
 
@@ -22,11 +23,15 @@ signals:
     void closestObject(const PosPoint &obj);
     void brakeSignal(const QString& msg);
 
+private slots:
+    void checkConnection();
+
 private:
     JsonStreamParserTcp mJsonParser;
 
     PosPoint mCameraData;
     void cameraInput(const QString& tcpMsg);
+    QTimer mTimer;
 };
 
 #endif // DEPTHAICAMERA_H

@@ -15,11 +15,19 @@ DepthAiCamera::DepthAiCamera()
     QObject::connect(&mJsonParser, &JsonStreamParserTcp::connectionError, [](QTcpSocket::SocketError error){
         qDebug() << "Info: DepthAiCamera not connected, got" << error;
     });
+
+    connect(&mTimer, &QTimer::timeout, this, &DepthAiCamera::checkConnection);
+    mTimer.start(3000); // 3 sec interval
 }
 
 void DepthAiCamera::cameraInput(const QString& tcpMsg)
 {
+    mTimer.start(3000); // Reset
     emit brakeSignal(tcpMsg);
+}
 
-    // if no message for 3 sec, emit brakeSignal("0")
+void DepthAiCamera::checkConnection()
+{
+    qDebug() << "DepthAICamera connection issue. No message received for 3 seconds.";
+    emit brakeSignal("0");  // Emergency break
 }
