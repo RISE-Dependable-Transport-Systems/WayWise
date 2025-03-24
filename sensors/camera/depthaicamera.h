@@ -23,15 +23,15 @@ signals:
     void closestObject(const PosPoint &obj);
     void brakeSignal(const QString& msg);
 
-private slots:
-    void checkConnection();
-
 private:
     JsonStreamParserTcp mJsonParser;
 
     PosPoint mCameraData;
-    void cameraInput(const QString& tcpMsg);
     QTimer mTimer;
+
+    void cameraInput(const QString& tcpMsg);
+    void ConnectionIssue();
+    void handleConnectionError(QTcpSocket::SocketError error);
 };
 
 #endif // DEPTHAICAMERA_H

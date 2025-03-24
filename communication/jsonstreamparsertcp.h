@@ -20,7 +20,7 @@ public:
     void connectToHost(QHostAddress address, qint16 port);
 
 signals:
-    void gotJsonArray(const QString& tcpMsg);qDebug() << "Activating emergency break:" << QTime::currentTime();
+    void gotJsonArray(const QString& tcpMsg);
     void connectionError(QTcpSocket::SocketError);
 private:
     void parseJson();
