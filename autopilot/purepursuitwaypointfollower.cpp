@@ -298,8 +298,8 @@ void PurepursuitWaypointFollower::updateState()
             qDebug() << "Goal overshot! Stopped waypoint follower with distance to goal:" << referencePointToEndGoalDistance << "m.";
         } else {
             double purePursuitRadius_ = purePursuitRadius();
-            double rearAxleToReferencePointOffset_x = currentVehiclePositionXY.x() - vehicleAlignmentReferencePointXY.x();
-            double extensionDistance = std::max(purePursuitRadius_ + rearAxleToReferencePointOffset_x - referencePointToEndGoalDistance, 0.0);
+            double rearAxleToEndGoalDistance = QLineF(currentVehiclePositionXY, endGoalPointXY).length();
+            double extensionDistance = std::max(purePursuitRadius_ - rearAxleToEndGoalDistance, 0.0);
             double extensionRatio = (extensionDistance + lastWayPointToEndGoalLine.length()) / lastWayPointToEndGoalLine.length();
             auto extendedGoalPoint = lastWayPointToEndGoalLine.pointAt(extensionRatio);
 
