@@ -65,7 +65,7 @@ void TruckState::updateTrailingVehicleOdomPositionAndYaw(double drivenDistance, 
         double currYaw_rad = truckHitchPosition.getYaw() * M_PI / 180.0;
 
         double trailerYaw_rad = trailer->getPosition(usePosType).getYaw() * M_PI / 180.0;
-        if (mSimulateTrailer) { // We do not get external updates on the trailer angle -> simple estimation
+        if (mSimulateTrailer && usePosType == PosType::odom) { // We do not get external updates on the trailer angle -> simple estimation
             trailerYaw_rad = trailerYaw_rad + ((drivenDistance / trailer->getWheelBase()) * sin(currYaw_rad - trailerYaw_rad));
             trailerYaw_rad = fmod(trailerYaw_rad + M_PI, 2 * M_PI) - M_PI;
             setTrailerAngle((currYaw_rad - trailerYaw_rad) * 180.0 / M_PI);
