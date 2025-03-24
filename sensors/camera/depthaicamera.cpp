@@ -16,6 +16,8 @@ DepthAiCamera::DepthAiCamera()
 
     connect(&mConnectionTimer, &QTimer::timeout, this, &DepthAiCamera::ConnectionIssue);
     mConnectionTimer.start(3000); // [ms]
+
+    connect(&mReconnectTimer, &QTimer::timeout, this, &DepthAiCamera::attemptConnection);
 }
 
 void DepthAiCamera::attemptConnection()
@@ -39,5 +41,5 @@ void DepthAiCamera::handleConnectionError(QTcpSocket::SocketError error)
 {
     qDebug() << "Info: DepthAiCamera not connected, got" << error;
     mConnectionTimer.stop();
-    attemptConnection(); // Try to reconnect
+    mReconnectTimer.start(5000); // Try to reconnect every 5 seconds
 }

@@ -27,7 +27,7 @@ private:
     JsonStreamParserTcp mJsonParser;
 
     PosPoint mCameraData;
-    QTimer mConnectionTimer;
+    QTimer mConnectionTimer, mReconnectTimer;
 
     void cameraInput(const QString& tcpMsg);
     void ConnectionIssue();
