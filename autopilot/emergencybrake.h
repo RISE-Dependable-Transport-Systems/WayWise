@@ -9,7 +9,7 @@
 #define EMERGENCYBRAKE_H
 
 #include <QObject>
-#include <QTimer>
+#include <QDateTime>
 #include "core/pospoint.h"
 
 struct EmergencyBrakeState {
@@ -32,7 +32,7 @@ signals:
 public slots:
     void deactivateEmergencyBrake();
     void activateEmergencyBrake();
-    void brakeForDetectedCameraObject(const PosPoint &detectedObject);
+    void brakeForDetectedCameraObject(const QString& msg);
 
 private:
     EmergencyBrakeState mCurrentState;

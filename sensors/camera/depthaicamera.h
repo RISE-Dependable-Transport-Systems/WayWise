@@ -20,12 +20,13 @@ public:
 
 signals:
     void closestObject(const PosPoint &obj);
+    void brakeSignal(const QString& msg);
 
 private:
     JsonStreamParserTcp mJsonParser;
 
     PosPoint mCameraData;
-    void cameraInput(const QJsonArray& jsonArray);
+    void cameraInput(const QString& tcpMsg);
 };
 
 #endif // DEPTHAICAMERA_H

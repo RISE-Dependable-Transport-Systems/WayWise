@@ -17,22 +17,13 @@ void JsonStreamParserTcp::connectToHost(QHostAddress address, qint16 port)
 
 void JsonStreamParserTcp::parseJson()
 {
-    QJsonParseError err;
     for (const auto& elem : mTcpSocket.readAll().split('\n')) {
         if (elem.isEmpty())
             continue;
 
-        QJsonDocument jsonDoc = QJsonDocument::fromJson(elem, &err);
+        QString msg = QString::fromUtf8(elem).trimmed();    // remove trailing whitespace including \r and \n
 
-        if (err.error != QJsonParseError::NoError) {
-            qDebug() << "Skipped input due to error while parsing JSON:" << err.errorString();
-        } else {
-            if (jsonDoc.isArray())
-                emit gotJsonArray(jsonDoc.array());
-
-            if (jsonDoc.isObject())
-                emit gotJsonObject(jsonDoc.object());
-        }
+        emit gotJsonArray(msg);
     }
 }
 

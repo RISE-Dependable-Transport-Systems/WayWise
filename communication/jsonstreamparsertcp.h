@@ -11,10 +11,6 @@
 #include <QObject>
 #include <QHostAddress>
 #include <QTcpSocket>
-#include <QJsonDocument>
-#include <QJsonParseError>
-#include <QJsonArray>
-#include <QJsonObject>
 
 class JsonStreamParserTcp : public QObject
 {
@@ -24,8 +20,7 @@ public:
     void connectToHost(QHostAddress address, qint16 port);
 
 signals:
-    void gotJsonArray(const QJsonArray& jsonArray);
-    void gotJsonObject(const QJsonObject& jsonObject);
+    void gotJsonArray(const QString& tcpMsg);qDebug() << "Activating emergency break:" << QTime::currentTime();
     void connectionError(QTcpSocket::SocketError);
 private:
     void parseJson();
