@@ -19,13 +19,3 @@ void GNSSReceiver::setEnuRef(llh_t enuRef)
     mEnuReferenceSet = true;
     emit updatedEnuReference(mEnuReference);
 }
-
-void GNSSReceiver::setIMUOrientationOffset(double roll_deg, double pitch_deg, double yaw_deg)
-{
-    mIMUOrientationOffset = {roll_deg, pitch_deg, yaw_deg};
-}
-
-void GNSSReceiver::setGNSSPositionOffset(double xOffset, double yOffset)
-{
-    mGNSSPositionOffset = {xOffset, yOffset, 0.0};
-}
