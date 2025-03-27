@@ -164,6 +164,23 @@ typedef struct {
 } ubx_nav_sat;
 
 typedef struct {
+    uint32_t i_tow; // GPS time of week of the navigation epoch
+    uint8_t gps_fix; // GPSfix Type, range 0..5
+    bool gnss_fix_ok; // Valid fix (i.e within DOP & accuracy)
+    bool diffSoln; // Differential corrections were applied
+    bool wknSet; // Valid GPS week number
+    bool towSet; // Valid GPS time of week
+    bool diffCorr; // Differential corrections available
+    bool carrSolnValid; // Carrier phase range solution status
+    uint8_t mapMatching; // Map matching status
+    uint8_t psmState; // Power Save Mode state
+    uint8_t spoofDetState; // Spoofing detection state
+    uint8_t carrSoln; // Carrier phase range solution status
+    uint32_t ttff; // Time to first fix (ms)
+    uint32_t msss; // Milliseconds since Startup / Reset
+} ubx_nav_status;
+
+typedef struct {
     double pr_mes;
     double cp_mes;
     float do_mes;
@@ -245,6 +262,10 @@ typedef struct {
 typedef struct {
     uint32_t i_tow;
     uint8_t version;
+    uint8_t wtInitStatus;
+    uint8_t mntAlgStatus;
+    uint8_t insInitStatus;
+    uint8_t imuInitStatus;
     uint8_t fusion_mode;
     uint8_t num_sens;
     ubx_esf_status_sensors sensors[255]; // ToDo: set correct nr of sensors
@@ -567,6 +588,22 @@ typedef struct {
     uint8_t response;
 } ubx_upd_sos;
 
+enum DynamicModel : uint8_t {
+    PORT = 0,       // Portable
+    STAT = 2,       // Stationary
+    PED = 3,        // Pedestrian
+    AUTOMOT = 4,    // Automotive
+    SEA = 5,        // Sea
+    AIR1 = 6,       // Airborne with <1g acceleration
+    AIR2 = 7,       // Airborne with <2g acceleration
+    AIR4 = 8,       // Airborne with <4g acceleration
+    WRIST = 9,      // Wrist-worn watch (not available in all products)
+    BIKE = 10,      // Motorbike (not available in all products)
+    MOWER = 11,     // Robotic lawn mower (not available in all products)
+    ESCOOTER = 12,  // E-scooter (not available in all products)
+    RAIL = 13       // Rail vehicles (trains, trams) (not available in all products)
+};
+
 class Ublox : public QObject
 {
     Q_OBJECT
@@ -592,7 +629,7 @@ public:
     bool ubloxCfgGnss(ubx_cfg_gnss *gnss);
     bool ubloxCfgNmea(ubx_cfg_nmea *nmea);
     bool ubloxCfgValset(unsigned char *values, int len,
-                        bool ram, bool bbr, bool flash);
+                        bool ram, bool bbr, bool flash, int timeoutMs = 500);
     bool ubloxCfgValget(unsigned char *keys, int len,
                         uint8_t layer, uint16_t position = 0);
 
@@ -612,9 +649,26 @@ public:
     void ubloxCfgAppendEnableSf(unsigned char *buffer, int *ind, bool ena);
     void ubloxCfgAppendRate(unsigned char *buffer, int *ind, uint16_t meas, uint16_t nav, uint8_t timeref, uint8_t prio);
     void ubloxCfgAppendRate(unsigned char *buffer, int *ind, uint16_t meas, uint16_t nav, uint8_t timeref);
+    void ubloxCfgAppendE1U1Key(unsigned char *buffer, int *ind, uint64_t key, uint8_t value);
+    void ubloxCfgAppendI2Key(unsigned char *buffer, int *ind, uint64_t key, int16_t value);
+    void ubloxCfgAppendU4Key(unsigned char *buffer, int *ind, uint64_t key, uint32_t value);
+    void ubloxCfgAppendU2Key(unsigned char *buffer, int *ind, uint64_t key, uint16_t value);
 
-    void ubloxUpdSos(uint8_t cmd);
-    void ubloxOdometerInput(ubx_esf_datatype_enum dataType, uint32_t dataField);
+    bool ubloxUpdSos(uint8_t cmd);
+    void ubloxOdometerInput(ubx_esf_datatype_enum dataType, uint32_t dataField, uint32_t timeTag = 0);
+
+    static QString getInitStatusText(uint8_t status);
+    static QString getFusionModeText(uint8_t mode);
+    static QString getSensorTypeText(uint8_t type);
+    static QString getCalibStatusText(uint8_t calibStatus);
+    static QString getTimeStatusText(uint8_t timeStatus);
+    static QString getFaultsText(bool badMeas, bool badTTag, bool missingMeas, bool noisyMeas);
+    static QString getDynamicModelName(DynamicModel model);
+    static QString getGpsFixTypeText(uint8_t gps_fix);
+    static QString getMapMatchingStatusText(uint8_t mapMatching);
+    static QString getPsmStateText(uint8_t psmState);
+    static QString getSpoofDetStateText(uint8_t spoofDetState);
+    static QString getCarrSolnText(uint8_t carrSoln);
 
 signals:
     void rxNavSol(const ubx_nav_sol &sol);
@@ -625,6 +679,7 @@ signals:
     void rxNak(const uint8_t &cls_id, const uint8_t &msg_id);
     void rxRawx(const ubx_rxm_rawx &rawx);
     void rxNavSat(const ubx_nav_sat &sat);
+    void rxNavStatus(const ubx_nav_status &status);
     void rxCfgGnss(const ubx_cfg_gnss &gnss);
     void rxCfgValget(const ubx_cfg_valget &valget);
     void rxEsfMeas(const ubx_esf_meas &meas);
@@ -645,7 +700,7 @@ private slots:
 private:
     typedef struct {
         uint8_t line[256];
-        uint8_t ubx[4096];
+        uint8_t ubx[8192];
         unsigned line_pos;
         unsigned ubx_pos;
         uint8_t ubx_class;
@@ -673,6 +728,7 @@ private:
     void ubx_decode_nak(uint8_t *msg, int len);
     void ubx_decode_rawx(uint8_t *msg, int len);
     void ubx_decode_nav_sat(uint8_t *msg, int len);
+    void ubx_decode_nav_status(uint8_t *msg, int len);
     void ubx_decode_cfg_gnss(uint8_t *msg, int len);
     void ubx_decode_cfg_valget(uint8_t *msg, int len);
     void ubx_decode_mon_ver(uint8_t *msg, int len);
@@ -706,6 +762,7 @@ private:
 #define UBX_NAV_RELPOSNED				0x3C
 #define UBX_NAV_SVIN					0x3B
 #define UBX_NAV_SAT 					0x35
+#define UBX_NAV_STATUS                  0x03
 
 // Receiver Manager (RXM) messages
 #define UBX_RXM_RAWX					0x15
@@ -796,6 +853,12 @@ private:
 #define CFG_SFODO_USE_WT_PIN            0x1007000F
 #define CFG_SFODO_DIR_PINPOL            0x10070010
 #define CFG_SFODO_DIS_AUTOSW            0x10070011
+#define CFG_SFIMU_IMU2ANT_LA_X          0x30060020
+#define CFG_SFIMU_IMU2ANT_LA_Y          0x30060021
+#define CFG_SFIMU_IMU2ANT_LA_Z          0x30060022
+#define CFG_SFODO_IMU2VRP_LA_X          0x30070012
+#define CFG_SFODO_IMU2VRP_LA_Y          0x30070013
+#define CFG_SFODO_IMU2VRP_LA_Z          0x30070014
 
 #define CFG_SFCORE_USE_SF               0x10080001
 
@@ -803,6 +866,15 @@ private:
 #define CFG_RATE_NAV                    0x30210002
 #define CFG_RATE_TIMEREF                0x20210003
 #define CFG_RATE_NAV_PRIO               0x20210004
+
+#define CFG_MSGOUT_UBX_ESF_MEAS_USB     0x2091027A
+#define CFG_MSGOUT_UBX_ESF_STATUS_USB   0x20910108
+#define CFG_MSGOUT_UBX_ESF_ALG_USB      0x20910112
+#define CFG_MSGOUT_UBX_NAV_PVT_USB      0x20910009
+#define CFG_MSGOUT_UBX_NAV_STATUS_USB   0x2091001d
+#define CFG_MSGOUT_NMEA_ID_GGA_USB      0x209100bd
+
+#define CFG_NAVSPG_DYNMODEL             0x20110021
 
 // RTCM3 messages
 #define UBX_RTCM3_1005					0x05 // Stationary RTK reference station ARP
