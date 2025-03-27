@@ -488,7 +488,7 @@ bool Ublox::ubxCfgRst(uint16_t navBbrMask, uint8_t resetMode)
     ubx_put_U1(buffer, &ind, resetMode);
     ubx_put_U1(buffer, &ind, 0); // Reserved
 
-    return ubx_encode_send(UBX_CLASS_CFG, UBX_CFG_CFG, buffer, ind, 10);
+    return ubx_encode_send(UBX_CLASS_CFG, UBX_CFG_CFG, buffer, ind, 0); // No ack will be sent
 }
 
 bool Ublox::ubloxCfgCfg(ubx_cfg_cfg *cfg)
@@ -711,7 +711,7 @@ bool Ublox::ubloxCfgNmea(ubx_cfg_nmea *nmea)
 }
 
 bool Ublox::ubloxCfgValset(unsigned char *values, int len,
-                           bool ram, bool bbr, bool flash)
+                           bool ram, bool bbr, bool flash, int timeoutMs)
 {
     const size_t buffersize = 4096;
     assert(((unsigned)len < buffersize) && "Ublox::ubloxCfgValset: message size exceeded");
@@ -735,7 +735,7 @@ bool Ublox::ubloxCfgValset(unsigned char *values, int len,
     memcpy(buffer + ind, values, len);
     ind += len;
 
-    return ubx_encode_send(UBX_CLASS_CFG, UBX_CFG_VALSET, buffer, ind, 500);
+    return ubx_encode_send(UBX_CLASS_CFG, UBX_CFG_VALSET, buffer, ind, timeoutMs);
 }
 
 /**
@@ -900,16 +900,15 @@ void Ublox::ubloxCfgAppendEnableSf(unsigned char *buffer, int *ind, bool ena)
  */
 void Ublox::ubloxCfgAppendMntalg(unsigned char *buffer, int *ind, bool automatic, uint32_t yaw, int16_t pitch, int16_t roll)
 {
-    if (automatic) {
     ubx_put_X4(buffer, ind, CFG_SFIMU_AUTO_MNTALG_ENA);
     ubx_put_U1(buffer, ind, automatic);
-    } else {
-    ubx_put_X4(buffer, ind, CFG_SFIMU_IMU_MNTALG_YAW);
-    ubx_put_I2(buffer, ind, yaw);
-    ubx_put_X4(buffer, ind, CFG_SFIMU_IMU_MNTALG_PITCH);
-    ubx_put_I1(buffer, ind, pitch);
-    ubx_put_X4(buffer, ind, CFG_SFIMU_IMU_MNTALG_ROLL);
-    ubx_put_I2(buffer, ind, roll);
+    if (!automatic) {
+        ubx_put_X4(buffer, ind, CFG_SFIMU_IMU_MNTALG_YAW);
+        ubx_put_U4(buffer, ind, yaw);
+        ubx_put_X4(buffer, ind, CFG_SFIMU_IMU_MNTALG_PITCH);
+        ubx_put_I2(buffer, ind, pitch);
+        ubx_put_X4(buffer, ind, CFG_SFIMU_IMU_MNTALG_ROLL);
+        ubx_put_I2(buffer, ind, roll);
     }
 }
 
@@ -993,6 +992,30 @@ void Ublox::ubloxCfgAppendRate(unsigned char *buffer, int *ind, uint16_t meas, u
     ubx_put_U1(buffer, ind, prio);
 }
 
+void Ublox::ubloxCfgAppendE1U1Key(unsigned char *buffer, int *ind, uint64_t key, uint8_t value)
+{
+    ubx_put_X4(buffer, ind, key);
+    ubx_put_U1(buffer, ind, value);
+}
+
+void Ublox::ubloxCfgAppendI2Key(unsigned char *buffer, int *ind, uint64_t key, int16_t value)
+{
+    ubx_put_X4(buffer, ind, key);
+    ubx_put_I2(buffer, ind, value);
+}
+
+void Ublox::ubloxCfgAppendU4Key(unsigned char *buffer, int *ind, uint64_t key, uint32_t value)
+{
+    ubx_put_X4(buffer, ind, key);
+    ubx_put_U4(buffer, ind, value);
+}
+
+void Ublox::ubloxCfgAppendU2Key(unsigned char *buffer, int *ind, uint64_t key, uint16_t value)
+{
+    ubx_put_X4(buffer, ind, key);
+    ubx_put_U2(buffer, ind, value);
+}
+
 /**
  * Reset receiver / Clear backup data structures
  *
@@ -1001,10 +1024,10 @@ void Ublox::ubloxCfgAppendRate(unsigned char *buffer, int *ind, uint16_t meas, u
  * 1 Clear backup in flash
  * 7 Poll backup restore status
  */
-void Ublox::ubloxUpdSos(uint8_t cmd)
+bool Ublox::ubloxUpdSos(uint8_t cmd)
 {
     if (cmd == 7){
-        ubx_encode_send(UBX_CLASS_UPD, UBX_UPD_SOS, 0, 0);
+        return ubx_encode_send(UBX_CLASS_UPD, UBX_UPD_SOS, 0, 0);
     } else if(cmd == 0 || cmd == 1){
         uint8_t buffer[4];
         int ind = 0;
@@ -1014,7 +1037,9 @@ void Ublox::ubloxUpdSos(uint8_t cmd)
         ubx_put_U1(buffer, &ind, 0); // Reserved
         ubx_put_U1(buffer, &ind, 0); // Reserved
 
-        ubx_encode_send(UBX_CLASS_UPD, UBX_UPD_SOS, buffer, ind, 0);
+        return ubx_encode_send(UBX_CLASS_UPD, UBX_UPD_SOS, buffer, ind, 0);
+    } else {
+        return false;
     }
 }
 
@@ -1030,19 +1055,21 @@ void Ublox::ubloxUpdSos(uint8_t cmd)
  * Bits 0-22: unsigned tick value. Bit 23: direction indicator (0=forward, 1=backward)
  * The speed data shall be delivered in meters per second.
  */
-void Ublox::ubloxOdometerInput(ubx_esf_datatype_enum dataType, uint32_t dataField)
+void Ublox::ubloxOdometerInput(ubx_esf_datatype_enum dataType, uint32_t dataField, uint32_t timeTag)
 {
-    uint8_t buffer[12];
+    uint8_t buffer[512];
     int ind = 0;
 
     uint32_t data = 0;
     data |= dataField << 0;
     data |= dataType << 24;
 
-    uint32_t timeTag = QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()).msecsSinceStartOfDay();
+    if (timeTag == 0) {
+        timeTag = QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()).msecsSinceStartOfDay();
+    }
 
-    ubx_put_U4(buffer, &ind, timeTag); // TODO: Time  tag  of  measurement  generated  by  external sensor?
-    ubx_put_X2(buffer, &ind, 4096); // Binary: 0001000000000000. Flags. Set all unused bits to zero. We have 1 measurement
+    ubx_put_U4(buffer, &ind, timeTag);
+    ubx_put_X2(buffer, &ind, 0); // Binary: 0001000000000000. Flags. Set all unused bits to zero. We have 1 measurement, (optional, can be obtained from message size)
     ubx_put_U2(buffer, &ind, 0); // Identification number of data provider?
     ubx_put_X4(buffer, &ind, data);
 
@@ -1285,6 +1312,9 @@ void Ublox::ubx_decode(uint8_t msg_class, uint8_t id, uint8_t *msg, int len)
             break;
         case UBX_NAV_SAT:
             ubx_decode_nav_sat(msg, len);
+            break;
+        case UBX_NAV_STATUS:
+            ubx_decode_nav_status(msg, len);
             break;
         default:
             break;
@@ -1642,6 +1672,40 @@ void Ublox::ubx_decode_nav_sat(uint8_t *msg, int len)
     emit rxNavSat(sat);
 }
 
+void Ublox::ubx_decode_nav_status(uint8_t *msg, int len) {
+    (void)len;
+
+    ubx_nav_status status;
+    int ind = 0;
+
+    status.i_tow = ubx_get_U4(msg, &ind);
+    status.gps_fix = ubx_get_U1(msg, &ind);
+
+    // Extract flags (Navigation Status Flags)
+    uint8_t flags = ubx_get_U1(msg, &ind);
+    status.gnss_fix_ok = (flags & 0x01) != 0; // bit 0: gpsFixOk
+    status.diffSoln = (flags & 0x02) != 0;    // bit 1: diffSoln
+    status.wknSet = (flags & 0x04) != 0;      // bit 2: wknSet
+    status.towSet = (flags & 0x08) != 0;      // bit 3: towSet
+
+    // Extract fixStat (Fix Status Information)
+    uint8_t fixStat = ubx_get_U1(msg, &ind);
+    status.diffCorr = (fixStat & 0x01) != 0;         // bit 0: diffCorr
+    status.carrSolnValid = (fixStat & 0x02) != 0;    // bit 1: carrSolnValid
+    status.mapMatching = (fixStat >> 6) & 0x03;      // bits 7-6: mapMatching
+
+    // Extract flags2 (Further information about navigation output)
+    uint8_t flags2 = ubx_get_U1(msg, &ind);
+    status.psmState = flags2 & 0x03;                // bits 1-0: psmState
+    status.spoofDetState = (flags2 >> 3) & 0x03;    // bits 4-3: spoofDetState
+    status.carrSoln = (flags2 >> 6) & 0x03;         // bits 7-6: carrSoln
+
+    status.ttff = ubx_get_U4(msg, &ind);
+    status.msss = ubx_get_U4(msg, &ind);
+
+    emit rxNavStatus(status);
+}
+
 void Ublox::ubx_decode_cfg_gnss(uint8_t *msg, int len)
 {
     (void)len;
@@ -1729,7 +1793,18 @@ void Ublox::ubx_decode_esf_status(uint8_t *msg, int len)
 
     status.i_tow       = ubx_get_U4(msg, &ind); // 0
     status.version     = ubx_get_U1(msg, &ind); // 4
-    ind                += 7;                    // 5-11 reserved
+
+    // Extract the Initialization status bitfield, part 1
+    flags                   = ubx_get_U1(msg, &ind); // 5
+    status.wtInitStatus     = flags & 0x03;          // Bits 1-0 (0b00000011)
+    status.mntAlgStatus     = (flags >> 2) & 0x07;   // Bits 4-2 (0b00011100 >> 2)
+    status.insInitStatus    = (flags >> 5) & 0x03;   // Bits 6-5 (0b01100000 >> 5)
+
+    // Extract the Initialization status bitfield, part 2
+    flags                   = ubx_get_U1(msg, &ind); // 6
+    status.imuInitStatus    = flags & 0x03;          // Bits 1-0 (0b00000011)
+
+    ind                += 5;                    // 7-11 reserved
     status.fusion_mode = ubx_get_U1(msg, &ind); // 12
     ind                += 2;                    // 13-14
     status.num_sens    = ubx_get_U1(msg, &ind); // 15
@@ -1814,4 +1889,149 @@ void Ublox::ubx_decode_cfg_valget(uint8_t *msg, int len)
     }
 
     emit rxCfgValget(valget);
+}
+
+
+// Helper function to convert init status to human-readable text
+QString Ublox::getInitStatusText(uint8_t status) {
+    switch (status) {
+        case 0: return "Off";
+        case 1: return "Initializing";
+        case 2: return "Initialized";
+        case 3: return "Initialized";
+        default: return "Unknown";
+    }
+}
+
+// Helper function to convert fusion mode to human-readable text
+QString Ublox::getFusionModeText(uint8_t mode) {
+    switch (mode) {
+        case 0: return "Initialization mode";
+        case 1: return "Fusion mode";
+        case 2: return "Suspended fusion mode";
+        case 3: return "Disabled fusion mode";
+        default: return "Unknown";
+    }
+}
+
+// Helper to get sensor type description
+QString Ublox::getSensorTypeText(uint8_t type) {
+    switch (type) {
+        case 0: return "None (no data)";
+        case 5: return "Z-axis gyroscope (deg/s)";
+        case 8: return "Rear-left wheel ticks";
+        case 9: return "Rear-right wheel ticks";
+        case 10: return "Single tick (speed tick)";
+        case 11: return "Speed (m/s)";
+        case 12: return "Gyroscope temperature (°C)";
+        case 13: return "Y-axis gyroscope (deg/s)";
+        case 14: return "X-axis gyroscope (deg/s)";
+        case 16: return "X-axis accelerometer (m/s^2)";
+        case 17: return "Y-axis accelerometer (m/s^2)";
+        case 18: return "Z-axis accelerometer (m/s^2)";
+        default: return "Reserved/Unknown";
+    }
+}
+
+// Helper to get calibration status text
+QString Ublox::getCalibStatusText(uint8_t calibStatus) {
+    switch (calibStatus) {
+        case 0: return "Not calibrated";
+        case 1: return "Calibrating";
+        case 2: return "Calibrated";
+        case 3: return "Calibrated (extra)";
+        default: return "Unknown";
+    }
+}
+
+// Helper to get time status text
+QString Ublox::getTimeStatusText(uint8_t timeStatus) {
+    switch (timeStatus) {
+        case 0: return "No data";
+        case 1: return "First byte tagged";
+        case 2: return "Event input tagged";
+        case 3: return "Time tag provided";
+        default: return "Unknown";
+    }
+}
+
+// Helper to display sensor faults
+QString Ublox::getFaultsText(bool badMeas, bool badTTag, bool missingMeas, bool noisyMeas) {
+    QStringList faults;
+    if (badMeas)     faults << "Bad measurements";
+    if (badTTag)     faults << "Bad time-tags";
+    if (missingMeas) faults << "Missing measurements";
+    if (noisyMeas)   faults << "Noisy measurements";
+    return faults.isEmpty() ? "None" : faults.join(", ");
+}
+
+// Helper function to get a string representation of the DynamicModel
+QString Ublox::getDynamicModelName(DynamicModel model) {
+    switch (model) {
+        case PORT:       return "Portable";
+        case STAT:       return "Stationary";
+        case PED:        return "Pedestrian";
+        case AUTOMOT:    return "Automotive";
+        case SEA:        return "Sea";
+        case AIR1:       return "Airborne with <1g acceleration";
+        case AIR2:       return "Airborne with <2g acceleration";
+        case AIR4:       return "Airborne with <4g acceleration";
+        case WRIST:      return "Wrist-worn watch";
+        case BIKE:       return "Motorbike";
+        case MOWER:      return "Robotic lawn mower";
+        case ESCOOTER:  return "E-scooter";
+        case RAIL:       return "Rail vehicles";
+        default:         return "Unknown"; // Should never happen
+    }
+}
+
+QString Ublox::getGpsFixTypeText(uint8_t gps_fix) {
+    switch (gps_fix) {
+        case 0x00: return "No Fix";
+        case 0x01: return "Dead Reckoning Only";
+        case 0x02: return "2D-Fix";
+        case 0x03: return "3D-Fix";
+        case 0x04: return "GPS + Dead Reckoning Combined";
+        case 0x05: return "Time Only Fix";
+        default: return "Reserved";
+    }
+}
+
+QString Ublox::getMapMatchingStatusText(uint8_t mapMatching) {
+    switch (mapMatching) {
+        case 0x00: return "None";
+        case 0x01: return "Valid but Not Used";
+        case 0x02: return "Valid and Used";
+        case 0x03: return "Valid and Used (Dead Reckoning)";
+        default: return "Invalid";
+    }
+}
+
+QString Ublox::getPsmStateText(uint8_t psmState) {
+    switch (psmState) {
+        case 0x00: return "ACQUISITION";
+        case 0x01: return "TRACKING";
+        case 0x02: return "POWER OPTIMIZED TRACKING";
+        case 0x03: return "INACTIVE";
+        default: return "Invalid";
+    }
+}
+
+QString Ublox::getSpoofDetStateText(uint8_t spoofDetState) {
+    switch (spoofDetState) {
+        case 0x00: return "Unknown or Deactivated";
+        case 0x01: return "No Spoofing Indicated";
+        case 0x02: return "Spoofing Indicated";
+        case 0x03: return "Multiple Spoofing Indications";
+        default: return "Invalid";
+    }
+}
+
+QString Ublox::getCarrSolnText(uint8_t carrSoln) {
+    switch (carrSoln) {
+        case 0x00: return "No Carrier Phase Solution";
+        case 0x01: return "Floating Ambiguities";
+        case 0x02: return "Fixed Ambiguities";
+        default: return "Invalid";
+    }
 }
