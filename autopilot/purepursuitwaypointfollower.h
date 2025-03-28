@@ -78,6 +78,8 @@ public:
     void provideParametersToParameterServer();
     QPointF getVehicleAlignmentReferencePoint();
 
+    WayPointFollowerState getCurrentState() const {return mCurrentState;}
+
 signals:
     void distanceOfRouteLeft(double meters);
 
