@@ -118,8 +118,22 @@ void PurepursuitWaypointFollower::startFollowingRoute(bool fromBeginning)
     mCurrentState.overrideAltitude = mVehicleState->getPosition(mPosTypeUsed).getHeight();
     qDebug() << "Note: WaypointFollower starts following route. Height info from route is ignored (staying at" << QString::number(mCurrentState.overrideAltitude, 'g', 2) << "m).";
 
-    if (fromBeginning || mCurrentState.stmState == WayPointFollowerSTMstates::NONE)
+    if (fromBeginning)
         mCurrentState.stmState = WayPointFollowerSTMstates::FOLLOW_ROUTE_INIT;
+    else {
+        QPointF currentVehiclePositionXY = getVehicleReferencePosition(mWaypointList);
+        int closestPointIndex = findClosestWaypointIndex(mWaypointList, currentVehiclePositionXY);
+        mCurrentState.currentWaypointIndex = closestPointIndex;
+
+        // Update stmState
+        if (mCurrentState.currentWaypointIndex == mWaypointList.size() - 1) {
+            mCurrentState.stmState = WayPointFollowerSTMstates::FOLLOW_ROUTE_APPROACHING_END_GOAL;
+        } else {
+            mCurrentState.stmState = WayPointFollowerSTMstates::FOLLOW_ROUTE_FOLLOWING;
+        }
+        mCurrentState.currentGoal = mWaypointList.at(mCurrentState.currentWaypointIndex);
+        mCurrentState.startPointXY = currentVehiclePositionXY;
+    }
 
     mUpdateStateTimer.start(mUpdateStatePeriod_ms);
 }
