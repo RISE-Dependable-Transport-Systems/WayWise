@@ -90,6 +90,9 @@ double TruckState::getCurvatureWithTrailer(const QPointF &pointInVehicleFrame)
     double gain;
 
     if (getSpeed() > 0){
+        if (fabs(trailerAngle_rad) < 1e-2 && fabs(pointInVehicleFrame.y()) < 1e-3) {
+            trailerAngle_rad = (pointInVehicleFrame.y() >= 0) ? 1e-2 : -1e-2;
+        }
         double theta_err =  atan2(pointInVehicleFrame.y(), pointInVehicleFrame.x());
         desiredTrailerAngle_rad = atan(2 * l2 * sin(theta_err)); // desired trailer angle towards truck
         gain = getPurePursuitForwardGain();
@@ -102,8 +105,8 @@ double TruckState::getCurvatureWithTrailer(const QPointF &pointInVehicleFrame)
         desiredTrailerAngle_rad = atan(2 * l2 * sin(theta_err) / getAutopilotRadius());
         gain = getPurePursuitReverseGain();
     }
-    double curve = gain * (trailerAngle_rad - desiredTrailerAngle_rad) - (sin(trailerAngle_rad) / (l2));
-    return curve / cos(trailerAngle_rad);
+    double curve = (gain * (trailerAngle_rad - desiredTrailerAngle_rad) - (sin(trailerAngle_rad) / (l2))) / cos(trailerAngle_rad);
+    return curve;
 }
 
 QSharedPointer<TrailerState> TruckState::getTrailingVehicle() const {
