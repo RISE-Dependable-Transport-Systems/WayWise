@@ -43,6 +43,44 @@ void PurepursuitWaypointFollower::addWaypoint(const PosPoint &point)
     mWaypointList.append(point);
 }
 
+QPointF PurepursuitWaypointFollower::getVehicleReferencePosition(const QList<PosPoint>& waypoints)
+{
+    // Default to the vehicle position.
+    QPointF positionXY = mVehicleState->getPosition(mPosTypeUsed).getPoint();
+    // If backing (speed < 0) and a trailer exists, use its position.
+    if (!waypoints.isEmpty() && mVehicleState->hasTrailingVehicle() && waypoints.first().getSpeed() < 0) {
+        positionXY = mVehicleState->getTrailingVehicle()->getPosition(mPosTypeUsed).getPoint();
+    }
+    return positionXY;
+}
+
+int PurepursuitWaypointFollower::findClosestWaypointIndex(const QList<PosPoint>& route, const QPointF &currentVehiclePositionXY)
+{
+    // Calculate closest point on a route to current vehicle position
+    int closestPointIndex = 0;
+    double minDistance = std::numeric_limits<double>::max();
+
+    for (int i = 0; i < route.size(); i++) {
+        double distance = QLineF(currentVehiclePositionXY, route[i].getPoint()).length();
+        if (distance < minDistance) {
+            minDistance = distance;
+            closestPointIndex = i;
+        }
+    }
+
+    while (closestPointIndex < route.size()) {
+        if (QLineF(currentVehiclePositionXY, route.at(closestPointIndex).getPoint()).length() >= purePursuitRadius()) {
+            break;
+        }
+        closestPointIndex++;
+    }
+    if (closestPointIndex == route.size()) {
+        closestPointIndex--;
+    }
+
+    return closestPointIndex;
+}
+
 void PurepursuitWaypointFollower::addRoute(const QList<PosPoint> &route)
 {
     if (route.isEmpty()) {
@@ -53,33 +91,19 @@ void PurepursuitWaypointFollower::addRoute(const QList<PosPoint> &route)
         mWaypointList.append(route);
     } else {
         // Calculate closest point on new route to current vehicle position
-        QPointF currentVehiclePositionXY = mVehicleState->getPosition(mPosTypeUsed).getPoint();
-        if (mVehicleState->hasTrailingVehicle() && mVehicleState->getSpeed() < 0) // position defined by trailer when backing (if exists)
-            currentVehiclePositionXY = mVehicleState->getTrailingVehicle()->getPosition(mPosTypeUsed).getPoint();
+        QPointF currentVehiclePositionXY = getVehicleReferencePosition(route);
+        int closestPointIndex = findClosestWaypointIndex(route, currentVehiclePositionXY);
 
-        int closestPointIndex = 0;
-        double minDistance = std::numeric_limits<double>::max();
-
-        for (int i = 0; i < route.size(); i++) {
-            double distance = QLineF(currentVehiclePositionXY, route[i].getPoint()).length();
-            if (distance < minDistance) {
-                minDistance = distance;
-                closestPointIndex = i;
-            }
-        }
         // Truncate the current route and append the new route from closest point onwards
         mWaypointList = mWaypointList.mid(0, mCurrentState.currentWaypointIndex);
         mWaypointList.append(route.mid(closestPointIndex));
-
-        // Update current waypoint index
-        while (mCurrentState.currentWaypointIndex < mWaypointList.size()) {
-            if (QLineF(currentVehiclePositionXY, mWaypointList.at(mCurrentState.currentWaypointIndex).getPoint()).length() >= purePursuitRadius()) {
-                break;
-            }
-            mCurrentState.currentWaypointIndex++;
-        }
-        if (mCurrentState.currentWaypointIndex >= mWaypointList.size()) {
+        if (mCurrentState.currentWaypointIndex == mWaypointList.size()) {
             mCurrentState.currentWaypointIndex--;
+        }
+        mCurrentState.currentGoal = mWaypointList.at(mCurrentState.currentWaypointIndex);
+
+        // Update stmState
+        if (mCurrentState.currentWaypointIndex == mWaypointList.size() - 1) {
             mCurrentState.stmState = WayPointFollowerSTMstates::FOLLOW_ROUTE_APPROACHING_END_GOAL;
         } else {
             mCurrentState.stmState = WayPointFollowerSTMstates::FOLLOW_ROUTE_FOLLOWING;
@@ -135,9 +159,7 @@ void PurepursuitWaypointFollower::resetState()
 
 void PurepursuitWaypointFollower::updateState()
 {
-    QPointF currentVehiclePositionXY = mVehicleState->getPosition(mPosTypeUsed).getPoint();
-    if (mVehicleState->hasTrailingVehicle() && mVehicleState->getSpeed() < 0) // position defined by trailer when backing (if exists)
-        currentVehiclePositionXY = mVehicleState->getTrailingVehicle()->getPosition(mPosTypeUsed).getPoint();
+    QPointF currentVehiclePositionXY = getVehicleReferencePosition(mWaypointList);
 
     switch (mCurrentState.stmState) {
     case WayPointFollowerSTMstates::NONE:
@@ -437,7 +459,7 @@ QPointF PurepursuitWaypointFollower::getVehicleAlignmentReferencePoint()
 {
     QPointF vehicleAlignmentReferencePointXY;
     QSharedPointer<VehicleState> referenceVehicleState = mVehicleState;
-    if (mVehicleState->hasTrailingVehicle() && mVehicleState->getSpeed() < 0) { // position defined by trailer when backing (if exists)
+    if (mVehicleState->hasTrailingVehicle() && mWaypointList.at(mCurrentState.currentWaypointIndex).getSpeed() < 0) { // position defined by trailer when backing (if exists)
         referenceVehicleState = mVehicleState->getTrailingVehicle();
     }
 
@@ -449,7 +471,7 @@ QPointF PurepursuitWaypointFollower::getVehicleAlignmentReferencePoint()
         } break;
         case AutopilotEndGoalAlignmentType::FRONT_REAR_END: {
             rearAxleToReferencePointOffset = referenceVehicleState->getRearAxleToRearEndOffset();
-            if(mVehicleState->getSpeed() >= 0) {
+            if(mWaypointList.at(mCurrentState.currentWaypointIndex).getSpeed() >= 0) {
                 rearAxleToReferencePointOffset.x += referenceVehicleState->getLength();
             }
             vehicleAlignmentReferencePointXY = referenceVehicleState->posInVehicleFrameToPosPointENU(rearAxleToReferencePointOffset, mPosTypeUsed).getPoint();
