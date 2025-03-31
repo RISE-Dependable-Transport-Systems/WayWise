@@ -86,6 +86,9 @@ signals:
 private:
     void updateState();
     void updateControl(const PosPoint& goal);
+    int findClosestWaypointIndex(const QList<PosPoint>& waypoints, const QPointF &currentVehiclePositionXY);
+    QPointF getVehicleReferencePosition(const QList<PosPoint>& waypoints);
+
     WayPointFollowerState mCurrentState;
 
     PosType mPosTypeUsed = PosType::fused; // The type of position (Odom, GNSS, UWB, ...) that should be used for planning
