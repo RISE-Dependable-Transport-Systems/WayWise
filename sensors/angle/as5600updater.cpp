@@ -10,8 +10,8 @@ AS5600Updater::AS5600Updater(QSharedPointer<VehicleState> vehicleState, double a
 {
    int res{};
    res = as5600_basic_init(); // basic init for reading angle using i2c
-   
-   if (res == 0) {
+   mIsConnected = res == 0;
+   if (mIsConnected) {
       printSensorInfo(); // print AS5600 information
       connect(&mPollTimer, &QTimer::timeout, [this, vehicleState]() {
          uint16_t angle_raw{};    
@@ -27,7 +27,6 @@ AS5600Updater::AS5600Updater(QSharedPointer<VehicleState> vehicleState, double a
             QSharedPointer<TruckState> truckState = qSharedPointerDynamicCast<TruckState>(vehicleState);
             if (truckState) {
                 truckState->setTrailerAngle(angleInDegrees);
-                mIsConnected = true;
             } else {
                 qDebug() << "Error: Failed to cast VehicleState to TruckState.";
             }
