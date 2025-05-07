@@ -9,7 +9,6 @@
 #define EMERGENCYBRAKE_H
 
 #include <QObject>
-#include <QDateTime>
 #include "core/pospoint.h"
 
 struct EmergencyBrakeState {
