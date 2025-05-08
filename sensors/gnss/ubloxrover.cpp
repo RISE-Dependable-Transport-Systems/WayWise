@@ -20,8 +20,8 @@ UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
     // Automatic IMU orientation alignment feature
     connect(&mUblox, &Ublox::rxEsfAlg, this, [this](const ubx_esf_alg &alg){
         if (alg.autoMntAlgOn)
-            setChipOrientationOffset(alg.roll, alg.pitch, (coordinateTransforms::yawNEDtoENU(alg.yaw) - 180.0));
-        if (mPrintVerbose && mReceiverState == RECEIVER_STATE::CALIBRATING){
+            setChipOrientationOffset(alg.roll, alg.pitch, alg.yaw);
+        if (mPrintVerbose){
             qDebug() << "---------------------------------";
             qDebug() << "ESF-ALG data:"
                      << "\nAuto mount alignmend enabled:" << alg.autoMntAlgOn
@@ -73,31 +73,33 @@ UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
                 break;
         }
 
-        if (mPrintVerbose && mReceiverState == RECEIVER_STATE::CALIBRATING) {
+        if (mPrintVerbose) {
             qDebug() << "---------------------------------";
             qDebug() << "ESF-STATUS data:"
-                    << "\nVersion:" << status.version
+                    // << "\nVersion:" << status.version
                     << "\nFusion mode:" << Ublox::getFusionModeText(status.fusion_mode)
-                    << "\nNumber of sensors:" << status.num_sens
-                    << "\nWheel tick status:" << Ublox::getInitStatusText(status.wtInitStatus)
+                    // << "\nNumber of sensors:" << status.num_sens
+                    << "\nIMU initialization status:" << Ublox::getInitStatusText(status.imuInitStatus)
                     << "\nMount alignment status:" << Ublox::getInitStatusText(status.mntAlgStatus)
-                    << "\nINS initialization status:" << Ublox::getInitStatusText(status.insInitStatus)
-                    << "\nIMU initialization status:" << Ublox::getInitStatusText(status.imuInitStatus);
+                    << "\nWheel tick status:" << Ublox::getInitStatusText(status.wtInitStatus)
+                    << "\nINS initialization status:" << Ublox::getInitStatusText(status.insInitStatus);
 
             qDebug() << "\nSensor Data:";
             for (int i = 0; i < status.num_sens; i++) {
                 const auto &sensor = status.sensors[i];
-                QString sensorStr = QString("Sensor #%1: Type: %2 | Used in fusion: %3 | Ready: %4 | Calibration: %5 | Time Status: %6 | Frequency: %7 Hz | Faults: %8")
-                    .arg(i + 1)
-                    .arg(Ublox::getSensorTypeText(sensor.type).leftJustified(30, ' '))
-                    .arg(QString(sensor.used ? "Yes" : "No").leftJustified(3, ' '))
-                    .arg(QString(sensor.ready ? "Yes" : "No").leftJustified(3, ' '))
-                    .arg(Ublox::getCalibStatusText(sensor.calib_status).leftJustified(15, ' '))
-                    .arg(Ublox::getTimeStatusText(sensor.time_status).leftJustified(15, ' '))
-                    .arg(sensor.freq, 4)  // pads the number to 4 characters
-                    .arg(Ublox::getFaultsText(sensor.bad_meas, sensor.bad_t_tag, sensor.missing_meas, sensor.noisy_meas).leftJustified(25, ' '));
+                if (sensor.calib_status != 2 && sensor.calib_status != 3) {
+                    QString sensorStr = QString("Sensor #%1: Type: %2 | Used in fusion: %3 | Ready: %4 | Calibration: %5 | Time Status: %6 | Frequency: %7 Hz | Faults: %8")
+                        .arg(i + 1)
+                        .arg(Ublox::getSensorTypeText(sensor.type).leftJustified(30, ' '))
+                        .arg(QString(sensor.used ? "Yes" : "No").leftJustified(3, ' '))
+                        .arg(QString(sensor.ready ? "Yes" : "No").leftJustified(3, ' '))
+                        .arg(Ublox::getCalibStatusText(sensor.calib_status).leftJustified(15, ' '))
+                        .arg(Ublox::getTimeStatusText(sensor.time_status).leftJustified(15, ' '))
+                        .arg(sensor.freq, 4)  // pads the number to 4 characters
+                        .arg(Ublox::getFaultsText(sensor.bad_meas, sensor.bad_t_tag, sensor.missing_meas, sensor.noisy_meas).leftJustified(25, ' '));
 
-                qDebug() << sensorStr;
+                    qDebug() << sensorStr;
+                }
             }
             qDebug() << "---------------------------------";
         }
@@ -401,29 +403,30 @@ void UbloxRover::updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt)
 
         // Position
         gnssPos.setXYZ(xyz);
-        // Apply antenna offset to reference point (e.g., back axle) if set. Assumes fused yaw is updated.
+
+        double vehYaw_radENU = 0.0;
         xyz_t mAntennaToRearAxleOffset = mAntennaToChipOffset + mChipToRearAxleOffset;
-        if (mAntennaToRearAxleOffset.x != 0.0 || mAntennaToRearAxleOffset.y != 0.0) {
-            PosPoint fusedPos = mVehicleState->getPosition(PosType::fused);
-            double fusedYaw_radENU = fusedPos.getYaw() * M_PI / 180.0;
-
-            gnssPos.updateWithOffsetAndYawRotation(-mAntennaToRearAxleOffset, fusedYaw_radENU);
-        }
-
-        // Yaw --- based on last GNSS position if fusion (F9R) unavailable
-        static xyz_t lastXyz;
-        if(pvt.head_veh_valid) {
+        if (mReceiverVariant == RECEIVER_VARIANT::UBLX_ZED_F9R) {
             double yaw_degENU = coordinateTransforms::yawNEDtoENU(pvt.head_veh) + mAChipOrientationOffset.yawOffset_deg;
 
-            // normalize to [-180.0:180.0[
+            // normalize to [-180.0:180.0]
             while (yaw_degENU < -180.0)
                 yaw_degENU += 360.0;
             while (yaw_degENU >= 180.0)
                 yaw_degENU -= 360.0;
 
             gnssPos.setYaw(yaw_degENU);
-        } else
-            gnssPos.setYaw(atan2(xyz.y - lastXyz.y, xyz.x - lastXyz.x) * 180.0 / M_PI);
+
+            vehYaw_radENU = yaw_degENU * M_PI / 180.0;
+        } else { // Assumes fused yaw is updated.
+            PosPoint fusedPos = mVehicleState->getPosition(PosType::fused);
+            vehYaw_radENU = fusedPos.getYaw() * M_PI / 180.0;
+        }
+
+        // Apply antenna offset to reference point (e.g., back axle) if set.
+        if (mAntennaToRearAxleOffset.x != 0.0 || mAntennaToRearAxleOffset.y != 0.0) {
+            gnssPos.updateWithOffsetAndYawRotation(-mAntennaToRearAxleOffset, vehYaw_radENU);
+        }
 
         // Time and speed
         gnssPos.setTime(QTime::fromMSecsSinceStartOfDay((pvt.i_tow % ms_per_day) - leapSeconds_ms));
@@ -431,9 +434,10 @@ void UbloxRover::updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt)
         gnssPos.setSpeed(pvt.g_speed);
 
         mVehicleState->setPosition(gnssPos);
+
+        static xyz_t lastXyz;
         emit updatedGNSSPositionAndYaw(mVehicleState, QLineF(QPointF(lastXyz.x, lastXyz.y), gnssPos.getPoint()).length(), pvt.head_veh_valid);
         emit txNavPvt(pvt);
-
 
         lastXyz = xyz;
     }
