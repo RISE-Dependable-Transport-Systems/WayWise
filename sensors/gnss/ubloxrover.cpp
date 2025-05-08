@@ -24,8 +24,11 @@ UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
         if (mPrintVerbose && mReceiverState == RECEIVER_STATE::CALIBRATING){
             qDebug() << "---------------------------------";
             qDebug() << "ESF-ALG data:"
-                     << "\nStatus:" << alg.status
                      << "\nAuto mount alignmend enabled:" << alg.autoMntAlgOn
+                     << "\nStatus:" << Ublox::getAutoMntAlgStatusText(alg.status)
+                     << "\n roll/pitch angle error:" << alg.tiltAlgError
+                     << "\n yaw angle error:" << alg.yawAlgError
+                     << "\n gimbal-lock error:" << alg.angleError
                      << "\nRoll, Pitch, Yaw:" << alg.roll << alg.pitch << alg.yaw;
         }
     });
