@@ -669,6 +669,7 @@ public:
     static QString getPsmStateText(uint8_t psmState);
     static QString getSpoofDetStateText(uint8_t spoofDetState);
     static QString getCarrSolnText(uint8_t carrSoln);
+    static QString getAutoMntAlgStatusText(uint8_t autoMntAlgOn);
 
 signals:
     void rxNavSol(const ubx_nav_sol &sol);

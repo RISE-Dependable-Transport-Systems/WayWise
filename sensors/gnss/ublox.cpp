@@ -2035,3 +2035,14 @@ QString Ublox::getCarrSolnText(uint8_t carrSoln) {
         default: return "Invalid";
     }
 }
+
+QString Ublox::getAutoMntAlgStatusText(uint8_t autoMntAlgOn) {
+    switch (autoMntAlgOn) {
+        case 0x00: return "User-defined/fixed angles are used";
+        case 0x01: return "roll/pitch angles alignment is ongoing";
+        case 0x02: return "roll/pitch/yaw angles alignment is ongoing";
+        case 0x03: return "coarse aligned";
+        case 0x04: return "fine aligned";
+        default: return "Invalid";
+    }
+}
