@@ -72,6 +72,24 @@ void Logger::initVehicle()
 {
     if(isInit)  return;
 
+    QDir documentsDirectory(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));   // Documents directory (OS agnostic)
+
+    QString folderName = "RCCar Logs";
+    QString folderPath = documentsDirectory.filePath(folderName);
+
+    if (!documentsDirectory.exists(folderPath))
+    {
+        if (documentsDirectory.mkpath(folderPath))   qDebug() << "Logs folder created";
+        else                                        qDebug() << "Failed to create Logs folder.";
+    }
+
+    logFile = new QFile;
+
+    QString fileName = QString("%1/Log %2.log").arg(folderPath).arg(QDateTime::currentDateTime().toString("dd-MM-yyyy hh-mm-ss"));
+
+    logFile->setFileName(fileName);
+    logFile->open(QIODevice::Append | QIODevice::Text);
+
     qInstallMessageHandler(Logger::messageOutput);
 
     Logger::isInit = true;
@@ -112,7 +130,7 @@ void Logger::messageOutput(QtMsgType type, const QMessageLogContext &context, co
     }
 
     fprintf(stderr, "%s\n", qPrintable(newItem.log));
-
+    /*
     static QVector<logItem> logQueue;
 
     if(Logger::getInstance().isConnected()) {
@@ -125,7 +143,7 @@ void Logger::messageOutput(QtMsgType type, const QMessageLogContext &context, co
         Logger::getInstance().emit logSent(newItem.log, newItem.severity);
     } else
         logQueue.push_back(newItem);
-
+    */
     if(logFile) {
         newItem.log.append("\n");
         logFile->write(newItem.log.toLocal8Bit());
