@@ -1484,10 +1484,11 @@ void Ublox::ubx_decode_nav_pvt(uint8_t *msg, int len)
     pvt.head_acc = ((double)ubx_get_U4(msg, &ind))*1.0e-5; // 72
     pvt.p_dop    = ((double)ubx_get_U2(msg, &ind))*1.0e-2; // 76
 
-    flags           = ubx_get_X1(msg, &ind); // 78
-    pvt.invalid_llh = (flags >> 0) & 1;
+    uint16_t flags_X2 = ubx_get_X2(msg, &ind); // 78
+    pvt.invalid_llh = (flags_X2 >> 0) & 1;
+    pvt.last_correction_age = (flags_X2 >> 1) & 0x0F;
 
-    ind += 5;  //  79-83 reserved
+    ind += 4;  //  80-83 reserved
 
     pvt.head_veh = ((double)ubx_get_I4(msg, &ind))*1.0e-5; // 84
     pvt.mag_dec   = ((double)ubx_get_I2(msg, &ind))*1.0e-2; // 88
