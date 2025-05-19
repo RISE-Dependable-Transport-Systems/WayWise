@@ -610,8 +610,8 @@ void UbloxRover::aboutToShutdown()
 void UbloxRover::shutdownGNSSReceiver()
 {
     if (mUblox.isSerialConnected()) {
-        bool result = mUblox.ubxCfgRst(0x0000, 0x01); // request CONTROLLED SOFTWARE reset with HOT start
-        qDebug() << "UbloxRover: Software reset request" << (result ? "was sent" : "reported an error");
+        // bool result = mUblox.ubxCfgRst(0x0000, 0x01); // request CONTROLLED SOFTWARE reset with HOT start
+        // qDebug() << "UbloxRover: Software reset request" << (result ? "was sent" : "reported an error");
         setReceiverState(RECEIVER_STATE::DISCONNECTED);
         mUblox.disconnectSerial();
     }
