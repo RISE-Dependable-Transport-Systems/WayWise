@@ -136,6 +136,7 @@ typedef struct {
     double p_dop;
 
     bool invalid_llh;
+    uint8_t last_correction_age;
 
     double head_veh;
     double mag_dec;
