@@ -398,6 +398,7 @@ void UbloxRover::updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt)
 
         if (!mEnuReferenceSet) {
             setEnuRef(llh);
+            qDebug() << "UbloxRover: ENU reference point set to" << pvt.lat << pvt.lon << pvt.height;
         } else
             xyz = coordinateTransforms::llhToEnu(mEnuReference, llh);
 
@@ -405,7 +406,6 @@ void UbloxRover::updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt)
         gnssPos.setXYZ(xyz);
 
         double vehYaw_radENU = 0.0;
-        xyz_t mAntennaToRearAxleOffset = mAntennaToChipOffset + mChipToRearAxleOffset;
         if (mReceiverVariant == RECEIVER_VARIANT::UBLX_ZED_F9R) {
             double yaw_degENU = coordinateTransforms::yawNEDtoENU(pvt.head_veh) + mAChipOrientationOffset.yawOffset_deg;
 
@@ -418,14 +418,20 @@ void UbloxRover::updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt)
             gnssPos.setYaw(yaw_degENU);
 
             vehYaw_radENU = yaw_degENU * M_PI / 180.0;
+
+            // Apply Chip to rear axle offset if set.
+            if (mChipToRearAxleOffset.x != 0.0 || mChipToRearAxleOffset.y != 0.0) {
+                gnssPos.updateWithOffsetAndYawRotation(mChipToRearAxleOffset, vehYaw_radENU);
+            }
         } else { // Assumes fused yaw is updated.
             PosPoint fusedPos = mVehicleState->getPosition(PosType::fused);
             vehYaw_radENU = fusedPos.getYaw() * M_PI / 180.0;
-        }
 
-        // Apply antenna offset to reference point (e.g., back axle) if set.
-        if (mAntennaToRearAxleOffset.x != 0.0 || mAntennaToRearAxleOffset.y != 0.0) {
-            gnssPos.updateWithOffsetAndYawRotation(-mAntennaToRearAxleOffset, vehYaw_radENU);
+            // Apply antenna to rear axle offset if set.
+            xyz_t mAntennaToRearAxleOffset = mAntennaToChipOffset + mChipToRearAxleOffset;
+            if (mAntennaToRearAxleOffset.x != 0.0 || mAntennaToRearAxleOffset.y != 0.0) {
+                gnssPos.updateWithOffsetAndYawRotation(mAntennaToRearAxleOffset, vehYaw_radENU);
+            }
         }
 
         // Time and speed
