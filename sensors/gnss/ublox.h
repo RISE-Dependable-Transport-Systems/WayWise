@@ -136,6 +136,7 @@ typedef struct {
     double p_dop;
 
     bool invalid_llh;
+    uint8_t last_correction_age;
 
     double head_veh;
     double mag_dec;
@@ -670,6 +671,7 @@ public:
     static QString getSpoofDetStateText(uint8_t spoofDetState);
     static QString getCarrSolnText(uint8_t carrSoln);
     static QString getAutoMntAlgStatusText(uint8_t autoMntAlgOn);
+    static QString getLastCorrectionAgeText(uint8_t lastCorrectionAge);
 
 signals:
     void rxNavSol(const ubx_nav_sol &sol);

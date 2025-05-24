@@ -1484,10 +1484,11 @@ void Ublox::ubx_decode_nav_pvt(uint8_t *msg, int len)
     pvt.head_acc = ((double)ubx_get_U4(msg, &ind))*1.0e-5; // 72
     pvt.p_dop    = ((double)ubx_get_U2(msg, &ind))*1.0e-2; // 76
 
-    flags           = ubx_get_X1(msg, &ind); // 78
-    pvt.invalid_llh = (flags >> 0) & 1;
+    uint16_t flags_X2 = ubx_get_X2(msg, &ind); // 78
+    pvt.invalid_llh = (flags_X2 >> 0) & 1;
+    pvt.last_correction_age = (flags_X2 >> 1) & 0x0F; // 0x0F = 0b1111
 
-    ind += 5;  //  79-83 reserved
+    ind += 4;  //  80-83 reserved
 
     pvt.head_veh = ((double)ubx_get_I4(msg, &ind))*1.0e-5; // 84
     pvt.mag_dec   = ((double)ubx_get_I2(msg, &ind))*1.0e-2; // 88
@@ -2046,3 +2047,21 @@ QString Ublox::getAutoMntAlgStatusText(uint8_t autoMntAlgOn) {
         default: return "Invalid";
     }
 }
+
+QString Ublox::getLastCorrectionAgeText(uint8_t lastCorrectionAge) {
+    switch (lastCorrectionAge) {
+            case 0: return "NA";
+            case 1: return "0-1 s";
+            case 2: return "1-2 s";
+            case 3: return "2-5 s";
+            case 4: return "5-10 s";
+            case 5: return "10-15 s";
+            case 6: return "15-20 s";
+            case 7: return "20-30 s";
+            case 8: return "30-45 s";
+            case 9: return "45-60 s";
+            case 10: return "60-90 s";
+            case 11: return "90-120 s";
+            default: return "≥120 s";
+        }
+    }
