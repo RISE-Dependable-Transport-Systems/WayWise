@@ -113,6 +113,11 @@ void PurepursuitWaypointFollower::addRoute(const QList<PosPoint> &route)
 
 void PurepursuitWaypointFollower::startFollowingRoute(bool fromBeginning)
 {
+    if (mWaypointList.size() == 0) {
+        qDebug() << "Note: WaypointFollower does not have any waypoints to follow.";
+        return;
+    }
+
     // Activate emergency brake for follow route
     emit activateEmergencyBrake();
     mCurrentState.overrideAltitude = mVehicleState->getPosition(mPosTypeUsed).getHeight();
@@ -334,7 +339,9 @@ void PurepursuitWaypointFollower::updateState()
                 qDebug() << "Goal overshot! Stopped waypoint follower with distance to goal:" << endGoalToreferencePointDistance << "m.";
             } else {
                 double purePursuitRadius_ = purePursuitRadius();
-                double extensionDistance = std::max(purePursuitRadius_ - endGoalToreferencePointDistance, 0.0);
+                QSharedPointer<VehicleState> referenceVehicleState = getReferenceVehicleState();
+                double endGoalToVehicleDistance = QLineF(endGoalPointXY, referenceVehicleState->getPosition(mPosTypeUsed).getPoint()).length();
+                double extensionDistance = std::max(purePursuitRadius_ - endGoalToVehicleDistance, 0.0);
                 double extensionRatio = (-extensionDistance) / endGoalToPreviousWayPointLine.length();
                 QPointF extendedGoalPointXY = endGoalToPreviousWayPointLine.pointAt(extensionRatio);
 
@@ -472,10 +479,7 @@ QList<PosPoint> PurepursuitWaypointFollower::getCurrentRoute()
 QPointF PurepursuitWaypointFollower::getVehicleAlignmentReferencePoint()
 {
     QPointF vehicleAlignmentReferencePointXY;
-    QSharedPointer<VehicleState> referenceVehicleState = mVehicleState;
-    if (mVehicleState->hasTrailingVehicle() && mWaypointList.at(mCurrentState.currentWaypointIndex).getSpeed() < 0) { // position defined by trailer when backing (if exists)
-        referenceVehicleState = mVehicleState->getTrailingVehicle();
-    }
+    QSharedPointer<VehicleState> referenceVehicleState = getReferenceVehicleState();
 
     xyz_t rearAxleToReferencePointOffset;
     switch (mVehicleState->getEndGoalAlignmentType()) {
@@ -497,4 +501,13 @@ QPointF PurepursuitWaypointFollower::getVehicleAlignmentReferencePoint()
     }
 
     return vehicleAlignmentReferencePointXY;
+}
+
+QSharedPointer<VehicleState> PurepursuitWaypointFollower::getReferenceVehicleState()
+{
+    if (mVehicleState->hasTrailingVehicle() && mWaypointList.at(mCurrentState.currentWaypointIndex).getSpeed() < 0) { // position defined by trailer when backing (if exists)
+        return mVehicleState->getTrailingVehicle();
+    } else {
+        return mVehicleState;
+    }
 }

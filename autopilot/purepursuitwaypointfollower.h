@@ -88,6 +88,7 @@ private:
     void updateControl(const PosPoint& goal);
     int findClosestWaypointIndex(const QList<PosPoint>& waypoints, const QPointF &currentVehiclePositionXY);
     QPointF getVehicleReferencePosition(const QList<PosPoint>& waypoints);
+    QSharedPointer<VehicleState> getReferenceVehicleState();
 
     WayPointFollowerState mCurrentState;
 
