@@ -441,6 +441,11 @@ void UbloxRover::updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt)
 
         mVehicleState->setPosition(gnssPos);
 
+        // Accuracy
+        mGnssFixAccuracy.horizontal = pvt.h_acc;
+        mGnssFixAccuracy.vertical = pvt.v_acc;
+        mGnssFixAccuracy.heading = pvt.head_acc;
+
         static xyz_t lastXyz;
         emit updatedGNSSPositionAndYaw(mVehicleState, QLineF(QPointF(lastXyz.x, lastXyz.y), gnssPos.getPoint()).length(), pvt.head_veh_valid);
         emit txNavPvt(pvt);

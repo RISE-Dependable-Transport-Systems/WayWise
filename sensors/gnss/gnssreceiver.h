@@ -10,12 +10,13 @@
 
 #include <QObject>
 #include <QSharedPointer>
+#include <limits>
 
 #include "core/coordinatetransforms.h"
 #include "vehicles/vehiclestate.h"
 
 
-enum class RECEIVER_VARIANT {UNKNOWN, WAYWISE_SIMULATED, EXT_SIMULATED, UBLX_ZED_F9P, UBLX_ZED_F9R};
+enum class RECEIVER_VARIANT {UNKNOWN, WAYWISE_SIMULATED, EXTERNAL, UBLX_ZED_F9P, UBLX_ZED_F9R};
 
 enum class RECEIVER_STATE
 {
@@ -32,6 +33,13 @@ enum class RECEIVER_STATE
 };
 
 enum class GNSS_FIX_TYPE {NO_FIX, DEAD_RECKONING_ONLY, FIX_2D, FIX_3D, FIX_GNSS_DR_COMBINED, FIX_TIME_ONLY};
+
+struct GnssFixAccuracy
+{
+  float horizontal = std::numeric_limits<float>::infinity();
+  float vertical = std::numeric_limits<float>::infinity();
+  float heading = std::numeric_limits<float>::infinity();
+};
 
 class GNSSReceiver : public QObject
 {
@@ -50,6 +58,8 @@ public:
     void setReceiverState(RECEIVER_STATE state) { mReceiverState = state; }
     virtual void aboutToShutdown() {};
     virtual void readVehicleSpeedForPositionFusion() {};
+    virtual void setGnssFixAccuracy(GnssFixAccuracy gnssFixAccuracy) { mGnssFixAccuracy = gnssFixAccuracy; }
+    virtual GnssFixAccuracy getGnssFixAccuracy() { return mGnssFixAccuracy; }
 
 signals:
     void updatedEnuReference(llh_t mEnuReference);
@@ -67,6 +77,7 @@ protected:
     struct {double rollOffset_deg, pitchOffset_deg, yawOffset_deg;} mAChipOrientationOffset; // in degrees
     xyz_t mAntennaToChipOffset = {0.0, 0.0, 0.0}; // in meters
     xyz_t mChipToRearAxleOffset = {0.0, 0.0, 0.0}; // in meters
+    GnssFixAccuracy mGnssFixAccuracy;
 };
 
 #endif // GNSSRECEIVER_H
