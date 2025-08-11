@@ -76,9 +76,13 @@ public:
     void setPosTypeUsed(const PosType &posTypeUsed);
 
     void provideParametersToParameterServer();
-    QPointF getVehicleAlignmentReferencePoint();
+    PosPoint getVehicleAlignmentReferencePosPoint();
+    QSharedPointer<VehicleState> getReferenceVehicleState();
 
     WayPointFollowerState getCurrentState() const {return mCurrentState;}
+
+    void setAdaptiveApproachSpeedEnabled(bool adaptive) {mAdaptiveApproachSpeedEnabled = adaptive;}
+    void setMinApproachSpeed(double minApproachSpeed) {mMinApproachSpeed = minApproachSpeed;}
 
 signals:
     void distanceOfRouteLeft(double meters);
@@ -88,7 +92,6 @@ private:
     void updateControl(const PosPoint& goal);
     int findClosestWaypointIndex(const QList<PosPoint>& waypoints, const QPointF &currentVehiclePositionXY);
     QPointF getVehicleReferencePosition(const QList<PosPoint>& waypoints);
-    QSharedPointer<VehicleState> getReferenceVehicleState();
 
     WayPointFollowerState mCurrentState;
 
@@ -106,6 +109,9 @@ private:
 
     bool mRetryAfterEndGoalOvershot = false;
     double mEndGoalAlignmentThreshold = 0.1; //[m]
+
+    bool mAdaptiveApproachSpeedEnabled = false;
+    double mMinApproachSpeed = 0.0;
 };
 
 #endif // PUREPURSUITWAYPOINTFOLLOWER_H
