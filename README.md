@@ -17,11 +17,11 @@ Our main projects that base on WayWise are:
 - [WayWiseR](https://github.com/RISE-Dependable-Transport-Systems/WayWiseR), a ROS2 integration of WayWise that streamlines the development and deployment of autonomous vehicles in both simulation and real-world environments.
 
 Current maintainers are:
-- Marvin Damschen
 - Aria Mirzai
 - Ramana Reddy Avula
 
 Previous maintainers:
+- Marvin Damschen
 - Rickard Häll
 
 You can reach out to us directly or via waywise@ri.se.
