@@ -1,5 +1,5 @@
 # WayWise
-![Workflow build result](https://github.com/RISE-Dependable-Transport-Systems/WayWise/actions/workflows/main.yml/badge.svg) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/RISE-Dependable-Transport-Systems/WayWise)
+![Workflow build result](https://github.com/RISE-Dependable-Transport-Systems/WayWise/actions/workflows/main.yml/badge.svg) [![Docker Image](https://github.com/RISE-Dependable-Transport-Systems/WayWise/actions/workflows/docker-build-push.yml/badge.svg)](https://github.com/RISE-Dependable-Transport-Systems/WayWise/actions/workflows/docker-build-push.yml) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/RISE-Dependable-Transport-Systems/WayWise)
 
 https://github.com/user-attachments/assets/22279eb2-fc61-4fe6-91da-493cc589b09c
 
@@ -36,6 +36,96 @@ As set of examples can be found in [/examples](https://github.com/RISE-Dependabl
 - [A minimal simulated car with an autopilot communicating via ISO/TS 22133](https://github.com/RISE-Dependable-Transport-Systems/WayWise/tree/main/examples/RCCar_ISO22133_autopilot). This example can be connected to using [ATOS](https://github.com/RI-SE/ATOS).
 
 ![RCCar_minimal_example](https://user-images.githubusercontent.com/2404625/202208555-1271ba0d-55f7-4c26-94ac-53920e6d18c5.gif)
+
+## 🐳 Docker Usage
+
+WayWise is available as a Docker container for easy deployment and testing. This is particularly useful for:
+- 🧪 Security chaos engineering experiments (PRECISE-project)
+- 🔄 Quick deployments with isolated, reproducible environments
+- 🚀 Running simulations without local build dependencies
+
+### Pull and Run
+
+Pull the latest image from DockerHub:
+```bash
+docker pull risedts/waywise:latest
+```
+
+Run the default MAVLINK autopilot example:
+```bash
+docker run --rm -p 14540:14540/udp -p 14550:14550/udp risedts/waywise:latest
+```
+
+The container exposes UDP ports for MAVLINK communication:
+- `14540/udp` - System port
+- `14550/udp` - Ground control station port (for ControlTower)
+
+### Available Executables
+
+The container includes three example applications:
+
+1. **RCCar_MAVLINK_autopilot** (default) - MAVLINK-based autonomous vehicle
+```bash
+docker run --rm -p 14540:14540/udp -p 14550:14550/udp risedts/waywise:latest
+```
+
+2. **RCCar_ISO22133_autopilot** - ISO/TS 22133-based autonomous vehicle
+```bash
+docker run --rm risedts/waywise:latest /usr/local/bin/RCCar_ISO22133_autopilot
+```
+
+3. **map_local_twocars** - Two-car local simulation
+```bash
+docker run --rm risedts/waywise:latest /usr/local/bin/map_local_twocars
+```
+
+### Connecting with ControlTower
+
+To connect [ControlTower](https://github.com/RISE-Dependable-Transport-Systems/ControlTower) to the containerized vehicle:
+
+1. Run the WayWise container with exposed ports:
+```bash
+docker run --rm --name waywise-vehicle \
+  -p 14540:14540/udp \
+  -p 14550:14550/udp \
+  risedts/waywise:latest
+```
+
+2. In ControlTower, connect to `udp://:14550`
+
+### Resetting State for Chaos Experiments
+
+The container is designed to be **stateless** - no persistent volumes are used by default. To reset the system state:
+
+```bash
+# Stop the running container
+docker stop waywise-vehicle
+
+# Start a fresh instance
+docker run --rm --name waywise-vehicle \
+  -p 14540:14540/udp \
+  -p 14550:14550/udp \
+  risedts/waywise:latest
+```
+
+Each container restart provides a completely clean environment, perfect for repeatable chaos engineering experiments. 🔁
+
+### Building the Docker Image Locally
+
+To build the image from source:
+
+```bash
+git clone --recursive https://github.com/RISE-Dependable-Transport-Systems/WayWise.git
+cd WayWise
+docker build -t waywise:local .
+```
+
+### Docker Image Tags
+
+Images are automatically built and pushed to DockerHub:
+- `latest` - Built from the main branch
+- `v*.*.*` - Versioned releases (e.g., `v1.0.0`)
+- `main` - Latest commit from main branch
 
 ## Organization
 - **core**: fundamental classes/headers, e.g., for storing a position and transforming coordinates
