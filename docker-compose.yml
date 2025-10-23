@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  # Default MAVLINK autopilot example
+  waywise-mavlink:
+    image: risedts/waywise:latest
+    container_name: waywise-mavlink
+    ports:
+      - "14540:14540/udp"
+      - "14550:14550/udp"
+    restart: unless-stopped
+    networks:
+      - waywise-net
+
+  # ISO22133 autopilot example
+  waywise-iso:
+    image: risedts/waywise:latest
+    container_name: waywise-iso
+    command: /usr/local/bin/RCCar_ISO22133_autopilot
+    restart: unless-stopped
+    networks:
+      - waywise-net
+    profiles:
+      - iso22133
+
+  # Two-car simulation example
+  waywise-twocars:
+    image: risedts/waywise:latest
+    container_name: waywise-twocars
+    command: /usr/local/bin/map_local_twocars
+    restart: unless-stopped
+    networks:
+      - waywise-net
+    profiles:
+      - simulation
+
+networks:
+  waywise-net:
+    driver: bridge
+
+# Usage examples:
+#
+# 1. Run default MAVLINK autopilot:
+#    docker-compose up waywise-mavlink
+#
+# 2. Run ISO22133 autopilot:
+#    docker-compose --profile iso22133 up waywise-iso
+#
+# 3. Run two-car simulation:
+#    docker-compose --profile simulation up waywise-twocars
+#
+# 4. Run in background (detached mode):
+#    docker-compose up -d waywise-mavlink
+#
+# 5. View logs:
+#    docker-compose logs -f waywise-mavlink
+#
+# 6. Stop and remove containers:
+#    docker-compose down
+#
+# 7. Reset state (stop and start fresh):
+#    docker-compose down && docker-compose up waywise-mavlink
