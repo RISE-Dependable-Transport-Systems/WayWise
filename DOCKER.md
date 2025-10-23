@@ -92,10 +92,19 @@ This example can be connected to using [ATOS](https://github.com/RI-SE/ATOS).
 
 ### Two-Car Simulation
 
-Run a local simulation with two vehicles:
+Run a local simulation with two vehicles. **Note:** This example requires a display or headless mode:
 
 ```bash
+# With X11 display forwarding (Linux/macOS)
 docker run --rm --name waywise-twocars \
+  -e DISPLAY=$DISPLAY \
+  -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
+  risedts/waywise:latest \
+  /usr/local/bin/map_local_twocars
+
+# Headless mode (no display)
+docker run --rm --name waywise-twocars \
+  -e QT_QPA_PLATFORM=offscreen \
   risedts/waywise:latest \
   /usr/local/bin/map_local_twocars
 ```
