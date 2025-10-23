@@ -49,8 +49,11 @@ RUN apt-get update && apt-get install -y \
     libqt5core5a \
     libqt5network5 \
     libqt5serialport5 \
+    libqt5printsupport5 \
+    libqt5widgets5 \
     libboost-program-options1.74.0 \
     libboost-system1.74.0 \
+    libatomic1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy MAVSDK libraries from builder
