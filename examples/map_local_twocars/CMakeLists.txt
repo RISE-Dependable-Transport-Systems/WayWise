@@ -42,6 +42,10 @@ add_executable(map_local_twocars
     ${WAYWISE_PATH}/userinterface/map/osmclient.cpp
     ${WAYWISE_PATH}/userinterface/map/osmtile.cpp
     ${WAYWISE_PATH}/core/pospoint.cpp
+    ${WAYWISE_PATH}/vehicles/controller/carmovementcontroller.cpp
+    ${WAYWISE_PATH}/vehicles/controller/motorcontroller.h
+    ${WAYWISE_PATH}/vehicles/controller/movementcontroller.cpp
+    ${WAYWISE_PATH}/vehicles/controller/servocontroller.cpp
 )
 
 target_include_directories(map_local_twocars PRIVATE ${WAYWISE_PATH}/)

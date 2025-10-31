@@ -21,9 +21,15 @@ int main(int argc, char *argv[])
     QSharedPointer<CarMovementController> mCarMovementController(new CarMovementController(mCarState));
 
     QObject::connect(&mUpdateVehicleStateTimer, &QTimer::timeout, [&](){
-        mCarState->simulationStep(mUpdateVehicleStatePeriod_ms, PosType::fused);
+        mCarMovementController->simulationStep(mUpdateVehicleStatePeriod_ms);
     });
     mUpdateVehicleStateTimer.start(mUpdateVehicleStatePeriod_ms);
+    QObject::connect(mCarMovementController.get(), &CarMovementController::updatedOdomPositionAndYaw, [&](QSharedPointer<VehicleState> vehicleState, double distanceDriven){
+        Q_UNUSED(distanceDriven)
+        PosPoint currentPosition = vehicleState->getPosition(PosType::odom);
+        currentPosition.setType(PosType::fused);
+        vehicleState->setPosition(currentPosition);
+    });
 
     // --- Autopilot ---
     QSharedPointer<PurepursuitWaypointFollower> mWaypointFollower(new PurepursuitWaypointFollower(mCarMovementController));
@@ -33,6 +39,11 @@ int main(int argc, char *argv[])
     // Setup MAVLINK communication towards ControlTower
     mavsdkVehicleServer.setMovementController(mCarMovementController);
     mavsdkVehicleServer.setWaypointFollower(mWaypointFollower);
+
+        // Advertise parameters
+    mCarState->provideParametersToParameterServer();
+    mavsdkVehicleServer.provideParametersToParameterServer();
+    mWaypointFollower->provideParametersToParameterServer();
 
     // Watchdog that warns when EventLoop is slowed down
     SimpleWatchdog watchdog;
