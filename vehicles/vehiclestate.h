@@ -98,7 +98,6 @@ public:
     void setTrailingVehicle(QSharedPointer<VehicleState> trailer);
     bool hasTrailingVehicle() const;
 
-    void simulationStep(double dt_ms, PosType usePosType = PosType::simulated); // Take current state and simulate step forward for dt_ms milliseconds, update state accordingly
     virtual void updateOdomPositionAndYaw(double drivenDistance, PosType usePosType = PosType::odom) = 0;
     virtual double steeringCurvatureToSteering(double steeringCurvature) = 0;
 

@@ -31,6 +31,8 @@ public:
     double getSpeedToRPMFactor() const;
     void setSpeedToRPMFactor(double getSpeedToRPMFactor);
 
+    virtual void simulationStep(double dt_ms) override;
+
     virtual void actuateDriveMotor(int32_t rpm) override;
     virtual void actuateSteeringServo(float steering) override;
 

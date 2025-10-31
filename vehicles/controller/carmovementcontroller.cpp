@@ -76,6 +76,17 @@ void CarMovementController::updateVehicleState(double rpm, int tachometer, int t
     emit updatedOdomPositionAndYaw(carState, drivenDistance);
 }
 
+void CarMovementController::simulationStep(double dt_ms) {
+    double drivenDistance = getDesiredSpeed() * dt_ms / 1000;
+
+    xyz_t currentVelocity = mCarState->getVelocity();
+    currentVelocity.x = getDesiredSpeed();
+    mCarState->setVelocity(currentVelocity);
+
+    mCarState->updateOdomPositionAndYaw(drivenDistance);
+    emit updatedOdomPositionAndYaw(mCarState, drivenDistance);
+}
+
 void CarMovementController::actuateDriveMotor(int32_t rpm)
 {
     if (mMotorController) {
