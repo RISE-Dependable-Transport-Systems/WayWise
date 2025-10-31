@@ -30,6 +30,9 @@ public:
 
     QSharedPointer<VehicleState> getVehicleState() const;
 
+    virtual void actuateDriveMotor([[maybe_unused]] int32_t rpm) {}
+    virtual void actuateSteeringServo([[maybe_unused]] float steering) {}
+
 signals:
     void updatedOdomPositionAndYaw(QSharedPointer<VehicleState> vehicleState, double distanceMoved);
 

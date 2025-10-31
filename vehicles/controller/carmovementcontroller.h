@@ -20,7 +20,7 @@ class CarMovementController : public MovementController
 {
     Q_OBJECT
 public:
-    CarMovementController(QSharedPointer<CarState> vehicleState);
+    CarMovementController(QSharedPointer<CarState> vehicleState, bool autoActuateMotorAndServo = true);
     // MovementController interface
     virtual void setDesiredSteering(double desiredSteering) override;
     virtual void setDesiredSpeed(double desiredSpeed) override;
@@ -31,6 +31,8 @@ public:
     double getSpeedToRPMFactor() const;
     void setSpeedToRPMFactor(double getSpeedToRPMFactor);
 
+    virtual void actuateDriveMotor(int32_t rpm) override;
+    virtual void actuateSteeringServo(float steering) override;
 
 private:
     void updateVehicleState(double rpm, int tachometer, int tachometer_abs, double voltageInput, double temperature, int errorID);
@@ -39,6 +41,7 @@ private:
     QSharedPointer<MotorController> mMotorController;
     QSharedPointer<ServoController> mServoController;
     double mSpeedToRPMFactor = 4123.3; // default for Traxxas Slash VXL
+    bool mAutoActuateMotorAndServo = true;
 };
 
 #endif // CARMOVEMENTCONTROLLER_H

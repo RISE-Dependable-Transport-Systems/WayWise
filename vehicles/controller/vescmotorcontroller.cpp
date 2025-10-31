@@ -121,11 +121,11 @@ void VESCMotorController::setEnableIMUOrientationUpdate(bool enabled)
     mEnableIMUOrientationUpdate = enabled;
 }
 
-void VESCMotorController::VESCServoController::requestSteering(float steering) // TODO: smoothen servo input
+void VESCMotorController::VESCServoController::requestServoPosition(float servoPosition) // TODO: smoothen servo input
 {
     VByteArray vb;
     vb.vbAppendInt8(VESC::COMM_SET_SERVO_POS);
-    vb.vbAppendDouble16(steering, 1000.0);
+    vb.vbAppendDouble16(servoPosition, 1000.0);
     mVESCPacket->sendPacket(vb);
 }
 

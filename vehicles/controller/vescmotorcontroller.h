@@ -44,8 +44,8 @@ private:
     class VESCServoController : public ServoController {
     public:
         VESCServoController(VESC::Packet* packet) {mVESCPacket = packet;};
-        virtual void requestSteering(float steering);
     private:
+        virtual void requestServoPosition(float servoPosition);
         VESC::Packet* mVESCPacket;
     };
     QSharedPointer<VESCServoController> mVESCServoController;
