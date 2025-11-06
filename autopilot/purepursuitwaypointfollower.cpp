@@ -8,6 +8,7 @@
 #include "purepursuitwaypointfollower.h"
 #include "communication/parameterserver.h"
 #include "core/geometry.h"
+#include "routeplanning/zigzagroutegenerator.h"
 
 PurepursuitWaypointFollower::PurepursuitWaypointFollower(QSharedPointer<MovementController> movementController)
 {
@@ -322,9 +323,19 @@ void PurepursuitWaypointFollower::updateState()
 
 void PurepursuitWaypointFollower::updateControl(const PosPoint &goal)
 {
+    PosPoint currentPos = mVehicleState->getPosition(mPosTypeUsed);   // ENU position
+    double cappedSpeed = goal.getSpeed();   // the goal's desired speed
+
+    // Check each speed limit region (if inside overlapping regions, the most restrictive limit will be applied)
+    for (const SpeedLimitRegion &region : mSpeedLimitRegions) {
+        if (ZigZagRouteGenerator::isPointWithin(currentPos, region.boundary)) {
+            cappedSpeed = std::min(cappedSpeed, region.maxSpeed);
+        }
+    }
+
     if (isOnVehicle()) {
         mMovementController->setDesiredSteeringCurvature(mVehicleState->getCurvatureToPointInENU(goal.getPoint(), mPosTypeUsed));
-        mMovementController->setDesiredSpeed(goal.getSpeed());
+        mMovementController->setDesiredSpeed(cappedSpeed);
         mMovementController->setDesiredAttributes(goal.getAttributes());
 
         mVehicleState->setAutopilotTargetPoint(goal.getPoint());
@@ -334,7 +345,7 @@ void PurepursuitWaypointFollower::updateControl(const PosPoint &goal)
                                     goal.getY() - mVehicleConnection->getVehicleState()->getPosition(mPosTypeUsed).getY(),
                                     mCurrentState.overrideAltitude - mVehicleState->getPosition(mPosTypeUsed).getHeight()};
         double positionDiffDistance = sqrtf(positionDifference.x*positionDifference.x + positionDifference.y*positionDifference.y + positionDifference.z*positionDifference.z);
-        double velocityFactor = goal.getSpeed() / positionDiffDistance;
+        double velocityFactor = cappedSpeed / positionDiffDistance;
 
         double yawDeg = atan2(goal.getY() - mVehicleState->getPosition(mPosTypeUsed).getY(),
                               goal.getX() - mVehicleState->getPosition(mPosTypeUsed).getX()) * 180.0 / M_PI;
@@ -461,4 +472,30 @@ QPointF PurepursuitWaypointFollower::getVehicleAlignmentReferencePoint()
     }
 
     return vehicleAlignmentReferencePointXY;
+}
+
+void PurepursuitWaypointFollower::addSpeedLimitRegion(const QList<PosPoint>& boundary, double maxSpeed)
+{
+    if (boundary.size() < 3) {
+        qDebug() << "WARNING: Speed limit region requires at least 3 points to define a polygon.";
+        return;
+    }
+
+    SpeedLimitRegion region;
+    region.boundary = boundary;
+    region.maxSpeed = maxSpeed;
+    mSpeedLimitRegions.append(region);
+
+    qDebug() << "Added speed limit region with" << boundary.size() << "vertices and max speed" << maxSpeed << "m/s";
+}
+
+void PurepursuitWaypointFollower::clearSpeedLimitRegions()
+{
+    mSpeedLimitRegions.clear();
+    qDebug() << "Cleared all speed limit regions";
+}
+
+QList<SpeedLimitRegion> PurepursuitWaypointFollower::getSpeedLimitRegions() const
+{
+    return mSpeedLimitRegions;
 }

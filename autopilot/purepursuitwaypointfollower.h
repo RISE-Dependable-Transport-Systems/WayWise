@@ -33,6 +33,11 @@ struct WayPointFollowerState {
     double overrideAltitude = 0.0;
 };
 
+struct SpeedLimitRegion {
+    QList<PosPoint> boundary;  // 2D-Polygon vertices (altitude not considered)
+    double maxSpeed;           // Speed limit [m/s]
+};
+
 class PurepursuitWaypointFollower : public WaypointFollower
 {
     Q_OBJECT
@@ -78,6 +83,10 @@ public:
     void provideParametersToParameterServer();
     QPointF getVehicleAlignmentReferencePoint();
 
+    void addSpeedLimitRegion(const QList<PosPoint>& boundary, double maxSpeed);
+    void clearSpeedLimitRegions();
+    QList<SpeedLimitRegion> getSpeedLimitRegions() const;
+
 signals:
     void distanceOfRouteLeft(double meters);
 
@@ -85,6 +94,7 @@ private:
     void updateState();
     void updateControl(const PosPoint& goal);
     WayPointFollowerState mCurrentState;
+    QList<SpeedLimitRegion> mSpeedLimitRegions;
 
     PosType mPosTypeUsed = PosType::fused; // The type of position (Odom, GNSS, UWB, ...) that should be used for planning
     QSharedPointer<MovementController> mMovementController;
