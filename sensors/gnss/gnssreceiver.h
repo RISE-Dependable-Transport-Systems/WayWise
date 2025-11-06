@@ -47,6 +47,8 @@ class GNSSReceiver : public QObject
 public:
     GNSSReceiver(QSharedPointer<VehicleState> vehicleState);
 
+    bool simulationStep(const std::function<bool(QTime, QSharedPointer<VehicleState>)> &perturbationFn = nullptr);
+
     void setReceiverVariant(RECEIVER_VARIANT receiverVariant) { mReceiverVariant = receiverVariant; }
     RECEIVER_VARIANT getReceiverVariant() { return mReceiverVariant; }
     virtual llh_t getEnuRef() const { return mEnuReference; }
