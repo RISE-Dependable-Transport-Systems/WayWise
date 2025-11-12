@@ -11,56 +11,96 @@ RtcmClient::RtcmClient(QObject *parent) : QObject(parent)
         QByteArray data =  mTcpSocket.readAll();
 //        qDebug() << data;
 
-        // Make sure to skip "ICY 200 OK" when connection to NTRIP
+        // If first reply contains headers, parse them to check HTTP status / ICY
         if (!mSkippedFirstReply) {
             mSkippedFirstReply = true;
-            return;
-        }
 
-        // Try to read 1005 or 1006 from stream to get base station position
-        // See RTKLIB for how RTCM is decoded (https://github.com/tomojitakasu/RTKLIB)
-        // We are not CRC checking here (getting data via TCP anyways)
-        // TODO: wait for rest of incomplete message?
-        if (!mFoundReferenceStationInfo) {
-            const char* dataPtr = data.constData();
-            while ((dataPtr = std::find(dataPtr, data.constEnd(), RTCM3_PREAMBLE)) != data.constEnd()) {
-                if (dataPtr + 5 < data.constEnd()) {
-                    int length = getbitu(dataPtr, 14, 10) + 1; // number of bytes inkl. crc
-                    int type = getbitu(dataPtr, 24, 12);
-                    if (dataPtr + length < data.constEnd() && (type == 1005 || type == 1006)) {
-                        llh_t baseLlh = decodeLllhFromReferenceStationInfo(data.mid(dataPtr - data.constData(), length));
-//                        qDebug() << baseLlh.latitude << baseLlh.longitude << baseLlh.height << dataPtr - data.data() << length;
-                        qDebug() << "RtcmClient got base station position:" << baseLlh.latitude << baseLlh.longitude << baseLlh.height;
-                        mFoundReferenceStationInfo = true;
-                        emit baseStationPosition(baseLlh);
-                    }
+            // Convert to string safely (headers are ASCII). If binary, this will truncate at \0
+            QString headerStr = QString::fromLatin1(data);
+            // qDebug() << "First reply (as text):\n" << headerStr;
+
+            // Useful checks:
+            if (headerStr.startsWith("ICY 200") || headerStr.contains("200 OK")) {
+                qDebug() << "RtcmClient: NTRIP server responded OK.";
+            } else {
+                qWarning() << "RtcmClient: NTRIP server initial reply not 200. It might be an error or sourcetable.";
+                qDebug() << "RtcmClient: NTRIP server initial reply:" << headerStr;
+            }
+
+            int headerEnd = headerStr.indexOf("\r\n\r\n");
+            if (headerEnd >= 0) {
+                QByteArray remainder = data.mid(headerEnd + 4);
+                if (!remainder.isEmpty()) {
+                    // handle remainder (may contain first RTCM bytes)
+                    // fall-through to RTCM scanning by replacing `data` with remainder
+                    data = remainder;
+                } else {
+                    // no more data in this chunk after headers, return to wait for RTCM
+                    return;
                 }
-                dataPtr++;
+            } else {
+                // Headers not complete yet — return and wait for more bytes
+                return;
             }
         }
+
+        // Now `data` should be pointing at RTCM binary stream; try to find RTCM messages
+        if (!mFoundReferenceStationInfo) {
+            const char* dataPtr = data.constData();
+            auto dataEnd = data.constEnd();
+
+            while ((dataPtr = std::find(dataPtr, dataEnd, RTCM3_PREAMBLE)) != dataEnd) {
+                if (dataPtr + 5 < dataEnd) {
+                    int length = getbitu(dataPtr, 14, 10) + 1; // bytes incl. CRC
+                    int type = getbitu(dataPtr, 24, 12);
+                    if (dataPtr + length < dataEnd) {
+                        if (type == 1005 || type == 1006) {
+                            QByteArray msgBytes = data.mid(dataPtr - data.constData(), length);
+                            llh_t baseLlh = decodeLllhFromReferenceStationInfo(msgBytes);
+                            qDebug() << "RtcmClient got base station position:" << baseLlh.latitude << baseLlh.longitude << baseLlh.height;
+                            mFoundReferenceStationInfo = true;
+                            emit baseStationPosition(baseLlh);
+                        }
+                    }
+                }
+                ++dataPtr;
+            }
+        }
+
         emit rtcmData(data);
     });
 
     connect(&mTcpSocket, &QTcpSocket::connected, [this]{
-        // If a stream is selected, we connected to an NTRIP server and potentially need to authenticate.
-        if (mCurrentNtripConnectionInfo.stream.size() > 0) {
-            QString msg;
-            msg += "GET /" + mCurrentNtripConnectionInfo.stream + " HTTP/1.1\r\n";
-            msg += "User-Agent: NTRIP " + mCurrentHost + "\r\n";
-
-            if (mCurrentNtripConnectionInfo.user.size() > 0 || mCurrentNtripConnectionInfo.password.size() > 0) {
-                QString authStr = mCurrentNtripConnectionInfo.user + ":" + mCurrentNtripConnectionInfo.password;
-                QByteArray auth;
-                auth.append(authStr.toLocal8Bit());
-                msg += "Authorization: Basic " + auth.toBase64() + "\r\n";
-            }
-
-            msg += "Accept: */*\r\nConnection: close\r\n";
-            msg += "\r\n";
-
-            mTcpSocket.write(msg.toLocal8Bit());
+        if (mCurrentNtripConnectionInfo.stream.size() == 0) {
+            qDebug() << "No mountpoint/stream specified.";
+            return;
         }
+
+        QString msg;
+        // Use HTTP/1.0 and include Host header
+        msg += "GET /" + mCurrentNtripConnectionInfo.stream + " HTTP/1.0\r\n";
+        msg += "Host: " + mCurrentHost + "\r\n";
+        msg += "User-Agent: NTRIP client/1.0\r\n";
+
+        if (!mCurrentNtripConnectionInfo.user.isEmpty() || !mCurrentNtripConnectionInfo.password.isEmpty()) {
+            QString authStr = mCurrentNtripConnectionInfo.user + ":" + mCurrentNtripConnectionInfo.password;
+            QByteArray auth;
+            auth.append(authStr.toLocal8Bit());
+            msg += "Authorization: Basic " + auth.toBase64() + "\r\n";
+        }
+
+        msg += "Accept: */*\r\n\r\n"; // no Connection: close for now
+
+        // qDebug() << msg;
+
+        mTcpSocket.write(msg.toLocal8Bit());
     });
+
+    // connect error and state for debugging (call once, e.g. in constructor)
+    connect(&mTcpSocket, &QTcpSocket::errorOccurred, [this](QAbstractSocket::SocketError err){
+        qWarning() << "RtcmClient socket error:" << err << mTcpSocket.errorString();
+    });
+
 }
 
 void RtcmClient::connectTcp(QString host, qint16 port)
