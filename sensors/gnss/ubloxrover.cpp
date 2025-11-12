@@ -12,7 +12,12 @@ UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
     : GNSSReceiver(vehicleState)
 {
     // Use GNSS reception to update location
-    connect(&mUblox, &Ublox::rxNavPvt, this, &UbloxRover::updateGNSSPositionAndYaw);
+    connect(&mUblox, &Ublox::rxNavPvt, this, [this](const ubx_nav_pvt &pvt){
+        if (mReceiverVariant == RECEIVER_VARIANT::UBLX_ZED_F9P && mReceiverState != RECEIVER_STATE::READY) {
+            setReceiverState(RECEIVER_STATE::READY);
+        }
+        updateGNSSPositionAndYaw(pvt);
+    });
 
     // Fordward received NMEA GGA messages
     connect(&mUblox, &Ublox::rxNmeaGga, this, &UbloxRover::gotNmeaGga);
@@ -243,9 +248,12 @@ bool UbloxRover::configureUblox()
     mUblox.ubloxCfgAppendEnableBds(buffer, &ind, true, true, true);
     mUblox.ubloxCfgAppendEnableGlo(buffer, &ind, true, true, true);
 
+    mUblox.ubloxCfgAppendE1U1Key(buffer, &ind, CFG_NAVSPG_DYNMODEL, mDynamicModel); // Set Dynmaic model
+    // Set the output rates for the messages
+    mUblox.ubloxCfgAppendE1U1Key(buffer, &ind, CFG_MSGOUT_NMEA_ID_GGA_USB, 1); // NMEA-GGA rate
+
     if (mReceiverVariant == RECEIVER_VARIANT::UBLX_ZED_F9R) {
         // F9R specific configuration
-        mUblox.ubloxCfgAppendE1U1Key(buffer, &ind, CFG_NAVSPG_DYNMODEL, mDynamicModel); // Set Dynmaic model
 
         if (mCalibrateEsfSensors) { // TODO: do a valget to compare the key values and change them if required
             mUblox.ubloxCfgAppendEnableSf(buffer, &ind, true); // enable/disable sensor fusion
@@ -281,7 +289,6 @@ bool UbloxRover::configureUblox()
         }
 
         // Set the output rates for the messages
-        mUblox.ubloxCfgAppendE1U1Key(buffer, &ind, CFG_MSGOUT_NMEA_ID_GGA_USB, 1); // NMEA-GGA rate
         mUblox.ubloxCfgAppendE1U1Key(buffer, &ind, CFG_MSGOUT_UBX_ESF_STATUS_USB, 1); // UBX-ESF-STATUS rate
 
         // Disable nav prio mode by default at startup, it will be enabled when the ESF sensors are calibrated
@@ -307,74 +314,14 @@ bool UbloxRover::configureUblox()
     } else if (mReceiverVariant == RECEIVER_VARIANT::UBLX_ZED_F9P) {
         // F9P specific configuration
 
-        // The rate of NMEA and UBX protocol output messages are configurable
-        // and it is possible to enable or disable single NMEA or UBX messages individually.
-        // If the rate configuration value is zero, then the corresponding message will not be output.
-        // Values greater than zero indicate how often the message is output.
-        // TODO: convert to VALSET msg
-        mUblox.ubxCfgMsg(UBX_CLASS_ESF, UBX_ESF_MEAS, 0);
-        mUblox.ubxCfgMsg(UBX_CLASS_NAV, UBX_NAV_PVT, 1);
-        mUblox.ubxCfgMsg(UBX_CLASS_ESF, UBX_ESF_STATUS, 1);
-        mUblox.ubxCfgMsg(UBX_CLASS_ESF, UBX_ESF_ALG, 1);
-        // make sure some messages are disabled
-        mUblox.ubxCfgMsg(UBX_CLASS_NAV, UBX_NAV_SAT, 0);
-        mUblox.ubxCfgMsg(UBX_CLASS_RXM, UBX_RXM_RAWX, 0);
-        mUblox.ubxCfgMsg(UBX_CLASS_RXM, UBX_RXM_SFRBX, 0);
-        mUblox.ubxCfgMsg(UBX_CLASS_NAV, UBX_NAV_SOL, 0);
-        result &= mUblox.ubxCfgRate(200, 1, 0);
+        int gNSSMeasurementPeriod_ms = 1000 / mGNSSMeasurementRate; // convert Hz to ms
+        mUblox.ubloxCfgAppendRate(buffer, &ind, gNSSMeasurementPeriod_ms, 1, 0); // Set rate
+        mUblox.ubloxCfgAppendE1U1Key(buffer, &ind, CFG_MSGOUT_UBX_NAV_PVT_USB, 1); // Enable UBX-NAV-PVT
 
-        // Chip might have been used as base station, make sure to reconfigure.
-        // TODO: this code is taken from "old sdvp" s.th. F9P behaves as we are used to,
-        //       but needs to be revised, e.g., use VALSET msgs that work for F9R and F9P:
-        //        ind = 0;
-        //        mUblox.ubloxCfgAppendRate(buffer, &ind, 200, 1, 0);
-        //        result &= mUblox.ubloxCfgValset(buffer, ind, true, true, true);
-
-        // Disable RTCM output
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1005, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1074, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1077, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1084, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1087, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1094, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1097, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1124, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1127, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_1230, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_4072_0, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_RTCM3, UBX_RTCM3_4072_1, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_NAV, UBX_NAV_SVIN, 0);
-
-        // Enable NMEA GGA output (required by some NTRIP/RTCM servers)
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_GGA, 1);
-
-        // Disable NMEA output (all but GGA)
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_GSV, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_GLL, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_GSA, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_RMC, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_VTG, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_GRS, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_GST, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_ZDA, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_GBS, 0);
-        result &= mUblox.ubxCfgMsg(UBX_CLASS_NMEA, UBX_NMEA_DTM, 0);
-
-        // Disable possible survey-in / fixed position
-        ubx_cfg_tmode3 cfg_mode;
-        memset(&cfg_mode, 0, sizeof(cfg_mode));
-        cfg_mode.mode = 0;
-        result &= mUblox.ubxCfgTmode3(&cfg_mode);
-
-        // Stationary dynamic model
-        ubx_cfg_nav5 nav5;
-        memset(&nav5, 0, sizeof(ubx_cfg_nav5));
-        nav5.apply_dyn = true;
-        nav5.dyn_model = 4;
-        result &= mUblox.ubxCfgNav5(&nav5);
-        result &= mUblox.ubloxCfgValset(buffer, ind, true, true, true);
+        result &= mUblox.ubloxCfgValset(buffer, ind, true, true, mCalibrateEsfSensors, 0); // timeout set to 0 as ack is not being received
 
         qDebug() << "UbloxRover: F9P configuration" << (result ? "was successful" : "reported an error");
+        mCreateBackupWithSoS = true;
     }
 
     setReceiverState(RECEIVER_STATE::CONFIGURED);
@@ -587,7 +534,9 @@ bool UbloxRover::switchNavPrioMode(bool navPrioMode)
 void UbloxRover::aboutToShutdown()
 {
     if (mUblox.isSerialConnected()) {
-        switchNavPrioMode(false);
+        if (mReceiverVariant == RECEIVER_VARIANT::UBLX_ZED_F9R) {
+            switchNavPrioMode(false);
+        }
         switch (mReceiverState)
         {
             case RECEIVER_STATE::READY:
