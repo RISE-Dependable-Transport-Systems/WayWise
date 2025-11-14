@@ -57,7 +57,6 @@ public:
     RECEIVER_STATE getReceiverState() { return mReceiverState; }
     void setReceiverState(RECEIVER_STATE state) { mReceiverState = state; }
     virtual void aboutToShutdown() {};
-    virtual void readVehicleSpeedForPositionFusion() {};
     virtual void setGnssFixAccuracy(GnssFixAccuracy gnssFixAccuracy) { mGnssFixAccuracy = gnssFixAccuracy; }
     virtual GnssFixAccuracy getGnssFixAccuracy() { return mGnssFixAccuracy; }
 
