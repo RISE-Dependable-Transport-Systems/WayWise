@@ -8,8 +8,8 @@
 #include <QLineF>
 #include <cmath>
 
-UbloxRover::UbloxRover(QSharedPointer<VehicleState> vehicleState)
-    : GNSSReceiver(vehicleState)
+UbloxRover::UbloxRover(QSharedPointer<ObjectState> objectState)
+    : GNSSReceiver(objectState)
 {
     // Use GNSS reception to update location
     connect(&mUblox, &Ublox::rxNavPvt, this, [this](const ubx_nav_pvt &pvt){
@@ -228,9 +228,9 @@ void UbloxRover::writeOdomToUblox(ubx_esf_datatype_enum dataType, uint32_t dataF
     mUblox.ubloxOdometerInput(dataType, dataField, timeTag);
 }
 
-void UbloxRover::readVehicleSpeedForPositionFusion()
+void UbloxRover::readObjectSpeedForPositionFusion()
 {
-    int32_t speed = static_cast<int32_t>(mVehicleState->getSpeed() * 1000.0);  // m/s to mm/s
+    int32_t speed = static_cast<int32_t>(mObjectState->getSpeed() * 1000.0);  // m/s to mm/s
     speed &= 0x00FFFFFF;  // Bits 31..23 are set to zero
     uint32_t timeTag = std::chrono::duration_cast<std::chrono::milliseconds>(
       std::chrono::high_resolution_clock::now().time_since_epoch()).count();
@@ -350,7 +350,7 @@ void UbloxRover::updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt)
         qDebug() << "UbloxRover: assuming" << leapSeconds_ms / 1000 << "seconds difference between GNSS time and UTC.";
         initializationDone = true;
     } else {
-        PosPoint gnssPos = mVehicleState->getPosition(PosType::GNSS);
+        PosPoint gnssPos = mObjectState->getPosition(PosType::GNSS);
 
         llh_t llh = {pvt.lat, pvt.lon, pvt.height};
         xyz_t xyz = {0.0, 0.0, 0.0};
@@ -383,7 +383,7 @@ void UbloxRover::updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt)
                 gnssPos.updateWithOffsetAndYawRotation(mChipToRearAxleOffset, vehYaw_radENU);
             }
         } else { // Assumes fused yaw is updated.
-            PosPoint fusedPos = mVehicleState->getPosition(PosType::fused);
+            PosPoint fusedPos = mObjectState->getPosition(PosType::fused);
             vehYaw_radENU = fusedPos.getYaw() * M_PI / 180.0;
 
             // Apply antenna to rear axle offset if set.
@@ -398,15 +398,17 @@ void UbloxRover::updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt)
 //        qDebug() << "UbloxRover, gnssPos.getTime() - msSinceTodayUTC:" << QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()).msecsSinceStartOfDay() - gnssPos.getTime();
         gnssPos.setSpeed(pvt.g_speed);
 
-        mVehicleState->setPosition(gnssPos);
+        mObjectState->setPosition(gnssPos);
 
         // Accuracy
         mGnssFixAccuracy.horizontal = pvt.h_acc;
         mGnssFixAccuracy.vertical = pvt.v_acc;
         mGnssFixAccuracy.heading = pvt.head_acc;
 
+        mPosGNSSisFused = pvt.head_veh_valid;
+
         static xyz_t lastXyz;
-        emit updatedGNSSPositionAndYaw(mVehicleState, QLineF(QPointF(lastXyz.x, lastXyz.y), gnssPos.getPoint()).length(), pvt.head_veh_valid);
+        emit updatedGNSSPositionAndYaw(mObjectState, QLineF(QPointF(lastXyz.x, lastXyz.y), gnssPos.getPoint()).length(), pvt.head_veh_valid);
         emit txNavPvt(pvt);
 
         lastXyz = xyz;

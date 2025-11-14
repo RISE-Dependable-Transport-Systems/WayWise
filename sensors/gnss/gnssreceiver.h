@@ -45,7 +45,7 @@ class GNSSReceiver : public QObject
 {
     Q_OBJECT
 public:
-    GNSSReceiver(QSharedPointer<VehicleState> vehicleState);
+    GNSSReceiver(QSharedPointer<ObjectState> objectState);
 
     bool simulationStep(const std::function<bool(QTime, QSharedPointer<VehicleState>)> &perturbationFn = nullptr);
 
@@ -60,6 +60,12 @@ public:
     virtual void setGnssFixAccuracy(GnssFixAccuracy gnssFixAccuracy) { mGnssFixAccuracy = gnssFixAccuracy; }
     virtual GnssFixAccuracy getGnssFixAccuracy() { return mGnssFixAccuracy; }
 
+    virtual void setPosGNSSisFused(bool posGNSSisFused) { mPosGNSSisFused = posGNSSisFused; }
+    virtual bool getPosGNSSisFused() { return mPosGNSSisFused; }
+
+    virtual void setGnssFixType(GNSS_FIX_TYPE gnssFixType) { mFixType = gnssFixType; }
+    virtual GNSS_FIX_TYPE getGnssFixType() { return mFixType; }
+
 protected:
     virtual void shutdownGNSSReceiver() {};
 
@@ -67,11 +73,12 @@ protected:
     RECEIVER_STATE mReceiverState = RECEIVER_STATE::UNKNOWN;
     GNSS_FIX_TYPE mFixType = GNSS_FIX_TYPE::NO_FIX;
 
-    QSharedPointer<VehicleState> mVehicleState;
+    QSharedPointer<ObjectState> mObjectState;
     struct {double rollOffset_deg, pitchOffset_deg, yawOffset_deg;} mAChipOrientationOffset; // in degrees
     xyz_t mAntennaToChipOffset = {0.0, 0.0, 0.0}; // in meters
     xyz_t mChipToRearAxleOffset = {0.0, 0.0, 0.0}; // in meters
     GnssFixAccuracy mGnssFixAccuracy;
+    bool mPosGNSSisFused = false;
 };
 
 #endif // GNSSRECEIVER_H

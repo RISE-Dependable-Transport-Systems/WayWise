@@ -7,9 +7,9 @@
 
 #include "gnssreceiver.h"
 
-GNSSReceiver::GNSSReceiver(QSharedPointer<VehicleState> vehicleState)
+GNSSReceiver::GNSSReceiver(QSharedPointer<ObjectState> objectState)
 {
-    mVehicleState = vehicleState;
+    mObjectState = objectState;
 }
 
 bool GNSSReceiver::simulationStep(const std::function<bool(QTime, QSharedPointer<VehicleState>)> &perturbationFn)
