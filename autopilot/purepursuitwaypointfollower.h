@@ -76,7 +76,13 @@ public:
     void setPosTypeUsed(const PosType &posTypeUsed);
 
     void provideParametersToParameterServer();
-    QPointF getVehicleAlignmentReferencePoint();
+    PosPoint getVehicleAlignmentReferencePosPoint();
+    QSharedPointer<VehicleState> getReferenceVehicleState();
+
+    WayPointFollowerState getCurrentState() const {return mCurrentState;}
+
+    void setAdaptiveApproachSpeedEnabled(bool adaptive) {mAdaptiveApproachSpeedEnabled = adaptive;}
+    void setMinApproachSpeed(double minApproachSpeed) {mMinApproachSpeed = minApproachSpeed;}
 
 signals:
     void distanceOfRouteLeft(double meters);
@@ -84,6 +90,9 @@ signals:
 private:
     void updateState();
     void updateControl(const PosPoint& goal);
+    int findClosestWaypointIndex(const QList<PosPoint>& waypoints, const QPointF &currentVehiclePositionXY);
+    QPointF getVehicleReferencePosition(const QList<PosPoint>& waypoints);
+
     WayPointFollowerState mCurrentState;
 
     PosType mPosTypeUsed = PosType::fused; // The type of position (Odom, GNSS, UWB, ...) that should be used for planning
@@ -100,6 +109,9 @@ private:
 
     bool mRetryAfterEndGoalOvershot = false;
     double mEndGoalAlignmentThreshold = 0.1; //[m]
+
+    bool mAdaptiveApproachSpeedEnabled = false;
+    double mMinApproachSpeed = 0.0;
 };
 
 #endif // PUREPURSUITWAYPOINTFOLLOWER_H

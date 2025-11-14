@@ -33,3 +33,13 @@ void ServoController::setServoCenter(double servoCenter)
 {
     mServoCenter = servoCenter;
 }
+
+void ServoController::requestSteering(float steering)
+{
+    // map from [-1.0:1.0] to actual servo range
+    float servoPosition = steering;
+    if (mInvertOutput)
+        servoPosition *= -1.0;
+    servoPosition = servoPosition * (mServoRange / 2.0) + mServoCenter;
+    requestServoPosition(servoPosition);
+}

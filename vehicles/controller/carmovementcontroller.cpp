@@ -5,9 +5,10 @@
 #include "carmovementcontroller.h"
 #include <QDebug>
 
-CarMovementController::CarMovementController(QSharedPointer<CarState> vehicleState): MovementController(vehicleState)
+CarMovementController::CarMovementController(QSharedPointer<CarState> vehicleState, bool autoActuateMotorAndServo): MovementController(vehicleState)
 {
     mCarState = getVehicleState().dynamicCast<CarState>();
+    mAutoActuateMotorAndServo = autoActuateMotorAndServo;
 }
 
 void CarMovementController::setDesiredSteering(double desiredSteering)
@@ -19,31 +20,17 @@ void CarMovementController::setDesiredSteering(double desiredSteering)
     // update vehicleState in any case (we do not expect feedback from servo)
     mCarState->setSteering(desiredSteering);
 
-    if (mServoController) {
-        // map from [-1.0:1.0] to actual servo range
-        // TODO: all of this should happen in ServoController!
-        if (mServoController->getInvertOutput())
-            desiredSteering *= -1.0;
-        desiredSteering = desiredSteering * (mServoController->getServoRange() / 2.0) + mServoController->getServoCenter();
-        mServoController->requestSteering(desiredSteering);
+    if (mAutoActuateMotorAndServo) {
+        actuateSteeringServo(desiredSteering);
     }
-
 }
 
 void CarMovementController::setDesiredSpeed(double desiredSpeed)
 {
     MovementController::setDesiredSpeed(desiredSpeed);
-    if (mMotorController)
-        mMotorController->requestRPM(desiredSpeed*getSpeedToRPMFactor());
-    else {
-        static bool warnedOnce = false;
-        if (!warnedOnce) {
-            qDebug() << "WARNING: CarMovementController has no MotorController connection. Simulating movement."; // TODO: create explicitly simulated controller
-            warnedOnce = true;
-        }
-        xyz_t currentVelocity = mCarState->getVelocity();
-        currentVelocity.x = desiredSpeed;
-        mCarState->setVelocity(currentVelocity);
+
+    if (mAutoActuateMotorAndServo) {
+        actuateDriveMotor(desiredSpeed*getSpeedToRPMFactor());
     }
 }
 
@@ -87,4 +74,29 @@ void CarMovementController::updateVehicleState(double rpm, int tachometer, int t
 
     previousTachometer = tachometer;
     emit updatedOdomPositionAndYaw(carState, drivenDistance);
+}
+
+void CarMovementController::simulationStep(double dt_ms) {
+    double drivenDistance = getDesiredSpeed() * dt_ms / 1000;
+
+    xyz_t currentVelocity = mCarState->getVelocity();
+    currentVelocity.x = getDesiredSpeed();
+    mCarState->setVelocity(currentVelocity);
+
+    mCarState->updateOdomPositionAndYaw(drivenDistance);
+    emit updatedOdomPositionAndYaw(mCarState, drivenDistance);
+}
+
+void CarMovementController::actuateDriveMotor(int32_t rpm)
+{
+    if (mMotorController) {
+        mMotorController->requestRPM(rpm);
+    }
+}
+
+void CarMovementController::actuateSteeringServo(float steering)
+{
+    if (mServoController) {
+        mServoController->requestSteering(steering);
+    }
 }

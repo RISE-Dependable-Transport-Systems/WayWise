@@ -31,12 +31,6 @@ void VehicleState::setPosition(PosPoint &point)
     emit positionUpdated();
 }
 
-void VehicleState::simulationStep(double dt_ms, PosType usePosType)
-{
-    double drivenDistance = getSpeed() * dt_ms / 1000;
-    updateOdomPositionAndYaw(drivenDistance, usePosType);
-}
-
 std::array<float, 3> VehicleState::getGyroscopeXYZ() const
 {
     return mGyroscopeXYZ;

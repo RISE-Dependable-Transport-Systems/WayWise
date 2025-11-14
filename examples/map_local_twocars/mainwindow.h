@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QTimer>
 #include "vehicles/carstate.h"
+#include "vehicles/controller/carmovementcontroller.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -23,5 +24,7 @@ private:
     QTimer mUpdateVehicleStateTimer;
     QSharedPointer<CarState> car1;
     QSharedPointer<CarState> car2;
+    QSharedPointer<CarMovementController> mCarMovementController1;
+    QSharedPointer<CarMovementController> mCarMovementController2;
 };
 #endif // MAINWINDOW_H
