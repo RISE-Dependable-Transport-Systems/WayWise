@@ -33,7 +33,7 @@ public:
     void setPrintVerbose(bool printVerbose) { mPrintVerbose = printVerbose; }
     void setESFAlgAutoMntAlgOn(bool esfAlgAutoMntAlgOn) { mESFAlgAutoMntAlgOn = esfAlgAutoMntAlgOn; }
     virtual void aboutToShutdown() override;
-    virtual void readVehicleSpeedForPositionFusion() override;
+    virtual void readVehicleSpeedForPositionFusion();
 
 signals:
     void updatedGNSSPositionAndYaw(QSharedPointer<VehicleState> vehicleState, double distanceMoved, bool fused);
