@@ -72,13 +72,8 @@ public:
     void setRearAxleToHitchOffset(xyz_t rearAxleToHitchOffset) { mRearAxleToHitchOffset = rearAxleToHitchOffset; }
 
     // Dynamic state
-    virtual PosPoint getPosition(PosType type) const;
-    virtual PosPoint getPosition() const override { return getPosition(PosType::simulated); }
     virtual PosPoint posInVehicleFrameToPosPointENU(xyz_t offset, PosType type) const;
     virtual PosPoint posInVehicleFrameToPosPointENU(xyz_t offset) const { return posInVehicleFrameToPosPointENU(offset, PosType::simulated); }
-    virtual void setPosition(PosPoint &point) override;
-    virtual QTime getTime() const override { return mTime; }
-    virtual void setTime(const QTime &time) override { mTime = time; }
     FlightMode getFlightMode() const;
     void setFlightMode(const FlightMode &flightMode);
     double getSteering() const;
@@ -131,9 +126,7 @@ private:
 
     // Dynamic state
     double mSteering = 0.0; // [-1.0:1.0]
-    PosPoint mPositionBySource[(int)PosType::_LAST_];
     PosPoint mApGoal;
-    QTime mTime;
     PosPoint mHomePosition;
     bool mIsArmed = false;
     FlightMode mFlightMode = FlightMode::Unknown;

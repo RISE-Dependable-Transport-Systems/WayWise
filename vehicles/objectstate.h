@@ -53,10 +53,11 @@ public:
     void setWaywiseObjectType(const WAYWISE_OBJECT_TYPE value) { mWaywiseObjectType = value; }
 
     // Dynamic state
-    virtual PosPoint getPosition() const { return mPosition; }
+    virtual PosPoint getPosition(PosType type) const;
+    virtual PosPoint getPosition() const { return getPosition(PosType::simulated); }
     virtual void setPosition(PosPoint &point);
-    virtual QTime getTime() const { return mPosition.getTime(); }
-    virtual void setTime(const QTime &time) { mPosition.setTime(time); }
+    virtual QTime getTime() const { return mTime; }
+    virtual void setTime(const QTime &time) { mTime = time; }
     virtual double getSpeed() const { return mSpeed; }
     virtual void setSpeed(double value) { mSpeed = value; }
     virtual Velocity getVelocity() const { return mVelocity; }
@@ -68,7 +69,7 @@ public:
     bool getDrawStatusText() const;
 
 signals:
-    void positionUpdated();
+    void positionUpdated(PosType type);
 
 private:
     // Static state
@@ -80,10 +81,11 @@ private:
 
 protected:
     // Dynamic state
-    PosPoint mPosition;
+    QTime mTime;
     double mSpeed = 0.0; // [m/s]
     Velocity mVelocity = {0.0, 0.0, 0.0}; // [m/s]
     Acceleration mAcceleration = {0.0, 0.0, 0.0}; // [m/s²]
+    PosPoint mPositionBySource[(int)PosType::_LAST_];
 };
 
 
