@@ -104,7 +104,7 @@ signals:
 private slots:
     void tileReady(OsmTile tile);
     void errorGetTile(QString reason);
-    void triggerUpdate();
+    void triggerUpdate(PosType type);
     void executeContextMenu(QMenu &contextMenu);
 
 protected:

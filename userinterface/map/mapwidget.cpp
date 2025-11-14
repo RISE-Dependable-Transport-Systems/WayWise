@@ -152,9 +152,11 @@ void MapWidget::errorGetTile(QString reason)
     qWarning() << "OSM tile error:" << reason;
 }
 
-void MapWidget::triggerUpdate()
+void MapWidget::triggerUpdate(PosType type)
 {
-    update();
+    if (type == PosType::fused) {
+        update();
+    }
 }
 
 void MapWidget::executeContextMenu(QMenu &contextMenu)
