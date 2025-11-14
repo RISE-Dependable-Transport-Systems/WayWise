@@ -20,17 +20,10 @@ class GNSSReceiver : public QObject
 public:
     GNSSReceiver(QSharedPointer<VehicleState> vehicleState);
 
-    virtual llh_t getEnuRef() const { return mEnuReference; }
-    virtual void setEnuRef(llh_t enuRef);
     virtual void setIMUOrientationOffset(double roll_deg, double pitch_deg, double yaw_deg);
     virtual void setGNSSPositionOffset(double xOffset, double yOffset);
 
-signals:
-    void updatedEnuReference(llh_t mEnuReference);
-
 protected:
-    llh_t mEnuReference;
-    bool mEnuReferenceSet = false;
     QSharedPointer<VehicleState> mVehicleState;
     struct {double rollOffset_deg, pitchOffset_deg, yawOffset_deg;} mIMUOrientationOffset;
     xyz_t mGNSSPositionOffset = {0.0, 0.0, 0.0};

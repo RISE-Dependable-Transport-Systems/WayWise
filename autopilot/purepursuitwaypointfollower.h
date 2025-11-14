@@ -34,7 +34,7 @@ struct WayPointFollowerState {
 };
 
 struct SpeedLimitRegion {
-    QList<PosPoint> boundary;  // 2D-Polygon vertices (altitude not considered)
+    QList<PosPoint> boundary;  // 2D-Polygon vertices (altitude not considered). If first point != last point, the polygon will automatically be closed by connecting the last vertex back to the first vertex
     double maxSpeed;           // Speed limit [m/s]
 };
 
@@ -83,7 +83,9 @@ public:
     void provideParametersToParameterServer();
     QPointF getVehicleAlignmentReferencePoint();
 
-    void addSpeedLimitRegion(const QList<PosPoint>& boundary, double maxSpeed);
+    void loadSpeedLimitRegionsFile();
+    void parseSpeedLimitRegionsDocument(const QJsonDocument& jsonDoc);
+    void addSpeedLimitRegion(const QList<PosPoint>& boundary, double maxSpeed_kmph);
     void clearSpeedLimitRegions();
     QList<SpeedLimitRegion> getSpeedLimitRegions() const;
 

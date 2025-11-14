@@ -11,6 +11,7 @@
 #include <chrono>
 #include "logger/logger.h"
 #include "communication/parameterserver.h"
+#include "autopilot/purepursuitwaypointfollower.h"
 
 MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleState, const QHostAddress controlTowerAddress, const unsigned controlTowerPort, const QAbstractSocket::SocketType controlTowerSocketType) :
     VehicleServer(vehicleState)
@@ -65,12 +66,12 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
 
         if (!mGNSSReceiver.isNull()) {
             // publish gpsOrigin
-            sendGpsOriginLlh(mGNSSReceiver->getEnuRef());
+            sendGpsOriginLlh(mVehicleState->getEnuRef());
 
             //TODO: homePositionLlh should not be EnuRef
-            homePositionLlh = {mGNSSReceiver->getEnuRef().latitude, mGNSSReceiver->getEnuRef().longitude, static_cast<float>(mGNSSReceiver->getEnuRef().height), 0};
+            homePositionLlh = {mVehicleState->getEnuRef().latitude, mVehicleState->getEnuRef().longitude, static_cast<float>(mVehicleState->getEnuRef().height), 0};
 
-            llh_t fusedPosGlobal = coordinateTransforms::enuToLlh(mGNSSReceiver->getEnuRef(), {mVehicleState->getPosition(PosType::fused).getXYZ()});
+            llh_t fusedPosGlobal = coordinateTransforms::enuToLlh(mVehicleState->getEnuRef(), {mVehicleState->getPosition(PosType::fused).getXYZ()});
             positionLlh = {fusedPosGlobal.latitude, fusedPosGlobal.longitude, static_cast<float>(fusedPosGlobal.height), 0};
         }
 
@@ -837,4 +838,3 @@ void MavsdkVehicleServer::createMavsdkComponentForTrailer(const QHostAddress con
         });
     }
 }
-
