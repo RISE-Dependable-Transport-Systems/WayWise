@@ -235,7 +235,19 @@ void UbloxRover::readVehicleSpeedForPositionFusion()
     uint32_t timeTag = std::chrono::duration_cast<std::chrono::milliseconds>(
       std::chrono::high_resolution_clock::now().time_since_epoch()).count();
     writeOdomToUblox(SPEED, speed, timeTag);
+
+    if (mPrintVerbose && mReceiverState == RECEIVER_STATE::CALIBRATING) {
+        static uint32_t lastTimeTag = 0;
+        // allow 1 message per second using timeTag
+        if (timeTag - lastTimeTag < 1000) {
+            return;
+        }
+        lastTimeTag = timeTag;
+        qDebug() << "UbloxRover: Odom speed set to" << speed << "mm/s.";
+    }
 }
+
+
 
 bool UbloxRover::configureUblox()
 {
