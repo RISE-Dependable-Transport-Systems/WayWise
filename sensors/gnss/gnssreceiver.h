@@ -45,7 +45,7 @@ class GNSSReceiver : public QObject
 {
     Q_OBJECT
 public:
-    GNSSReceiver(QSharedPointer<VehicleState> vehicleState);
+    GNSSReceiver(QSharedPointer<ObjectState> objectState);
 
     void setReceiverVariant(RECEIVER_VARIANT receiverVariant) { mReceiverVariant = receiverVariant; }
     RECEIVER_VARIANT getReceiverVariant() { return mReceiverVariant; }
@@ -60,6 +60,12 @@ public:
     virtual void setGnssFixAccuracy(GnssFixAccuracy gnssFixAccuracy) { mGnssFixAccuracy = gnssFixAccuracy; }
     virtual GnssFixAccuracy getGnssFixAccuracy() { return mGnssFixAccuracy; }
 
+    virtual void setPosGNSSisFused(bool posGNSSisFused) { mPosGNSSisFused = posGNSSisFused; }
+    virtual bool getPosGNSSisFused() { return mPosGNSSisFused; }
+
+    virtual void setGnssFixType(GNSS_FIX_TYPE gnssFixType) { mFixType = gnssFixType; }
+    virtual GNSS_FIX_TYPE getGnssFixType() { return mFixType; }
+
 signals:
     void updatedEnuReference(llh_t mEnuReference);
 
@@ -70,13 +76,14 @@ protected:
     RECEIVER_STATE mReceiverState = RECEIVER_STATE::UNKNOWN;
     GNSS_FIX_TYPE mFixType = GNSS_FIX_TYPE::NO_FIX;
 
-    llh_t mEnuReference;
+    llh_t mEnuReference = {57.71495867, 12.89134921, 0}; // AztaZero {57.7810, 12.7692, 0}, Klätterlabbet {57.6876, 11.9807, 0}, RISE RTK base station {57.71495867, 12.89134921, 0}
     bool mEnuReferenceSet = false;
-    QSharedPointer<VehicleState> mVehicleState;
+    QSharedPointer<ObjectState> mObjectState;
     struct {double rollOffset_deg, pitchOffset_deg, yawOffset_deg;} mAChipOrientationOffset; // in degrees
     xyz_t mAntennaToChipOffset = {0.0, 0.0, 0.0}; // in meters
     xyz_t mChipToRearAxleOffset = {0.0, 0.0, 0.0}; // in meters
     GnssFixAccuracy mGnssFixAccuracy;
+    bool mPosGNSSisFused = false;
 };
 
 #endif // GNSSRECEIVER_H

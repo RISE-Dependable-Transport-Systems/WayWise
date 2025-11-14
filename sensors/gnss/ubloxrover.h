@@ -20,7 +20,7 @@ class UbloxRover : public GNSSReceiver
 {
     Q_OBJECT
 public:
-    UbloxRover(QSharedPointer<VehicleState> vehicleState);
+    UbloxRover(QSharedPointer<ObjectState> objectState);
     bool connectSerial(const QSerialPortInfo &serialPortInfo);
     bool isSerialConnected();
     void writeRtcmToUblox(QByteArray data);
@@ -33,10 +33,10 @@ public:
     void setPrintVerbose(bool printVerbose) { mPrintVerbose = printVerbose; }
     void setESFAlgAutoMntAlgOn(bool esfAlgAutoMntAlgOn) { mESFAlgAutoMntAlgOn = esfAlgAutoMntAlgOn; }
     virtual void aboutToShutdown() override;
-    virtual void readVehicleSpeedForPositionFusion();
+    virtual void readObjectSpeedForPositionFusion();
 
 signals:
-    void updatedGNSSPositionAndYaw(QSharedPointer<VehicleState> vehicleState, double distanceMoved, bool fused);
+    void updatedGNSSPositionAndYaw(QSharedPointer<ObjectState> objectState, double distanceMoved, bool fused);
     void txNavPvt(const ubx_nav_pvt &pvt);
     void gotNmeaGga(const QByteArray& nmeaGgaStr);
 

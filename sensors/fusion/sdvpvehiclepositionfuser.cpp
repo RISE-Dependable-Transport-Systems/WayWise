@@ -60,12 +60,12 @@ double SDVPVehiclePositionFuser::getMaxSignedStepFromValueTowardsGoal(double val
     return goal - value;
 }
 
-void SDVPVehiclePositionFuser::correctPositionAndYawGNSS(QSharedPointer<VehicleState> vehicleState, double distanceMoved, bool fused)
+void SDVPVehiclePositionFuser::correctPositionAndYawGNSS(QSharedPointer<ObjectState> objectState, double distanceMoved, bool fused)
 {
     mPosGNSSisFused = fused;
-    PosPoint posGNSS = vehicleState->getPosition(PosType::GNSS);
-    PosPoint posIMU = vehicleState->getPosition(PosType::IMU);
-    PosPoint posFused = vehicleState->getPosition(PosType::fused);
+    PosPoint posGNSS = objectState->getPosition(PosType::GNSS);
+    PosPoint posIMU = objectState->getPosition(PosType::IMU);
+    PosPoint posFused = objectState->getPosition(PosType::fused);
 
     if (mPosGNSSisFused) {// use GNSS position directly if that was already fused (e.g., F9R).
         posFused.setYaw(posGNSS.getYaw());
@@ -103,14 +103,14 @@ void SDVPVehiclePositionFuser::correctPositionAndYawGNSS(QSharedPointer<VehicleS
 
     posFused.setHeight(posGNSS.getHeight());
     posFused.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()));
-    vehicleState->setPosition(posFused);
+    objectState->setPosition(posFused);
     mPosOdomDistanceDrivenSinceGNSSupdate = 0.0;
 }
 
-void SDVPVehiclePositionFuser::correctPositionAndYawOdom(QSharedPointer<VehicleState> vehicleState, double distanceDriven)
+void SDVPVehiclePositionFuser::correctPositionAndYawOdom(QSharedPointer<ObjectState> objectState, double distanceDriven)
 {
     if (!mPosGNSSisFused) {
-        PosPoint posFused = vehicleState->getPosition(PosType::fused);
+        PosPoint posFused = objectState->getPosition(PosType::fused);
 
         // use Odom input from motorcontroller for IMU-based dead reckoning
         double yawRad = posFused.getYaw() / (180.0/M_PI);
@@ -118,7 +118,7 @@ void SDVPVehiclePositionFuser::correctPositionAndYawOdom(QSharedPointer<VehicleS
                        posFused.getY() + sin(yawRad) * distanceDriven);
 
         posFused.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()));
-        vehicleState->setPosition(posFused);
+        objectState->setPosition(posFused);
 
         samplePosFused(posFused);
     }
@@ -126,7 +126,7 @@ void SDVPVehiclePositionFuser::correctPositionAndYawOdom(QSharedPointer<VehicleS
     mPosOdomDistanceDrivenSinceGNSSupdate += distanceDriven;
 }
 
-void SDVPVehiclePositionFuser::correctPositionAndYawIMU(QSharedPointer<VehicleState> vehicleState)
+void SDVPVehiclePositionFuser::correctPositionAndYawIMU(QSharedPointer<ObjectState> objectState)
 {
     if (!mPosGNSSisFused) {
         static bool standstillAtLastCall = false;
@@ -134,11 +134,11 @@ void SDVPVehiclePositionFuser::correctPositionAndYawIMU(QSharedPointer<VehicleSt
         static double yawDriftSinceStandstill = 0.0;
 
         // --- correct relative/raw IMU yaw with external offset
-        PosPoint posIMU = vehicleState->getPosition(PosType::IMU);
-        PosPoint posFused = vehicleState->getPosition(PosType::fused);
+        PosPoint posIMU = objectState->getPosition(PosType::IMU);
+        PosPoint posFused = objectState->getPosition(PosType::fused);
 
         // 1. handle drift at standstill
-        if (fabs(vehicleState->getSpeed()) < 0.05) {
+        if (fabs(objectState->getSpeed()) < 0.05) {
             if (!standstillAtLastCall)
                 yawWhenStopping = posIMU.getYaw();
 
@@ -161,7 +161,7 @@ void SDVPVehiclePositionFuser::correctPositionAndYawIMU(QSharedPointer<VehicleSt
         posFused.setYaw(yawResult);
 
         posFused.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()));
-        vehicleState->setPosition(posFused);
+        objectState->setPosition(posFused);
     }
 }
 

@@ -7,10 +7,9 @@
 
 #include "gnssreceiver.h"
 
-GNSSReceiver::GNSSReceiver(QSharedPointer<VehicleState> vehicleState)
+GNSSReceiver::GNSSReceiver(QSharedPointer<ObjectState> objectState)
 {
-    mVehicleState = vehicleState;
-    mEnuReference = {57.71495867, 12.89134921, 0}; // AztaZero {57.7810, 12.7692, 0}, Klätterlabbet {57.6876, 11.9807, 0}, RISE RTK base station {57.71495867, 12.89134921, 0}
+    mObjectState = objectState;
 }
 
 void GNSSReceiver::setEnuRef(llh_t enuRef)
