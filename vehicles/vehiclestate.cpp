@@ -146,3 +146,15 @@ bool VehicleState::hasTrailingVehicle() const
 {
     return !mTrailingVehicle.isNull();
 }
+
+void VehicleState::setEnuRef(llh_t enuRef)
+{
+    mEnuReference = enuRef;
+    mEnuReferenceSet = true;
+    emit updatedEnuReference(mEnuReference);
+}
+
+bool VehicleState::isEnuReferenceSet()
+{
+    return mEnuReferenceSet;
+}

@@ -355,11 +355,11 @@ void UbloxRover::updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt)
         llh_t llh = {pvt.lat, pvt.lon, pvt.height};
         xyz_t xyz = {0.0, 0.0, 0.0};
 
-        if (!mEnuReferenceSet) {
-            setEnuRef(llh);
+        if (!mVehicleState->isEnuReferenceSet()) {
+            mVehicleState->setEnuRef(llh);
             qDebug() << "UbloxRover: ENU reference point set to" << pvt.lat << pvt.lon << pvt.height;
         } else
-            xyz = coordinateTransforms::llhToEnu(mEnuReference, llh);
+            xyz = coordinateTransforms::llhToEnu(mVehicleState->getEnuRef(), llh);
 
         // Position
         gnssPos.setXYZ(xyz);
