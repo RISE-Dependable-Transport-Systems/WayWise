@@ -227,7 +227,7 @@ void PurepursuitWaypointFollower::updateState()
 
         if (intersections.size()) {
             mCurrentState.currentGoal.setXY(intersections[0].x(), intersections[0].y());
-            trol(mCurrentState.currentGoal);
+            updateControl(mCurrentState.currentGoal);
         } else { // first waypoint within circle -> start route
             if (mWaypointList.size() > 1) {
                 mCurrentState.stmState = WayPointFollowerSTMstates::FOLLOW_ROUTE_FOLLOWING;
@@ -319,7 +319,7 @@ void PurepursuitWaypointFollower::updateState()
             mCurrentState.currentGoal.setAttributes(closestWaypoint.getAttributes());
 
             // 4. Update control for current goal
-            trol(mCurrentState.currentGoal);
+            updateControl(mCurrentState.currentGoal);
         }
     } break;
     case WayPointFollowerSTMstates::FOLLOW_ROUTE_APPROACHING_END_GOAL: {
@@ -379,7 +379,7 @@ void PurepursuitWaypointFollower::updateState()
                 } else {
                     mCurrentState.currentGoal.setSpeed(endGoalPosPoint.getSpeed());
                 }
-                trol(mCurrentState.currentGoal);
+                updateControl(mCurrentState.currentGoal);
             }
         }
     } break;
