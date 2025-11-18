@@ -1,0 +1,106 @@
+name: Build and Push Docker and GHCR Image
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: docker-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write           # needed for GHCR
+      id-token: write           # needed if you add cosign keyless
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          install: true
+
+      - name: Log in to Docker Hub (main only, if secrets exist)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DOCKERHUB_USERNAME && secrets.DOCKERHUB_TOKEN
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to GHCR (main only)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker meta (tags & labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ vars.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}
+            ghcr.io/${{ vars.ORG_NAME }}/${{ github.event.repository.name }}
+          tags: |
+            # branch tag on non-default branches (kept for traceability)
+            type=ref,event=branch
+            # short sha always
+            type=sha,format=short
+            # immutable date+sha edge tag on default branch
+            type=raw,value=edge-{{date 'YYYYMMDD'}}-{{sha}},enable={{is_default_branch}}
+            # "edge" pointer tag on default branch
+            type=raw,value=edge,enable={{is_default_branch}}
+            # keep latest on default branch only
+            type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.title=WayWise
+            org.opencontainers.image.description=WayWise - A rapid prototyping library for connected, autonomous vehicles
+            org.opencontainers.image.source=${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.url=https://github.com/${{ github.repository }}
+            org.opencontainers.image.created={{date 'YYYY-MM-DDTHH:mm:ssZ'}}
+
+      # Ready to migrate away from the main.yml build workflow for building on PRs
+      - name: Set platforms
+        id: platforms
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "value=linux/amd64" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=linux/amd64,linux/arm64" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build (PRs) or Build+Push (main)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: ${{ steps.platforms.outputs.value }}
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          # Supply-chain goodies:
+          provenance: true
+          sbom: true
+
+      - name: Cosign sign (main only)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: sigstore/cosign-installer@v3
+      - run: cosign sign --yes $(echo "${{ steps.meta.outputs.tags }}" | tr ' ' '\n' | grep -E '^(ghcr\.io|docker\.io)')
+
+      - name: Show image tags
+        run: echo "${{ steps.meta.outputs.tags }}"

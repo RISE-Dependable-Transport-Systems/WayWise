@@ -1,14 +1,39 @@
 # Multi-stage Dockerfile for WayWise
 # Optimized for C++ builds with minimal runtime image
 
-# Build stage
-FROM ubuntu:22.04 AS builder
+# --- MAVSDK stage (install once, reuse everywhere) ---
+FROM ubuntu:24.04 AS mavsdk
+ARG DEBIAN_FRONTEND=noninteractive
+ARG TARGETARCH
+ARG MAVSDK_VER=2.14.1
+ARG MAVSDK_SHA256_AMD64=794e2583aa60993623e6faa19dcb464dc776d05fd93b08dcc28293a16a3c1da3
+ARG MAVSDK_SHA256_ARM64=47f02bd1fa86f48df28843d40125176f6b52108174f66f3f761a644773dde410
+
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends ca-certificates wget; \
+    arch="${TARGETARCH:-$(dpkg --print-architecture)}"; \
+    case "$arch" in \
+    amd64)  DEB="libmavsdk-dev_${MAVSDK_VER}_ubuntu22.04_amd64.deb"; SUM="$MAVSDK_SHA256_AMD64" ;; \
+    arm64)  DEB="libmavsdk-dev_${MAVSDK_VER}_debian12_arm64.deb";   SUM="$MAVSDK_SHA256_ARM64" ;; \
+    *)      echo "Unsupported arch: $arch"; exit 1 ;; \
+    esac; \
+    url="https://github.com/mavlink/MAVSDK/releases/download/v${MAVSDK_VER}/${DEB}"; \
+    wget -O /tmp/mavsdk.deb "$url"; \
+    echo "${SUM}  /tmp/mavsdk.deb" | sha256sum -c -; \
+    apt-get install -y --no-install-recommends /tmp/mavsdk.deb; \
+    rm -rf /var/lib/apt/lists/* /tmp/mavsdk.deb
+
+# --- Build stage ---
+FROM ubuntu:24.04 AS builder
 
 # Avoid interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
+ARG BUILD_TYPE=Release
+ARG TARGETARCH
 
 # Install build dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     build-essential \
     cmake \
@@ -16,13 +41,14 @@ RUN apt-get update && apt-get install -y \
     libqt5serialport5-dev \
     libboost-program-options-dev \
     libboost-system-dev \
+    ninja-build \
+    ca-certificates \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
-# Install MAVSDK
-RUN wget --no-check-certificate https://github.com/mavlink/MAVSDK/releases/download/v2.10.2/libmavsdk-dev_2.10.2_ubuntu22.04_amd64.deb \
-    && dpkg -i libmavsdk-dev_2.10.2_ubuntu22.04_amd64.deb \
-    && rm libmavsdk-dev_2.10.2_ubuntu22.04_amd64.deb
+
+# Get MAVSDK headers & libs from the mavsdk stage (no repeated logic)
+COPY --from=mavsdk /usr/ /usr/
 
 # Set working directory
 WORKDIR /build
@@ -30,22 +56,25 @@ WORKDIR /build
 # Copy source code
 COPY . .
 
-# Initialize submodules and build
+# Initialize submodules and build + install
 RUN git submodule update --init --recursive \
-    && cd examples \
-    && mkdir -p build \
-    && cd build \
-    && cmake .. -DCMAKE_BUILD_TYPE=Release \
-    && cmake --build . --config Release -j$(nproc)
+    && cmake -S examples -B build -G Ninja \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=/opt/waywise \
+    -DCMAKE_INSTALL_RPATH="/opt/waywise/lib:/usr/local/lib" \
+    -DCMAKE_INSTALL_DO_STRIP=ON \
+    && cmake --build build -j$(nproc --ignore=1) \
+    && cmake --install build
 
 # Runtime stage
-FROM ubuntu:22.04
+FROM ubuntu:24.04
+ARG TARGETARCH
 
 # Avoid interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install runtime dependencies only
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     libqt5core5a \
     libqt5network5 \
     libqt5serialport5 \
@@ -54,29 +83,45 @@ RUN apt-get update && apt-get install -y \
     libboost-program-options1.74.0 \
     libboost-system1.74.0 \
     libatomic1 \
+    tini \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy MAVSDK libraries from builder
-COPY --from=builder /usr/lib/libmavsdk*.so* /usr/lib/
+# Reuse MAVSDK from the mavsdk stage (no repeated logic)
+COPY --from=mavsdk /usr/ /usr/
 
-# Copy built executables
-COPY --from=builder /build/examples/build/RCCar_MAVLINK_autopilot/RCCar_MAVLINK_autopilot /usr/local/bin/
-COPY --from=builder /build/examples/build/RCCar_ISO22133_autopilot/RCCar_ISO22133_autopilot /usr/local/bin/
-COPY --from=builder /build/examples/build/map_local_twocars/map_local_twocars /usr/local/bin/
-COPY --from=builder /build/examples/build/RCCar_ISO22133_autopilot/isoObject/*.so /usr/local/lib/
-COPY --from=builder /build/examples/build/RCCar_ISO22133_autopilot/isoObject/iso22133/*.so /usr/local/lib/
+# Copy preinstalled artifacts
+COPY --from=builder /opt/waywise /opt/waywise
+
+# Make binaries available in PATH
+RUN ln -s /opt/waywise/bin/RCCar_MAVLINK_autopilot /usr/local/bin/RCCar_MAVLINK_autopilot \
+    && ln -s /opt/waywise/bin/RCCar_ISO22133_autopilot /usr/local/bin/RCCar_ISO22133_autopilot \
+    && ln -s /opt/waywise/bin/map_local_twocars /usr/local/bin/map_local_twocars
 
 # Update library cache
 RUN ldconfig
 
-# Create non-root user for running the application
-RUN useradd -m -s /bin/bash waywise
+# Verify that the main binary exists and all dependencies are met
+RUN test -x /opt/waywise/bin/RCCar_MAVLINK_autopilot \
+    && ldd /opt/waywise/bin/RCCar_MAVLINK_autopilot | (! grep "not found")
+
+# Create non-root user with stable UID/GID
+ARG APP_UID=10001
+ARG APP_GID=10001
+RUN groupadd -g ${APP_GID} waywise && useradd -m -u ${APP_UID} -g ${APP_GID} -s /bin/bash waywise
+
+# Simple liveness check (adjust as needed)
+USER root
+RUN printf '#!/bin/sh\nexec /usr/local/bin/RCCar_MAVLINK_autopilot >/dev/null 2>&1 || exit 1\n' \
+    > /usr/local/bin/healthcheck && chmod +x /usr/local/bin/healthcheck
+
+# RUN useradd -m -s /bin/bash waywise
 USER waywise
 WORKDIR /home/waywise
 
-# Set default command to the main MAVLINK autopilot example
-CMD ["/usr/local/bin/RCCar_MAVLINK_autopilot"]
-
+# Use tini as init; keep args overrideable via CMD
+ENTRYPOINT ["/usr/bin/tini","--","/usr/local/bin/RCCar_MAVLINK_autopilot"]
+CMD []
+HEALTHCHECK --interval=30s --timeout=3s --retries=3 CMD /usr/local/bin/healthcheck
 # Expose MAVLINK default ports
 # UDP: 14540 (system), 14550 (ground control)
 EXPOSE 14540/udp 14550/udp

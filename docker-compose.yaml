@@ -1,9 +1,7 @@
-version: '3.8'
-
 services:
   # Default MAVLINK autopilot example
   waywise-mavlink:
-    image: risedts/waywise:latest
+    image: risedas/waywise:latest
     container_name: waywise-mavlink
     ports:
       - "14540:14540/udp"
@@ -14,7 +12,7 @@ services:
 
   # ISO22133 autopilot example
   waywise-iso:
-    image: risedts/waywise:latest
+    image: risedas/waywise:latest
     container_name: waywise-iso
     command: /usr/local/bin/RCCar_ISO22133_autopilot
     restart: unless-stopped
@@ -25,7 +23,7 @@ services:
 
   # Two-car simulation example
   waywise-twocars:
-    image: risedts/waywise:latest
+    image: risedas/waywise:latest
     container_name: waywise-twocars
     command: /usr/local/bin/map_local_twocars
     restart: unless-stopped
@@ -37,7 +35,6 @@ services:
 networks:
   waywise-net:
     driver: bridge
-
 # Usage examples:
 #
 # 1. Run default MAVLINK autopilot:
