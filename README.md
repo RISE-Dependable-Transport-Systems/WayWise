@@ -1,6 +1,6 @@
 # WayWise
 
-![Workflow build result](https://github.com/RISE-Dependable-Transport-Systems/WayWise/actions/workflows/main.yml/badge.svg) [![Docker Image](https://github.com/RISE-Dependable-Transport-Systems/WayWise/actions/workflows/docker-build-push.yml/badge.svg)](https://github.com/RISE-Dependable-Transport-Systems/WayWise/actions/workflows/docker-build-push.yml) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/RISE-Dependable-Transport-Systems/WayWise)
+![Workflow build result](https://github.com/RISE-Dependable-Transport-Systems/WayWise/actions/workflows/main.yml/badge.svg) [![Docker Image](https://github.com/RISE-Dependable-Transport-Systems/WayWise/actions/workflows/docker-ghcr-build-push.yaml/badge.svg)](https://github.com/RISE-Dependable-Transport-Systems/WayWise/actions/workflows/docker-ghcr-build-push.yaml) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/RISE-Dependable-Transport-Systems/WayWise)
 
 <https://github.com/user-attachments/assets/22279eb2-fc61-4fe6-91da-493cc589b09c>
 
