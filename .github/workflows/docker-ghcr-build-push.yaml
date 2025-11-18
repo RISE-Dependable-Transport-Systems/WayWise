@@ -2,9 +2,9 @@ name: Build and Push Docker and GHCR Image
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -16,14 +16,16 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
-      packages: write           # needed for GHCR
-      id-token: write           # needed if you add cosign keyless
+      packages: write # needed for GHCR
+      id-token: write # needed if you add cosign keyless
     steps:
+      # --- Checkout & setup ---
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
+      # --- Buildx & platforms ---
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -32,6 +34,7 @@ jobs:
         with:
           install: true
 
+      # --- Auth & metadata ---
       - name: Log in to Docker Hub (main only, if secrets exist)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DOCKERHUB_USERNAME
         uses: docker/login-action@v3
@@ -73,34 +76,42 @@ jobs:
             org.opencontainers.image.url=https://github.com/${{ github.repository }}
             org.opencontainers.image.created={{date 'YYYY-MM-DDTHH:mm:ssZ'}}
 
-      # Ready to migrate away from the main.yml build workflow for building on PRs
       - name: Set platforms
         id: platforms
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            echo "value=linux/amd64" >> "$GITHUB_OUTPUT"
+            echo "platforms=linux/amd64" >> "$GITHUB_OUTPUT"
           else
-            echo "value=linux/amd64,linux/arm64" >> "$GITHUB_OUTPUT"
+            echo "platforms=linux/amd64,linux/arm64" >> "$GITHUB_OUTPUT"
           fi
 
+      # --- Build, push ---
       - name: Build (PRs) or Build+Push (main)
         uses: docker/build-push-action@v6
         with:
           context: .
-          platforms: ${{ steps.platforms.outputs.value }}
+          platforms: ${{ steps.platforms.outputs.platforms }}
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          # Supply-chain goodies:
           provenance: true
           sbom: true
 
-      - name: Cosign sign (main only)
+      # --- Signing (main only) ---
+      - name: Install Cosign (main only)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: sigstore/cosign-installer@v3
-      - run: cosign sign --yes $(echo "${{ steps.meta.outputs.tags }}" | tr ' ' '\n' | grep -E '^(ghcr\.io|docker\.io)')
 
+      - name: Cosign sign images (main only)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          cosign sign --yes \
+            $(echo "${{ steps.meta.outputs.tags }}" \
+              | tr ' ' '\n' \
+              | grep -E '^(ghcr\.io|docker\.io)')
+
+      # --- Outputs for debugging ---
       - name: Show image tags
         run: echo "${{ steps.meta.outputs.tags }}"
