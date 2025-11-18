@@ -587,26 +587,9 @@ QList<SpeedLimitRegion> PurepursuitWaypointFollower::getSpeedLimitRegions() cons
 
 void PurepursuitWaypointFollower::loadSpeedLimitRegionsFile()
 {
-    QDir documentsDirectory(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));   // OS agnostic
-
-    QString folderName = "WayWise Speed Limits";
-    QString folderPath = documentsDirectory.filePath(folderName);
-
-    if (!documentsDirectory.exists(folderPath)) {
-        if (documentsDirectory.mkpath(folderPath)) {
-            qInfo() << "Speed limits folder created";
-        } else {
-            qWarning() << "Failed to create speed limits folder";
-            return;
-        }
-    }
-
-    QString fileName = "speedLimitRegions.json";
-    QString filePath = documentsDirectory.filePath(folderName + "/" + fileName);
-
-    QFile file(filePath);
+    QFile file(mSpeedLimitRegionsFilePath);
     if (!file.open(QIODevice::ReadOnly)) {
-        qInfo() << "Could not open speed limit regions file:" << filePath << Qt::endl
+        qInfo() << "Could not open speed limit regions file:" << mSpeedLimitRegionsFilePath << Qt::endl
                 << "To create speed limit regions:" << Qt::endl
                 << "1. Go to https://geojson.io/#map=2/0/20 to easily define Polygons geometry" << Qt::endl
                 << "2. Copy the JSON source (make sure type is 'FeatureCollection')" << Qt::endl

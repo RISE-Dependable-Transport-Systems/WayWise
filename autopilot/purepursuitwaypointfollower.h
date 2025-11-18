@@ -94,7 +94,8 @@ public:
     void addSpeedLimitRegion(const QList<PosPoint>& boundary, double maxSpeed_kmph);
     void clearSpeedLimitRegions();
     QList<SpeedLimitRegion> getSpeedLimitRegions() const;
-
+void setSpeedLimitRegionsFilePath(QString value) { mSpeedLimitRegionsFilePath = value;};
+QString getSpeedLimitRegionsFilePath() const {return mSpeedLimitRegionsFilePath;};
 signals:
     void distanceOfRouteLeft(double meters);
 
@@ -106,7 +107,7 @@ private:
 
     WayPointFollowerState mCurrentState;
     QList<SpeedLimitRegion> mSpeedLimitRegions;
-
+QString mSpeedLimitRegionsFilePath;
     PosType mPosTypeUsed = PosType::fused; // The type of position (Odom, GNSS, UWB, ...) that should be used for planning
     QSharedPointer<MovementController> mMovementController;
     QSharedPointer<VehicleConnection> mVehicleConnection;
