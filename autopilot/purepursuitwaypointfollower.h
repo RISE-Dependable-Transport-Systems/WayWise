@@ -107,7 +107,7 @@ private:
 
     WayPointFollowerState mCurrentState;
     QList<SpeedLimitRegion> mSpeedLimitRegions;
-QString mSpeedLimitRegionsFilePath;
+    QString mSpeedLimitRegionsFilePath = "No file path specified";
     PosType mPosTypeUsed = PosType::fused; // The type of position (Odom, GNSS, UWB, ...) that should be used for planning
     QSharedPointer<MovementController> mMovementController;
     QSharedPointer<VehicleConnection> mVehicleConnection;
