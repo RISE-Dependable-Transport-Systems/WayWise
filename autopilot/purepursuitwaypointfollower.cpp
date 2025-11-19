@@ -12,22 +12,13 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
-#include <QDir>
-#include <QStandardPaths>
+#include <QFile>
 
 PurepursuitWaypointFollower::PurepursuitWaypointFollower(QSharedPointer<MovementController> movementController)
 {
     mMovementController = movementController;
     mVehicleState = mMovementController->getVehicleState();
     connect(&mUpdateStateTimer, &QTimer::timeout, this, &PurepursuitWaypointFollower::updateState);
-
-    loadSpeedLimitRegionsFile();    // uses the default ENU reference (for simulation)
-    connect(mVehicleState.get(), &VehicleState::updatedEnuReference, this, [this]() {
-        qInfo() << "New ENU reference received, reloading speed limit regions.";
-
-        clearSpeedLimitRegions();
-        loadSpeedLimitRegionsFile();
-    });
 }
 
 PurepursuitWaypointFollower::PurepursuitWaypointFollower(QSharedPointer<VehicleConnection> vehicleConnection, PosType posTypeUsed)
@@ -36,14 +27,6 @@ PurepursuitWaypointFollower::PurepursuitWaypointFollower(QSharedPointer<VehicleC
     mVehicleState = mVehicleConnection->getVehicleState();
     connect(&mUpdateStateTimer, &QTimer::timeout, this, &PurepursuitWaypointFollower::updateState);
     setPosTypeUsed(posTypeUsed);
-
-    loadSpeedLimitRegionsFile();    // uses the default ENU reference (for simulation)
-    connect(mVehicleState.get(), &VehicleState::updatedEnuReference, this, [this]() {
-        qInfo() << "New ENU reference received, reloading speed limit regions.";
-
-        clearSpeedLimitRegions();
-        loadSpeedLimitRegionsFile();
-    });
 }
 
 void PurepursuitWaypointFollower::provideParametersToParameterServer()
@@ -585,11 +568,11 @@ QList<SpeedLimitRegion> PurepursuitWaypointFollower::getSpeedLimitRegions() cons
     return mSpeedLimitRegions;
 }
 
-void PurepursuitWaypointFollower::loadSpeedLimitRegionsFile()
+void PurepursuitWaypointFollower::loadSpeedLimitRegionsFile(const QString& filePath)
 {
-    QFile file(mSpeedLimitRegionsFilePath);
+    QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly)) {
-        qInfo() << "Could not open speed limit regions file:" << mSpeedLimitRegionsFilePath << Qt::endl
+        qInfo() << "Could not open speed limit regions file:" << filePath << Qt::endl
                 << "To create speed limit regions:" << Qt::endl
                 << "1. Go to https://geojson.io/#map=2/0/20 to easily define Polygons geometry" << Qt::endl
                 << "2. Copy the JSON source (make sure type is 'FeatureCollection')" << Qt::endl
