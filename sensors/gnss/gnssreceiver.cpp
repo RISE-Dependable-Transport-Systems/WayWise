@@ -10,12 +10,4 @@
 GNSSReceiver::GNSSReceiver(QSharedPointer<VehicleState> vehicleState)
 {
     mVehicleState = vehicleState;
-    mEnuReference = {57.71495867, 12.89134921, 0}; // AztaZero {57.7810, 12.7692, 0}, Klätterlabbet {57.6876, 11.9807, 0}, RISE RTK base station {57.71495867, 12.89134921, 0}
-}
-
-void GNSSReceiver::setEnuRef(llh_t enuRef)
-{
-    mEnuReference = enuRef;
-    mEnuReferenceSet = true;
-    emit updatedEnuReference(mEnuReference);
 }

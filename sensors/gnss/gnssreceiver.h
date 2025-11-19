@@ -49,8 +49,6 @@ public:
 
     void setReceiverVariant(RECEIVER_VARIANT receiverVariant) { mReceiverVariant = receiverVariant; }
     RECEIVER_VARIANT getReceiverVariant() { return mReceiverVariant; }
-    virtual llh_t getEnuRef() const { return mEnuReference; }
-    virtual void setEnuRef(llh_t enuRef);
     virtual void setChipOrientationOffset(double roll_deg, double pitch_deg, double yaw_deg) { mAChipOrientationOffset = {roll_deg, pitch_deg, yaw_deg}; }
     virtual void setAntennaToChipOffset(double xOffset, double yOffset, double zOffset) { mAntennaToChipOffset = {xOffset, yOffset, zOffset}; }
     virtual void setChipToRearAxleOffset(double xOffset, double yOffset, double zOffset) { mChipToRearAxleOffset = {xOffset, yOffset, zOffset}; }
@@ -61,9 +59,6 @@ public:
     virtual void setGnssFixAccuracy(GnssFixAccuracy gnssFixAccuracy) { mGnssFixAccuracy = gnssFixAccuracy; }
     virtual GnssFixAccuracy getGnssFixAccuracy() { return mGnssFixAccuracy; }
 
-signals:
-    void updatedEnuReference(llh_t mEnuReference);
-
 protected:
     virtual void shutdownGNSSReceiver() {};
 
@@ -71,8 +66,6 @@ protected:
     RECEIVER_STATE mReceiverState = RECEIVER_STATE::UNKNOWN;
     GNSS_FIX_TYPE mFixType = GNSS_FIX_TYPE::NO_FIX;
 
-    llh_t mEnuReference;
-    bool mEnuReferenceSet = false;
     QSharedPointer<VehicleState> mVehicleState;
     struct {double rollOffset_deg, pitchOffset_deg, yawOffset_deg;} mAChipOrientationOffset; // in degrees
     xyz_t mAntennaToChipOffset = {0.0, 0.0, 0.0}; // in meters

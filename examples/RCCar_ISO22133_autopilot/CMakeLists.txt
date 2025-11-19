@@ -50,6 +50,8 @@ add_executable(RCCar_ISO22133_autopilot
     ${WAYWISE_PATH}/communication/vehicleserver.h
     ${WAYWISE_PATH}/communication/iso22133vehicleserver.cpp
     ${WAYWISE_PATH}/logger/logger.cpp
+    ${WAYWISE_PATH}/routeplanning/zigzagroutegenerator.cpp
+    ${WAYWISE_PATH}/routeplanning/zigzagroutegenerator.h
 )
 
 target_include_directories(RCCar_ISO22133_autopilot PRIVATE ${WAYWISE_PATH})
