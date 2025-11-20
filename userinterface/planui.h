@@ -17,6 +17,7 @@
 #include "userinterface/map/routeplannermodule.h"
 #include "userinterface/routegeneratorui.h"
 #include "communication/vehicleconnections/vehicleconnection.h"
+#include "routeplanning/routeutils.h"
 
 namespace Ui {
 class PlanUI;

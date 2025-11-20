@@ -47,6 +47,8 @@ class GNSSReceiver : public QObject
 public:
     GNSSReceiver(QSharedPointer<VehicleState> vehicleState);
 
+    bool simulationStep(const std::function<bool(QTime, QSharedPointer<VehicleState>)> &perturbationFn = nullptr);
+
     void setReceiverVariant(RECEIVER_VARIANT receiverVariant) { mReceiverVariant = receiverVariant; }
     RECEIVER_VARIANT getReceiverVariant() { return mReceiverVariant; }
     virtual void setChipOrientationOffset(double roll_deg, double pitch_deg, double yaw_deg) { mAChipOrientationOffset = {roll_deg, pitch_deg, yaw_deg}; }

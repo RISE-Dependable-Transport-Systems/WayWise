@@ -12,8 +12,6 @@
 class ZigZagRouteGenerator
 {
 public:
-    static bool isPointWithin(double px, double py, QList<PosPoint> route);
-    static bool isPointWithin(PosPoint p, QList<PosPoint> route);
     static double distanceToLine(PosPoint p, PosPoint l0, PosPoint l1);
     static bool ccw(PosPoint a, PosPoint b, PosPoint c);
     static bool lineIntersect(PosPoint a, PosPoint b, PosPoint c, PosPoint d);

@@ -193,78 +193,13 @@ void PlanUI::on_importRouteButton_clicked()
 {
     QString filename = QFileDialog::getOpenFileName(this, tr("Import Routes from File"), "", tr("XML Files (*.xml)"));
 
-    if (filename.isEmpty())
-        return;
-
-    QFile file(filename);
-    if (!file.open(QIODevice::ReadOnly)) {
-        QMessageBox::critical(this, "Import Routes", "Could not open \"" + filename + "\" for reading.");
-        return;
-    }
-
-    QXmlStreamReader stream(&file);
-
-    if (stream.readNextStartElement())
+    QList<PosPoint> importedRoute = readRouteFromFile(filename, getRouteGeneratorUI()->getEnuRef());
+    if (!importedRoute.isEmpty())
     {
-        if (stream.name() == "routes") {
-            llh_t importedEnuRef{0.0, 0.0, 0.0};
-            while(stream.readNextStartElement())
-            {
-                if(stream.name() == "enuref")
-                {
-                    while(stream.readNextStartElement())
-                    {
-                        if (stream.name() == "Latitude")
-                            importedEnuRef.latitude = stream.readElementText().toDouble();
-                        if (stream.name() == "Longitude")
-                            importedEnuRef.longitude = stream.readElementText().toDouble();
-                        if (stream.name() == "Height")
-                            importedEnuRef.height = stream.readElementText().toDouble();
-                    }
-                }
-                if (stream.name() == "route")
-                {
-                    QList<PosPoint> importedRoute;
-                    while(stream.readNextStartElement())
-                    {
-                        if (stream.name() == "point")
-                        {
-                            PosPoint importedPoint;
-
-                            while(stream.readNextStartElement())
-                            {
-                                if (stream.name() == "x")
-                                    importedPoint.setX(stream.readElementText().toDouble());
-                                if (stream.name() == "y")
-                                    importedPoint.setY(stream.readElementText().toDouble());
-                                if (stream.name() == "z")
-                                    importedPoint.setHeight(stream.readElementText().toDouble());
-                                if (stream.name() == "speed")
-                                    importedPoint.setSpeed(stream.readElementText().toDouble());
-                                if (stream.name() == "attributes")
-                                    importedPoint.setAttributes(stream.readElementText().toUInt());
-                            }
-
-                            llh_t importedAbsPoint = coordinateTransforms::enuToLlh(importedEnuRef, {importedPoint.getX(), importedPoint.getY(), importedPoint.getHeight()});
-                            xyz_t importedEnuPoint = coordinateTransforms::llhToEnu(getRouteGeneratorUI()->getEnuRef(), importedAbsPoint);
-
-                            importedPoint.setX(importedEnuPoint.x);
-                            importedPoint.setY(importedEnuPoint.y);
-                            importedPoint.setHeight(importedEnuPoint.z);
-
-                            importedRoute.append(importedPoint);
-                        }
-                    }
-                    if (!importedRoute.isEmpty())
-                    {
-                        if (mRoutePlanner->getCurrentRoute().isEmpty())
-                            mRoutePlanner->appendRouteToCurrentRoute(importedRoute);
-                        else
-                            mRoutePlanner->addRoute(importedRoute);
-                    }
-                }
-            }
-        }
+        if (mRoutePlanner->getCurrentRoute().isEmpty())
+            mRoutePlanner->appendRouteToCurrentRoute(importedRoute);
+        else
+            mRoutePlanner->addRoute(importedRoute);
     }
 
     ui->currentRouteSpinBox->setValue(mRoutePlanner->getCurrentRouteIndex() + 1);

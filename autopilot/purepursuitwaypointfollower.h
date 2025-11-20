@@ -16,6 +16,7 @@
 #include "vehicles/controller/movementcontroller.h"
 #include "communication/vehicleconnections/vehicleconnection.h"
 #include "autopilot/waypointfollower.h"
+#include "routeplanning/routeutils.h"
 
 enum class WayPointFollowerSTMstates {NONE, FOLLOW_ROUTE_INIT, FOLLOW_ROUTE_GOTO_BEGIN, FOLLOW_ROUTE_FOLLOWING, FOLLOW_ROUTE_APPROACHING_END_GOAL, FOLLOW_ROUTE_FINISHED};
 struct WayPointFollowerState {
