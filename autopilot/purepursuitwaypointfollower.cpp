@@ -8,7 +8,6 @@
 #include "purepursuitwaypointfollower.h"
 #include "communication/parameterserver.h"
 #include "core/geometry.h"
-#include "routeplanning/zigzagroutegenerator.h"
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
@@ -385,7 +384,7 @@ void PurepursuitWaypointFollower::updateControl(const PosPoint &goal)
 
     // Check each speed limit region (if inside overlapping regions, the most restrictive limit will be applied)
     for (const SpeedLimitRegion &region : mSpeedLimitRegions) {
-        if (ZigZagRouteGenerator::isPointWithin(currentPos, region.boundary)) {
+        if (isPointWithin(currentPos, region.boundary)) {
             cappedSpeed = std::min(cappedSpeed, region.maxSpeed);
         }
     }

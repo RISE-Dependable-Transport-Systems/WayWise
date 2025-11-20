@@ -46,8 +46,8 @@ add_executable(map_local_twocars
     ${WAYWISE_PATH}/vehicles/controller/motorcontroller.h
     ${WAYWISE_PATH}/vehicles/controller/movementcontroller.cpp
     ${WAYWISE_PATH}/vehicles/controller/servocontroller.cpp
-    ${WAYWISE_PATH}/routeplanning/zigzagroutegenerator.cpp
-    ${WAYWISE_PATH}/routeplanning/zigzagroutegenerator.h
+    ${WAYWISE_PATH}/routeplanning/routeutils.cpp
+    ${WAYWISE_PATH}/routeplanning/routeutils.h
 )
 
 target_include_directories(map_local_twocars PRIVATE ${WAYWISE_PATH}/)

@@ -3,38 +3,11 @@
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
  */
 #include "zigzagroutegenerator.h"
+#include "routeutils.h"
 
 ZigZagRouteGenerator::ZigZagRouteGenerator()
 {
 
-}
-
-bool ZigZagRouteGenerator::isPointWithin(double px, double py, QList<PosPoint> route)
-{
-    if (route.size() < 3) {
-        return false;
-    }
-    int nVert = route.size();
-    int i,j;
-    bool c = false;
-
-    for (i = 0, j = nVert -  1; i < nVert; j = i ++) {
-        double vxi = route.at(i).getX();
-        double vyi = route.at(i).getY();
-        double vxj = route.at(j).getX();
-        double vyj = route.at(j).getY();
-
-        if (((vyi > py) != (vyj > py)) &&
-            (px < (vxj-vxi) * (py-vyi) / (vyj-vyi) + vxi)) {
-            c = !c;
-        }
-    }
-    return c;
-}
-
-bool ZigZagRouteGenerator::isPointWithin(PosPoint p, QList<PosPoint> route)
-{
-    return isPointWithin(p.getX(),p.getY(),route);
 }
 
 double ZigZagRouteGenerator::distanceToLine(PosPoint p, PosPoint l0, PosPoint l1)
