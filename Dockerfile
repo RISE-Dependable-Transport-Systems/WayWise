@@ -109,12 +109,11 @@ ARG APP_UID=10001
 ARG APP_GID=10001
 RUN groupadd -g ${APP_GID} waywise && useradd -m -u ${APP_UID} -g ${APP_GID} -s /bin/bash waywise
 
-# Simple liveness check (adjust as needed)
+# Simple liveness check - verify the main process is still running
 USER root
-RUN printf '#!/bin/sh\nexec /usr/local/bin/RCCar_MAVLINK_autopilot >/dev/null 2>&1 || exit 1\n' \
+RUN printf '#!/bin/sh\npgrep -x RCCar_MAVLINK_autopilot >/dev/null 2>&1 || exit 1\n' \
     > /usr/local/bin/healthcheck && chmod +x /usr/local/bin/healthcheck
 
-# RUN useradd -m -s /bin/bash waywise
 USER waywise
 WORKDIR /home/waywise
 
