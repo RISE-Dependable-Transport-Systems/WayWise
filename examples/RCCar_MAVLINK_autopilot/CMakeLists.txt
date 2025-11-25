@@ -49,8 +49,8 @@ add_executable(RCCar_MAVLINK_autopilot
     ${WAYWISE_PATH}/communication/vehicleserver.h
     ${WAYWISE_PATH}/communication/mavsdkvehicleserver.cpp
     ${WAYWISE_PATH}/logger/logger.cpp
-    ${WAYWISE_PATH}/routeplanning/zigzagroutegenerator.cpp
-    ${WAYWISE_PATH}/routeplanning/zigzagroutegenerator.h
+    ${WAYWISE_PATH}/routeplanning/routeutils.cpp
+    ${WAYWISE_PATH}/routeplanning/routeutils.h
 )
 
 target_include_directories(RCCar_MAVLINK_autopilot PRIVATE ${WAYWISE_PATH})
