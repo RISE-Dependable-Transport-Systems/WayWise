@@ -60,9 +60,9 @@ double SDVPVehiclePositionFuser::getMaxSignedStepFromValueTowardsGoal(double val
     return goal - value;
 }
 
-void SDVPVehiclePositionFuser::correctPositionAndYawGNSS(QSharedPointer<ObjectState> objectState, double distanceMoved, bool fused)
+void SDVPVehiclePositionFuser::correctPositionAndYawGNSS(QSharedPointer<ObjectState> objectState, double distanceMoved, GnssFixStatus gnssFixStatus)
 {
-    mPosGNSSisFused = fused;
+    mPosGNSSisFused = gnssFixStatus.isFused;
     PosPoint posGNSS = objectState->getPosition(PosType::GNSS);
     PosPoint posIMU = objectState->getPosition(PosType::IMU);
     PosPoint posFused = objectState->getPosition(PosType::fused);

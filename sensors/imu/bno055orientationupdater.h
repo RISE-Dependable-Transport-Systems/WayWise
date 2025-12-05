@@ -18,7 +18,7 @@ extern "C" {
 class BNO055OrientationUpdater : public IMUOrientationUpdater
 {
 public:
-    BNO055OrientationUpdater(QSharedPointer<VehicleState> vehicleState, QString i2cBus = "/dev/i2c-1");
+    BNO055OrientationUpdater(QSharedPointer<ObjectState> objectState, QString i2cBus = "/dev/i2c-1");
     void printBNO055Info();
 
     virtual bool setUpdateIntervall(int pollIntervall_ms) override;

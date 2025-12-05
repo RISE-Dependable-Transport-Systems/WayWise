@@ -34,7 +34,7 @@ public:
 
 
     QSharedPointer<ServoController> getServoController();
-    QSharedPointer<IMUOrientationUpdater> getIMUOrientationUpdater(QSharedPointer<VehicleState> vehicleState);
+    QSharedPointer<IMUOrientationUpdater> getIMUOrientationUpdater(QSharedPointer<ObjectState> objectState);
 
     int getPollValuesPeriod() const;
     void setPollValuesPeriod(int milliseconds);
@@ -52,20 +52,20 @@ private:
 
     class VESCOrientationUpdater : public IMUOrientationUpdater {
     public:
-        VESCOrientationUpdater(QSharedPointer<VehicleState> vehicleState) : IMUOrientationUpdater(vehicleState) {}
+        VESCOrientationUpdater(QSharedPointer<ObjectState> objectState) : IMUOrientationUpdater(objectState) {}
         virtual bool setUpdateIntervall(int) override {
             return false; // TODO
         }
     private:
         void useIMUDataFromVESC(double roll, double pitch, double yaw) {
-            QSharedPointer<VehicleState> vehicleState = getVehicleState();
-            PosPoint currIMUPos = vehicleState->getPosition(PosType::IMU);
+            QSharedPointer<ObjectState> objectState = getObjectState();
+            PosPoint currIMUPos = objectState->getPosition(PosType::IMU);
 
             currIMUPos.setRollPitchYaw(roll, pitch, coordinateTransforms::yawNEDtoENU(yaw));
             currIMUPos.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()));
-            vehicleState->setPosition(currIMUPos);
+            objectState->setPosition(currIMUPos);
 
-            emit updatedIMUOrientation(vehicleState);
+            emit updatedIMUOrientation(objectState);
         };
 
         friend class VESCMotorController;

@@ -10,22 +10,23 @@
 
 #include <QObject>
 #include <QSharedPointer>
-#include "vehicles/vehiclestate.h"
+#include "vehicles/objectstate.h"
 
 class IMUOrientationUpdater : public QObject
 {
     Q_OBJECT
 public:
-    IMUOrientationUpdater(QSharedPointer<VehicleState> vehicleState);
-    QSharedPointer<VehicleState> getVehicleState() const;
+    IMUOrientationUpdater(QSharedPointer<ObjectState> objectState);
+    QSharedPointer<ObjectState> getObjectState() const;
     virtual bool setUpdateIntervall(int intervall_ms) = 0;
+    void simulationStep(const std::function<void(QTime, QSharedPointer<ObjectState>)> &simulationFn = nullptr);
 
 
 signals:
-    void updatedIMUOrientation(QSharedPointer<VehicleState> vehicleState);
+    void updatedIMUOrientation(QSharedPointer<ObjectState> objectState);
 
 private:
-    QSharedPointer<VehicleState> mVehicleState; // vehicle which's PosType::IMU is periodically updated
+    QSharedPointer<ObjectState> mObjectState; // object whose PosType::IMU is periodically updated
 
 };
 

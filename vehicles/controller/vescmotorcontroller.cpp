@@ -134,9 +134,9 @@ QSharedPointer<ServoController> VESCMotorController::getServoController()
     return mVESCServoController;
 }
 
-QSharedPointer<IMUOrientationUpdater> VESCMotorController::getIMUOrientationUpdater(QSharedPointer<VehicleState> vehicleState)
+QSharedPointer<IMUOrientationUpdater> VESCMotorController::getIMUOrientationUpdater(QSharedPointer<ObjectState> objectState)
 {
-    mVESCOrientationUpdater.reset(new VESCOrientationUpdater(vehicleState));
+    mVESCOrientationUpdater.reset(new VESCOrientationUpdater(objectState));
     setEnableIMUOrientationUpdate(true);
 
     return  mVESCOrientationUpdater;

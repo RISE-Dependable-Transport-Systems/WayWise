@@ -56,3 +56,15 @@ PosPoint ObjectState::getPosition(PosType type) const
 {
     return mPositionBySource[(int)type];
 }
+
+void ObjectState::setEnuRef(llh_t enuRef)
+{
+    mEnuReference = enuRef;
+    mEnuReferenceSet = true;
+    emit updatedEnuReference(mEnuReference);
+}
+
+bool ObjectState::isEnuReferenceSet()
+{
+    return mEnuReferenceSet;
+}
