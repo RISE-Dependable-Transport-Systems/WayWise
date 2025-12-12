@@ -12,33 +12,44 @@ GNSSReceiver::GNSSReceiver(QSharedPointer<ObjectState> objectState)
     mObjectState = objectState;
 }
 
-bool GNSSReceiver::simulationStep(const std::function<bool(QTime, QSharedPointer<VehicleState>)> &perturbationFn)
+void GNSSReceiver::simulationStep(const std::function<GnssFixStatus(QTime, QSharedPointer<ObjectState>)> &perturbationFn)
 {
-    static PosPoint prevOdomPosition = PosPoint();
-    PosPoint odomPosition = mVehicleState->getPosition(PosType::odom);
+    static QPointF lastGNSSPoint = QPointF();
+    static PosPoint lastOdomPosPoint = PosPoint();
+    PosPoint gnssPosPoint = mObjectState->getPosition(PosType::GNSS);
+    PosPoint odomPosPoint = mObjectState->getPosition(PosType::odom);
 
-    double deltaX = odomPosition.getX() - prevOdomPosition.getX();
-    double deltaY = odomPosition.getY() - prevOdomPosition.getY();
-    double deltaYaw = odomPosition.getYaw() - prevOdomPosition.getYaw();
-
-    PosPoint gnssPosition = mVehicleState->getPosition(PosType::GNSS);
-    gnssPosition.setX(gnssPosition.getX() + deltaX);
-    gnssPosition.setY(gnssPosition.getY() + deltaY);
-    double yawResult = gnssPosition.getYaw() + deltaYaw;
+    double deltaX = odomPosPoint.getX() - lastOdomPosPoint.getX();
+    double deltaY = odomPosPoint.getY() - lastOdomPosPoint.getY();
+    double deltaYaw = odomPosPoint.getYaw() - lastOdomPosPoint.getYaw();
+    gnssPosPoint.setX(gnssPosPoint.getX() + deltaX);
+    gnssPosPoint.setY(gnssPosPoint.getY() + deltaY);
+    double yawResult = gnssPosPoint.getYaw() + deltaYaw;
 
     while (yawResult < -180.0)
         yawResult += 360.0;
     while (yawResult >= 180.0)
         yawResult -= 360.0;
 
-    gnssPosition.setYaw(yawResult);
-    gnssPosition.setTime(odomPosition.getTime());
-    mVehicleState->setPosition(gnssPosition);
-    prevOdomPosition = odomPosition;
+    gnssPosPoint.setYaw(yawResult);
+    gnssPosPoint.setTime(odomPosPoint.getTime());
+    mObjectState->setPosition(gnssPosPoint);
 
+    GnssFixStatus gnssFixStatus;
     if (perturbationFn) {
-        return perturbationFn(odomPosition.getTime(), mVehicleState);
+        gnssFixStatus = perturbationFn(odomPosPoint.getTime(), mObjectState);
+        gnssPosPoint = mObjectState->getPosition(PosType::GNSS);
+    } else {
+        gnssFixStatus.isFusedOnChip = true;
+        gnssFixStatus.fixType = GNSS_FIX_TYPE::FIX_3D;
+        gnssFixStatus.horizontalAccuracy = 0.0;
+        gnssFixStatus.verticalAccuracy = 0.0;
+        gnssFixStatus.headingAccuracy = 0.0;
+        gnssFixStatus.lastRtcmCorrectionAge = 0;
+        gnssFixStatus.numSatellites = 0;
     }
 
-    return true;
+    emit updatedGNSSPositionAndYaw(mObjectState, QLineF(lastGNSSPoint, gnssPosPoint.getPoint()).length(), gnssFixStatus);
+    lastGNSSPoint = gnssPosPoint.getPoint();
+    lastOdomPosPoint = odomPosPoint;
 }

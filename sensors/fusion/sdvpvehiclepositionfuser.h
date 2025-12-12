@@ -22,13 +22,14 @@
 #include <QObject>
 #include <QSharedPointer>
 #include "vehicles/vehiclestate.h"
+#include "sensors/gnss/gnssreceiver.h"
 
 class SDVPVehiclePositionFuser : public QObject
 {
     Q_OBJECT
 public:
     explicit SDVPVehiclePositionFuser(QObject *parent = nullptr);
-    void correctPositionAndYawGNSS(QSharedPointer<ObjectState> objectState, double distanceMoved, bool fused);
+    void correctPositionAndYawGNSS(QSharedPointer<ObjectState> objectState, double distanceMoved, GnssFixStatus gnssFixStatus);
     void correctPositionAndYawOdom(QSharedPointer<ObjectState> objectState, double distanceDriven);
     void correctPositionAndYawIMU(QSharedPointer<ObjectState> objectState);
 
