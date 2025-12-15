@@ -53,3 +53,49 @@ void GNSSReceiver::simulationStep(const std::function<GnssFixStatus(QTime, QShar
     lastGNSSPoint = gnssPosPoint.getPoint();
     lastOdomPosPoint = odomPosPoint;
 }
+
+void GNSSReceiver::updateGNSSPositionAndYaw(llh_t llh, double heading, bool isFusedOnChip)
+{
+
+    PosPoint gnssPos = mObjectState->getPosition(PosType::GNSS);
+    xyz_t xyz = {0.0, 0.0, 0.0};
+
+    if (!mObjectState->isEnuReferenceSet()) {
+        mObjectState->setEnuRef(llh);
+        qDebug() << "GNSSReceiver: ENU reference point set to" << llh.latitude << llh.longitude << llh.height;
+    } else
+        xyz = coordinateTransforms::llhToEnu(mObjectState->getEnuRef(), llh);
+
+    // Position
+    gnssPos.setXYZ(xyz);
+
+    double vehYaw_radENU = 0.0;
+    if (isFusedOnChip) {
+        double yaw_degENU = coordinateTransforms::yawNEDtoENU(heading) + mAChipOrientationOffset.yawOffset_deg;
+
+        // normalize to [-180.0:180.0]
+        while (yaw_degENU < -180.0)
+            yaw_degENU += 360.0;
+        while (yaw_degENU >= 180.0)
+            yaw_degENU -= 360.0;
+
+        gnssPos.setYaw(yaw_degENU);
+
+        vehYaw_radENU = yaw_degENU * M_PI / 180.0;
+
+        // Apply Chip to rear axle offset if set.
+        if (mChipToBaseOffset.x != 0.0 || mChipToBaseOffset.y != 0.0) {
+            gnssPos.updateWithOffsetAndYawRotation(mChipToBaseOffset, vehYaw_radENU);
+        }
+    } else { // Assumes fused yaw is updated.
+        PosPoint fusedPos = mObjectState->getPosition(PosType::fused);
+        vehYaw_radENU = fusedPos.getYaw() * M_PI / 180.0;
+
+        // Apply antenna to rear axle offset if set.
+        xyz_t mAntennaToRearAxleOffset = mAntennaToChipOffset + mChipToBaseOffset;
+        if (mAntennaToRearAxleOffset.x != 0.0 || mAntennaToRearAxleOffset.y != 0.0) {
+            gnssPos.updateWithOffsetAndYawRotation(mAntennaToRearAxleOffset, vehYaw_radENU);
+        }
+    }
+    mObjectState->setPosition(gnssPos);
+}

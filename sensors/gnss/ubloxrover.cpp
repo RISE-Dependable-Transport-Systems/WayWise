@@ -350,49 +350,9 @@ void UbloxRover::updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt)
         qDebug() << "UbloxRover: assuming" << leapSeconds_ms / 1000 << "seconds difference between GNSS time and UTC.";
         initializationDone = true;
     } else {
+        GNSSReceiver::updateGNSSPositionAndYaw({pvt.lat, pvt.lon, pvt.height}, pvt.head_veh, pvt.head_veh_valid);
+
         PosPoint gnssPos = mObjectState->getPosition(PosType::GNSS);
-
-        llh_t llh = {pvt.lat, pvt.lon, pvt.height};
-        xyz_t xyz = {0.0, 0.0, 0.0};
-
-        if (!mVehicleState->isEnuReferenceSet()) {
-            mVehicleState->setEnuRef(llh);
-            qDebug() << "UbloxRover: ENU reference point set to" << pvt.lat << pvt.lon << pvt.height;
-        } else
-            xyz = coordinateTransforms::llhToEnu(mVehicleState->getEnuRef(), llh);
-
-        // Position
-        gnssPos.setXYZ(xyz);
-
-        double vehYaw_radENU = 0.0;
-        if (mReceiverVariant == RECEIVER_VARIANT::UBLX_ZED_F9R) {
-            double yaw_degENU = coordinateTransforms::yawNEDtoENU(pvt.head_veh) + mAChipOrientationOffset.yawOffset_deg;
-
-            // normalize to [-180.0:180.0]
-            while (yaw_degENU < -180.0)
-                yaw_degENU += 360.0;
-            while (yaw_degENU >= 180.0)
-                yaw_degENU -= 360.0;
-
-            gnssPos.setYaw(yaw_degENU);
-
-            vehYaw_radENU = yaw_degENU * M_PI / 180.0;
-
-            // Apply Chip to rear axle offset if set.
-            if (mChipToRearAxleOffset.x != 0.0 || mChipToRearAxleOffset.y != 0.0) {
-                gnssPos.updateWithOffsetAndYawRotation(mChipToRearAxleOffset, vehYaw_radENU);
-            }
-        } else { // Assumes fused yaw is updated.
-            PosPoint fusedPos = mObjectState->getPosition(PosType::fused);
-            vehYaw_radENU = fusedPos.getYaw() * M_PI / 180.0;
-
-            // Apply antenna to rear axle offset if set.
-            xyz_t mAntennaToRearAxleOffset = mAntennaToChipOffset + mChipToRearAxleOffset;
-            if (mAntennaToRearAxleOffset.x != 0.0 || mAntennaToRearAxleOffset.y != 0.0) {
-                gnssPos.updateWithOffsetAndYawRotation(mAntennaToRearAxleOffset, vehYaw_radENU);
-            }
-        }
-
         // Time and speed
         gnssPos.setTime(QTime::fromMSecsSinceStartOfDay((pvt.i_tow % ms_per_day) - leapSeconds_ms));
 //        qDebug() << "UbloxRover, gnssPos.getTime() - msSinceTodayUTC:" << QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()).msecsSinceStartOfDay() - gnssPos.getTime();
@@ -400,18 +360,21 @@ void UbloxRover::updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt)
 
         mObjectState->setPosition(gnssPos);
 
-        // Accuracy
-        mGnssFixAccuracy.horizontal = pvt.h_acc;
-        mGnssFixAccuracy.vertical = pvt.v_acc;
-        mGnssFixAccuracy.heading = pvt.head_acc;
+        // GNSS fix status
+        GnssFixStatus gnssFixStatus;
+        gnssFixStatus.isFusedOnChip = pvt.head_veh_valid;
+        gnssFixStatus.horizontalAccuracy = pvt.h_acc;
+        gnssFixStatus.verticalAccuracy = pvt.v_acc;
+        gnssFixStatus.headingAccuracy = pvt.head_acc;
+        gnssFixStatus.fixType = static_cast<GNSS_FIX_TYPE>(pvt.fix_type);
+        gnssFixStatus.lastRtcmCorrectionAge = pvt.last_correction_age;
+        gnssFixStatus.numSatellites = pvt.num_sv;
 
-        mPosGNSSisFused = pvt.head_veh_valid;
-
-        static xyz_t lastXyz;
-        emit updatedGNSSPositionAndYaw(mObjectState, QLineF(QPointF(lastXyz.x, lastXyz.y), gnssPos.getPoint()).length(), pvt.head_veh_valid);
+        static QPointF lastGnssPoint;
+        emit updatedGNSSPositionAndYaw(mObjectState, QLineF(lastGnssPoint, gnssPos.getPoint()).length(), gnssFixStatus);
         emit txNavPvt(pvt);
 
-        lastXyz = xyz;
+        lastGnssPoint = gnssPos.getPoint();
     }
 }
 

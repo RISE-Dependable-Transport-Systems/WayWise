@@ -36,7 +36,6 @@ public:
     virtual void readObjectSpeedForPositionFusion();
 
 signals:
-    void updatedGNSSPositionAndYaw(QSharedPointer<ObjectState> objectState, double distanceMoved, bool fused);
     void txNavPvt(const ubx_nav_pvt &pvt);
     void gotNmeaGga(const QByteArray& nmeaGgaStr);
 

@@ -8,6 +8,8 @@
 #ifndef GNSSRECEIVER_H
 #define GNSSRECEIVER_H
 
+#include <QDebug>
+#include <QLineF>
 #include <QObject>
 #include <QSharedPointer>
 #include <limits>
@@ -75,6 +77,10 @@ public:
     RECEIVER_STATE getReceiverState() { return mReceiverState; }
     void setReceiverState(RECEIVER_STATE state) { mReceiverState = state; }
     virtual void aboutToShutdown() {};
+    virtual void updateGNSSPositionAndYaw(llh_t llh, double heading, bool isFusedOnChip);
+
+signals:
+    void updatedGNSSPositionAndYaw(QSharedPointer<ObjectState> objectState, double distanceMoved, GnssFixStatus gnssFixStatus);
 
 protected:
     virtual void shutdownGNSSReceiver() {};
