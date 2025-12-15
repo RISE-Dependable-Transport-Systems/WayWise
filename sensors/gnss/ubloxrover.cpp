@@ -112,7 +112,6 @@ UbloxRover::UbloxRover(QSharedPointer<ObjectState> objectState)
 
     // Print nav-status message
     connect(&mUblox, &Ublox::rxNavStatus, this, [this](const ubx_nav_status &status) {
-        mFixType = static_cast<GNSS_FIX_TYPE>(status.gps_fix);
         if (mPrintVerbose && mReceiverState == RECEIVER_STATE::CALIBRATING) {
             qDebug() << "---------------------------------";
             qDebug() << "NAV-STATUS data:"
@@ -277,7 +276,7 @@ bool UbloxRover::configureUblox()
             // mUblox.ubloxCfgAppendU2Key(buffer, &ind, CFG_SFODO_LATENCY, 5); // Wheel tick/speed data latency (in ms), if not provided, it is assumed to be 0.
             mUblox.ubloxCfgAppendU4Key(buffer, &ind, CFG_SFODO_QUANT_ERROR, 1e3); // Wheel tick/speed data quantization error (units: 1e-6), set it to 0 for automatic estimation, 1e3 = 1mm/s
 
-            // Automatic IMU mount alignment is not supported for MOWER and E-Scooter models
+            // IMU mount alignment
             uint32_t yaw_deg_scaled = static_cast<uint32_t>(mAChipOrientationOffset.yawOffset_deg * 100);
             uint16_t pitch_deg_scaled = static_cast<uint16_t>(mAChipOrientationOffset.pitchOffset_deg * 100);
             uint16_t roll_deg_scaled = static_cast<uint16_t>(mAChipOrientationOffset.rollOffset_deg * 100);
@@ -292,9 +291,9 @@ bool UbloxRover::configureUblox()
             mUblox.ubloxCfgAppendI2Key(buffer, &ind, CFG_SFIMU_IMU2ANT_LA_Z, imu2ant_la_z_cm); // IMU to antenna lever arm Z (cm)
 
             // Set the offset between the IMU and the vehicle reference point
-            uint16_t imu2vrp_la_x_cm = static_cast<uint16_t>(mChipToRearAxleOffset.x * 100);
-            uint16_t imu2vrp_la_y_cm = static_cast<uint16_t>(mChipToRearAxleOffset.y * 100);
-            uint16_t imu2vrp_la_z_cm = static_cast<uint16_t>(mChipToRearAxleOffset.z * 100);
+            uint16_t imu2vrp_la_x_cm = static_cast<uint16_t>(mChipToBaseOffset.x * 100);
+            uint16_t imu2vrp_la_y_cm = static_cast<uint16_t>(mChipToBaseOffset.y * 100);
+            uint16_t imu2vrp_la_z_cm = static_cast<uint16_t>(mChipToBaseOffset.z * 100);
             mUblox.ubloxCfgAppendI2Key(buffer, &ind, CFG_SFODO_IMU2VRP_LA_X, imu2vrp_la_x_cm); // IMU to vehicle reference point lever arm X (cm)
             mUblox.ubloxCfgAppendI2Key(buffer, &ind, CFG_SFODO_IMU2VRP_LA_Y, imu2vrp_la_y_cm); // IMU to vehicle reference point lever arm Y (cm)
             mUblox.ubloxCfgAppendI2Key(buffer, &ind, CFG_SFODO_IMU2VRP_LA_Z, imu2vrp_la_z_cm); // IMU to vehicle reference point lever arm Z (cm)
@@ -326,9 +325,9 @@ bool UbloxRover::configureUblox()
     } else if (mReceiverVariant == RECEIVER_VARIANT::UBLX_ZED_F9P) {
         // F9P specific configuration
 
-        int gNSSMeasurementPeriod_ms = 1000 / mGNSSMeasurementRate; // convert Hz to ms
-        mUblox.ubloxCfgAppendRate(buffer, &ind, gNSSMeasurementPeriod_ms, 1, 0); // Set rate
-        mUblox.ubloxCfgAppendE1U1Key(buffer, &ind, CFG_MSGOUT_UBX_NAV_PVT_USB, 1); // Enable UBX-NAV-PVT
+        int gNSSMeasurementPeriod_ms = 1000 / mNavPvtMessageRate; // convert Hz to ms
+        mUblox.ubloxCfgAppendRate(buffer, &ind, gNSSMeasurementPeriod_ms, 1, 0); // One measurement per nav solution
+        mUblox.ubloxCfgAppendE1U1Key(buffer, &ind, CFG_MSGOUT_UBX_NAV_PVT_USB, 1); // Output NAV-PVT every nav solution
 
         result &= mUblox.ubloxCfgValset(buffer, ind, true, true, mCalibrateEsfSensors, 0); // timeout set to 0 as ack is not being received
 
@@ -493,9 +492,9 @@ bool UbloxRover::switchNavPrioMode(bool navPrioMode)
     int ind = 0;
 
     if (navPrioMode) {
-        int gNSSMeasurementPeriod_ms = 1000 / mGNSSMeasurementRate; // convert Hz to ms
-        mUblox.ubloxCfgAppendRate(buffer, &ind, gNSSMeasurementPeriod_ms, 1, 0, mNavPrioMessageRate); // Enable/disable nav prio mode
-        mUblox.ubloxCfgAppendE1U1Key(buffer, &ind, CFG_MSGOUT_UBX_NAV_PVT_USB, 1); // UBX-NAV-PVT rate
+        int gNSSMeasurementPeriod_ms = 1000 / mNavPvtMessageRate; // convert Hz to ms
+        mUblox.ubloxCfgAppendRate(buffer, &ind, gNSSMeasurementPeriod_ms, 1, 0, mNavPvtMessageRate); // Enable nav prio mode, one measurement per nav solution
+        mUblox.ubloxCfgAppendE1U1Key(buffer, &ind, CFG_MSGOUT_UBX_NAV_PVT_USB, 1); // Output NAV-PVT every nav solution
     } else {
         mUblox.ubloxCfgAppendRate(buffer, &ind, 1000, 1, 0, 0); // Disable nav prio mode
         mUblox.ubloxCfgAppendE1U1Key(buffer, &ind, CFG_MSGOUT_UBX_NAV_PVT_USB, 0); // UBX-NAV-PVT rate

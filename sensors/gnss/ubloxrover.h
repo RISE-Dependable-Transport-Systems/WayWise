@@ -27,8 +27,7 @@ public:
     void writeOdomToUblox(ubx_esf_datatype_enum dataType, uint32_t dataField, uint32_t timeTag = 0);
     void setDynamicModel(DynamicModel dynamicModel) { mDynamicModel = dynamicModel; }
     void setForceRecalibrateSensors(bool forceRecalibrateSensors) { mCalibrateEsfSensors = forceRecalibrateSensors; }
-    void setGNSSMeasurementRate(int rate) { mGNSSMeasurementRate = rate; }
-    void setNavPrioMessageRate(int rate) { mNavPrioMessageRate = rate; }
+    void setNavPvtMessageRate(int rate) { mNavPvtMessageRate = rate; }
     void setSpeedDataInputRate(int rate) { mSpeedDataInputRate = rate; }
     void setPrintVerbose(bool printVerbose) { mPrintVerbose = printVerbose; }
     void setESFAlgAutoMntAlgOn(bool esfAlgAutoMntAlgOn) { mESFAlgAutoMntAlgOn = esfAlgAutoMntAlgOn; }
@@ -53,8 +52,7 @@ private:
     Ublox mUblox;
 
     DynamicModel mDynamicModel = DynamicModel::AUTOMOT;
-    int mGNSSMeasurementRate = 1; // Hz
-    int mNavPrioMessageRate = 10; // Hz
+    int mNavPvtMessageRate = 5; // Hz
     int mSpeedDataInputRate = 10; // Hz
     bool mCalibrateEsfSensors = false;
     bool mESFAlgAutoMntAlgOn = false;
