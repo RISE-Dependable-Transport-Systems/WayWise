@@ -5,7 +5,7 @@
 #include "bno055orientationupdater.h"
 #include <QDebug>
 
-BNO055OrientationUpdater::BNO055OrientationUpdater(QSharedPointer<VehicleState> vehicleState, QString i2cBus) : IMUOrientationUpdater(vehicleState)
+BNO055OrientationUpdater::BNO055OrientationUpdater(QSharedPointer<ObjectState> objectState, QString i2cBus) : IMUOrientationUpdater(objectState)
 {
     int res = get_i2cbus(i2cBus.toLocal8Bit().data(), mBNO055I2CAddress.toLocal8Bit().data());
 
@@ -26,14 +26,14 @@ BNO055OrientationUpdater::BNO055OrientationUpdater(QSharedPointer<VehicleState> 
                 qDebug() << "WARNING: BNO055OrientationUpdater cannot read orientation data from i2c bus.";
             } else {
                 // qDebug() << "Roll:" << bnod.eul_roll << "Pitch:" << bnod.eul_pitc << "Yaw:" << bnod.eul_head;
-                QSharedPointer<VehicleState> vehicleState = getVehicleState();
-                PosPoint currIMUPos = vehicleState->getPosition(PosType::IMU);
+                QSharedPointer<ObjectState> objectState = getObjectState();
+                PosPoint currIMUPos = objectState->getPosition(PosType::IMU);
 
                 currIMUPos.setRollPitchYaw(bnod.eul_roll, bnod.eul_pitc, coordinateTransforms::yawNEDtoENU(bnod.eul_head));
                 currIMUPos.setTime(QTime::currentTime().addSecs(-QDateTime::currentDateTime().offsetFromUtc()));
-                vehicleState->setPosition(currIMUPos);
+                objectState->setPosition(currIMUPos);
 
-                emit updatedIMUOrientation(vehicleState);
+                emit updatedIMUOrientation(objectState);
             }
         });
         mPollTimer.start(mPollIntervall_ms);
