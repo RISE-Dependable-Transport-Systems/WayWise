@@ -52,6 +52,10 @@ public:
     WAYWISE_OBJECT_TYPE getWaywiseObjectType() const { return mWaywiseObjectType; }
     void setWaywiseObjectType(const WAYWISE_OBJECT_TYPE value) { mWaywiseObjectType = value; }
 
+    virtual llh_t getEnuRef() const { return mEnuReference; }
+    virtual void setEnuRef(llh_t enuRef);
+    bool isEnuReferenceSet();
+
     // Dynamic state
     virtual PosPoint getPosition(PosType type) const;
     virtual PosPoint getPosition() const { return getPosition(PosType::simulated); }
@@ -70,6 +74,7 @@ public:
 
 signals:
     void positionUpdated(PosType type);
+    void updatedEnuReference(llh_t mEnuReference);
 
 private:
     // Static state
@@ -78,6 +83,9 @@ private:
     Qt::GlobalColor mColor;
     bool mDrawStatusText = true;
     WAYWISE_OBJECT_TYPE mWaywiseObjectType = WAYWISE_OBJECT_TYPE_GENERIC;
+
+    llh_t mEnuReference = {57.71495867, 12.89134921, 0}; // AztaZero {57.7810, 12.7692, 0}, Klätterlabbet {57.6876, 11.9807, 0}, RISE RTK base station {57.71495867, 12.89134921, 0}
+    bool mEnuReferenceSet = false;
 
 protected:
     // Dynamic state

@@ -57,10 +57,6 @@ public:
     double getMaxAcceleration() const { return mMaxAcceleration; }
     void setMaxAcceleration(double maxAcceleration) { mMaxAcceleration = maxAcceleration; }
 
-    virtual llh_t getEnuRef() const { return mEnuReference; }
-    virtual void setEnuRef(llh_t enuRef);
-    bool isEnuReferenceSet();
-
     xyz_t getRearAxleToCenterOffset() const { return mRearAxleToCenterOffset; }
     void setRearAxleToCenterOffset(double rearAxleToCenterOffsetX) { mRearAxleToCenterOffset.x = rearAxleToCenterOffsetX; }
     void setRearAxleToCenterOffset(xyz_t rearAxleToCenterOffset) { mRearAxleToCenterOffset = rearAxleToCenterOffset; }
@@ -106,9 +102,6 @@ public:
     std::array<float, 3> getAccelerometerXYZ() const;
     void setAccelerometerXYZ(const std::array<float, 3> &accelerometerXYZ);
 
-signals:
-    void updatedEnuReference(llh_t mEnuReference);
-
 private:
     // Static state
     double mLength = 0.8; // [m]
@@ -120,9 +113,6 @@ private:
     xyz_t mRearAxleToCenterOffset;
     xyz_t mRearAxleToRearEndOffset{-0.1333, 0.0, 0.0};
     xyz_t mRearAxleToHitchOffset;
-
-    llh_t mEnuReference = {57.71495867, 12.89134921, 0}; // AztaZero {57.7810, 12.7692, 0}, Klätterlabbet {57.6876, 11.9807, 0}, RISE RTK base station {57.71495867, 12.89134921, 0}
-    bool mEnuReferenceSet = false;
 
     // Dynamic state
     double mSteering = 0.0; // [-1.0:1.0]
