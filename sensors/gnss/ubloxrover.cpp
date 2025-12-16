@@ -13,7 +13,7 @@ UbloxRover::UbloxRover(QSharedPointer<ObjectState> objectState)
 {
     // Use GNSS reception to update location
     connect(&mUblox, &Ublox::rxNavPvt, this, [this](const ubx_nav_pvt &pvt){
-        if (mReceiverVariant == RECEIVER_VARIANT::UBLX_ZED_F9P && mReceiverState != RECEIVER_STATE::READY) {
+        if (mReceiverState != RECEIVER_STATE::READY) {
             setReceiverState(RECEIVER_STATE::READY);
         }
         updateGNSSPositionAndYaw(pvt);
@@ -69,7 +69,7 @@ UbloxRover::UbloxRover(QSharedPointer<ObjectState> objectState)
             } break;
             case RECEIVER_STATE::READY:
             {
-                if (status.fusion_mode == 0) { // Recalibrating sensors
+                if (status.fusion_mode == 0 && mFusionOnChip) { // Recalibrating sensors
                     setReceiverState(RECEIVER_STATE::CALIBRATING);
                     qDebug() << "UbloxRover: Recalibrating sensors";
                 }
@@ -78,7 +78,7 @@ UbloxRover::UbloxRover(QSharedPointer<ObjectState> objectState)
                 break;
         }
 
-        if (mPrintVerbose) {
+        if (mPrintVerbose && mFusionOnChip) {
             qDebug() << "---------------------------------";
             qDebug() << "ESF-STATUS data:"
                     // << "\nVersion:" << status.version
@@ -266,53 +266,62 @@ bool UbloxRover::configureUblox()
     if (mReceiverVariant == RECEIVER_VARIANT::UBLX_ZED_F9R) {
         // F9R specific configuration
 
-        if (mCalibrateEsfSensors) { // TODO: do a valget to compare the key values and change them if required
-            mUblox.ubloxCfgAppendEnableSf(buffer, &ind, true); // enable/disable sensor fusion
+        if (mFusionOnChip) { // TODO: do a valget to compare the key values and change them if required
+            mUblox.ubloxCfgAppendEnableSf(buffer, &ind, true); // enable sensor fusion
 
-            // Set the odometer input configuration for sensor fusion
-            mUblox.ubloxCfgAppendE1U1Key(buffer, &ind, CFG_SFODO_USE_SPEED, true); // Use speed data for fusion, speed should be sent as mm/s, signed int.
-            mUblox.ubloxCfgAppendE1U1Key(buffer, &ind, CFG_SFODO_USE_WT_PIN, false); // Disable wheel tick input
-            mUblox.ubloxCfgAppendE1U1Key(buffer, &ind, CFG_SFODO_FREQUENCY, mSpeedDataInputRate); // Speed data frequency (Hz), should be accurate upto 10%, set it to 0 for automatic estimation
-            // mUblox.ubloxCfgAppendU2Key(buffer, &ind, CFG_SFODO_LATENCY, 5); // Wheel tick/speed data latency (in ms), if not provided, it is assumed to be 0.
-            mUblox.ubloxCfgAppendU4Key(buffer, &ind, CFG_SFODO_QUANT_ERROR, 1e3); // Wheel tick/speed data quantization error (units: 1e-6), set it to 0 for automatic estimation, 1e3 = 1mm/s
+            if (mCalibrateEsfSensors) {
+                // Set the odometer input configuration for sensor fusion
+                mUblox.ubloxCfgAppendE1U1Key(buffer, &ind, CFG_SFODO_USE_SPEED, true); // Use speed data for fusion, speed should be sent as mm/s, signed int.
+                mUblox.ubloxCfgAppendE1U1Key(buffer, &ind, CFG_SFODO_USE_WT_PIN, false); // Disable wheel tick input
+                mUblox.ubloxCfgAppendE1U1Key(buffer, &ind, CFG_SFODO_FREQUENCY, mSpeedDataInputRate); // Speed data frequency (Hz), should be accurate upto 10%, set it to 0 for automatic estimation
+                // mUblox.ubloxCfgAppendU2Key(buffer, &ind, CFG_SFODO_LATENCY, 5); // Wheel tick/speed data latency (in ms), if not provided, it is assumed to be 0.
+                mUblox.ubloxCfgAppendU4Key(buffer, &ind, CFG_SFODO_QUANT_ERROR, 1e3); // Wheel tick/speed data quantization error (units: 1e-6), set it to 0 for automatic estimation, 1e3 = 1mm/s
 
-            // IMU mount alignment
-            uint32_t yaw_deg_scaled = static_cast<uint32_t>(mAChipOrientationOffset.yawOffset_deg * 100);
-            uint16_t pitch_deg_scaled = static_cast<uint16_t>(mAChipOrientationOffset.pitchOffset_deg * 100);
-            uint16_t roll_deg_scaled = static_cast<uint16_t>(mAChipOrientationOffset.rollOffset_deg * 100);
-            mUblox.ubloxCfgAppendMntalg(buffer, &ind, mESFAlgAutoMntAlgOn, yaw_deg_scaled, pitch_deg_scaled, roll_deg_scaled); // IMU mount alignment, in degrees with a scale of 1/1e-2
+                // IMU mount alignment
+                uint32_t yaw_deg_scaled = static_cast<uint32_t>(mAChipOrientationOffset.yawOffset_deg * 100);
+                uint16_t pitch_deg_scaled = static_cast<uint16_t>(mAChipOrientationOffset.pitchOffset_deg * 100);
+                uint16_t roll_deg_scaled = static_cast<uint16_t>(mAChipOrientationOffset.rollOffset_deg * 100);
+                mUblox.ubloxCfgAppendMntalg(buffer, &ind, mESFAlgAutoMntAlgOn, yaw_deg_scaled, pitch_deg_scaled, roll_deg_scaled); // IMU mount alignment, in degrees with a scale of 1/1e-2
 
-            // Set the offset between the IMU and the antenna
-            uint16_t imu2ant_la_x_cm = static_cast<uint16_t>(-mAntennaToChipOffset.x * 100);
-            uint16_t imu2ant_la_y_cm = static_cast<uint16_t>(-mAntennaToChipOffset.y * 100);
-            uint16_t imu2ant_la_z_cm = static_cast<uint16_t>(-mAntennaToChipOffset.z * 100);
-            mUblox.ubloxCfgAppendI2Key(buffer, &ind, CFG_SFIMU_IMU2ANT_LA_X, imu2ant_la_x_cm); // IMU to antenna lever arm X (cm)
-            mUblox.ubloxCfgAppendI2Key(buffer, &ind, CFG_SFIMU_IMU2ANT_LA_Y, imu2ant_la_y_cm); // IMU to antenna lever arm Y (cm)
-            mUblox.ubloxCfgAppendI2Key(buffer, &ind, CFG_SFIMU_IMU2ANT_LA_Z, imu2ant_la_z_cm); // IMU to antenna lever arm Z (cm)
+                // Set the offset between the IMU and the antenna
+                uint16_t imu2ant_la_x_cm = static_cast<uint16_t>(-mAntennaToChipOffset.x * 100);
+                uint16_t imu2ant_la_y_cm = static_cast<uint16_t>(-mAntennaToChipOffset.y * 100);
+                uint16_t imu2ant_la_z_cm = static_cast<uint16_t>(-mAntennaToChipOffset.z * 100);
+                mUblox.ubloxCfgAppendI2Key(buffer, &ind, CFG_SFIMU_IMU2ANT_LA_X, imu2ant_la_x_cm); // IMU to antenna lever arm X (cm)
+                mUblox.ubloxCfgAppendI2Key(buffer, &ind, CFG_SFIMU_IMU2ANT_LA_Y, imu2ant_la_y_cm); // IMU to antenna lever arm Y (cm)
+                mUblox.ubloxCfgAppendI2Key(buffer, &ind, CFG_SFIMU_IMU2ANT_LA_Z, imu2ant_la_z_cm); // IMU to antenna lever arm Z (cm)
 
-            // Set the offset between the IMU and the vehicle reference point
-            uint16_t imu2vrp_la_x_cm = static_cast<uint16_t>(mChipToBaseOffset.x * 100);
-            uint16_t imu2vrp_la_y_cm = static_cast<uint16_t>(mChipToBaseOffset.y * 100);
-            uint16_t imu2vrp_la_z_cm = static_cast<uint16_t>(mChipToBaseOffset.z * 100);
-            mUblox.ubloxCfgAppendI2Key(buffer, &ind, CFG_SFODO_IMU2VRP_LA_X, imu2vrp_la_x_cm); // IMU to vehicle reference point lever arm X (cm)
-            mUblox.ubloxCfgAppendI2Key(buffer, &ind, CFG_SFODO_IMU2VRP_LA_Y, imu2vrp_la_y_cm); // IMU to vehicle reference point lever arm Y (cm)
-            mUblox.ubloxCfgAppendI2Key(buffer, &ind, CFG_SFODO_IMU2VRP_LA_Z, imu2vrp_la_z_cm); // IMU to vehicle reference point lever arm Z (cm)
-        }
+                // Set the offset between the IMU and the vehicle reference point
+                uint16_t imu2vrp_la_x_cm = static_cast<uint16_t>(mChipToBaseOffset.x * 100);
+                uint16_t imu2vrp_la_y_cm = static_cast<uint16_t>(mChipToBaseOffset.y * 100);
+                uint16_t imu2vrp_la_z_cm = static_cast<uint16_t>(mChipToBaseOffset.z * 100);
+                mUblox.ubloxCfgAppendI2Key(buffer, &ind, CFG_SFODO_IMU2VRP_LA_X, imu2vrp_la_x_cm); // IMU to vehicle reference point lever arm X (cm)
+                mUblox.ubloxCfgAppendI2Key(buffer, &ind, CFG_SFODO_IMU2VRP_LA_Y, imu2vrp_la_y_cm); // IMU to vehicle reference point lever arm Y (cm)
+                mUblox.ubloxCfgAppendI2Key(buffer, &ind, CFG_SFODO_IMU2VRP_LA_Z, imu2vrp_la_z_cm); // IMU to vehicle reference point lever arm Z (cm)
+            }
 
-        // Set the output rates for the messages
-        mUblox.ubloxCfgAppendE1U1Key(buffer, &ind, CFG_MSGOUT_UBX_ESF_STATUS_USB, 1); // UBX-ESF-STATUS rate
+            // Set the output rates for the messages
+            mUblox.ubloxCfgAppendE1U1Key(buffer, &ind, CFG_MSGOUT_UBX_ESF_STATUS_USB, 1); // UBX-ESF-STATUS rate
 
-        // Disable nav prio mode by default at startup, it will be enabled when the ESF sensors are calibrated
-        mUblox.ubloxCfgAppendRate(buffer, &ind, 1000, 1, 0, 0); // Disable nav prio mode
-        mUblox.ubloxCfgAppendE1U1Key(buffer, &ind, CFG_MSGOUT_UBX_NAV_PVT_USB, 0); // UBX-NAV-PVT rate
+            // Disable nav prio mode by default at startup, it will be enabled when the ESF sensors are calibrated
+            mUblox.ubloxCfgAppendRate(buffer, &ind, 1000, 1, 0, 0); // Disable nav prio mode
+            mUblox.ubloxCfgAppendE1U1Key(buffer, &ind, CFG_MSGOUT_UBX_NAV_PVT_USB, 0); // UBX-NAV-PVT rate
 
-        // if (mPrintVerbose) { // TODO: handle this after configuration is done by writing to just ram and bbr
-        //     // mUblox.ubloxCfgAppendE1U1Key(buffer, &ind, CFG_MSGOUT_UBX_ESF_MEAS_USB, 1); // UBX-ESF-MEAS rate
-        //     mUblox.ubloxCfgAppendE1U1Key(buffer, &ind, CFG_MSGOUT_UBX_NAV_STATUS_USB, 1); // UBX-NAV-STATUS rate
-        // }
 
-        if (mESFAlgAutoMntAlgOn) {
-            mUblox.ubloxCfgAppendE1U1Key(buffer, &ind, CFG_MSGOUT_UBX_ESF_ALG_USB, 1); // UBX-ESF-ALG rate
+            // if (mPrintVerbose) { // TODO: handle this after configuration is done by writing to just ram and bbr
+            //     // mUblox.ubloxCfgAppendE1U1Key(buffer, &ind, CFG_MSGOUT_UBX_ESF_MEAS_USB, 1); // UBX-ESF-MEAS rate
+            //     mUblox.ubloxCfgAppendE1U1Key(buffer, &ind, CFG_MSGOUT_UBX_NAV_STATUS_USB, 1); // UBX-NAV-STATUS rate
+            // }
+
+            if (mESFAlgAutoMntAlgOn) {
+                mUblox.ubloxCfgAppendE1U1Key(buffer, &ind, CFG_MSGOUT_UBX_ESF_ALG_USB, 1); // UBX-ESF-ALG rate
+            }
+        } else {
+            mUblox.ubloxCfgAppendEnableSf(buffer, &ind, false); // disable sensor fusion
+
+            int gNSSMeasurementPeriod_ms = 1000 / mNavPvtMessageRate; // convert Hz to ms
+            mUblox.ubloxCfgAppendRate(buffer, &ind, gNSSMeasurementPeriod_ms, 1, 0); // One measurement per nav solution
+            mUblox.ubloxCfgAppendE1U1Key(buffer, &ind, CFG_MSGOUT_UBX_NAV_PVT_USB, 1); // Output NAV-PVT every nav solution
         }
 
         result &= mUblox.ubloxCfgValset(buffer, ind, true, true, mCalibrateEsfSensors, 0); // timeout set to 0 as ack is not being received
@@ -329,7 +338,7 @@ bool UbloxRover::configureUblox()
         mUblox.ubloxCfgAppendRate(buffer, &ind, gNSSMeasurementPeriod_ms, 1, 0); // One measurement per nav solution
         mUblox.ubloxCfgAppendE1U1Key(buffer, &ind, CFG_MSGOUT_UBX_NAV_PVT_USB, 1); // Output NAV-PVT every nav solution
 
-        result &= mUblox.ubloxCfgValset(buffer, ind, true, true, mCalibrateEsfSensors, 0); // timeout set to 0 as ack is not being received
+        result &= mUblox.ubloxCfgValset(buffer, ind, true, true, false, 0); // timeout set to 0 as ack is not being received
 
         qDebug() << "UbloxRover: F9P configuration" << (result ? "was successful" : "reported an error");
         mCreateBackupWithSoS = true;

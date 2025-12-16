@@ -29,6 +29,7 @@ public:
     void setForceRecalibrateSensors(bool forceRecalibrateSensors) { mCalibrateEsfSensors = forceRecalibrateSensors; }
     void setNavPvtMessageRate(int rate) { mNavPvtMessageRate = rate; }
     void setSpeedDataInputRate(int rate) { mSpeedDataInputRate = rate; }
+    void setFusionOnChip(bool fusionOnChip) { mFusionOnChip = fusionOnChip; }
     void setPrintVerbose(bool printVerbose) { mPrintVerbose = printVerbose; }
     void setESFAlgAutoMntAlgOn(bool esfAlgAutoMntAlgOn) { mESFAlgAutoMntAlgOn = esfAlgAutoMntAlgOn; }
     virtual void aboutToShutdown() override;
@@ -54,12 +55,11 @@ private:
     DynamicModel mDynamicModel = DynamicModel::AUTOMOT;
     int mNavPvtMessageRate = 5; // Hz
     int mSpeedDataInputRate = 10; // Hz
+    bool mFusionOnChip = true; // only used for Ublox F9R
     bool mCalibrateEsfSensors = false;
     bool mESFAlgAutoMntAlgOn = false;
     bool mPrintVerbose = false;
     bool mCreateBackupWithSoS = false;
-
-
 };
 
 #endif // UBLOXROVER_H
