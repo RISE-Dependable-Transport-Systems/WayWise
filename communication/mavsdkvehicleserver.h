@@ -38,6 +38,7 @@ public:
     void on_logSent(const QString& message, const quint8& severity);
     void updateRawGpsAndGpsInfoFromUbx(const ubx_nav_pvt &pvt) override;
     void setMavsdkRawGpsAndGpsInfo(const mavsdk::TelemetryServer::RawGps &rawGps, const mavsdk::TelemetryServer::GpsInfo &gpsInfo);
+    void setTransferLogs(bool transferLogs);
 
     void provideParametersToParameterServer();
 
@@ -55,6 +56,7 @@ private:
 
     QDateTime mMavsdkVehicleServerCreationTime = QDateTime::currentDateTime();
     ParameterServer *mParameterServer;
+    bool mTransferLogs = false;
 
     const unsigned mCountdown_ms = 2000;
 

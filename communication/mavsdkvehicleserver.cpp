@@ -15,8 +15,7 @@
 MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleState, const QHostAddress controlTowerAddress, const unsigned controlTowerPort, const QAbstractSocket::SocketType controlTowerSocketType) :
     VehicleServer(vehicleState)
 {
-    connect(&Logger::getInstance(), &Logger::logSent, this, &MavsdkVehicleServer::on_logSent);
-
+    setTransferLogs(true);
     mVehicleState = vehicleState;
     mSystemId = mVehicleState->getId();
 
@@ -731,6 +730,16 @@ void MavsdkVehicleServer::on_logSent(const QString& message, const quint8& sever
     }
 
     logQueue.clear();
+}
+
+void MavsdkVehicleServer::setTransferLogs(bool transferLogs)
+{
+    if (transferLogs && !mTransferLogs) {
+        connect(&Logger::getInstance(), &Logger::logSent, this, &MavsdkVehicleServer::on_logSent);
+    } else if (!transferLogs && mTransferLogs) {
+        disconnect(&Logger::getInstance(), &Logger::logSent, this, &MavsdkVehicleServer::on_logSent);
+    }
+    mTransferLogs = transferLogs;
 }
 
 void MavsdkVehicleServer::sendMissionAck(quint8 type)
