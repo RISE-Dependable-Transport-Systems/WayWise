@@ -57,7 +57,11 @@ MapWidget::MapWidget(QWidget *parent) : QWidget(parent)
 void MapWidget::addObjectState(QSharedPointer<ObjectState> objectState)
 {
     mObjectStateMap.insert(objectState->getId(), objectState);
-    connect(objectState.get(), &ObjectState::positionUpdated, this, &MapWidget::triggerUpdate);
+    QMetaObject::Connection conn = connect(objectState.get(), &ObjectState::positionUpdated, [this](PosType type){
+        Q_UNUSED(type);
+        triggerUpdate();
+    });
+    mObjectStateConnectionMap.insert(objectState->getId(), conn);
 }
 
 QSharedPointer<ObjectState> MapWidget::getObjectState(int objectID)
@@ -67,7 +71,8 @@ QSharedPointer<ObjectState> MapWidget::getObjectState(int objectID)
 
 bool MapWidget::removeObjectState(int objectID)
 {
-    QObject::disconnect(mObjectStateMap.value(objectID).get(), &ObjectState::positionUpdated, this, &MapWidget::triggerUpdate);
+    disconnect(mObjectStateConnectionMap.value(objectID));
+    mObjectStateConnectionMap.remove(objectID);
 
     bool removedAnElement = mObjectStateMap.remove(objectID);
     update();

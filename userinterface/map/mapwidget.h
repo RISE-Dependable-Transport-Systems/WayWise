@@ -121,6 +121,7 @@ protected:
 
 private:
     QMap<int, QSharedPointer<ObjectState>> mObjectStateMap;
+    QMap<int, QMetaObject::Connection> mObjectStateConnectionMap;
     llh_t mRefLlh;
     double mScaleFactor;
     double mRotation;
