@@ -67,7 +67,7 @@ class GNSSReceiver : public QObject
 public:
     GNSSReceiver(QSharedPointer<ObjectState> objectState);
 
-    void simulationStep(const std::function<GnssFixStatus(QTime, QSharedPointer<ObjectState>)> &perturbationFn = nullptr);
+    void simulationStep(const std::function<GnssFixStatus(QTime, QSharedPointer<ObjectState>)> &simulationFn = nullptr);
 
     void setReceiverVariant(RECEIVER_VARIANT receiverVariant) { mReceiverVariant = receiverVariant; }
     RECEIVER_VARIANT getReceiverVariant() { return mReceiverVariant; }
@@ -77,10 +77,11 @@ public:
     RECEIVER_STATE getReceiverState() { return mReceiverState; }
     void setReceiverState(RECEIVER_STATE state) { mReceiverState = state; }
     virtual void aboutToShutdown() {};
-    virtual void updateGNSSPositionAndYaw(llh_t llh, double heading, bool isFusedOnChip);
+    virtual void updateGNSSPositionAndOrientation(llh_t llh, double heading_degNED, bool isFusedOnChip);
+    virtual void updateGNSSPositionAndOrientation(llh_t llh, rpy_t rpy_degNED, bool isFusedOnChip);
 
 signals:
-    void updatedGNSSPositionAndYaw(QSharedPointer<ObjectState> objectState, double distanceMoved, GnssFixStatus gnssFixStatus);
+    void updatedGNSSPositionAndOrientation(QSharedPointer<ObjectState> objectState, double distanceMoved, GnssFixStatus gnssFixStatus);
 
 protected:
     virtual void shutdownGNSSReceiver() {};

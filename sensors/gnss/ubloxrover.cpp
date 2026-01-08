@@ -16,7 +16,7 @@ UbloxRover::UbloxRover(QSharedPointer<ObjectState> objectState)
         if (mReceiverState != RECEIVER_STATE::READY) {
             setReceiverState(RECEIVER_STATE::READY);
         }
-        updateGNSSPositionAndYaw(pvt);
+        updateGNSSPositionAndOrientation(pvt);
     });
 
     // Fordward received NMEA GGA messages
@@ -348,7 +348,7 @@ bool UbloxRover::configureUblox()
     return true;
 }
 
-void UbloxRover::updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt)
+void UbloxRover::updateGNSSPositionAndOrientation(const ubx_nav_pvt &pvt)
 {
     static bool initializationDone = false;
     static int leapSeconds_ms = 0;
@@ -358,7 +358,7 @@ void UbloxRover::updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt)
         qDebug() << "UbloxRover: assuming" << leapSeconds_ms / 1000 << "seconds difference between GNSS time and UTC.";
         initializationDone = true;
     } else {
-        GNSSReceiver::updateGNSSPositionAndYaw({pvt.lat, pvt.lon, pvt.height}, pvt.head_veh, pvt.head_veh_valid);
+        GNSSReceiver::updateGNSSPositionAndOrientation({pvt.lat, pvt.lon, pvt.height}, pvt.head_veh, pvt.head_veh_valid);
 
         PosPoint gnssPos = mObjectState->getPosition(PosType::GNSS);
         // Time and speed
@@ -379,7 +379,7 @@ void UbloxRover::updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt)
         gnssFixStatus.numSatellites = pvt.num_sv;
 
         static QPointF lastGnssPoint;
-        emit updatedGNSSPositionAndYaw(mObjectState, QLineF(lastGnssPoint, gnssPos.getPoint()).length(), gnssFixStatus);
+        emit updatedGNSSPositionAndOrientation(mObjectState, QLineF(lastGnssPoint, gnssPos.getPoint()).length(), gnssFixStatus);
         emit txNavPvt(pvt);
 
         lastGnssPoint = gnssPos.getPoint();

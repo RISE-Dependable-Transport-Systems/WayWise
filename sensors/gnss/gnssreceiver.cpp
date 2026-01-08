@@ -12,34 +12,35 @@ GNSSReceiver::GNSSReceiver(QSharedPointer<ObjectState> objectState)
     mObjectState = objectState;
 }
 
-void GNSSReceiver::simulationStep(const std::function<GnssFixStatus(QTime, QSharedPointer<ObjectState>)> &perturbationFn)
+void GNSSReceiver::simulationStep(const std::function<GnssFixStatus(QTime, QSharedPointer<ObjectState>)> &simulationFn)
 {
-    static QPointF lastGNSSPoint = QPointF();
-    static PosPoint lastOdomPosPoint = PosPoint();
+    static xyz_t lastGNSS_xyz;
     PosPoint gnssPosPoint = mObjectState->getPosition(PosType::GNSS);
     PosPoint odomPosPoint = mObjectState->getPosition(PosType::odom);
 
-    double deltaX = odomPosPoint.getX() - lastOdomPosPoint.getX();
-    double deltaY = odomPosPoint.getY() - lastOdomPosPoint.getY();
-    double deltaYaw = odomPosPoint.getYaw() - lastOdomPosPoint.getYaw();
-    gnssPosPoint.setX(gnssPosPoint.getX() + deltaX);
-    gnssPosPoint.setY(gnssPosPoint.getY() + deltaY);
-    double yawResult = gnssPosPoint.getYaw() + deltaYaw;
-
-    while (yawResult < -180.0)
-        yawResult += 360.0;
-    while (yawResult >= 180.0)
-        yawResult -= 360.0;
-
-    gnssPosPoint.setYaw(yawResult);
-    gnssPosPoint.setTime(odomPosPoint.getTime());
-    mObjectState->setPosition(gnssPosPoint);
-
     GnssFixStatus gnssFixStatus;
-    if (perturbationFn) {
-        gnssFixStatus = perturbationFn(odomPosPoint.getTime(), mObjectState);
+    if (simulationFn) {
+        gnssFixStatus = simulationFn(odomPosPoint.getTime(), mObjectState);
         gnssPosPoint = mObjectState->getPosition(PosType::GNSS);
     } else {
+        static PosPoint lastOdomPosPoint = PosPoint();
+
+        double deltaX = odomPosPoint.getX() - lastOdomPosPoint.getX();
+        double deltaY = odomPosPoint.getY() - lastOdomPosPoint.getY();
+        double deltaYaw = odomPosPoint.getYaw() - lastOdomPosPoint.getYaw();
+        gnssPosPoint.setX(gnssPosPoint.getX() + deltaX);
+        gnssPosPoint.setY(gnssPosPoint.getY() + deltaY);
+        double yawResult = gnssPosPoint.getYaw() + deltaYaw;
+
+        while (yawResult < -180.0)
+            yawResult += 360.0;
+        while (yawResult >= 180.0)
+            yawResult -= 360.0;
+
+        gnssPosPoint.setYaw(yawResult);
+        gnssPosPoint.setTime(odomPosPoint.getTime());
+        mObjectState->setPosition(gnssPosPoint);
+
         gnssFixStatus.isFusedOnChip = true;
         gnssFixStatus.fixType = GNSS_FIX_TYPE::FIX_3D;
         gnssFixStatus.horizontalAccuracy = 0.0;
@@ -47,14 +48,15 @@ void GNSSReceiver::simulationStep(const std::function<GnssFixStatus(QTime, QShar
         gnssFixStatus.headingAccuracy = 0.0;
         gnssFixStatus.lastRtcmCorrectionAge = 0;
         gnssFixStatus.numSatellites = 0;
+
+        lastOdomPosPoint = odomPosPoint;
     }
 
-    emit updatedGNSSPositionAndYaw(mObjectState, QLineF(lastGNSSPoint, gnssPosPoint.getPoint()).length(), gnssFixStatus);
-    lastGNSSPoint = gnssPosPoint.getPoint();
-    lastOdomPosPoint = odomPosPoint;
+    emit updatedGNSSPositionAndOrientation(mObjectState, lastGNSS_xyz.dist(gnssPosPoint.getXYZ()), gnssFixStatus);
+    lastGNSS_xyz = gnssPosPoint.getXYZ();
 }
 
-void GNSSReceiver::updateGNSSPositionAndYaw(llh_t llh, double heading, bool isFusedOnChip)
+void GNSSReceiver::updateGNSSPositionAndOrientation(llh_t llh, rpy_t rpy_degNED, bool isFusedOnChip)
 {
 
     PosPoint gnssPos = mObjectState->getPosition(PosType::GNSS);
@@ -69,9 +71,8 @@ void GNSSReceiver::updateGNSSPositionAndYaw(llh_t llh, double heading, bool isFu
     // Position
     gnssPos.setXYZ(xyz);
 
-    double vehYaw_radENU = 0.0;
     if (isFusedOnChip) {
-        double yaw_degENU = coordinateTransforms::yawNEDtoENU(heading) + mAChipOrientationOffset.yawOffset_deg;
+        double yaw_degENU = coordinateTransforms::yawNEDtoENU(rpy_degNED.yaw) + mAChipOrientationOffset.yawOffset_deg;
 
         // normalize to [-180.0:180.0]
         while (yaw_degENU < -180.0)
@@ -81,21 +82,29 @@ void GNSSReceiver::updateGNSSPositionAndYaw(llh_t llh, double heading, bool isFu
 
         gnssPos.setYaw(yaw_degENU);
 
-        vehYaw_radENU = yaw_degENU * M_PI / 180.0;
-
         // Apply Chip to rear axle offset if set.
         if (mChipToBaseOffset.x != 0.0 || mChipToBaseOffset.y != 0.0) {
-            gnssPos.updateWithOffsetAndYawRotation(mChipToBaseOffset, vehYaw_radENU);
+            gnssPos.updateWithOffsetAndYawRotation(mChipToBaseOffset, yaw_degENU * M_PI / 180.0);
         }
+        gnssPos.setRoll(rpy_degNED.roll);
+        gnssPos.setPitch(-rpy_degNED.pitch); // NED to ENU
     } else { // Assumes fused yaw is updated.
         PosPoint fusedPos = mObjectState->getPosition(PosType::fused);
-        vehYaw_radENU = fusedPos.getYaw() * M_PI / 180.0;
+        rpy_t fusedPos_rpy_degENU = fusedPos.getRPY();
 
         // Apply antenna to rear axle offset if set.
         xyz_t mAntennaToRearAxleOffset = mAntennaToChipOffset + mChipToBaseOffset;
         if (mAntennaToRearAxleOffset.x != 0.0 || mAntennaToRearAxleOffset.y != 0.0) {
-            gnssPos.updateWithOffsetAndYawRotation(mAntennaToRearAxleOffset, vehYaw_radENU);
+            gnssPos.updateWithOffsetAndYawRotation(mAntennaToRearAxleOffset, fusedPos_rpy_degENU.yaw * M_PI / 180.0);
         }
+        gnssPos.setRoll(fusedPos_rpy_degENU.roll);
+        gnssPos.setPitch(fusedPos_rpy_degENU.pitch);
     }
     mObjectState->setPosition(gnssPos);
+}
+
+void GNSSReceiver::updateGNSSPositionAndOrientation(llh_t llh, double heading_degNED, bool isFusedOnChip)
+{
+    rpy_t rpy_degNED = {0.0, 0.0, heading_degNED};
+    updateGNSSPositionAndOrientation(llh, rpy_degNED, isFusedOnChip);
 }

@@ -44,7 +44,7 @@ protected:
 
 private:
     bool configureUblox();
-    void updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt);
+    void updateGNSSPositionAndOrientation(const ubx_nav_pvt &pvt);
     void restoreBackedupConfiguration(int pollIntervalms = 1000, int maxPolls = 10);
     void createConfigurationBackup(int pollIntervalms = 1000, int maxPolls = 10);
     bool switchNavPrioMode(bool navPrioMode);
