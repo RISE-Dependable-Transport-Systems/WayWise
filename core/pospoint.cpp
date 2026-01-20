@@ -49,6 +49,11 @@ double PosPoint::getPitch() const
     return mPitch;
 }
 
+rpy_t PosPoint::getRPY() const
+{
+    return {mRoll, mPitch, mYaw};
+}
+
 double PosPoint::getYaw() const
 {
     return mYaw;
@@ -237,6 +242,13 @@ void PosPoint::setRollPitchYaw(double roll, double pitch, double yaw)
     mRoll = roll;
     mPitch = pitch;
     mYaw = yaw;
+}
+
+void PosPoint::setRPY(rpy_t rpy)
+{
+    mRoll = rpy.roll;
+    mPitch = rpy.pitch;
+    mYaw = rpy.yaw;
 }
 
 void PosPoint::setSpeed(double speed)

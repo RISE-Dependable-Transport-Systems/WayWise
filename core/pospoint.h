@@ -41,6 +41,7 @@ public:
     double getRoll() const;
     double getPitch() const;
     double getYaw() const;
+    rpy_t getRPY() const;
     double getSpeed() const;
     QPointF getPoint() const;
     QPointF getPointMm() const;
@@ -66,6 +67,7 @@ public:
     void setPitch(double pitch);
     void setYaw(double alpha);
     void setRollPitchYaw(double roll, double pitch, double yaw);
+    void setRPY(rpy_t rpy);
     void setSpeed(double speed);
     void setRadius(double radius);
     void setSigma(double sigma);
@@ -76,7 +78,7 @@ public:
     void setDrawLine(bool drawLine);
     void setAttributes(quint32 attributes);
 
-    void updateWithOffsetAndYawRotation (xyz_t offset, double yaw);
+    void updateWithOffsetAndYawRotation (xyz_t offset, double yaw_rad);
 
     // Operators
     PosPoint& operator=(const PosPoint& point);

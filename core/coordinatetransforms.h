@@ -17,6 +17,12 @@ struct llh_t {
     double height;
 };
 
+struct rpy_t {
+    double roll;
+    double pitch;
+    double yaw;
+};
+
 struct xyz_t {
     double x;
     double y;
@@ -56,6 +62,14 @@ struct xyz_t {
     xyz_t operator-() const {
         return {-x, -y, -z};
     }
+
+    double dist(const xyz_t & other) const
+    {
+        double dx = x - other.x;
+        double dy = y - other.y;
+        double dz = z - other.z;
+        return std::sqrt(dx * dx + dy * dy + dz * dz);
+  }
 };
 
 namespace coordinateTransforms {

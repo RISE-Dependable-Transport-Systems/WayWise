@@ -52,11 +52,16 @@ public:
     WAYWISE_OBJECT_TYPE getWaywiseObjectType() const { return mWaywiseObjectType; }
     void setWaywiseObjectType(const WAYWISE_OBJECT_TYPE value) { mWaywiseObjectType = value; }
 
+    virtual llh_t getEnuRef() const { return mEnuReference; }
+    virtual void setEnuRef(llh_t enuRef);
+    bool isEnuReferenceSet();
+
     // Dynamic state
-    virtual PosPoint getPosition() const { return mPosition; }
+    virtual PosPoint getPosition(PosType type) const;
+    virtual PosPoint getPosition() const { return getPosition(PosType::simulated); }
     virtual void setPosition(PosPoint &point);
-    virtual QTime getTime() const { return mPosition.getTime(); }
-    virtual void setTime(const QTime &time) { mPosition.setTime(time); }
+    virtual QTime getTime() const { return mTime; }
+    virtual void setTime(const QTime &time) { mTime = time; }
     virtual double getSpeed() const { return mSpeed; }
     virtual void setSpeed(double value) { mSpeed = value; }
     virtual Velocity getVelocity() const { return mVelocity; }
@@ -68,7 +73,8 @@ public:
     bool getDrawStatusText() const;
 
 signals:
-    void positionUpdated();
+    void positionUpdated(PosType type);
+    void updatedEnuReference(llh_t mEnuReference);
 
 private:
     // Static state
@@ -78,12 +84,16 @@ private:
     bool mDrawStatusText = true;
     WAYWISE_OBJECT_TYPE mWaywiseObjectType = WAYWISE_OBJECT_TYPE_GENERIC;
 
+    llh_t mEnuReference = {57.71495867, 12.89134921, 0}; // AztaZero {57.7810, 12.7692, 0}, Klätterlabbet {57.6876, 11.9807, 0}, RISE RTK base station {57.71495867, 12.89134921, 0}
+    bool mEnuReferenceSet = false;
+
 protected:
     // Dynamic state
-    PosPoint mPosition;
+    QTime mTime;
     double mSpeed = 0.0; // [m/s]
     Velocity mVelocity = {0.0, 0.0, 0.0}; // [m/s]
     Acceleration mAcceleration = {0.0, 0.0, 0.0}; // [m/s²]
+    PosPoint mPositionBySource[(int)PosType::_LAST_];
 };
 
 

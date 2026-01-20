@@ -15,8 +15,7 @@
 MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleState, const QHostAddress controlTowerAddress, const unsigned controlTowerPort, const QAbstractSocket::SocketType controlTowerSocketType) :
     VehicleServer(vehicleState)
 {
-    connect(&Logger::getInstance(), &Logger::logSent, this, &MavsdkVehicleServer::on_logSent);
-
+    setTransferLogs(true);
     mVehicleState = vehicleState;
     mSystemId = mVehicleState->getId();
 
@@ -63,16 +62,14 @@ MavsdkVehicleServer::MavsdkVehicleServer(QSharedPointer<VehicleState> vehicleSta
         mavsdk::TelemetryServer::Position homePositionLlh{};
         mavsdk::TelemetryServer::Position positionLlh{};
 
-        if (!mGNSSReceiver.isNull()) {
-            // publish gpsOrigin
-            sendGpsOriginLlh(mVehicleState->getEnuRef());
+        // publish gpsOrigin
+        sendGpsOriginLlh(mVehicleState->getEnuRef());
 
-            //TODO: homePositionLlh should not be EnuRef
-            homePositionLlh = {mVehicleState->getEnuRef().latitude, mVehicleState->getEnuRef().longitude, static_cast<float>(mVehicleState->getEnuRef().height), 0};
+        //TODO: homePositionLlh should not be EnuRef
+        homePositionLlh = {mVehicleState->getEnuRef().latitude, mVehicleState->getEnuRef().longitude, static_cast<float>(mVehicleState->getEnuRef().height), 0};
 
-            llh_t fusedPosGlobal = coordinateTransforms::enuToLlh(mVehicleState->getEnuRef(), {mVehicleState->getPosition(PosType::fused).getXYZ()});
-            positionLlh = {fusedPosGlobal.latitude, fusedPosGlobal.longitude, static_cast<float>(fusedPosGlobal.height), 0};
-        }
+        llh_t fusedPosGlobal = coordinateTransforms::enuToLlh(mVehicleState->getEnuRef(), {mVehicleState->getPosition(PosType::fused).getXYZ()});
+        positionLlh = {fusedPosGlobal.latitude, fusedPosGlobal.longitude, static_cast<float>(fusedPosGlobal.height), 0};
 
         mTelemetryServer->publish_position(positionLlh, velocity, heading);
         mTelemetryServer->publish_home(homePositionLlh);
@@ -733,6 +730,16 @@ void MavsdkVehicleServer::on_logSent(const QString& message, const quint8& sever
     }
 
     logQueue.clear();
+}
+
+void MavsdkVehicleServer::setTransferLogs(bool transferLogs)
+{
+    if (transferLogs && !mTransferLogs) {
+        connect(&Logger::getInstance(), &Logger::logSent, this, &MavsdkVehicleServer::on_logSent);
+    } else if (!transferLogs && mTransferLogs) {
+        disconnect(&Logger::getInstance(), &Logger::logSent, this, &MavsdkVehicleServer::on_logSent);
+    }
+    mTransferLogs = transferLogs;
 }
 
 void MavsdkVehicleServer::sendMissionAck(quint8 type)

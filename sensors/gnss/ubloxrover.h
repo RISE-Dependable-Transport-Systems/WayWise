@@ -20,23 +20,22 @@ class UbloxRover : public GNSSReceiver
 {
     Q_OBJECT
 public:
-    UbloxRover(QSharedPointer<VehicleState> vehicleState);
+    UbloxRover(QSharedPointer<ObjectState> objectState);
     bool connectSerial(const QSerialPortInfo &serialPortInfo);
     bool isSerialConnected();
     void writeRtcmToUblox(QByteArray data);
     void writeOdomToUblox(ubx_esf_datatype_enum dataType, uint32_t dataField, uint32_t timeTag = 0);
     void setDynamicModel(DynamicModel dynamicModel) { mDynamicModel = dynamicModel; }
     void setForceRecalibrateSensors(bool forceRecalibrateSensors) { mCalibrateEsfSensors = forceRecalibrateSensors; }
-    void setGNSSMeasurementRate(int rate) { mGNSSMeasurementRate = rate; }
-    void setNavPrioMessageRate(int rate) { mNavPrioMessageRate = rate; }
+    void setNavPvtMessageRate(int rate) { mNavPvtMessageRate = rate; }
     void setSpeedDataInputRate(int rate) { mSpeedDataInputRate = rate; }
+    void setFusionOnChip(bool fusionOnChip) { mFusionOnChip = fusionOnChip; }
     void setPrintVerbose(bool printVerbose) { mPrintVerbose = printVerbose; }
     void setESFAlgAutoMntAlgOn(bool esfAlgAutoMntAlgOn) { mESFAlgAutoMntAlgOn = esfAlgAutoMntAlgOn; }
     virtual void aboutToShutdown() override;
-    virtual void readVehicleSpeedForPositionFusion() override;
+    virtual void readObjectSpeedForPositionFusion();
 
 signals:
-    void updatedGNSSPositionAndYaw(QSharedPointer<VehicleState> vehicleState, double distanceMoved, bool fused);
     void txNavPvt(const ubx_nav_pvt &pvt);
     void gotNmeaGga(const QByteArray& nmeaGgaStr);
 
@@ -45,7 +44,7 @@ protected:
 
 private:
     bool configureUblox();
-    void updateGNSSPositionAndYaw(const ubx_nav_pvt &pvt);
+    void updateGNSSPositionAndOrientation(const ubx_nav_pvt &pvt);
     void restoreBackedupConfiguration(int pollIntervalms = 1000, int maxPolls = 10);
     void createConfigurationBackup(int pollIntervalms = 1000, int maxPolls = 10);
     bool switchNavPrioMode(bool navPrioMode);
@@ -54,15 +53,13 @@ private:
     Ublox mUblox;
 
     DynamicModel mDynamicModel = DynamicModel::AUTOMOT;
-    int mGNSSMeasurementRate = 1; // Hz
-    int mNavPrioMessageRate = 10; // Hz
+    int mNavPvtMessageRate = 5; // Hz
     int mSpeedDataInputRate = 10; // Hz
+    bool mFusionOnChip = true; // only used for Ublox F9R
     bool mCalibrateEsfSensors = false;
     bool mESFAlgAutoMntAlgOn = false;
     bool mPrintVerbose = false;
     bool mCreateBackupWithSoS = false;
-
-
 };
 
 #endif // UBLOXROVER_H
