@@ -1,0 +1,39 @@
+# Git files (keep .git for submodules)
+.github
+
+# Documentation
+README.md
+*.md
+CITATION.cff
+LICENSE
+
+# Build artifacts
+build/
+examples/build/
+**/build/
+*.o
+*.so
+*.a
+*.deb
+*.rpm
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.log
+*.tmp
+tmp/
+/tmp/
+
+# CI/CD
+.github/workflows
+
+# Docker files (no need to copy these into the image)
+Dockerfile*
+.dockerignore
+docker-compose*.yml

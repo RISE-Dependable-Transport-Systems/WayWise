@@ -5,3 +5,7 @@ build
 
 # VS Code files
 *.vscode
+
+# Downloaded binaries
+*.deb
+*.rpm
