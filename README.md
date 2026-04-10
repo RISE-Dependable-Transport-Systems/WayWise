@@ -1,20 +1,20 @@
 # WayWise
-![Workflow build result](https://github.com/RISE-Dependable-Transport-Systems/WayWise/actions/workflows/main.yml/badge.svg) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/RISE-Dependable-Transport-Systems/WayWise)
+![Workflow build result](https://github.com/das-rise/WayWise/actions/workflows/main.yml/badge.svg) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/das-rise/WayWise)
 
 https://github.com/user-attachments/assets/22279eb2-fc61-4fe6-91da-493cc589b09c
 
 WayWise ([way-wise](https://en.wiktionary.org/wiki/way-wise): _Expert or knowledgeable in finding or keeping the way; knowing the way or route._) is a rapid prototyping library for connected, autonomous vehicles.
 It is developed within research projects at the RISE Dependable Transport Systems group to investigate the use of autonomous vehicles (rc cars, tractors, drones) and, especially, related functional safety as well as cybersecurity risks and opportunities they bring, in various use cases (road traffic, agriculture, maritime).
-It has roots in the [RISE Self-Driving Vehicle Platform (SDVP)](https://github.com/RISE-Dependable-Transport-Systems/rise_sdvp), originally developed by Benjamin Vedder, but was redesigned and rewritten based on C++ and Qt targeting commercial-of-the-shelf hardware (instead of custom hardware and firmware).
+It has roots in the [RISE Self-Driving Vehicle Platform (SDVP)](https://github.com/das-rise/rise_sdvp), originally developed by Benjamin Vedder, but was redesigned and rewritten based on C++ and Qt targeting commercial-of-the-shelf hardware (instead of custom hardware and firmware).
 The library is used to build the brains on-vehicle and the control application counterpart on the desktop.
 The main protocol for communication between vehicle and control application is [MAVLINK](https://mavlink.io/), which is implemented using [MAVSDK](http://mavsdk.io/).
 There is also support for controlling vehicles using [ISO/TS 22133:2023](https://www.iso.org/standard/78970.html) as implemented in [RI-SE/iso22133](https://github.com/RI-SE/iso22133).
 WayWise does not target production readiness but exploring specific use cases by rapid prototyping.
 
 Our main projects that base on WayWise are:
-- [ControlTower](https://github.com/RISE-Dependable-Transport-Systems/ControlTower), desktop control application that communicates to vehicles via MAVLINK (WayWise-based vehicles mainly, experimental [PX4](https://px4.io/) support).
-- [RCCar](https://github.com/RISE-Dependable-Transport-Systems/RCCar), a fully-fledged rc car implementation (GNSS & IMU-based positioning, [VESC](https://vesc-project.com/)-based odometry, ...).
-- [WayWiseR](https://github.com/RISE-Dependable-Transport-Systems/WayWiseR), a ROS2 integration of WayWise that streamlines the development and deployment of autonomous vehicles in both simulation and real-world environments.
+- [ControlTower](https://github.com/das-rise/ControlTower), desktop control application that communicates to vehicles via MAVLINK (WayWise-based vehicles mainly, experimental [PX4](https://px4.io/) support).
+- [RCCar](https://github.com/das-rise/RCCar), a fully-fledged rc car implementation (GNSS & IMU-based positioning, [VESC](https://vesc-project.com/)-based odometry, ...).
+- [WayWiseR](https://github.com/das-rise/WayWiseR), a ROS2 integration of WayWise that streamlines the development and deployment of autonomous vehicles in both simulation and real-world environments.
 
 Current maintainers are:
 - Aria Mirzai
@@ -31,9 +31,9 @@ This "library" is meant to be used as a git submodule, as we do not do releases 
 In general, our development resources are scarce and dedicated to fulfill use cases of research projects we are part of.
 We do our best to avoid it, but things will break from time to time.
 
-As set of examples can be found in [/examples](https://github.com/RISE-Dependable-Transport-Systems/WayWise/tree/main/examples), most notably:
-- [A minimal simulated car with an autopilot communicating via MAVLINK](https://github.com/RISE-Dependable-Transport-Systems/WayWise/tree/main/examples/RCCar_MAVLINK_autopilot). This example can be connected to using [ControlTower](https://github.com/RISE-Dependable-Transport-Systems/ControlTower) and follow waypoints created on the map (see screen recording below).
-- [A minimal simulated car with an autopilot communicating via ISO/TS 22133](https://github.com/RISE-Dependable-Transport-Systems/WayWise/tree/main/examples/RCCar_ISO22133_autopilot). This example can be connected to using [ATOS](https://github.com/RI-SE/ATOS).
+As set of examples can be found in [/examples](https://github.com/das-rise/WayWise/tree/main/examples), most notably:
+- [A minimal simulated car with an autopilot communicating via MAVLINK](https://github.com/das-rise/WayWise/tree/main/examples/RCCar_MAVLINK_autopilot). This example can be connected to using [ControlTower](https://github.com/das-rise/ControlTower) and follow waypoints created on the map (see screen recording below).
+- [A minimal simulated car with an autopilot communicating via ISO/TS 22133](https://github.com/das-rise/WayWise/tree/main/examples/RCCar_ISO22133_autopilot). This example can be connected to using [ATOS](https://github.com/RI-SE/ATOS).
 
 ![RCCar_minimal_example](https://user-images.githubusercontent.com/2404625/202208555-1271ba0d-55f7-4c26-94ac-53920e6d18c5.gif)
 
@@ -47,7 +47,7 @@ As set of examples can be found in [/examples](https://github.com/RISE-Dependabl
   - PurePursuitWaypointFollower, an implementation of [pure pursuit](https://www.ri.cmu.edu/pub_files/pub3/coulter_r_craig_1992_1/coulter_r_craig_1992_1.pdf), which can also follow a point, e.g., a person or another vehicle
   - GotoWaypointFollower, does not do low-level control but sends goto requests (mainly used for PX4-based drones)
   - MultiWaypointFollower, is a container that allows switching between multiple instances of WaypointFollower (e.g., if you want to switch between different routes and save state inbetween)
-- **userinterface**: UI building blocks to create desktop applications (see also [ControlTower](https://github.com/RISE-Dependable-Transport-Systems/ControlTower))
+- **userinterface**: UI building blocks to create desktop applications (see also [ControlTower](https://github.com/das-rise/ControlTower))
 - **external**: code from external projects
 - **tools**: tools that support WayWise development like for building MAVSDK
 - **examples**: a set of examples showing how WayWise is used
