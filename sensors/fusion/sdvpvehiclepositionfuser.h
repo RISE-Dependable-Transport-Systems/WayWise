@@ -3,7 +3,7 @@
  *     Published under GPLv3: https://www.gnu.org/licenses/gpl-3.0.html
  *
  * Rewritten and restructured version of SDVP's sensor "fusion" algorithm for obtaining position and orientation 
- * (see: https://github.com/RISE-Dependable-Transport-Systems/rise_sdvp/blob/master/Embedded/RC_Controller/pos.c).
+ * (see: https://github.com/das-rise/rise_sdvp/blob/master/Embedded/RC_Controller/pos.c).
  * Inputs are GNSS position, Odometry feedback (e.g., from motor controller) and IMU orientation.
  * The algorithm tries to tackle two main problems: 1. GNSS position is exact but old and arrives at low frequency 2. IMU orientation is not absolute and drifts
  * The general approach is as follows:

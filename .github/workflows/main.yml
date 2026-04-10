@@ -50,7 +50,7 @@ jobs:
     - name: RCCar - Checkout
       uses: actions/checkout@v4
       with:
-        repository: RISE-Dependable-Transport-Systems/RCCar
+        repository: das-rise/RCCar
         path: RCCar
 
     - name: RCCar - Checkout WayWise
@@ -80,7 +80,7 @@ jobs:
     - name: ControlTower - Checkout
       uses: actions/checkout@v4
       with:
-        repository: RISE-Dependable-Transport-Systems/ControlTower
+        repository: das-rise/ControlTower
         path: ControlTower
 
     - name: ControlTower - Checkout WayWise
