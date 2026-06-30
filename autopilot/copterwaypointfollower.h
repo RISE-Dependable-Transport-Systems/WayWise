@@ -46,6 +46,7 @@ public:
 
     WayPointFollowerState getCurrentState() const {return mCurrentState;}
     CopterVelocityCommand getDesiredVelocityCommand() const {return mDesiredVelocityCommand;}
+    bool isClimbingToStartWaypointHeight() const {return mClimbingToStartWaypointHeight;}
 
     PosType getPosTypeUsed() const;
     void setPosTypeUsed(const PosType &posTypeUsed);
@@ -62,6 +63,9 @@ public:
     double getMaxSpeed() const {return mMaxSpeed;}
     void setMaxSpeed(double value) {mMaxSpeed = value;}
 
+    double getDescentSpeed() const {return mDescentSpeed;}
+    void setDescentSpeed(double value) {mDescentSpeed = value;}
+
     double getMinApproachSpeed() const {return mMinApproachSpeed;}
     void setMinApproachSpeed(double value) {mMinApproachSpeed = value;}
 
@@ -77,12 +81,33 @@ public:
     double getMaxYawRate() const {return mMaxYawRate;}
     void setMaxYawRate(double value) {mMaxYawRate = value;}
 
+    double getVerticalHeightTolerance() const {return mVerticalHeightTolerance;}
+    void setVerticalHeightTolerance(double value) {mVerticalHeightTolerance = value;}
+
+    double getVerticalProportionalGain() const {return mVerticalProportionalGain;}
+    void setVerticalProportionalGain(double value) {mVerticalProportionalGain = value;}
+
+    double getVerticalIntegralGain() const {return mVerticalIntegralGain;}
+    void setVerticalIntegralGain(double value) {mVerticalIntegralGain = value;}
+
+    double getVerticalDerivativeGain() const {return mVerticalDerivativeGain;}
+    void setVerticalDerivativeGain(double value) {mVerticalDerivativeGain = value;}
+
+    double getVerticalIntegralLimit() const {return mVerticalIntegralLimit;}
+    void setVerticalIntegralLimit(double value) {mVerticalIntegralLimit = value;}
+
 private:
     void updateState();
     void updateControl(const PosPoint &goal);
+    void updateTrackingControl(const PosPoint &goal);
+    void updateClimbControl(const PosPoint &goal);
     void holdPosition();
+    bool isVerticalLeg(int waypointIndex) const;
+    PosPoint waypointHeightAtCurrentPosition(int waypointIndex) const;
+    double verticalLegReferenceHeight(int waypointIndex) const;
     PosPoint getCurrentVehiclePosition() const;
-    int findClosestWaypointIndex() const;
+    int findClosestSegmentStartIndex() const;
+    double descentSpeedForGoal(const PosPoint &goal) const;
     double speedForGoal(const PosPoint &goal, double distanceToGoal) const;
     static double normalizeAngleRad(double angle);
 
@@ -95,16 +120,25 @@ private:
     unsigned mUpdateStatePeriod_ms = 50;
 
     CopterVelocityCommand mDesiredVelocityCommand;
+    bool mClimbingToStartWaypointHeight = false;
+    bool mSkipStartWaypointAfterClimb = false;
+    double mVerticalHeightErrorIntegral = 0.0;
     double mPrevDistanceToGoal = std::numeric_limits<double>::max(); // overshoot detection
     double mWaypointProximity = 0.5;            // [m]
     double mEndGoalAlignmentThreshold = 0.25;   // [m]
     double mCruiseSpeed = 1.0;                  // [m/s]
     double mMaxSpeed = 2.0;                     // [m/s]
+    double mDescentSpeed = 0.3;                 // [m/s]
     double mMinApproachSpeed = 0.1;             // [m/s]
     double mApproachSlowdownRadius = 1.5;       // [m]
     bool mFaceTravelDirection = true;
     double mYawGain = 1.5;                      // [1/s]
     double mMaxYawRate = 1.0;                   // [rad/s]
+    double mVerticalHeightTolerance = 0.10;      // [m]
+    double mVerticalProportionalGain = 0.8;      // [1/s]
+    double mVerticalIntegralGain = 0.04;         // [1/s^2]
+    double mVerticalDerivativeGain = 0.5;        // dimensionless damping on vertical speed
+    double mVerticalIntegralLimit = 2.0;         // [m*s]
 };
 
 #endif // COPTERWAYPOINTFOLLOWER_H
