@@ -18,7 +18,7 @@
 #include "autopilot/waypointfollower.h"
 #include "routeplanning/routeutils.h"
 
-enum class WayPointFollowerSTMstates {NONE, FOLLOW_ROUTE_INIT, FOLLOW_ROUTE_GOTO_BEGIN, FOLLOW_ROUTE_FOLLOWING, FOLLOW_ROUTE_APPROACHING_END_GOAL, FOLLOW_ROUTE_FINISHED};
+enum class WayPointFollowerSTMstates {NONE, FOLLOW_ROUTE_INIT, FOLLOW_ROUTE_GOTO_BEGIN, FOLLOW_ROUTE_FOLLOWING, FOLLOW_ROUTE_APPROACHING_END_GOAL, FOLLOW_ROUTE_APPROACHING_END_GOAL_Z, FOLLOW_ROUTE_FINISHED};
 struct WayPointFollowerState {
     WayPointFollowerSTMstates stmState = WayPointFollowerSTMstates::NONE;
     PosPoint currentGoal;

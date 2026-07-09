@@ -47,15 +47,24 @@ public:
     WayPointFollowerState getCurrentState() const {return mCurrentState;}
     CopterVelocityCommand getDesiredVelocityCommand() const {return mDesiredVelocityCommand;}
     bool isClimbingToStartWaypointHeight() const {return mClimbingToStartWaypointHeight;}
+    void setFinishRouteAfterInitialClimb(bool value) {mFinishRouteAfterInitialClimb = value;}
 
     PosType getPosTypeUsed() const;
     void setPosTypeUsed(const PosType &posTypeUsed);
 
-    double getWaypointProximity() const {return mWaypointProximity;}
-    void setWaypointProximity(double value) {mWaypointProximity = value;}
+    double getWaypointProximityXY() const {return mWaypointProximityXY;}
+    void setWaypointProximityXY(double value) {mWaypointProximityXY = value;}
+    double getWaypointProximityZ() const {return mWaypointProximityZ;}
+    void setWaypointProximityZ(double value) {mWaypointProximityZ = value;}
 
-    double getEndGoalAlignmentThreshold() const {return mEndGoalAlignmentThreshold;}
-    void setEndGoalAlignmentThreshold(double value) {mEndGoalAlignmentThreshold = value;}
+    double getEndGoalAlignmentThresholdXY() const {return mEndGoalAlignmentThresholdXY;}
+    void setEndGoalAlignmentThresholdXY(double value) {mEndGoalAlignmentThresholdXY = value;}
+
+    double getEndGoalAlignmentThresholdZ() const {return mEndGoalAlignmentThresholdZ;}
+    void setEndGoalAlignmentThresholdZ(double value) {mEndGoalAlignmentThresholdZ = value;}
+
+    double getStopSpeedThreshold() const {return mStopSpeedThreshold;}
+    void setStopSpeedThreshold(double value) {mStopSpeedThreshold = value;}
 
     double getCruiseSpeed() const {return mCruiseSpeed;}
     void setCruiseSpeed(double value) {mCruiseSpeed = value;}
@@ -109,6 +118,7 @@ private:
     int findClosestSegmentStartIndex() const;
     double descentSpeedForGoal(const PosPoint &goal) const;
     double speedForGoal(const PosPoint &goal, double distanceToGoal) const;
+    double climbSpeedForGoal(const PosPoint &goal) const;
     static double normalizeAngleRad(double angle);
 
     WayPointFollowerState mCurrentState;
@@ -122,10 +132,14 @@ private:
     CopterVelocityCommand mDesiredVelocityCommand;
     bool mClimbingToStartWaypointHeight = false;
     bool mSkipStartWaypointAfterClimb = false;
+    bool mFinishRouteAfterInitialClimb = false;
     double mVerticalHeightErrorIntegral = 0.0;
     double mPrevDistanceToGoal = std::numeric_limits<double>::max(); // overshoot detection
-    double mWaypointProximity = 0.5;            // [m]
-    double mEndGoalAlignmentThreshold = 0.25;   // [m]
+    double mWaypointProximityXY = 0.5;            // [m]
+    double mWaypointProximityZ = 1.0;             // [m]
+    double mEndGoalAlignmentThresholdXY = 0.25; // [m]
+    double mEndGoalAlignmentThresholdZ = 0.25;  // [m]
+    double mStopSpeedThreshold = 0.2;           // [m/s]
     double mCruiseSpeed = 1.0;                  // [m/s]
     double mMaxSpeed = 2.0;                     // [m/s]
     double mDescentSpeed = 0.3;                 // [m/s]
