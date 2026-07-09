@@ -137,17 +137,33 @@ void CopterWaypointFollower::startFollowingRoute(bool fromBeginning)
 
     emit activateEmergencyBrake();
 
-    mCurrentState.currentWaypointIndex = fromBeginning ? 0 : findClosestSegmentStartIndex();
+    if (fromBeginning || mWaypointList.size() < 2) {
+        mCurrentState.currentWaypointIndex = 0;
+    } else {
+        int closestIdx = findClosestSegmentStartIndex();
+        const PosPoint segmentStart = mWaypointList.at(closestIdx);
+        const PosPoint segmentEnd = mWaypointList.at(closestIdx + 1);
+        const double px = getCurrentVehiclePosition().getX();
+        const double py = getCurrentVehiclePosition().getY();
+        const double sx = segmentStart.getX();
+        const double sy = segmentStart.getY();
+        const double vx = segmentEnd.getX() - sx;
+        const double vy = segmentEnd.getY() - sy;
+        const double segmentLengthSquared = vx * vx + vy * vy;
+        const double projection = segmentLengthSquared > std::numeric_limits<double>::epsilon() ?
+            ((px - sx) * vx + (py - sy) * vy) / segmentLengthSquared : 0.0;
+        mCurrentState.currentWaypointIndex = projection > 0.0 ? closestIdx + 1 : closestIdx;
+    }
     mCurrentState.stmState = WayPointFollowerSTMstates::FOLLOW_ROUTE_INIT;
     mSkipStartWaypointAfterClimb = false;
-    mClimbingToStartWaypointHeight = !fromBeginning;
+    mClimbingToStartWaypointHeight = !fromBeginning || mFinishRouteAfterInitialClimb;
     if (fromBeginning) {
         const PosPoint currentPos = getCurrentVehiclePosition();
         const PosPoint startWaypoint = mWaypointList.first();
         const double dx = startWaypoint.getX() - currentPos.getX();
         const double dy = startWaypoint.getY() - currentPos.getY();
         const double distance2d = std::sqrt(dx * dx + dy * dy);
-        mClimbingToStartWaypointHeight = distance2d <= mWaypointProximity &&
+        mClimbingToStartWaypointHeight = distance2d <= mWaypointProximityXY &&
             std::abs(startWaypoint.getHeight() - currentPos.getHeight()) > mVerticalHeightTolerance;
         mSkipStartWaypointAfterClimb = mClimbingToStartWaypointHeight;
     }
@@ -179,6 +195,7 @@ void CopterWaypointFollower::resetState()
     mCurrentState.currentGoal = PosPoint();
     mClimbingToStartWaypointHeight = false;
     mSkipStartWaypointAfterClimb = false;
+    mFinishRouteAfterInitialClimb = false;
     mPrevDistanceToGoal = std::numeric_limits<double>::max();
     mVerticalHeightErrorIntegral = 0.0;
     holdPosition();
@@ -215,7 +232,7 @@ void CopterWaypointFollower::updateState()
                 mCurrentState.currentWaypointIndex);
             const double heightError =
                 mCurrentState.currentGoal.getHeight() - getCurrentVehiclePosition().getHeight();
-            if (std::abs(heightError) > mVerticalHeightTolerance) {
+            if (std::abs(heightError) > mWaypointProximityZ) {
                 updateClimbControl(mCurrentState.currentGoal);
                 break;
             }
@@ -224,6 +241,13 @@ void CopterWaypointFollower::updateState()
             mDesiredVelocityCommand = {};
             mPrevDistanceToGoal = std::numeric_limits<double>::max();
             mVerticalHeightErrorIntegral = 0.0;
+            if (mFinishRouteAfterInitialClimb) {
+                mFinishRouteAfterInitialClimb = false;
+                mCurrentState.stmState = WayPointFollowerSTMstates::FOLLOW_ROUTE_FINISHED;
+                qInfo() << "Copter route goal reached with vertical accuracy:"
+                        << std::abs(heightError) << "m.";
+                break;
+            }
             if (mSkipStartWaypointAfterClimb &&
                 mCurrentState.currentWaypointIndex + 1 < mWaypointList.size()) {
                 mCurrentState.currentWaypointIndex++;
@@ -234,7 +258,7 @@ void CopterWaypointFollower::updateState()
             const double dx = mCurrentState.currentGoal.getX() - currentPos.getX();
             const double dy = mCurrentState.currentGoal.getY() - currentPos.getY();
             const double distance2d = std::sqrt(dx * dx + dy * dy);
-            if (distance2d <= mWaypointProximity &&
+            if (distance2d <= mWaypointProximityXY &&
                 mCurrentState.currentWaypointIndex + 1 < mWaypointList.size()) {
                 mCurrentState.currentWaypointIndex++;
                 mCurrentState.currentGoal = mWaypointList.at(mCurrentState.currentWaypointIndex);
@@ -269,10 +293,9 @@ void CopterWaypointFollower::updateState()
         const double dz = mCurrentState.currentGoal.getHeight() - currentPos.getHeight();
         const double distance2d = std::sqrt(dx * dx + dy * dy);
 
-        const bool reachedByProximity = distanceToGoal <= mWaypointProximity ||
-            (distance2d <= mWaypointProximity && std::abs(dz) <= mVerticalHeightTolerance);
-        const bool reachedByOvershoot = mPrevDistanceToGoal <= mWaypointProximity * 2.0
-                                        && distanceToGoal > mPrevDistanceToGoal;
+        const bool reachedByProximity = distance2d <= mWaypointProximityXY && std::abs(dz) <= mWaypointProximityZ;
+        const bool reachedByOvershoot = distance2d <= mWaypointProximityXY * 2.0 &&
+                                        distance2d > mPrevDistanceToGoal;
         if (reachedByProximity || reachedByOvershoot) {
             mPrevDistanceToGoal = std::numeric_limits<double>::max();
             mCurrentState.currentWaypointIndex++;
@@ -311,10 +334,9 @@ void CopterWaypointFollower::updateState()
 
         // Advance if within proximity, OR if the drone overshot — it was within
         // 2× proximity at closest approach but is now moving away from the waypoint.
-        const bool reachedByProximity = distanceToGoal <= mWaypointProximity ||
-            (distance2d <= mWaypointProximity && std::abs(dz) <= mVerticalHeightTolerance);
-        const bool reachedByOvershoot = mPrevDistanceToGoal <= mWaypointProximity * 2.0
-                                        && distanceToGoal > mPrevDistanceToGoal;
+        const bool reachedByProximity = distance2d <= mWaypointProximityXY && std::abs(dz) <= mWaypointProximityZ;
+        const bool reachedByOvershoot = distance2d <= mWaypointProximityXY * 2.0 &&
+                                        distance2d > mPrevDistanceToGoal;
         if (reachedByProximity || reachedByOvershoot) {
             mPrevDistanceToGoal = std::numeric_limits<double>::max();
             mCurrentState.currentWaypointIndex++;
@@ -342,14 +364,60 @@ void CopterWaypointFollower::updateState()
 
         mCurrentState.currentWaypointIndex = mWaypointList.size() - 1;
         mCurrentState.currentGoal = mWaypointList.last();
-        const double distanceToGoal =
-            getCurrentVehiclePosition().getDistanceTo3d(mCurrentState.currentGoal);
-        if (distanceToGoal <= mEndGoalAlignmentThreshold) {
-            if (mCurrentState.repeatRoute) {
-                mCurrentState.stmState = WayPointFollowerSTMstates::FOLLOW_ROUTE_INIT;
+        const PosPoint currentPos = getCurrentVehiclePosition();
+        const double dx = mCurrentState.currentGoal.getX() - currentPos.getX();
+        const double dy = mCurrentState.currentGoal.getY() - currentPos.getY();
+        const double distance2d = std::sqrt(dx * dx + dy * dy);
+
+        const auto vel = mVehicleState->getVelocity();
+        const double speed2d = std::sqrt(vel.x * vel.x + vel.y * vel.y);
+
+        // Require the horizontal speed to be relatively low to ensure we are actually
+        // settling at the goal, not just blowing past it at high speed (overshoot).
+        if (distance2d <= mWaypointProximityXY && speed2d < mStopSpeedThreshold) {
+            mCurrentState.stmState = WayPointFollowerSTMstates::FOLLOW_ROUTE_APPROACHING_END_GOAL_Z;
+            qInfo() << "Copter route end goal XY tolerance reached. Adjusting Z. (2D accuracy:" << distance2d << "m)";
+        } else {
+            updateControl(mCurrentState.currentGoal);
+        }
+    } break;
+
+    case WayPointFollowerSTMstates::FOLLOW_ROUTE_APPROACHING_END_GOAL_Z: {
+        if (mWaypointList.isEmpty()) {
+            mCurrentState.stmState = WayPointFollowerSTMstates::FOLLOW_ROUTE_FINISHED;
+            break;
+        }
+
+        mCurrentState.currentWaypointIndex = mWaypointList.size() - 1;
+        mCurrentState.currentGoal = mWaypointList.last();
+
+        const PosPoint currentPos = getCurrentVehiclePosition();
+        const double dx = mCurrentState.currentGoal.getX() - currentPos.getX();
+        const double dy = mCurrentState.currentGoal.getY() - currentPos.getY();
+        const double distance2d = std::sqrt(dx * dx + dy * dy);
+
+        // If a strong wind or overshoot pushes the drone significantly out of the XY tolerance, 
+        // fallback to the previous state to re-acquire the horizontal position.
+        if (distance2d > mWaypointProximityXY * 2.0) {
+            mCurrentState.stmState = WayPointFollowerSTMstates::FOLLOW_ROUTE_APPROACHING_END_GOAL;
+            updateControl(mCurrentState.currentGoal);
+            break;
+        }
+
+        const double dz = mCurrentState.currentGoal.getHeight() - currentPos.getHeight();
+
+        if (std::abs(dz) <= mEndGoalAlignmentThresholdZ && distance2d <= mEndGoalAlignmentThresholdXY) {
+            const auto vel = mVehicleState->getVelocity();
+            const double speed = std::sqrt(vel.x * vel.x + vel.y * vel.y + vel.z * vel.z);
+            if (speed < mStopSpeedThreshold) {
+                if (mCurrentState.repeatRoute) {
+                    mCurrentState.stmState = WayPointFollowerSTMstates::FOLLOW_ROUTE_INIT;
+                } else {
+                    mCurrentState.stmState = WayPointFollowerSTMstates::FOLLOW_ROUTE_FINISHED;
+                    qInfo() << "Copter route goal reached with 2D accuracy:" << distance2d << "m and Z accuracy:" << std::abs(dz) << "m.";
+                }
             } else {
-                qDebug() << "Copter route goal reached with accuracy:" << distanceToGoal << "m.";
-                mCurrentState.stmState = WayPointFollowerSTMstates::FOLLOW_ROUTE_FINISHED;
+                holdPosition();
             }
         } else {
             updateControl(mCurrentState.currentGoal);
@@ -378,7 +446,7 @@ void CopterWaypointFollower::updateControl(const PosPoint &goal)
         const double horizontalSpeedTolerance = std::max(
             kVerticalLegHorizontalSpeedThreshold,
             mMinApproachSpeed);
-        if (distance2d > mWaypointProximity ||
+        if (distance2d > mWaypointProximityXY ||
             horizontalSpeed > horizontalSpeedTolerance) {
             PosPoint levelGoal = goal;
             levelGoal.setHeight(verticalLegReferenceHeight(mCurrentState.currentWaypointIndex));
@@ -401,7 +469,7 @@ void CopterWaypointFollower::updateTrackingControl(const PosPoint &goal)
     const double distance2d = std::sqrt(dx * dx + dy * dy);
     const double distance = std::sqrt(distance2d * distance2d + dz * dz);
 
-    if (distance2d <= mWaypointProximity && std::abs(dz) > mVerticalHeightTolerance) {
+    if (distance2d <= mWaypointProximityXY && std::abs(dz) > mWaypointProximityZ) {
         updateClimbControl(goal);
         return;
     }
@@ -463,7 +531,7 @@ void CopterWaypointFollower::updateClimbControl(const PosPoint &goal)
     const PosPoint currentPos = getCurrentVehiclePosition();
     const double heightError = goal.getHeight() - currentPos.getHeight();
     const double verticalSpeedLimit = heightError < -mVerticalHeightTolerance ?
-        descentSpeedForGoal(goal) : speedForGoal(goal, std::abs(heightError));
+        descentSpeedForGoal(goal) : climbSpeedForGoal(goal);
 
     mDesiredVelocityCommand = {};
     mDesiredVelocityCommand.up = verticalSpeedForHeightError(
@@ -505,8 +573,8 @@ bool CopterWaypointFollower::isVerticalLeg(int waypointIndex) const
     const double dx = goal.getX() - previousGoal.getX();
     const double dy = goal.getY() - previousGoal.getY();
     const double dz = goal.getHeight() - previousGoal.getHeight();
-    return std::sqrt(dx * dx + dy * dy) <= mWaypointProximity &&
-        std::abs(dz) > mVerticalHeightTolerance;
+    return std::sqrt(dx * dx + dy * dy) <= mWaypointProximityXY &&
+        std::abs(dz) > mWaypointProximityZ;
 }
 
 PosPoint CopterWaypointFollower::waypointHeightAtCurrentPosition(int waypointIndex) const
@@ -529,6 +597,15 @@ double CopterWaypointFollower::verticalLegReferenceHeight(int waypointIndex) con
 double CopterWaypointFollower::descentSpeedForGoal(const PosPoint &) const
 {
     return std::min(mDescentSpeed, mMaxSpeed);
+}
+
+double CopterWaypointFollower::climbSpeedForGoal(const PosPoint &goal) const
+{
+    double speed = std::abs(goal.getSpeed());
+    if (speed <= std::numeric_limits<double>::epsilon()) {
+        speed = mCruiseSpeed;
+    }
+    return std::min(speed, mMaxSpeed);
 }
 
 PosPoint CopterWaypointFollower::getCurrentVehiclePosition() const
