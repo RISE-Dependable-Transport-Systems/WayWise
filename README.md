@@ -18,9 +18,9 @@ Our main projects that base on WayWise are:
 
 Current maintainers are:
 - Aria Mirzai
-- Ramana Reddy Avula
 
 Previous maintainers:
+- Ramana Reddy Avula
 - Marvin Damschen
 - Rickard Häll
 
